@@ -32,6 +32,12 @@ const TypeStyle& styleForType(const QString& type) {
     return fallback;
 }
 
+QColor fpClassColor(int c) {
+    static const char* col[] = {"#868e96", "#2f9e44", "#94d82d", "#e03131", "#1c7ed6", "#1971c2", "#c92a2a",
+                                "#f08c00", "#0ca678", "#7048e8", "#4dabf7"};
+    return QColor(c >= 0 && c < static_cast<int>(sizeof col / sizeof col[0]) ? col[c] : "#868e96");
+}
+
 bool isMetalElement(const QString& e) {
     static const QSet<QString> m = {"Zn", "Mg", "Ca", "Fe", "Mn", "Cu", "Ni", "Co", "Cd", "Hg", "Na", "K"};
     return m.contains(e);

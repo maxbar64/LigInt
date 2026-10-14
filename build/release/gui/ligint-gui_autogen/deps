@@ -1,4 +1,48 @@
 ligint-gui_autogen/timestamp: \
 	/home/massimo/devel/LigInt/gui/CMakeLists.txt \
 	/home/massimo/devel/LigInt/gui/main.cpp \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Config.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigExtras.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigVersion.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigVersionImpl.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Dependencies.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Targets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6VersionlessAliasTargets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtFeature.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtFeatureCommon.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtInstallPaths.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicAppleHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicCMakeHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicExternalProjectHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicFinalizerHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicFindPackageHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicGitHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicPluginHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomAttributionHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomCpeHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomDepHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomFileHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomGenerationHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomLicenseHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomOpsHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomPurlHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomPythonHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomSystemDepHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicTargetHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicTestHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicToolHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicWalkLibsHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgAdditionalTargetInfo.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfig.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfigVersion.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfigVersionImpl.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgDependencies.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgTargets-release.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgTargets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgVersionlessAliasTargets.cmake \
+	/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake \
+	/usr/share/cmake-3.28/Modules/CheckCXXCompilerFlag.cmake \
 	/usr/bin/cmake

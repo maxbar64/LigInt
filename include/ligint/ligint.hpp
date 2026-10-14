@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.2.0"
+#define LIGINT_VERSION "0.3.0"
 #endif
 
 namespace ligint {
@@ -122,6 +122,8 @@ struct HitRecord {
     V3 proteinPos{0, 0, 0};
     V3 waterPos{0, 0, 0};           // water bridges only
     bool hasWater = false;
+    int residueCharge = 0;          // charge of the protein atom in salt bridges, repulsions and charge-assisted H-bonds (+1/-1/0)
+    char hbResidueRole = 0;         // hydrogen bonds: 'D' = the protein residue donates, 'A' = it accepts, 0 = not an H-bond
 };
 
 struct LigandResult {

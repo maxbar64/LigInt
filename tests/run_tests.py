@@ -14,6 +14,7 @@ Groups:
     chem   chemical and geometric rules on synthetic fragments (known geometry, known expected outcome)
     tmpl   SDF / MOL2 templates (matching by coordinates, explicit H, fallback)
     pdb    PDB parsing (altlocs, insertion codes, models, ligand selection, CSV)
+    fp     interaction fingerprints (CSV/JSON/SVG output, pocket definition files)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -21,6 +22,7 @@ Groups:
 Exit code: 0 if all the tests pass, 1 otherwise.
 """
 import argparse
+import json
 import math
 import os
 import random
@@ -28,6 +30,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import xml.etree.ElementTree as ET
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -871,6 +874,159 @@ def csv_is_well_formed():
     for l in lines[1:]:
         check(len(l.split(",")) == 7, "CSV row with the wrong number of fields: " + l)
     check("annotation" not in r.out.lower() and "B-factor" not in r.out, "service information on stdout in CSV mode")
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP fp: interaction fingerprints
+# ----------------------------------------------------------------------------------------------
+SVG_NS = "{http://www.w3.org/2000/svg}"
+
+
+def fp_system():
+    m = methanol()
+    return Sys().ligand(m).prot("ASN", "OD1", at(m.atoms[1][2], (0.5, 0.866, 0), 2.8))
+
+
+def run_fp(system, fmt, extra=(), text=None):
+    pdb = tmpfile(text if text is not None else system.text())
+    return run_raw([pdb, "LIG", "--fingerprint", fmt] + list(extra))
+
+
+def pocket_file(lines, newline="\n"):
+    return tmpfile(newline.join(lines) + newline, ".tsv")
+
+
+@test("fp")
+def fingerprint_csv_json_svg_are_consistent():
+    s = fp_system()
+    c = run_fp(s, "csv")
+    check(c.rc == 0, "csv rc=%d: %s" % (c.rc, c.err[:200]))
+    lines = c.out.strip().splitlines()
+    head = lines[0].split(",")
+    check(head[:6] == ["ligand", "residue", "chain", "resi", "position", "region"] and "hbond_acceptor" in head, "CSV header: " + lines[0])
+    check(len(lines) == 2, "expected a single residue: " + c.out)
+    row = dict(zip(head, lines[1].split(",")))
+    check(row["residue"] == "ASN 10A" and row["hbond_acceptor"] == "1" and row["hbond_donor"] == "0", "CSV row: " + lines[1])
+    j = run_fp(s, "json")
+    check(j.rc == 0, "json rc=%d" % j.rc)
+    data = json.loads(j.out)
+    check(len(data) == 1 and data[0]["ligand"] == "LIG 1L" and len(data[0]["classes"]) == len(head) - 6, "JSON structure")
+    res = data[0]["residues"][0]
+    check(res["residue"] == "ASN 10A" and res["counts"]["hbond_acceptor"] == 1 and abs(res["min_distance"]["hbond_acceptor"] - 2.8) < 0.01,
+          "JSON residue: " + str(res))
+    v = run_fp(s, "svg")
+    check(v.rc == 0, "svg rc=%d" % v.rc)
+    root = ET.fromstring(v.out)                              # well-formed XML
+    check(root.tag == SVG_NS + "svg" and root.get("width") and root.get("viewBox"), "svg root")
+    check("ASN 10A" in v.out and "LIG 1L" in v.out and "H-bond acceptor" in v.out, "svg content")
+
+
+@test("fp")
+def fingerprint_uses_the_pocket_definition():
+    s = fp_system()
+    pk = pocket_file(["# example", "@name My pocket", "@color regA #336699",
+                      "A\t9\t1\tregA\tALA", "A\t10\t2\tregA\tASN", "A\t11\t3\tregB\tGLY"])
+    c = run_fp(s, "csv", ["--pocket", pk])
+    check(c.rc == 0, "rc=%d: %s" % (c.rc, c.err[:200]))
+    rows = [l.split(",") for l in c.out.strip().splitlines()[1:]]
+    check([r[1] for r in rows] == ["ALA 9A", "ASN 10A", "GLY 11A"], "positions in definition order, empty ones included: " + c.out)
+    check([r[4] for r in rows] == ["1", "2", "3"] and [r[5] for r in rows] == ["regA", "regA", "regB"], "labels and regions")
+    v = run_fp(s, "svg", ["--pocket", pk])
+    check(v.rc == 0 and "My pocket" in v.out and "#336699" in v.out, "svg with pocket name and region color")
+    for lab in ("ALA 9A", "ASN 10A", "GLY 11A"):
+        check(lab in v.out, "cell missing in the svg: " + lab)
+    j = json.loads(run_fp(s, "json", ["--pocket", pk]).out)
+    check(j[0]["pocket"] == "My pocket" and [r["in_pocket"] for r in j[0]["residues"]] == [True, True, True], "JSON pocket info")
+    # a contact residue outside the definition is appended and flagged
+    pk2 = pocket_file(["A 9 1 regA ALA"])
+    j2 = json.loads(run_fp(s, "json", ["--pocket", pk2]).out)
+    check([r["in_pocket"] for r in j2[0]["residues"]] == [True, False], "residue outside the pocket must be flagged")
+
+
+@test("fp")
+def fingerprint_pocket_file_variants_and_warnings():
+    s = fp_system()
+    variants = {
+        "whitespace": ["A 10 p10 reg ASN"],
+        "commas": ["A,10,p10,reg,ASN"],
+        "any chain": ["* 10 p10 reg ASN"],
+        "crlf": None,
+    }
+    for name, lines in variants.items():
+        pk = pocket_file(["A\t10\tp10\treg\tASN"], "\r\n") if lines is None else pocket_file(lines)
+        c = run_fp(s, "csv", ["--pocket", pk])
+        check(c.rc == 0 and "ASN 10A,A,10,p10,reg" in c.out, "%s: %s | %s" % (name, c.out, c.err[:150]))
+    bad = pocket_file(["A 10 p10 reg ASN", "A xyz 1 reg", "A 11", "@bogus 1", "@color reg nocolor"])
+    c = run_fp(s, "csv", ["--pocket", bad])
+    check(c.rc == 0 and c.err.count("Warning: pocket definition line") == 4, "expected 4 warnings: " + c.err)
+    check("ASN 10A" in c.out, "valid lines must still be used")
+    # residue name mismatch
+    mm = pocket_file(["A 10 p10 reg LEU"])
+    c = run_fp(s, "csv", ["--pocket", mm])
+    check(c.rc == 0 and "does not match the pocket definition" in c.err, "mismatch warning: " + c.err)
+
+
+@test("fp")
+def fingerprint_command_line_errors():
+    pdb = tmpfile(fp_system().text())
+    good = pocket_file(["A 10 p10 reg ASN"])
+    cases = [([pdb, "LIG", "--fingerprint"], "--fingerprint without a value"),
+             ([pdb, "LIG", "--fingerprint", "xml"], "unknown format"),
+             ([pdb, "LIG", "--fingerprint", "csv", "--pocket", "/no/such/pocket.tsv"], "nonexistent pocket file"),
+             ([pdb, "LIG", "--pocket", good], "--pocket without --fingerprint"),
+             ([pdb, "LIG", "--fingerprint", "csv", "--pocket"], "--pocket without a value")]
+    for args, what in cases:
+        r = run_raw(args)
+        check(r.rc == 1, "%s: expected code 1, got %d (%s)" % (what, r.rc, r.err[:120]))
+        no_crash(r)
+    # no ligand requested: the listing is printed, no fingerprint
+    r = run_raw([pdb, "--fingerprint", "csv"])
+    check(r.rc == 0 and "Ligands (HETATM) present" in r.out, "listing instead of the fingerprint: " + r.out)
+
+
+@test("fp")
+def fingerprint_robustness():
+    s = fp_system()
+    random.seed(5)
+    garbage = bytes(random.getrandbits(8) for _ in range(6000))
+    pk = tmpfile(garbage, ".tsv", binary=True)
+    for fmt in ("csv", "json", "svg"):
+        r = run_fp(s, fmt, ["--pocket", pk])
+        check(r.rc == 0, "%s with a garbage pocket: rc=%d %s" % (fmt, r.rc, r.err[:150]))
+        no_crash(r)
+    weird = pocket_file(["A 99999999 1 reg ASN", "A 10 " + "x" * 5000 + " reg ASN", "A 10 p<&\"> r&<>\" ASN", "A -5 7 reg ALA"])
+    r = run_fp(s, "svg", ["--pocket", weird])
+    check(r.rc == 0, "weird pocket: rc=%d" % r.rc)
+    ET.fromstring(r.out)                                       # still well-formed XML despite special characters
+    check("&amp;" in r.out and "&lt;" in r.out, "special characters must be escaped")
+    # empty fingerprint (ligand without contacts)
+    alone = Sys().ligand(methanol())
+    for fmt in ("csv", "json", "svg"):
+        r = run_fp(alone, fmt)
+        check(r.rc == 0, "no contacts, %s: rc=%d %s" % (fmt, r.rc, r.err[:100]))
+    check("No interactions" in run_fp(alone, "svg").out, "empty figure")
+    check(json.loads(run_fp(alone, "json").out)[0]["residues"] == [], "empty JSON residues")
+    # many residues in a pocket: figure wraps and stays well-formed
+    big = pocket_file(["A %d p%d reg%d ALA" % (i, i, i // 7) for i in range(1, 300)])
+    r = run_fp(s, "svg", ["--pocket", big])
+    check(r.rc == 0 and len(ET.fromstring(r.out).findall(".//" + SVG_NS + "g")) > 299, "large pocket")
+
+
+@test("fp")
+def fingerprint_several_ligands():
+    s = Sys().ligand(methanol(), chain="L", resi=1)
+    m2 = methanol()
+    for name, el, xyz, _, _ in m2.atoms:
+        s.atom("HETATM", name, "LIG", "M", 2, v_add(xyz, (30, 0, 0)), el)
+    s.prot("ASN", "OD1", at(m2.atoms[1][2], (0.5, 0.866, 0), 2.8), resi=10)
+    s.prot("ASP", "OD1", at(v_add(m2.atoms[1][2], (30, 0, 0)), (0.5, 0.866, 0), 2.8), resi=11)
+    c = run_fp(s, "csv")
+    check(c.rc == 0 and len({l.split(",")[0] for l in c.out.strip().splitlines()[1:]}) == 2, "CSV must contain both ligands: " + c.out)
+    j = json.loads(run_fp(s, "json").out)
+    check(len(j) == 2, "JSON must have one object per ligand")
+    v = run_fp(s, "svg")
+    check(v.rc == 0 and "only the first is drawn" in v.err, "SVG with several ligands: " + v.err)
+    ET.fromstring(v.out)
 
 
 # ----------------------------------------------------------------------------------------------

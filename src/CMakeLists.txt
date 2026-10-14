@@ -2,7 +2,9 @@
 add_library(ligint_core
     core/analysis.cpp
     core/chemistry.cpp
+    core/fingerprint.cpp
     core/report.cpp
+    core/svg.cpp
     core/templates.cpp
     core/internal.hpp)
 add_library(ligint::core ALIAS ligint_core)

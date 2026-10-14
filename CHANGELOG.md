@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0
+
+Interaction fingerprints (one row per protein residue, one column per interaction class):
+
+- new library API in `ligint/fingerprint.hpp`: `makeFingerprint`, `PocketDefinition` (plain-text file mapping residues
+  to a position label and a region), CSV and JSON writers, and `fingerprintSvg` (figure with the residues grouped by
+  region and one glyph per class, legend and tooltips; no Qt needed);
+- the interaction records now say which side donates the hydrogen and the charge of the residue
+  (`HitRecord::hbResidueRole`, `HitRecord::residueCharge`), which the fingerprint classes need;
+- command line: `--fingerprint csv|json|svg` and `--pocket FILE`;
+- GUI: **Fingerprint** tab (figure and table), pocket definition loading, export to SVG/CSV/JSON; the figure needs the
+  optional Qt Svg module, otherwise the GUI shows the table only; the control panel scrolls on small windows;
+- documentation in `docs/FINGERPRINT.md` with an illustrative pocket definition (`docs/examples/`);
+- 6 new Python tests, new C++ unit tests and GUI smoke test checks for fingerprints and pocket files.
+
+The existing output of `ligint` is unchanged.
+
 ## 0.2.0
 
 All text in the code is now in English: comments, messages, GUI labels, documentation. **This changes the program

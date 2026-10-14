@@ -1,0 +1,40 @@
+# Illustrative pocket definition for HIV-1 protease (PDB 1HSG, homodimer, chains A and B).
+# This file only shows the format: the regions and labels are an example, not a reference mapping.
+# Columns: chain  residue number  position label  region  [residue name]
+@name HIV-1 protease pocket (example)
+@color catalytic #e5857f
+@color flap #f3e04a
+@color 80s-loop #7bc96f
+@color dimer-interface #bfc9d1
+A	8	A8	dimer-interface	ARG
+A	23	A23	catalytic	LEU
+A	25	A25	catalytic	ASP
+A	27	A27	catalytic	GLY
+A	28	A28	catalytic	ALA
+A	29	A29	catalytic	ASP
+A	30	A30	catalytic	ASP
+A	32	A32	catalytic	VAL
+A	47	A47	flap	ILE
+A	48	A48	flap	GLY
+A	49	A49	flap	GLY
+A	50	A50	flap	ILE
+A	80	A80	80s-loop	THR
+A	81	A81	80s-loop	PRO
+A	82	A82	80s-loop	VAL
+A	84	A84	80s-loop	ILE
+B	8	B8	dimer-interface	ARG
+B	23	B23	catalytic	LEU
+B	25	B25	catalytic	ASP
+B	27	B27	catalytic	GLY
+B	28	B28	catalytic	ALA
+B	29	B29	catalytic	ASP
+B	30	B30	catalytic	ASP
+B	32	B32	catalytic	VAL
+B	47	B47	flap	ILE
+B	48	B48	flap	GLY
+B	49	B49	flap	GLY
+B	50	B50	flap	ILE
+B	80	B80	80s-loop	THR
+B	81	B81	80s-loop	PRO
+B	82	B82	80s-loop	VAL
+B	84	B84	80s-loop	ILE

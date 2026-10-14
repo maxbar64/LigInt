@@ -468,24 +468,31 @@ Result analyzeStream(std::istream& in, const Options& opt) {
 
                 int qq = lr.q * r.q;
                 bool sb = P.saltCentroid <= 0 && qq < 0 && d <= P.saltMax;   // with --salt-centroid salt bridges are evaluated per group
-                if (qq > 0 && d <= P.repMax) add(ligint::type::ElectrostaticRepulsion, false);
+                if (qq > 0 && d <= P.repMax) { add(ligint::type::ElectrostaticRepulsion, false); hits.back().rq = r.q; }
 
                 bool polar = isNO(l.el) && isNO(p.el);
-                bool hb = false; string hnote;
+                bool hb = false; string hnote; char hbRole = 0;
                 if (polar && qq <= 0 && d >= P.hbMin && d <= max(P.hbMax, P.hbLong)) {
                     bool isLong = d > P.hbMax;
                     if (lr.don && r.acc) {
                         auto dr = isLong ? donorTestLong(l, l.nb, L, p) : donorTest(l, l.nb, L, p);
-                        if (dr.ok && angleOk(p, pnb(k), prot, l)) { hb = true; hnote = dr.note; }
+                        if (dr.ok && angleOk(p, pnb(k), prot, l)) { hb = true; hnote = dr.note; hbRole = 'A'; }   // ligand donates: the protein accepts
                     }
                     if (!hb && lr.acc && r.don) {
                         auto dr = isLong ? donorTestLong(p, pnb(k), prot, l) : donorTest(p, pnb(k), prot, l);
-                        if (dr.ok && angleOk(l, l.nb, L, p)) { hb = true; hnote = dr.note; }
+                        if (dr.ok && angleOk(l, l.nb, L, p)) { hb = true; hnote = dr.note; hbRole = 'D'; }   // the protein donates
                     }
                 }
-                if (sb && hb) add(ligint::type::SaltBridge, true, "also hydrogen bond" + (hnote.empty() ? "" : "; " + hnote));
-                else if (sb) add(ligint::type::SaltBridge, true);
-                else if (hb) add(ligint::type::HydrogenBond, true, qq < 0 ? "charge-assisted" + (hnote.empty() ? "" : "; " + hnote) : hnote);
+                if (sb && hb) {
+                    add(ligint::type::SaltBridge, true, "also hydrogen bond" + (hnote.empty() ? "" : "; " + hnote));
+                    hits.back().rq = r.q; hits.back().hbr = hbRole;
+                } else if (sb) {
+                    add(ligint::type::SaltBridge, true);
+                    hits.back().rq = r.q;
+                } else if (hb) {
+                    add(ligint::type::HydrogenBond, true, qq < 0 ? "charge-assisted" + (hnote.empty() ? "" : "; " + hnote) : hnote);
+                    hits.back().rq = r.q; hits.back().hbr = hbRole;
+                }
 
                 if (lr.hal && isNOS(p.el) && d <= P.halMax && !l.nb.empty() &&
                     angleDeg(L[l.nb[0]], l, p) >= P.halAngle) add(ligint::type::HalogenBond, true);
@@ -528,6 +535,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     if (excl[k0]) continue;
                     hits.push_back({ligint::type::SaltBridge, label(L[g.idx[0]]), label(prot[k0]), resLabel(prot[k0]),
                                     "charged-group centroids", dc, true, g.c, pg.c});
+                    hits.back().rq = pg.q;
                 }
             }
         }
@@ -623,6 +631,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         for (auto& h : hits) {
             HitRecord hr;
             hr.type = h.type; hr.ligandAtom = h.la; hr.proteinAtom = h.pa; hr.residue = h.pres; hr.note = h.note;
+            hr.residueCharge = h.rq; hr.hbResidueRole = h.hbr;
             hr.distance = h.d; hr.favorable = h.fav; hr.ligandPos = h.p1; hr.proteinPos = h.p2; hr.waterPos = h.pw; hr.hasWater = h.hasW;
             if (h.hasW) lres.waters.push_back(h.pw);
             lres.hits.push_back(hr);

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 
+#include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
 
 static int failures = 0;
@@ -181,6 +182,144 @@ static void testMalformedInputDoesNotCrash() {
     }
 }
 
+
+// ---- fingerprints -----------------------------------------------------------------------------
+// acetate (carboxylate) as ligand + a lysine NZ 2.8 A from O1, in the direction away from the carboxylate
+static std::string carboxylateLysSystem() {
+    std::ostringstream s;
+    s << atomLine("HETATM", 1, "C1", "LIG", 'L', 1, -1.52, 0, 0, "C") << "\n"
+      << atomLine("HETATM", 2, "C2", "LIG", 'L', 1, 0, 0, 0, "C") << "\n"
+      << atomLine("HETATM", 3, "O1", "LIG", 'L', 1, 0.62, 1.07, 0, "O") << "\n"
+      << atomLine("HETATM", 4, "O2", "LIG", 'L', 1, 0.62, -1.07, 0, "O") << "\n"
+      << atomLine("ATOM", 5, "NZ", "LYS", 'A', 30, 0.62 + 2.8 * 0.5, 1.07 + 2.8 * 0.866, 0, "N") << "\n";
+    return s.str();
+}
+
+static void testFingerprintClasses() {
+    ligint::Options opt;
+    opt.ligName = "LIG";
+    // ligand hydroxyl donates to an asparagine O: the RESIDUE is the acceptor
+    ligint::Result r = run(methanolSystem(), opt);
+    ligint::Fingerprint fp = ligint::makeFingerprint(r.ligands[0]);
+    CHECK(fp.ligandId == "LIG 1L" && fp.entries.size() == 1);
+    CHECK(fp.entries[0].residue == "ASN 10A" && fp.entries[0].inPocket && fp.entries[0].position.empty());
+    CHECK(fp.entries[0].counts[ligint::FpHBondAcceptor] == 1 && fp.entries[0].counts[ligint::FpHBondDonor] == 0);
+    CHECK(std::fabs(fp.entries[0].minDistance[ligint::FpHBondAcceptor] - 2.8) < 0.01);
+    // carboxylate + lysine: ionic positive (the residue is positive) and H-bond donor (the lysine donates)
+    r = run(carboxylateLysSystem(), opt);
+    fp = ligint::makeFingerprint(r.ligands[0]);
+    CHECK(fp.entries.size() == 1);
+    CHECK(fp.entries[0].counts[ligint::FpIonicPositive] == 1 && fp.entries[0].counts[ligint::FpIonicNegative] == 0);
+    CHECK(fp.entries[0].counts[ligint::FpHBondDonor] == 1);
+    // the hit records carry the information used by the fingerprint
+    bool seen = false;
+    for (auto& h : r.ligands[0].hits)
+        if (h.type == ligint::type::SaltBridge) { seen = true; CHECK(h.residueCharge == 1 && h.hbResidueRole == 'D'); }
+    CHECK(seen);
+    // clashes and repulsions do not enter the fingerprint
+    ligint::LigandResult fake;
+    fake.id = "X";
+    ligint::HitRecord bad;
+    bad.type = ligint::type::StericClash; bad.residue = "ALA 5A"; bad.favorable = false; bad.distance = 2.0;
+    fake.hits.push_back(bad);
+    bad.type = ligint::type::ElectrostaticRepulsion;
+    fake.hits.push_back(bad);
+    CHECK(ligint::makeFingerprint(fake).entries.empty());
+    CHECK(std::string(ligint::fpClassName(ligint::FpHBondDonor)) == "hbond_donor" && ligint::oneLetterCode("TRP") == 'W' && ligint::oneLetterCode("XYZ") == '?');
+}
+
+static void testPocketDefinition() {
+    std::istringstream in(
+        "# comment\n"
+        "@name Test pocket\n"
+        "@color hinge #ff0000\n"
+        "@color broken nocolor\n"
+        "@bogus x\n"
+        "A\t10\t1\thinge\tASN\n"          // tab separated, with the residue name
+        "A,11A,2,hinge,gly\n"                 // comma separated, insertion code, lowercase name
+        "*  12  3  gk\n"                      // whitespace separated, any chain
+        "A abc 4 x\n"                         // malformed residue number
+        "A 13\n"                              // too few fields
+        "\n");
+    ligint::PocketDefinition def;
+    std::vector<std::string> warnings;
+    CHECK(ligint::parsePocketDefinition(in, def, warnings));
+    CHECK(def.name == "Test pocket" && def.colors.size() == 1 && def.colors[0].first == "hinge");
+    CHECK(def.positions.size() == 3 && warnings.size() == 4);
+    CHECK(def.positions[0].chain == "A" && def.positions[0].resi == 10 && def.positions[0].resName == "ASN" && def.positions[0].region == "hinge");
+    CHECK(def.positions[1].icode == 'A' && def.positions[1].resName == "GLY");
+    CHECK(def.positions[2].chain.empty() && def.positions[2].label == "3" && def.positions[2].resName.empty());
+    CHECK(!ligint::loadPocketDefinition("/no/such/pocket.tsv", def, warnings));
+    // binary garbage must not crash
+    std::string junk(4000, '\0');
+    for (size_t i = 0; i < junk.size(); i++) junk[i] = static_cast<char>((i * 37) % 251);
+    std::istringstream g(junk);
+    ligint::PocketDefinition d2;
+    std::vector<std::string> w2;
+    ligint::parsePocketDefinition(g, d2, w2);
+}
+
+static void testFingerprintWithPocket() {
+    ligint::Options opt;
+    opt.ligName = "LIG";
+    ligint::Result r = run(methanolSystem(), opt);       // contact: ASN 10 chain A
+    ligint::PocketDefinition def;
+    def.name = "P";
+    def.positions = {{"A", 9, ' ', "p9", "reg1", "ALA"}, {"", 10, ' ', "p10", "reg1", "ASN"}, {"A", 11, ' ', "p11", "reg2", "GLY"}};
+    ligint::Fingerprint fp = ligint::makeFingerprint(r.ligands[0], &def);
+    CHECK(fp.entries.size() == 3 && fp.pocketName == "P");                     // every position, also empty ones
+    CHECK(!fp.entries[0].any() && fp.entries[1].any() && !fp.entries[2].any());
+    CHECK(fp.entries[1].position == "p10" && fp.entries[1].region == "reg1" && fp.entries[1].chain == "A");
+    CHECK(fp.warnings.empty());
+    // a contact residue outside the definition is appended and flagged
+    def.positions = {{"A", 9, ' ', "p9", "reg1", "ALA"}};
+    fp = ligint::makeFingerprint(r.ligands[0], &def);
+    CHECK(fp.entries.size() == 2 && !fp.entries[1].inPocket && fp.entries[1].residue == "ASN 10A");
+    // residue name mismatch is reported
+    def.positions = {{"A", 10, ' ', "p10", "reg1", "LEU"}};
+    fp = ligint::makeFingerprint(r.ligands[0], &def);
+    CHECK(fp.entries.size() == 1 && fp.warnings.size() == 1 && fp.warnings[0].find("does not match") != std::string::npos);
+}
+
+static void testFingerprintOutputs() {
+    ligint::Options opt;
+    opt.ligName = "LIG";
+    ligint::Result r = run(carboxylateLysSystem(), opt);
+    ligint::PocketDefinition def;
+    def.name = "a&b <pocket>";
+    def.positions = {{"A", 30, ' ', "p<30>", "reg&1", "LYS"}, {"A", 31, ' ', "p31", "reg&1", "GLU"}};
+    ligint::Fingerprint fp = ligint::makeFingerprint(r.ligands[0], &def);
+    std::ostringstream csv;
+    ligint::writeFingerprintCsv(csv, {fp});
+    std::string c = csv.str();
+    size_t lines = 0, commas = 0;
+    for (char ch : c.substr(0, c.find('\n'))) if (ch == ',') commas++;
+    for (char ch : c) if (ch == '\n') lines++;
+    CHECK(lines == 1 + fp.entries.size() && commas == 5 + ligint::FpClassCount);
+    CHECK(c.find("LIG 1L,LYS 30A,A,30,p<30>,reg&1,") != std::string::npos);
+    std::ostringstream js;
+    ligint::writeFingerprintJson(js, {fp});
+    CHECK(js.str().front() == '[' && js.str().find("\"hbond_donor\": 1") != std::string::npos && js.str().find("\"ionic_positive\"") != std::string::npos);
+    CHECK(js.str().find("a&b <pocket>") != std::string::npos);
+    std::string svg = ligint::fingerprintSvg(fp);
+    CHECK(svg.rfind("<?xml", 0) == 0 && svg.find("</svg>") != std::string::npos);
+    CHECK(svg.find("a&amp;b &lt;pocket&gt;") != std::string::npos && svg.find("reg&amp;1") != std::string::npos);   // XML escaping
+    CHECK(svg.find("a&b") == std::string::npos);
+    CHECK(svg.find("Hydrophobic") != std::string::npos && svg.find("Ionic positive") != std::string::npos);        // legend
+    ligint::SvgOptions so;
+    so.showLegend = false;
+    CHECK(ligint::fingerprintSvg(fp, so).find("Ionic positive") == std::string::npos);
+    CHECK(ligint::fingerprintSvg(ligint::Fingerprint()).find("No interactions") != std::string::npos);
+    // wrapping: many residues in one region fill several rows
+    ligint::Fingerprint big;
+    for (int i = 0; i < 50; i++) { ligint::FingerprintEntry e; e.residue = "ALA " + std::to_string(i) + "A"; e.resName = "ALA"; e.resi = i; e.region = "r"; big.entries.push_back(e); }
+    so.cellsPerRow = 10;
+    std::string bs = ligint::fingerprintSvg(big, so);
+    size_t headers = 0;
+    for (size_t p = 0; (p = bs.find(">r</text>", p)) != std::string::npos; p++) headers++;
+    CHECK(headers == 5);
+}
+
 int main() {
     testListing();
     testHydrogenBondAndPositions();
@@ -191,6 +330,10 @@ int main() {
     testTemplateSdf();
     testLinkedResiduesAreMerged();
     testMalformedInputDoesNotCrash();
+    testFingerprintClasses();
+    testPocketDefinition();
+    testFingerprintWithPocket();
+    testFingerprintOutputs();
     if (failures) {
         std::cerr << failures << " checks failed\n";
         return 1;

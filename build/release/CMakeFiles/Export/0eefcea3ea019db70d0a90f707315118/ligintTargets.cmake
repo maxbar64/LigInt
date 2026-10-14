@@ -59,7 +59,7 @@ endif()
 add_library(ligint::core STATIC IMPORTED)
 
 set_target_properties(ligint::core PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS "LIGINT_VERSION=\"0.2.0\""
+  INTERFACE_COMPILE_DEFINITIONS "LIGINT_VERSION=\"0.3.0\""
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include;${_IMPORT_PREFIX}/include"
   INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:ligint::ligint_options>"
 )

@@ -1,5 +1,6 @@
 /home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/EWIEGA46WW/moc_MainWindow.cpp: /home/massimo/devel/LigInt/gui/MainWindow.h \
   /home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/moc_predefs.h \
+  /home/massimo/devel/LigInt/include/ligint/fingerprint.hpp \
   /home/massimo/devel/LigInt/include/ligint/ligint.hpp \
   /home/massimo/miniconda3/include/qt6/QtCore/QFutureWatcher \
   /home/massimo/miniconda3/include/qt6/QtCore/QString \

@@ -83,6 +83,7 @@
 #define __SCHAR_MAX__ 0x7f
 #define __FLT128_MANT_DIG__ 113
 #define __WCHAR_MIN__ (-__WCHAR_MAX__ - 1)
+#define QT_SVG_LIB 1
 #define __INT64_C(c) c ## L
 #define __SSP_STRONG__ 3
 #define __GCC_ATOMIC_POINTER_LOCK_FREE 2
@@ -93,7 +94,7 @@
 #define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2
 #define __cpp_aligned_new 201606L
 #define __FLT32_MAX_10_EXP__ 38
-#define LIGINT_VERSION "0.2.0"
+#define LIGINT_VERSION "0.3.0"
 #define __FLT64X_EPSILON__ 1.08420217248550443400745280086994171e-19F64x
 #define __STDC_HOSTED__ 1
 #define __DEC64_MIN_EXP__ (-382)
@@ -351,6 +352,7 @@
 #define __BFLT16_MIN_EXP__ (-125)
 #define __INT_MAX__ 0x7fffffff
 #define __linux__ 1
+#define LIGINT_GUI_HAS_SVG 1
 #define __INT64_TYPE__ long int
 #define __FLT_MAX_EXP__ 128
 #define __ORDER_BIG_ENDIAN__ 4321

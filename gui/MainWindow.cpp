@@ -10,6 +10,7 @@
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QListWidget>
@@ -19,6 +20,7 @@
 #include <QMimeData>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QSplitter>
 #include <QStatusBar>
@@ -36,6 +38,7 @@
 
 #include "HitsModel.h"
 #include "Style.h"
+#include "SvgView.h"
 #include "ViewerWidget.h"
 
 namespace gui {
@@ -93,8 +96,10 @@ void MainWindow::buildUi() {
     makeAction(file, tr("&Open PDB…"), &MainWindow::onOpen, QKeySequence::Open);
     exportAct_ = makeAction(file, tr("Export interactions (&CSV)…"), &MainWindow::onExportCsv);
     imageAct_ = makeAction(file, tr("&Save image…"), &MainWindow::onSaveImage);
+    fpAct_ = makeAction(file, tr("Export &fingerprint…"), &MainWindow::onExportFingerprint);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(false);
+    fpAct_->setEnabled(false);
     file->addSeparator();
     makeAction(file, tr("&Quit"), &QWidget::close, QKeySequence::Quit);
     auto* help = menuBar()->addMenu(tr("&Help"));
@@ -164,6 +169,21 @@ void MainWindow::buildUi() {
     tv->addWidget(templateLabel_);
     lv->addWidget(gTmpl);
 
+    auto* gPocket = new QGroupBox(tr("Pocket definition (fingerprint)"));
+    auto* pkv = new QVBoxLayout(gPocket);
+    pocketLabel_ = new QLabel(tr("none: residues in contact, sorted by number"));
+    pocketLabel_->setWordWrap(true);
+    auto* pkRow = new QHBoxLayout;
+    auto* pkLoad = new QPushButton(tr("Load definition…"));
+    auto* pkClear = new QPushButton(tr("Clear"));
+    connect(pkLoad, &QPushButton::clicked, this, &MainWindow::onLoadPocket);
+    connect(pkClear, &QPushButton::clicked, this, [this] { clearPocket(); });
+    pkRow->addWidget(pkLoad);
+    pkRow->addWidget(pkClear);
+    pkv->addLayout(pkRow);
+    pkv->addWidget(pocketLabel_);
+    lv->addWidget(gPocket);
+
     runButton_ = new QPushButton(tr("Analyze"));
     runButton_->setEnabled(false);
     runButton_->setDefault(true);
@@ -200,6 +220,35 @@ void MainWindow::buildUi() {
     log_->setReadOnly(true);
     tabs_->addTab(table_, tr("Interactions"));
     tabs_->addTab(residueTable_, tr("Residues"));
+
+    // fingerprint tab: figure on top (if Qt Svg is available) and table below
+    auto* fpTab = new QSplitter(Qt::Vertical);
+    fpFigure_ = new SvgView;
+    if (SvgView::available()) {
+        auto* scroll = new QScrollArea;
+        scroll->setWidget(fpFigure_);
+        scroll->setWidgetResizable(false);
+        scroll->setBackgroundRole(QPalette::Base);
+        fpTab->addWidget(scroll);
+    } else {
+        fpNote_ = new QLabel(tr("The figure needs Qt Svg: this build shows the fingerprint as a table only."));
+        fpNote_->setAlignment(Qt::AlignCenter);
+        fpTab->addWidget(fpNote_);
+        fpFigure_->hide();
+    }
+    fpTable_ = new QTableWidget(0, 3 + ligint::FpClassCount);
+    {
+        QStringList heads = {tr("Residue"), tr("Position"), tr("Region")};
+        for (int c = 0; c < ligint::FpClassCount; c++) heads << QString::fromUtf8(ligint::fpClassTitle(c));
+        fpTable_->setHorizontalHeaderLabels(heads);
+    }
+    fpTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    fpTable_->verticalHeader()->setVisible(false);
+    fpTable_->setAlternatingRowColors(true);
+    fpTab->addWidget(fpTable_);
+    fpTab->setStretchFactor(0, 3);
+    fpTab->setStretchFactor(1, 2);
+    tabs_->addTab(fpTab, tr("Fingerprint"));
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
@@ -208,11 +257,18 @@ void MainWindow::buildUi() {
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
 
+    // the control panel scrolls when the window is too small for all its groups
+    auto* leftScroll = new QScrollArea;
+    leftScroll->setWidget(left);
+    leftScroll->setWidgetResizable(true);
+    leftScroll->setFrameShape(QFrame::NoFrame);
+    leftScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     auto* split = new QSplitter(Qt::Horizontal);
-    split->addWidget(left);
+    split->addWidget(leftScroll);
     split->addWidget(right);
     split->setStretchFactor(1, 1);
-    left->setMaximumWidth(360);
+    leftScroll->setMaximumWidth(380);
     setCentralWidget(split);
 
     // ---- view toolbar
@@ -262,6 +318,9 @@ bool MainWindow::openStructure(const QString& path) {
     viewer_->clear();
     residueTable_->setRowCount(0);
     typeList_->clear();
+    fp_ = ligint::Fingerprint();
+    fpTable_->setRowCount(0);
+    fpAct_->setEnabled(false);
     fileLabel_->setText(QFileInfo(path).fileName());
     setWindowTitle(tr("ligint — %1").arg(QFileInfo(path).fileName()));
     for (const auto& w : listing.warnings) log(QString::fromStdString(w));
@@ -397,6 +456,8 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     viewer_->setLigand(lig);
     fillTypeList();
     fillResidueTable();
+    updateFingerprint();
+    fpAct_->setEnabled(true);
     table_->resizeColumnsToContents();
     table_->sortByColumn(HitsModel::Type, Qt::AscendingOrder);
     exportAct_->setEnabled(true);
@@ -449,6 +510,98 @@ void MainWindow::fillResidueTable() {
         residueTable_->setItem(i, 2, new QTableWidgetItem(types));
     }
     residueTable_->resizeColumnsToContents();
+}
+
+// ------------------------------------------------------------------------------------------------
+// fingerprint and pocket definition
+// ------------------------------------------------------------------------------------------------
+bool MainWindow::loadPocket(const QString& path) {
+    ligint::PocketDefinition def;
+    std::vector<std::string> warnings;
+    if (!ligint::loadPocketDefinition(path.toStdString(), def, warnings)) {
+        showError(tr("Cannot open the pocket definition"), path);
+        return false;
+    }
+    for (const auto& w : warnings) log(tr("Pocket definition: ") + QString::fromStdString(w));
+    if (def.positions.empty()) {
+        showError(tr("Invalid pocket definition"), tr("No position found in %1").arg(path));
+        return false;
+    }
+    pocket_ = def;
+    havePocket_ = true;
+    const QString name = def.name.empty() ? QFileInfo(path).fileName() : QString::fromStdString(def.name);
+    pocketLabel_->setText(tr("%1 (%2 positions)").arg(name).arg(def.positions.size()));
+    log(tr("Pocket definition loaded: %1").arg(path));
+    updateFingerprint();
+    return true;
+}
+
+void MainWindow::clearPocket() {
+    pocket_ = ligint::PocketDefinition();
+    havePocket_ = false;
+    pocketLabel_->setText(tr("none: residues in contact, sorted by number"));
+    updateFingerprint();
+}
+
+void MainWindow::onLoadPocket() {
+    QSettings s("ligint", "ligint-gui");
+    QString f = QFileDialog::getOpenFileName(this, tr("Pocket definition"), s.value("lastDir").toString(),
+                                             tr("Pocket definitions (*.tsv *.csv *.txt);;All files (*)"));
+    if (!f.isEmpty()) loadPocket(f);
+}
+
+void MainWindow::updateFingerprint() {
+    if (result_.ligands.empty()) return;
+    fp_ = ligint::makeFingerprint(result_.ligands.front(), havePocket_ ? &pocket_ : nullptr);
+    for (const auto& w : fp_.warnings) log(tr("Fingerprint: ") + QString::fromStdString(w));
+
+    fpTable_->setRowCount(static_cast<int>(fp_.entries.size()));
+    for (int i = 0; i < static_cast<int>(fp_.entries.size()); i++) {
+        const ligint::FingerprintEntry& e = fp_.entries[i];
+        fpTable_->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(e.residue)));
+        fpTable_->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(e.position)));
+        fpTable_->setItem(i, 2, new QTableWidgetItem(QString::fromStdString(e.region)));
+        for (int c = 0; c < ligint::FpClassCount; c++) {
+            auto* item = new QTableWidgetItem(e.counts[c] > 0 ? QString::number(e.counts[c]) : QString());
+            item->setTextAlignment(Qt::AlignCenter);
+            if (e.counts[c] > 0) {
+                QColor col = fpClassColor(c);
+                col.setAlpha(70);
+                item->setBackground(col);
+            }
+            fpTable_->setItem(i, 3 + c, item);
+        }
+    }
+    fpTable_->resizeColumnsToContents();
+    if (SvgView::available()) {
+        const std::string svg = ligint::fingerprintSvg(fp_);
+        if (!fpFigure_->load(QByteArray::fromStdString(svg))) log(tr("Fingerprint figure could not be drawn"));
+    }
+}
+
+bool MainWindow::exportFingerprint(const QString& path) {
+    if (result_.ligands.empty()) return false;
+    const QString suffix = QFileInfo(path).suffix().toLower();
+    std::ofstream file(path.toStdString());
+    if (!file) return false;
+    if (suffix == "svg") file << ligint::fingerprintSvg(fp_);
+    else if (suffix == "csv") ligint::writeFingerprintCsv(file, {fp_});
+    else if (suffix == "json") ligint::writeFingerprintJson(file, {fp_});
+    else return false;
+    file.flush();
+    return static_cast<bool>(file);
+}
+
+void MainWindow::onExportFingerprint() {
+    if (result_.ligands.empty()) return;
+    QSettings s("ligint", "ligint-gui");
+    QString selected;
+    QString f = QFileDialog::getSaveFileName(this, tr("Export fingerprint"), s.value("lastDir").toString() + "/fingerprint.svg",
+                                             tr("SVG figure (*.svg);;CSV table (*.csv);;JSON (*.json)"), &selected);
+    if (f.isEmpty()) return;
+    if (QFileInfo(f).suffix().isEmpty()) f += selected.contains("CSV") ? ".csv" : selected.contains("JSON") ? ".json" : ".svg";
+    if (!exportFingerprint(f)) showError(tr("Export failed"), f);
+    else statusBar()->showMessage(tr("Exported %1").arg(f), 5000);
 }
 
 void MainWindow::onRowChanged() {

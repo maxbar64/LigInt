@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <vector>
 
+#include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
 
 class QCheckBox;
@@ -19,11 +20,13 @@ class QPushButton;
 class QTableView;
 class QTableWidget;
 class QTabWidget;
+class QScrollArea;
 
 namespace gui {
 
 class HitsFilterProxy;
 class HitsModel;
+class SvgView;
 class ViewerWidget;
 
 struct AnalysisOutcome {
@@ -45,11 +48,16 @@ public:
     void selectLigand(int index);
     void analyze(bool wait = false);              // wait = true: waits for the result (tests)
     bool addTemplate(const QString& path);        // SDF or MOL2
+    bool loadPocket(const QString& path);         // pocket definition for the fingerprint
+    void clearPocket();
+    bool exportFingerprint(const QString& path);  // format from the suffix: .svg, .csv or .json
 
     const ligint::Result& result() const { return result_; }
     ViewerWidget* viewer() const { return viewer_; }
     HitsModel* hitsModel() const { return model_; }
     HitsFilterProxy* hitsProxy() const { return proxy_; }
+    const ligint::Fingerprint& fingerprint() const { return fp_; }
+    QTableWidget* fingerprintTable() const { return fpTable_; }
     QString logText() const;
 
 signals:
@@ -65,6 +73,8 @@ private slots:
     void onSaveImage();
     void onAbout();
     void onAddTemplate();
+    void onLoadPocket();
+    void onExportFingerprint();
     void onPresetToggled(bool on);
     void onTypeFilterChanged();
     void onRowChanged();
@@ -77,6 +87,7 @@ private:
     void applyOutcome(const AnalysisOutcome& o);
     void fillResidueTable();
     void fillTypeList();
+    void updateFingerprint();
     void log(const QString& line);
     void showError(const QString& title, const QString& text);
 
@@ -95,6 +106,7 @@ private:
     QDoubleSpinBox *hbMax_ = nullptr, *hbLong_ = nullptr, *saltMax_ = nullptr, *saltCentroid_ = nullptr,
                    *hydMax_ = nullptr, *piAngle_ = nullptr;
     QLabel* templateLabel_ = nullptr;
+    QLabel* pocketLabel_ = nullptr;
     QPushButton* runButton_ = nullptr;
     QListWidget* typeList_ = nullptr;
 
@@ -107,7 +119,13 @@ private:
     HitsModel* model_ = nullptr;
     HitsFilterProxy* proxy_ = nullptr;
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
-    QAction *exportAct_ = nullptr, *imageAct_ = nullptr;
+    QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;
+    ligint::PocketDefinition pocket_;
+    bool havePocket_ = false;
+    ligint::Fingerprint fp_;
+    QTableWidget* fpTable_ = nullptr;
+    SvgView* fpFigure_ = nullptr;
+    QLabel* fpNote_ = nullptr;
 };
 
 }  // namespace gui

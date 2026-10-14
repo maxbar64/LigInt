@@ -8,10 +8,24 @@ contains:
 |---|---|
 | `ligint_core` | C++17 library with no dependencies (API in `include/ligint/ligint.hpp`) |
 | `ligint` | command-line program (readable table or CSV) |
-| `ligint-gui` | Qt graphical interface with a 3D view of the interactions, tables and filters |
+| `ligint-gui` | Qt graphical interface with a 3D view of the interactions, tables, filters and the fingerprint figure |
 | `tests/` | C++ tests, Python suite, GUI smoke test, comparison with PLIP |
 
 ![GUI on 1HSG (indinavir)](docs/img/gui-1HSG-window.png)
+
+## Interaction fingerprints
+
+A fingerprint is a table with one row per protein residue and one column per interaction class (hydrophobic,
+aromatic face-to-face and edge-to-face, H-bond donor and acceptor, ionic positive and negative, ...). It can be exported
+to CSV/JSON, drawn as an SVG figure with the residues grouped by pocket region, and shown in the GUI. A plain-text
+**pocket definition** (residue, position label, region) turns it into the usual pocket-position figure; without it the
+residues in contact are listed by number. See [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md).
+
+```
+ligint structure.pdb LIG --fingerprint svg --pocket pocket.tsv > figure.svg
+```
+
+![Fingerprint of indinavir in 1HSG (example pocket definition)](docs/img/fingerprint-1HSG.svg)
 
 ## Building
 
@@ -32,6 +46,7 @@ With CMake ≥ 3.21 you can use the presets: `cmake --preset release && cmake --
 |---|---|---|
 | `LIGINT_BUILD_CLI` | ON | `ligint` executable |
 | `LIGINT_BUILD_GUI` | ON | `ligint-gui` (requires Qt; if missing, a warning and the build continues) |
+| `LIGINT_GUI_WITH_SVG` | ON | fingerprint figure in the GUI (needs the Qt Svg module; without it the GUI shows the table only) |
 | `LIGINT_BUILD_TESTS` | ON | tests registered in CTest |
 | `LIGINT_SANITIZE` | OFF | AddressSanitizer + UBSan (GCC/Clang; better without the GUI) |
 | `LIGINT_WARNINGS_AS_ERRORS` | OFF | compiler warnings as errors |
@@ -48,11 +63,12 @@ ligint structure.pdb ATP A 501             only chain A, residue 501
 ligint structure.pdb ATP --csv             CSV output (service information goes to stderr)
 ligint structure.pdb LIG --sdf lig.sdf     chemical annotation from SDF (also --mol2)
 ligint structure.pdb LIG --plip-like       preset for the comparison with PLIP
+ligint structure.pdb LIG --fingerprint csv|json|svg [--pocket FILE]   interaction fingerprint instead of the table
 ligint --help                              thresholds and default values
 ```
 
 Options: `--csv`, `--no-water`, `--no-merge`, `--plip-like`, `--sdf F`, `--mol2 F`, `--metal-donors`,
-`--backbone-hyd`, `--hb-long X`, `--salt-centroid X`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
+`--backbone-hyd`, `--hb-long X`, `--salt-centroid X`, `--fingerprint FORMAT`, `--pocket FILE`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
 `--hyd-max`, ...; see `--help`). Unknown options, non-numeric thresholds or missing files end with an error
 (exit code 1); thresholds above 6 Å for the grid searches are limited with a warning.
 
@@ -69,7 +85,8 @@ Open a PDB (menu, drag and drop or argument), choose the ligand, adjust options 
 The 3D view (drag: rotate; right or middle button: pan; wheel: zoom; double click: reset) shows the ligand, the
 residues in contact, ions and waters, with the interactions colored by type, distances, labels and a legend.
 Selecting a row of the table highlights the interaction in the view. You can filter the types, add SDF/MOL2
-templates, export the interactions to CSV and save the image as PNG. The analysis runs in a separate thread.
+templates, export the interactions to CSV and save the image as PNG. The **Fingerprint** tab shows the figure and the
+table (pocket definition loaded from the control panel; export to SVG, CSV or JSON). The analysis runs in a separate thread.
 
 ![3D view on 4IKF (integrase inhibitor, Mg, DNA)](docs/img/gui-4IKF-viewer.png)
 
@@ -146,7 +163,7 @@ uncertain effect.
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     67 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     73 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -191,15 +208,15 @@ was not tried by hand.
 
 ```
 include/ligint/ligint.hpp   public API
-src/core/                   library: analysis.cpp, chemistry.cpp, templates.cpp, report.cpp, internal.hpp
+src/core/                   library: analysis.cpp, chemistry.cpp, templates.cpp, report.cpp, fingerprint.cpp, svg.cpp, internal.hpp
 src/cli/main.cpp            command line
-gui/                        Qt GUI (MainWindow, ViewerWidget, HitsModel, Style) and screenshot tool
+gui/                        Qt GUI (MainWindow, ViewerWidget, SvgView, HitsModel, Style) and screenshot tool
 tests/                      unit/ (C++), gui/ (smoke test), run_tests.py, compare_plip.py, benchmark.py, data/ (test PDB files)
 docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (reports), img/
 cmake/                      CMake package configuration files
 ```
 
-Other documents: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
+Other documents: [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

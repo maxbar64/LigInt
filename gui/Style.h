@@ -23,4 +23,7 @@ QColor elementColor(const QString& element, bool ligand);
 double elementRadius(const QString& element);          // relative radius (carbon = 1)
 bool isMetalElement(const QString& element);
 
+// Color of a fingerprint class (ligint::FpClass), the same palette as the SVG figure.
+QColor fpClassColor(int cls);
+
 }  // namespace gui

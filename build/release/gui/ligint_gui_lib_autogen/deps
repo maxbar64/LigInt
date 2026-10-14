@@ -7,10 +7,14 @@ ligint_gui_lib_autogen/timestamp: \
 	/home/massimo/devel/LigInt/gui/MainWindow.h \
 	/home/massimo/devel/LigInt/gui/Style.cpp \
 	/home/massimo/devel/LigInt/gui/Style.h \
+	/home/massimo/devel/LigInt/gui/SvgView.cpp \
+	/home/massimo/devel/LigInt/gui/SvgView.h \
 	/home/massimo/devel/LigInt/gui/ViewerWidget.cpp \
 	/home/massimo/devel/LigInt/gui/ViewerWidget.h \
+	/home/massimo/devel/LigInt/include/ligint/fingerprint.hpp \
 	/home/massimo/devel/LigInt/include/ligint/ligint.hpp \
 	/home/massimo/miniconda3/include/qt6/QtCore/QAbstractTableModel \
+	/home/massimo/miniconda3/include/qt6/QtCore/QByteArray \
 	/home/massimo/miniconda3/include/qt6/QtCore/QFutureWatcher \
 	/home/massimo/miniconda3/include/qt6/QtCore/QPointF \
 	/home/massimo/miniconda3/include/qt6/QtCore/QSet \
@@ -189,6 +193,48 @@ ligint_gui_lib_autogen/timestamp: \
 	/home/massimo/miniconda3/include/qt6/QtWidgets/qtwidgetsexports.h \
 	/home/massimo/miniconda3/include/qt6/QtWidgets/qtwidgetsglobal.h \
 	/home/massimo/miniconda3/include/qt6/QtWidgets/qwidget.h \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Config.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigExtras.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigVersion.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6ConfigVersionImpl.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Dependencies.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6Targets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/Qt6VersionlessAliasTargets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtFeature.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtFeatureCommon.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtInstallPaths.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicAppleHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicCMakeHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicExternalProjectHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicFinalizerHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicFindPackageHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicGitHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicPluginHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomAttributionHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomCpeHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomDepHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomFileHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomGenerationHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomLicenseHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomOpsHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomPurlHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomPythonHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicSbomSystemDepHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicTargetHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicTestHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicToolHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6/QtPublicWalkLibsHelpers.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgAdditionalTargetInfo.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfig.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfigVersion.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgConfigVersionImpl.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgDependencies.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgTargets-release.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgTargets.cmake \
+	/home/massimo/miniconda3/lib/cmake/Qt6Svg/Qt6SvgVersionlessAliasTargets.cmake \
 	/usr/include/alloca.h \
 	/usr/include/asm-generic/errno-base.h \
 	/usr/include/asm-generic/errno.h \
@@ -460,4 +506,6 @@ ligint_gui_lib_autogen/timestamp: \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/stdbool.h \
 	/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
+	/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake \
+	/usr/share/cmake-3.28/Modules/CheckCXXCompilerFlag.cmake \
 	/usr/bin/cmake

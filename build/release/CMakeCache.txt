@@ -188,13 +188,13 @@ CMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=/home/massimo/devel/LigInt/build/release/.
 CMAKE_PROJECT_NAME:STATIC=ligint
 
 //Value Computed by CMake
-CMAKE_PROJECT_VERSION:STATIC=0.2.0
+CMAKE_PROJECT_VERSION:STATIC=0.3.0
 
 //Value Computed by CMake
 CMAKE_PROJECT_VERSION_MAJOR:STATIC=0
 
 //Value Computed by CMake
-CMAKE_PROJECT_VERSION_MINOR:STATIC=2
+CMAKE_PROJECT_VERSION_MINOR:STATIC=3
 
 //Value Computed by CMake
 CMAKE_PROJECT_VERSION_PATCH:STATIC=0
@@ -280,6 +280,9 @@ LIGINT_BUILD_SCREENSHOT_TOOL:BOOL=OFF
 //Build the tests and register them in CTest
 LIGINT_BUILD_TESTS:BOOL=ON
 
+//Use Qt Svg for the fingerprint figure in the GUI when it is available
+LIGINT_GUI_WITH_SVG:BOOL=ON
+
 //Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC/Clang)
 LIGINT_SANITIZE:BOOL=OFF
 
@@ -364,6 +367,9 @@ Qt6GuiTools_DIR:PATH=/home/massimo/miniconda3/lib/cmake/Qt6GuiTools
 
 //The directory containing a CMake configuration file for Qt6Gui.
 Qt6Gui_DIR:PATH=/home/massimo/miniconda3/lib/cmake/Qt6Gui
+
+//The directory containing a CMake configuration file for Qt6Svg.
+Qt6Svg_DIR:PATH=/home/massimo/miniconda3/lib/cmake/Qt6Svg
 
 //The directory containing a CMake configuration file for Qt6WidgetsTools.
 Qt6WidgetsTools_DIR:PATH=/home/massimo/miniconda3/lib/cmake/Qt6WidgetsTools

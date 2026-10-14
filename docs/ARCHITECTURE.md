@@ -10,8 +10,10 @@ src/core/
   chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
   templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
   report.cpp                text reports (table and CSV)
+  fingerprint.cpp           pocket definition, per-residue classification, CSV/JSON fingerprint output (ligint/fingerprint.hpp)
+  svg.cpp                   SVG figure of a fingerprint
 src/cli/main.cpp            command line: arguments -> Options -> analyzeFile -> printText/printCsv
-gui/                        Qt: MainWindow, ViewerWidget (3D view), HitsModel/HitsFilterProxy, Style
+gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HitsModel/HitsFilterProxy, Style
 ```
 
 The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
@@ -32,11 +34,18 @@ results) is in `Result`. The GUI and the CLI are two clients of the same API.
 5. **Result:** sorted interactions, with coordinates (for the graphics), ligand atoms and bonds, atoms of the residues in
    contact and the coordination sphere of the metals.
 
+## Fingerprints
+
+`makeFingerprint` works only on a `LigandResult`: it classifies each favorable `HitRecord` (type, `hbResidueRole`,
+`residueCharge`) into the `FpClass` columns and groups the counts by residue; a `PocketDefinition` fixes which residues
+are listed and in which order. The SVG and the GUI table are views of the same `Fingerprint`. See `docs/FINGERPRINT.md`.
+
 ## Adding an interaction type
 
 1. Add a constant in `ligint::type` (`ligint.hpp`) and compute the interaction in `analysis.cpp` (inside the atom-atom
    loop or afterwards, as for rings and water bridges) with the coordinates `p1`/`p2` (and `pw` for water).
-2. Give it a style in `gui/Style.cpp` and, if it must be compared with PLIP, map it in `tests/compare_plip.py`.
+2. Give it a style in `gui/Style.cpp`, decide its fingerprint class in `classesOf` (`src/core/fingerprint.cpp`) and, if it must be
+   compared with PLIP, map it in `tests/compare_plip.py`.
 3. Write the synthetic test in `tests/run_tests.py` and document the threshold (`Params`, `Params::set`, `--help`, README).
 
 ## GUI

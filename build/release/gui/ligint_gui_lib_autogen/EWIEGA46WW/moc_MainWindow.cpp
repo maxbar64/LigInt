@@ -46,6 +46,8 @@ static constexpr auto qt_meta_stringdata_ZN3gui10MainWindowE = QtMocHelpers::str
     "onSaveImage",
     "onAbout",
     "onAddTemplate",
+    "onLoadPocket",
+    "onExportFingerprint",
     "onPresetToggled",
     "on",
     "onTypeFilterChanged",
@@ -62,7 +64,7 @@ Q_CONSTINIT static const uint qt_meta_data_ZN3gui10MainWindowE[] = {
       12,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+      12,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -70,18 +72,20 @@ Q_CONSTINIT static const uint qt_meta_data_ZN3gui10MainWindowE[] = {
        1,       // signalCount
 
  // signals: name, argc, parameters, tag, flags, initial metatype offsets
-       1,    1,   74,    2, 0x06,    1 /* Public */,
+       1,    1,   86,    2, 0x06,    1 /* Public */,
 
  // slots: name, argc, parameters, tag, flags, initial metatype offsets
-       4,    0,   77,    2, 0x08,    3 /* Private */,
-       5,    0,   78,    2, 0x08,    4 /* Private */,
-       6,    0,   79,    2, 0x08,    5 /* Private */,
-       7,    0,   80,    2, 0x08,    6 /* Private */,
-       8,    0,   81,    2, 0x08,    7 /* Private */,
-       9,    1,   82,    2, 0x08,    8 /* Private */,
-      11,    0,   85,    2, 0x08,   10 /* Private */,
-      12,    0,   86,    2, 0x08,   11 /* Private */,
-      13,    0,   87,    2, 0x08,   12 /* Private */,
+       4,    0,   89,    2, 0x08,    3 /* Private */,
+       5,    0,   90,    2, 0x08,    4 /* Private */,
+       6,    0,   91,    2, 0x08,    5 /* Private */,
+       7,    0,   92,    2, 0x08,    6 /* Private */,
+       8,    0,   93,    2, 0x08,    7 /* Private */,
+       9,    0,   94,    2, 0x08,    8 /* Private */,
+      10,    0,   95,    2, 0x08,    9 /* Private */,
+      11,    1,   96,    2, 0x08,   10 /* Private */,
+      13,    0,   99,    2, 0x08,   12 /* Private */,
+      14,    0,  100,    2, 0x08,   13 /* Private */,
+      15,    0,  101,    2, 0x08,   14 /* Private */,
 
  // signals: parameters
     QMetaType::Void, QMetaType::Bool,    3,
@@ -92,7 +96,9 @@ Q_CONSTINIT static const uint qt_meta_data_ZN3gui10MainWindowE[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::Bool,   10,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void, QMetaType::Bool,   12,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -122,6 +128,10 @@ Q_CONSTINIT const QMetaObject gui::MainWindow::staticMetaObject = { {
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onAddTemplate'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onLoadPocket'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
+        // method 'onExportFingerprint'
+        QtPrivate::TypeAndForceComplete<void, std::false_type>,
         // method 'onPresetToggled'
         QtPrivate::TypeAndForceComplete<void, std::false_type>,
         QtPrivate::TypeAndForceComplete<bool, std::false_type>,
@@ -146,10 +156,12 @@ void gui::MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
         case 3: _t->onSaveImage(); break;
         case 4: _t->onAbout(); break;
         case 5: _t->onAddTemplate(); break;
-        case 6: _t->onPresetToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
-        case 7: _t->onTypeFilterChanged(); break;
-        case 8: _t->onRowChanged(); break;
-        case 9: _t->onFinished(); break;
+        case 6: _t->onLoadPocket(); break;
+        case 7: _t->onExportFingerprint(); break;
+        case 8: _t->onPresetToggled((*reinterpret_cast< std::add_pointer_t<bool>>(_a[1]))); break;
+        case 9: _t->onTypeFilterChanged(); break;
+        case 10: _t->onRowChanged(); break;
+        case 11: _t->onFinished(); break;
         default: ;
         }
     }
@@ -184,14 +196,14 @@ int gui::MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 12;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 10)
+        if (_id < 12)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 10;
+        _id -= 12;
     }
     return _id;
 }

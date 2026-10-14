@@ -53,6 +53,8 @@ struct Hit {
     bool fav;
     V3 p1{0, 0, 0}, p2{0, 0, 0}, pw{0, 0, 0};
     bool hasW = false;
+    int rq = 0;       // charge of the protein atom (salt bridges, repulsions, charge-assisted H-bonds)
+    char hbr = 0;     // H-bonds: 'D' protein donates, 'A' protein accepts
 };
 struct Ring { V3 c, n; string label, pres; };
 

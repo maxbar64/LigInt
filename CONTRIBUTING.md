@@ -19,6 +19,8 @@ Before changing the library it is also worth checking the sanitizers:
   molecule builders in `run_tests.py`.
 - New thresholds go into `ligint::Params`, into `Params::set` (same name as the command-line option), into the
   `--help` text and into the README.
+- A new fingerprint class needs an entry in `FpClass`, `fpClassName`/`fpClassTitle`, a glyph in `src/core/svg.cpp`, the color in
+  `gui/Style.cpp` (`fpClassColor`) and the documentation in `docs/FINGERPRINT.md`.
 - The interaction types are the constants in `ligint::type` (also used by the GUI in `gui/Style.cpp` and by the
   comparison scripts): when adding one, update the library, `gui/Style.cpp` and `tests/compare_plip.py`.
 - The library does not print: warnings and information go into `Result`.

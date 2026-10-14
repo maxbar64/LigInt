@@ -1,7 +1,10 @@
 // GUI smoke test: opens a PDB, analyzes, checks tables, filters and rendering ("offscreen" platform).
 #include <QApplication>
+#include <QFile>
 #include <QImage>
 #include <QSet>
+#include <QTableWidget>
+#include <QTemporaryDir>
 #include <iostream>
 
 #include "HitsModel.h"
@@ -57,6 +60,35 @@ int main(int argc, char** argv) {
     QImage window = w.grab().toImage();
     CHECK(!window.isNull() && window.width() > 600);
     window.save("ligint_gui_window.png");
+
+    // fingerprint: table, pocket definition and exports
+    CHECK(!w.fingerprint().entries.empty());
+    CHECK(w.fingerprintTable()->rowCount() == static_cast<int>(w.fingerprint().entries.size()));
+    const size_t contacts = w.fingerprint().entries.size();
+    QTemporaryDir dir;
+    CHECK(dir.isValid());
+    const QString pocketPath = dir.filePath("pocket.tsv");
+    {
+        QFile f(pocketPath);
+        CHECK(f.open(QIODevice::WriteOnly));
+        f.write("@name Smoke pocket\nA\t91\t1\tr1\tPHE\nA\t94\t2\tr1\tHIS\nA\t199\t3\tr2\tTHR\n");
+    }
+    CHECK(!w.loadPocket("/no/such/pocket.tsv"));
+    CHECK(w.loadPocket(pocketPath));
+    CHECK(w.fingerprint().pocketName == "Smoke pocket");
+    // 3 positions + the contact residues that are not in the definition
+    CHECK(w.fingerprint().entries.size() == 3 + (contacts - 2));
+    CHECK(w.fingerprint().entries[1].residue.find("HIS 94") == 0 && !w.fingerprint().entries[1].any());
+    CHECK(w.fingerprintTable()->rowCount() == static_cast<int>(w.fingerprint().entries.size()));
+    for (const char* name : {"fp.svg", "fp.csv", "fp.json"}) {
+        const QString path = dir.filePath(name);
+        CHECK(w.exportFingerprint(path));
+        QFile f(path);
+        CHECK(f.exists() && f.size() > 100);
+    }
+    CHECK(!w.exportFingerprint(dir.filePath("fp.txt")));          // unknown format
+    w.clearPocket();
+    CHECK(w.fingerprint().entries.size() == contacts);
 
     if (failures) { std::cerr << failures << " checks failed\n"; return 1; }
     std::cout << "ligint_gui_smoke: ok (" << w.hitsModel()->rowCount() << " interactions, image saved)\n";
