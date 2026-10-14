@@ -1,0 +1,46 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Release (GUI se Qt e' disponibile)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug", "LIGINT_WARNINGS_AS_ERRORS": "ON" }
+    },
+    {
+      "name": "cli-only",
+      "displayName": "Solo libreria e riga di comando (senza Qt)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cli-only",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LIGINT_BUILD_GUI": "OFF" }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "AddressSanitizer + UBSan (senza GUI)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/sanitize",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "LIGINT_SANITIZE": "ON", "LIGINT_BUILD_GUI": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "cli-only", "configurePreset": "cli-only" },
+    { "name": "sanitize", "configurePreset": "sanitize" }
+  ],
+  "testPresets": [
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true }, "environment": { "QT_QPA_PLATFORM": "offscreen" } },
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true }, "environment": { "QT_QPA_PLATFORM": "offscreen" } },
+    { "name": "cli-only", "configurePreset": "cli-only", "output": { "outputOnFailure": true } },
+    { "name": "sanitize", "configurePreset": "sanitize", "output": { "outputOnFailure": true } }
+  ]
+}

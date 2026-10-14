@@ -1,0 +1,21 @@
+# ---- test C++ della libreria (senza dipendenze esterne)
+add_executable(ligint_core_tests unit/test_core.cpp)
+target_link_libraries(ligint_core_tests PRIVATE ligint::core ligint_options)
+add_test(NAME core_unit COMMAND ligint_core_tests)
+
+# ---- suite Python (regole chimiche, SDF/MOL2, parsing, input malformati, complessi reali in tests/data)
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_FOUND AND TARGET ligint)
+    add_test(NAME python_suite
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.py
+                --bin $<TARGET_FILE:ligint> --real-dir ${CMAKE_CURRENT_SOURCE_DIR}/data)
+    set_tests_properties(python_suite PROPERTIES TIMEOUT 600)
+endif()
+
+# ---- test di fumo della GUI (piattaforma Qt "offscreen": non serve uno schermo)
+if(TARGET ligint_gui_lib)
+    add_executable(ligint_gui_smoke gui/gui_smoke.cpp)
+    target_link_libraries(ligint_gui_smoke PRIVATE ligint_gui_lib ligint_options)
+    add_test(NAME gui_smoke COMMAND ligint_gui_smoke ${CMAKE_CURRENT_SOURCE_DIR}/data/1AZM.pdb)
+    set_tests_properties(gui_smoke PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
+endif()
