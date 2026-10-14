@@ -1,0 +1,4 @@
+gui/ligint-gui_autogen/timestamp: \
+  /home/massimo/devel/LigInt/gui/CMakeLists.txt \
+  /home/massimo/devel/LigInt/gui/main.cpp \
+  /usr/bin/cmake

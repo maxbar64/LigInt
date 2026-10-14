@@ -1,0 +1,4 @@
+core_unit 1 0.00167029
+python_suite 1 1.25363
+gui_smoke 1 0.216857
+---

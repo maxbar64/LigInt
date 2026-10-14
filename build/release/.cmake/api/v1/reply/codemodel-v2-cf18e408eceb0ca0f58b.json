@@ -1,0 +1,192 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-b76d5463a63e738d48b3.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "src",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-src-Release-c44ddaae47a9a0777af0.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						0,
+						4
+					]
+				},
+				{
+					"build" : "gui",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-gui-Release-a9113a2b723c2357937f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "gui",
+					"targetIndexes" : 
+					[
+						1,
+						2,
+						3,
+						6,
+						7,
+						8
+					]
+				},
+				{
+					"build" : "tests",
+					"jsonFile" : "directory-tests-Release-b01f6abb0ab61427ef3b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "tests",
+					"targetIndexes" : 
+					[
+						5,
+						9
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					],
+					"name" : "ligint",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "ligint::@145eef247bfb46b6828c",
+					"jsonFile" : "target-ligint-Release-b47adbb4b8b9df2b6825.json",
+					"name" : "ligint",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint-gui::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint-gui-Release-fe8c7ab21290f0ac9248.json",
+					"name" : "ligint-gui",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint-gui_autogen::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint-gui_autogen-Release-ec3030ecd1d2e2795729.json",
+					"name" : "ligint-gui_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint-gui_autogen_timestamp_deps::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint-gui_autogen_timestamp_deps-Release-c587155ee2388af67882.json",
+					"name" : "ligint-gui_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "ligint_core::@145eef247bfb46b6828c",
+					"jsonFile" : "target-ligint_core-Release-e34f67791f2224117169.json",
+					"name" : "ligint_core",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "ligint_core_tests::@a44f0ac069e85531cdee",
+					"jsonFile" : "target-ligint_core_tests-Release-654818e01593aeb0eb78.json",
+					"name" : "ligint_core_tests",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint_gui_lib::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint_gui_lib-Release-04e0a1063e196d450220.json",
+					"name" : "ligint_gui_lib",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint_gui_lib_autogen::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint_gui_lib_autogen-Release-e8a8691872899077319b.json",
+					"name" : "ligint_gui_lib_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "ligint_gui_lib_autogen_timestamp_deps::@35f413a6cfe5475b20aa",
+					"jsonFile" : "target-ligint_gui_lib_autogen_timestamp_deps-Release-a8b8b312eb6807ca0023.json",
+					"name" : "ligint_gui_lib_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "ligint_gui_smoke::@a44f0ac069e85531cdee",
+					"jsonFile" : "target-ligint_gui_smoke-Release-f39219605a0a5c044962.json",
+					"name" : "ligint_gui_smoke",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/massimo/devel/LigInt/build/release",
+		"source" : "/home/massimo/devel/LigInt"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

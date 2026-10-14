@@ -1,0 +1,120 @@
+Start testing: Oct 14 15:25 CEST
+----------------------------------------------------------
+1/3 Testing: core_unit
+1/3 Test: core_unit
+Command: "/home/massimo/devel/LigInt/build/tests/ligint_core_tests"
+Directory: /home/massimo/devel/LigInt/build/tests
+"core_unit" start time: Oct 14 15:25 CEST
+Output:
+----------------------------------------------------------
+ligint_core_tests: tutti i test sono passati
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"core_unit" end time: Oct 14 15:25 CEST
+"core_unit" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/3 Testing: python_suite
+2/3 Test: python_suite
+Command: "/home/massimo/miniconda3/bin/python3" "/home/massimo/devel/LigInt/tests/run_tests.py" "--bin" "/home/massimo/devel/LigInt/build/src/ligint" "--real-dir" "/home/massimo/devel/LigInt/tests/data"
+Directory: /home/massimo/devel/LigInt/build/tests
+"python_suite" start time: Oct 14 15:25 CEST
+Output:
+----------------------------------------------------------
+binario: /home/massimo/devel/LigInt/build/src/ligint (precompilato)
+  ok    chem    carboxylate_forms_salt_bridge_with_lysine
+  ok    chem    carboxylate_repels_glutamate
+  ok    chem    amidine_is_cationic
+  ok    chem    guanidinium_is_cationic
+  ok    chem    aminopyrimidine_is_not_cationic
+  ok    chem    ring_nitrogen_is_acceptor
+  ok    chem    aliphatic_amine_is_protonated
+  ok    chem    amide_nitrogen_is_not_acceptor
+  ok    chem    hydroxyl_donates_unless_metal_coordinated
+  ok    chem    metal_distance_limits_per_element
+  ok    chem    metal_needs_lone_pair
+  ok    chem    histidine_bound_to_zinc_does_not_donate
+  ok    chem    hydrophobic_rules
+  ok    chem    hydrophobic_thresholds_are_configurable
+  ok    chem    pi_stacking_parallel_and_offset_limit
+  ok    chem    pi_stacking_angle_threshold
+  ok    chem    pi_stacking_t_shaped
+  ok    chem    cation_pi_geometry
+  ok    chem    halogen_bond_needs_linear_geometry
+  ok    chem    clash_and_covalent_distances
+  ok    chem    water_bridge
+  ok    chem    ligand_metal_coordination_removes_hbond_partners
+  ok    chem    water_bridge_needs_realistic_angle
+  ok    chem    long_hbond_needs_possible_hydrogen_geometry
+  ok    chem    salt_bridge_by_group_centroid
+  ok    chem    plip_like_preset_and_explicit_override
+  ok    chem    nucleic_acid_stacking_and_phosphate
+  ok    tmpl    sdf_with_explicit_h_distinguishes_acid_from_carboxylate
+  ok    tmpl    template_hbond_uses_hydrogen_geometry
+  ok    tmpl    template_without_hydrogens_keeps_donors
+  ok    tmpl    template_mismatch_falls_back_to_heuristics
+  ok    tmpl    mol2_guanidinium_via_cationic_type
+  ok    tmpl    mol2_aromatic_bonds_give_rings
+  ok    pdb     altloc_first_encountered_is_used
+  ok    pdb     insertion_codes_are_distinct_residues
+  ok    pdb     only_first_model_is_read
+  ok    pdb     ligand_selection_and_listing
+  ok    pdb     linked_hetero_residues_form_one_ligand
+  ok    pdb     csv_is_well_formed
+  ok    robust  missing_pdb_file
+  ok    robust  no_arguments_prints_usage
+  ok    robust  empty_and_whitespace_files
+  ok    robust  ligand_not_present
+  ok    robust  truncated_lines_do_not_crash
+  ok    robust  binary_garbage_does_not_crash
+  ok    robust  non_numeric_coordinates
+  ok    robust  huge_and_nan_coordinates
+  ok    robust  coincident_atoms_zero_distance
+  ok    robust  crlf_line_endings_give_same_result
+  ok    robust  missing_or_lowercase_element_column
+  ok    robust  single_atom_ligand
+  ok    robust  ligand_with_only_hydrogens
+  ok    robust  malformed_sdf_files
+  ok    robust  malformed_mol2_files
+  ok    robust  invalid_command_line_is_rejected
+  ok    robust  oversized_thresholds_are_clamped_not_silent
+  ok    robust  large_system_runs_in_reasonable_time
+  ok    golden  golden_2OZR_GG1_A_2001
+  ok    golden  golden_1efy_BZC_1
+  ok    golden  golden_4IKF_M76_2
+  ok    golden  golden_3PTB_BEN_3
+  ok    golden  golden_3PTB_BEN_4
+  ok    golden  golden_1STP_BTN_5
+  ok    golden  golden_1IEP_STI_A_201_6
+  ok    golden  golden_1HSG_MK1_7
+  ok    golden  golden_1AZM_AZM_8
+
+risultato: 66 ok, 0 falliti, 0 saltati
+<end of output>
+Test time =   1.25 sec
+----------------------------------------------------------
+Test Passed.
+"python_suite" end time: Oct 14 15:25 CEST
+"python_suite" time elapsed: 00:00:01
+----------------------------------------------------------
+
+3/3 Testing: gui_smoke
+3/3 Test: gui_smoke
+Command: "/home/massimo/devel/LigInt/build/tests/ligint_gui_smoke" "/home/massimo/devel/LigInt/tests/data/1AZM.pdb"
+Directory: /home/massimo/devel/LigInt/build/tests
+"gui_smoke" start time: Oct 14 15:25 CEST
+Output:
+----------------------------------------------------------
+This plugin does not support propagateSizeHints()
+ligint_gui_smoke: ok (6 interazioni, immagine salvata)
+<end of output>
+Test time =   0.22 sec
+----------------------------------------------------------
+Test Passed.
+"gui_smoke" end time: Oct 14 15:25 CEST
+"gui_smoke" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 14 15:25 CEST
