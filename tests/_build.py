@@ -1,4 +1,4 @@
-"""Compilazione di ligint dai sorgenti, per gli script di test quando non si passa un binario gia' pronto."""
+"""Builds ligint from the sources, for the test scripts when no prebuilt binary is given."""
 import glob
 import os
 import subprocess
@@ -11,7 +11,7 @@ def sources():
 
 
 def build_ligint(out, sanitize=False):
-    """Compila la CLI in `out` con il compilatore in $CXX (default g++). Ritorna gli eventuali avvisi."""
+    """Builds the CLI into `out` with the compiler in $CXX (default g++). Returns any warnings."""
     cxx = os.environ.get("CXX", "g++")
     flags = (["-O1", "-g", "-fsanitize=address,undefined,float-cast-overflow", "-fno-sanitize-recover=all",
               "-fno-omit-frame-pointer"] if sanitize else ["-O2"])
@@ -19,5 +19,5 @@ def build_ligint(out, sanitize=False):
            "-I", os.path.join(ROOT, "src", "core")] + flags + sources() + ["-o", out]
     p = subprocess.run(cmd, capture_output=True)
     if p.returncode != 0:
-        raise RuntimeError("compilazione fallita:\n" + p.stderr.decode())
+        raise RuntimeError("build failed:\n" + p.stderr.decode())
     return p.stderr.decode().strip()

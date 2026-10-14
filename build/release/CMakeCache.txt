@@ -176,7 +176,7 @@ CMAKE_OBJDUMP:FILEPATH=/usr/bin/x86_64-linux-gnu-objdump
 CMAKE_PREFIX_PATH:PATH=
 
 //Value Computed by CMake
-CMAKE_PROJECT_DESCRIPTION:STATIC=Interazioni non covalenti ligando-proteina da file PDB
+CMAKE_PROJECT_DESCRIPTION:STATIC=Non-covalent ligand-protein interactions from PDB files
 
 //Value Computed by CMake
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
@@ -188,13 +188,13 @@ CMAKE_PROJECT_INCLUDE_BEFORE:FILEPATH=/home/massimo/devel/LigInt/build/release/.
 CMAKE_PROJECT_NAME:STATIC=ligint
 
 //Value Computed by CMake
-CMAKE_PROJECT_VERSION:STATIC=0.1.0
+CMAKE_PROJECT_VERSION:STATIC=0.2.0
 
 //Value Computed by CMake
 CMAKE_PROJECT_VERSION_MAJOR:STATIC=0
 
 //Value Computed by CMake
-CMAKE_PROJECT_VERSION_MINOR:STATIC=1
+CMAKE_PROJECT_VERSION_MINOR:STATIC=2
 
 //Value Computed by CMake
 CMAKE_PROJECT_VERSION_PATCH:STATIC=0
@@ -267,23 +267,23 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
-//Compila l'eseguibile a riga di comando (ligint)
+//Build the command-line executable (ligint)
 LIGINT_BUILD_CLI:BOOL=ON
 
-//Compila la GUI Qt (ligint-gui); richiede Qt6 o Qt5 (Widgets,
+//Build the Qt GUI (ligint-gui); requires Qt6 or Qt5 (Widgets,
 // Concurrent)
 LIGINT_BUILD_GUI:BOOL=ON
 
-//Compila ligint-screenshot (immagini per la documentazione)
+//Build ligint-screenshot (images for the documentation)
 LIGINT_BUILD_SCREENSHOT_TOOL:BOOL=OFF
 
-//Compila i test e li registra in CTest
+//Build the tests and register them in CTest
 LIGINT_BUILD_TESTS:BOOL=ON
 
-//Compila con AddressSanitizer e UndefinedBehaviorSanitizer (GCC/Clang)
+//Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC/Clang)
 LIGINT_SANITIZE:BOOL=OFF
 
-//Tratta gli avvisi del compilatore come errori
+//Treat compiler warnings as errors
 LIGINT_WARNINGS_AS_ERRORS:BOOL=OFF
 
 //Path to a file.

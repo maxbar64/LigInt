@@ -1,4 +1,4 @@
-// Test di fumo della GUI: apre un PDB, analizza, controlla tabelle, filtri e rendering (piattaforma "offscreen").
+// GUI smoke test: opens a PDB, analyzes, checks tables, filters and rendering ("offscreen" platform).
 #include <QApplication>
 #include <QImage>
 #include <QSet>
@@ -12,24 +12,24 @@ static int failures = 0;
 #define CHECK(cond)                                                                    \
     do {                                                                               \
         if (!(cond)) {                                                                 \
-            std::cerr << __FILE__ << ":" << __LINE__ << ": CHECK fallito: " #cond "\n"; \
+            std::cerr << __FILE__ << ":" << __LINE__ << ": CHECK failed: " #cond "\n"; \
             failures++;                                                                \
         }                                                                              \
     } while (0)
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
-    if (argc < 2) { std::cerr << "uso: ligint_gui_smoke file.pdb\n"; return 2; }
+    if (argc < 2) { std::cerr << "usage: ligint_gui_smoke file.pdb\n"; return 2; }
 
     gui::MainWindow w;
-    w.setInteractive(false);                          // nessuna finestra di dialogo
+    w.setInteractive(false);                          // no dialog boxes
     w.resize(1200, 800);
     w.show();
 
-    CHECK(!w.openStructure("/non/esiste.pdb"));       // errore gestito senza crash
+    CHECK(!w.openStructure("/no/such.pdb"));       // error handled without crashing
     CHECK(w.openStructure(argv[1]));
     CHECK(w.ligandCount() > 0);
-    CHECK(!w.viewer()->hasData());                    // nulla da mostrare prima dell'analisi
+    CHECK(!w.viewer()->hasData());                    // nothing to show before the analysis
 
     w.selectLigand(0);
     w.analyze(true);
@@ -37,16 +37,16 @@ int main(int argc, char** argv) {
     CHECK(w.hitsModel()->rowCount() > 0);
     CHECK(w.hitsProxy()->rowCount() == w.hitsModel()->rowCount());
     CHECK(w.viewer()->hasData());
-    CHECK(w.logText().contains("Annotazione ligando"));
+    CHECK(w.logText().contains("Ligand annotation"));
 
-    // il filtro per tipo agisce sulla tabella
+    // the type filter acts on the table
     w.hitsProxy()->setVisibleTypes(QSet<QString>());
     CHECK(w.hitsProxy()->rowCount() == 0);
-    w.hitsProxy()->setVisibleTypes(QSet<QString>{"Legame a idrogeno"});
+    w.hitsProxy()->setVisibleTypes(QSet<QString>{QString(ligint::type::HydrogenBond)});
     CHECK(w.hitsProxy()->rowCount() > 0 && w.hitsProxy()->rowCount() <= w.hitsModel()->rowCount());
 
-    // rendering: l'immagine non e' uniforme e viene salvata come artefatto
-    w.viewer()->setVisibleTypes(QSet<QString>{"Legame a idrogeno", "Coordinazione metallica", "Contatto idrofobico"});
+    // rendering: the image is not uniform and is saved as an artifact
+    w.viewer()->setVisibleTypes(QSet<QString>{QString(ligint::type::HydrogenBond), QString(ligint::type::MetalCoordination), QString(ligint::type::Hydrophobic)});
     QImage img = w.viewer()->renderImage(QSize(900, 700));
     CHECK(img.width() == 900 && img.height() == 700);
     QSet<QRgb> colors;
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     CHECK(!window.isNull() && window.width() > 600);
     window.save("ligint_gui_window.png");
 
-    if (failures) { std::cerr << failures << " controlli falliti\n"; return 1; }
-    std::cout << "ligint_gui_smoke: ok (" << w.hitsModel()->rowCount() << " interazioni, immagine salvata)\n";
+    if (failures) { std::cerr << failures << " checks failed\n"; return 1; }
+    std::cout << "ligint_gui_smoke: ok (" << w.hitsModel()->rowCount() << " interactions, image saved)\n";
     return 0;
 }

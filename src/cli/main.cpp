@@ -1,4 +1,4 @@
-// ligint - interfaccia a riga di comando.
+// ligint - command-line interface.
 #include "ligint/ligint.hpp"
 
 #include <cmath>
@@ -12,9 +12,9 @@ using namespace std;
 using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
-    cerr << "Uso: " << prog << " file.pdb [RESNAME [catena [resseq]]] [opzioni]\n"
-         << "Opzioni: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --version  --help\n"
-         << "Soglie (default): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
+    cerr << "Usage: " << prog << " file.pdb [RESNAME [chain [resseq]]] [options]\n"
+         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --version  --help\n"
+         << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
          << " --salt-max " << p.saltMax << " --rep-max " << p.repMax << "\n  --hal-max " << p.halMax
          << " --hal-angle " << p.halAngle << " --metal-max " << p.metalMax << " --pi-max " << p.piMax
@@ -26,7 +26,7 @@ static void usage(const char* prog, const Params& p) {
 int main(int argc, char** argv) {
     Options opt;
     Params& P = opt.params;
-    for (int i = 1; i < argc; i++)            // preset applicato per primo: le opzioni esplicite lo sovrascrivono
+    for (int i = 1; i < argc; i++)            // preset applied first: explicit options override it
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
@@ -39,10 +39,10 @@ int main(int argc, char** argv) {
         else if (s == "--metal-donors") opt.metalDonors = true;
         else if (s == "--backbone-hyd") opt.backboneHyd = true;
         else if (s == "--no-merge") opt.mergeLinked = false;
-        else if (s == "--plip-like") {}           // gia' applicato sopra
+        else if (s == "--plip-like") {}           // already applied above
         else if (s == "--sdf" || s == "--mol2") {
-            if (i + 1 >= argc) { cerr << s << " richiede un file\n"; return 1; }
-            if (!ifstream(argv[i + 1])) { cerr << "Impossibile aprire " << argv[i + 1] << "\n"; return 1; }
+            if (i + 1 >= argc) { cerr << s << " requires a file\n"; return 1; }
+            if (!ifstream(argv[i + 1])) { cerr << "Cannot open " << argv[i + 1] << "\n"; return 1; }
             vector<string> warnings;
             bool ok = s == "--sdf" ? loadSdf(argv[i + 1], opt.templates, warnings) : loadMol2(argv[i + 1], opt.templates, warnings);
             i++;
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
             double val = i + 1 < argc ? strtod(argv[i + 1], &endp) : 0.0;
             bool numOK = i + 1 < argc && endp != argv[i + 1] && *endp == '\0' && isfinite(val);
             if (!numOK || !P.set(s.substr(2), val)) {
-                cerr << "Opzione sconosciuta, senza valore o non numerica: " << s << "\n"; usage(argv[0], P); return 1;
+                cerr << "Unknown option, missing value or non-numeric: " << s << "\n"; usage(argv[0], P); return 1;
             }
             i++;
         } else pa.push_back(s);

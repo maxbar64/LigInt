@@ -1,398 +1,398 @@
-pdb,gruppo,sito,tipo,solo_in,residuo,dettaglio,causa_probabile
-1A28,C,STR:A:1,hydrophobic,ligint,CYS 891A,C18 -> CB d=3.97 ,ligint: contatto idrofobico non riportato da PLIP
-1A28,C,STR:A:1,hydrophobic,ligint,MET 909A,C18 -> CE d=3.68 ,ligint: contatto idrofobico non riportato da PLIP
-1A28,C,STR:A:1,hbond,PLIP,GLN 725A,d=3.28 don=Nam acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-1A28,C,STR:A:1,water,ligint,MET 759A,O3 -> O d=3.09 via HOH 1004A:O; d(H2O-prot) 2.71,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1A3K,C,NAG:B:1,hbond,ligint,ASN 160A,O4 -> OD1 d=3.19 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1A3K,C,NAG:B:1,hbond,ligint,HIS 158A,O4 -> NE2 d=2.59 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1A3K,C,NAG:B:1,water,ligint,GLU 184A,O6 -> OE2 d=2.90 via HOH 1075A:O; d(H2O-prot) 3.13,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1A3K,C,NAG:B:1,water,PLIP,TRP 181A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1A3K,C,NAG:B:1,salt,PLIP,ARG 162A,d=4.08,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1A6M,C,HEM:A:154,hydrophobic,ligint,LEU 104A,CHC -> CD2 d=3.70 ; CMC -> CD2 d=3.97 ,ligint: contatto idrofobico non riportato da PLIP
-1A6M,C,HEM:A:154,hbond,ligint,HIS 97A,O2A -> NE2 d=2.73 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1A6M,C,HEM:A:154,hbond,PLIP,HIS 64A,d=3.08 don=N3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1A6M,C,HEM:A:154,water,ligint,LYS 96A,O2A -> NZ d=2.83 via HOH 1118A:O; d(H2O-prot) 3.09,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1A6M,C,HEM:A:154,salt,PLIP,HIS 93A,d=4.65,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1A6M,C,HEM:A:154,salt,PLIP,HIS 97A,d=4.32,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1A6M,C,HEM:A:154,pistack,ligint,PHE 43A,anello(C1D) -> anello d=4.83 angolo normali 13; distanza piani 3.3; offset 3.2 A,ligint: stacking non riportato da PLIP
-1A6M,C,HEM:A:154,pistack,PLIP,HIS 93A,d=3.79 ang=89.84 off=1.91,PLIP: stacking non riportato da ligint
-1A6M,C,SO4:A:155,hbond,ligint,SER 58A,O1 -> OG d=2.77 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1A6M,C,SO4:A:155,water,ligint,HIS 48A,O1 -> NE2 d=2.72 via HOH 1007A:O; d(H2O-prot) 2.80,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1A6M,C,SO4:A:155,water,PLIP,ALA 57A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1ABE,C,ARA:A:307,hbond,PLIP,ASP 90A,d=3.45 don=O3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1ABE,C,ARA:A:307,hbond,PLIP,GLU 14A,d=3.36 don=O3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1ABE,C,ARA:A:307,water,ligint,ASN 205A,O2 -> ND2 d=2.61 via HOH 309A:O; d(H2O-prot) 2.86; O2 -> ND2 d=2.60 via HOH 309A:O; d(H2O-prot) 2.86,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ABE,C,ARA:A:307,water,ligint,ASP 89A,O5 -> O d=2.80 via HOH 310A:O; d(H2O-prot) 2.71; O5 -> O d=2.74 via HOH 310A:O; d(H2O-prot) 2.71,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ABE,C,ARA:A:307,water,ligint,GLN 11A,O2 -> OE1 d=2.61 via HOH 309A:O; d(H2O-prot) 2.85; O3 -> OE1 d=3.23 via HOH 309A:O; d(H2O-prot) 2.85; O2 -> OE1 d=2.60 via HOH 309A:O; d(H2O-prot) 2.85; O3 -> OE1 d=3.19 via HOH 309A:O; d(H2O-prot) 2.85,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ABE,C,ARA:A:307,water,ligint,GLU 14A,O2 -> OE2 d=2.61 via HOH 309A:O; d(H2O-prot) 2.72; O2 -> OE2 d=2.60 via HOH 309A:O; d(H2O-prot) 2.72,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ABE,C,ARA:A:307,water,ligint,THR 147A,O5 -> OG1 d=2.80 via HOH 310A:O; d(H2O-prot) 2.79; O5 -> OG1 d=2.74 via HOH 310A:O; d(H2O-prot) 2.79,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ABE,C,ARA:A:307,salt,PLIP,ARG 151A,d=4.23,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1ABE,C,ARA:A:307,salt,PLIP,LYS 10A,d=4.11,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1ACJ,C,THA:A:999,hydrophobic,ligint,HIS 440A,C11 -> CD2 d=3.62 ,ligint: contatto idrofobico non riportato da PLIP
-1ACJ,C,THA:A:999,hydrophobic,ligint,PHE 330A,C1 -> CD1 d=3.31 ; C1 -> CG d=3.82 ; C1 -> CE1 d=3.88 ; C2 -> CD1 d=3.65 ; C2 -> CG d=3.71 ; C4 -> CE1 d=3.72 ; C4 -> CZ d=3.88 ; C5 -> CE1 d=3.36 ; C5 -> CD1 d=3.74 ; C5 -> CZ d=3.95 ; C6 -> CD1 d=3.36 ; C6 -> CE1 d=3.45 ,ligint: contatto idrofobico non riportato da PLIP
-1ACJ,C,THA:A:999,hbond,ligint,HIS 440A,N7 -> O d=3.24 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1ACJ,C,THA:A:999,water,ligint,SER 81A,N15 -> O d=3.16 via HOH 643A:O; d(H2O-prot) 2.89,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ACJ,C,THA:A:999,water,PLIP,ASN 85A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1AJ6,C,NOV:A:1,hbond,PLIP,THR 165A,d=3.81 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1AJ6,C,NOV:A:1,water,ligint,ASP 73A,O4 -> OD1 d=2.97 via HOH 227A:O; d(H2O-prot) 2.77,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1AJ6,C,NOV:A:1,water,ligint,THR 165A,O4 -> OG1 d=2.97 via HOH 227A:O; d(H2O-prot) 2.57,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1AJ6,C,NOV:A:1,water,ligint,VAL 43A,N1 -> O d=3.11 via HOH 230A:O; d(H2O-prot) 2.97,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1AJ6,C,NOV:A:1,salt,PLIP,ARG 76A,d=4.03,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1AQ1,C,STU:A:299,hydrophobic,PLIP,ASP 145A,d=3.50,PLIP: contatto idrofobico non riportato da ligint
-1AQ1,C,STU:A:299,hbond,ligint,GLU 81A,N1 -> O d=2.75 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1AQ1,C,STU:A:299,salt,ligint,ASP 86A,N4 -> OD2 d=2.82 anche legame a idrogeno,ligint: ponte salino non riportato da PLIP
-1ATK,C,E64:A:216,hbond,ligint,HIS 162A,O1 -> ND1 d=2.95 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1ATK,C,E64:A:216,hbond,PLIP,GLY 23A,d=3.66 don=O.co2 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1ATK,C,E64:A:216,hbond,PLIP,TRP 26A,d=4.09 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1ATK,C,E64:A:216,water,ligint,ASN 161A,O1 -> O d=2.66 via HOH 232A:O; d(H2O-prot) 2.88,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ATK,C,E64:A:216,water,ligint,GLY 64A,O3 -> O d=2.91 via HOH 225A:O; d(H2O-prot) 2.79,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ATK,C,E64:A:216,water,ligint,GLY 65A,O3 -> N d=2.91 via HOH 225A:O; d(H2O-prot) 3.33,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1ATK,C,E64:A:216,salt,PLIP,HIS 162A,d=4.53,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1BSX,C,T3:A:1,hydrophobic,ligint,HIS 435A,C10 -> CD2 d=3.71 ,ligint: contatto idrofobico non riportato da PLIP
-1BSX,C,T3:A:1,hydrophobic,ligint,LEU 330A,C5 -> CD2 d=3.62 ; C5 -> CG d=3.99 ,ligint: contatto idrofobico non riportato da PLIP
-1BSX,C,T3:A:1,hydrophobic,ligint,MET 313A,C11 -> CB d=3.99 ; C13 -> CB d=3.95 ,ligint: contatto idrofobico non riportato da PLIP
-1BSX,C,T3:A:1,hbond,ligint,HIS 435A,O1 -> NE2 d=2.78 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1BSX,C,T3:A:1,hbond,PLIP,ARG 320A,d=3.98 don=Ng+ acc=O.co2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1BSX,C,T3:A:1,hbond,PLIP,ASN 331A,d=2.89 don=Nam acc=N3,"PLIP: D-A entro 3,5 A, da esaminare"
-1BSX,C,T3:A:1,salt,ligint,ARG 320A,OXT -> NH1 d=3.98 ,ligint: ponte salino non riportato da PLIP
-1BSX,C,T3:A:1,halogen,PLIP,GLY 344A,d=3.95,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-1C3W,C,RET:A:301,hydrophobic,ligint,LEU 93A,C15 -> CD1 d=3.95 ; C20 -> CD1 d=3.79 ,ligint: contatto idrofobico non riportato da PLIP
-1C3W,C,RET:A:301,hydrophobic,ligint,MET 118A,C19 -> CE d=3.61 ; C9 -> CE d=3.89 ,ligint: contatto idrofobico non riportato da PLIP
-1C3W,C,RET:A:301,hydrophobic,ligint,TRP 138A,C3 -> CD1 d=3.67 ; C4 -> CD1 d=3.77 ,ligint: contatto idrofobico non riportato da PLIP
-1C3W,C,SQU:A:701,hydrophobic,ligint,LEU 19A,C22 -> CD2 d=3.89 ,ligint: contatto idrofobico non riportato da PLIP
-1D3G,C,ACT:A:401,hydrophobic,PLIP,ASP 311A,d=3.47,PLIP: contatto idrofobico non riportato da ligint
-1D3G,C,ACT:A:401,hydrophobic,PLIP,GLN 315A,d=3.74,PLIP: contatto idrofobico non riportato da ligint
-1D3G,C,ACT:A:401,hbond,PLIP,GLN 315A,d=3.36 don=N3 acc=O.co2,"PLIP: D-A entro 3,5 A, da esaminare"
-1D3G,C,BRE:A:397,hydrophobic,ligint,MET 43A,C1 -> CE d=3.72 ; C12 -> CE d=3.92 ; C23 -> CE d=3.80 ; C8 -> CE d=3.80 ; C9 -> CE d=3.96 ,ligint: contatto idrofobico non riportato da PLIP
-1D3G,C,BRE:A:397,hydrophobic,PLIP,GLN 47A,d=3.90,PLIP: contatto idrofobico non riportato da ligint
-1D3G,C,BRE:A:397,hbond,PLIP,PRO 52A,d=3.99 don=O.co2 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1D3G,C,BRE:A:397,pistack,ligint,HIS 56A,anello(C6) -> anello d=4.89 angolo normali 21; distanza piani 3.2; offset 3.1 A,ligint: stacking non riportato da PLIP
-1D3G,C,DDQ:A:700,hydrophobic,ligint,MET 30A,C3 -> CE d=3.50 ; C4 -> CE d=3.57 ; C6 -> CE d=3.92 ,ligint: contatto idrofobico non riportato da PLIP
-1D3G,C,FMN:A:398,hydrophobic,PLIP,ASN 145A,d=3.82,PLIP: contatto idrofobico non riportato da ligint
-1D3G,C,FMN:A:398,hbond,ligint,ASN 212A,O2 -> ND2 d=2.95 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1D3G,C,FMN:A:398,hbond,ligint,THR 283A,O3' -> O d=2.98 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1D3G,C,FMN:A:398,hbond,PLIP,ASN 284A,d=3.79 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1D3G,C,FMN:A:398,hbond,PLIP,SER 305A,d=4.09 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1D3G,C,FMN:A:398,water,ligint,GLY 335A,O2P -> N d=2.63 via HOH 403A:O; d(H2O-prot) 3.24,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1D3G,C,ORO:A:399,hbond,ligint,ASN 212A,O4 -> ND2 d=3.08 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1D3G,C,ORO:A:399,hbond,ligint,TYR 147A,O72 -> N d=3.16 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1D3G,C,ORO:A:399,water,PLIP,SER 215A,d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-1D3G,C,SO4:A:400,hbond,ligint,HIS 248A,O3 -> NE2 d=2.88 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1D3G,C,SO4:A:400,water,ligint,ARG 246A,O2 -> N d=3.25 via HOH 614A:O; d(H2O-prot) 3.40,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1D3G,C,SO4:A:400,salt,PLIP,HIS 248A,d=4.83,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1DWC,C,MIT:H:1,hydrophobic,ligint,HIS 57H,C31 -> CD2 d=3.45 ; C41 -> CD2 d=3.58 ; C41 -> CG d=3.97 ; C71 -> CD2 d=3.98 ,ligint: contatto idrofobico non riportato da PLIP
-1DWC,C,MIT:H:1,hydrophobic,ligint,TRP 60H,C21 -> CZ3 d=3.78 ; C21 -> CH2 d=3.94 ; C6 -> CH2 d=3.72 ; C6 -> CZ2 d=3.79 ; C71 -> CZ3 d=3.73 ; C71 -> CE3 d=3.99 ,ligint: contatto idrofobico non riportato da PLIP
-1DWC,C,MIT:H:1,hydrophobic,ligint,TYR 60H,C71 -> CD2 d=3.43 ; C71 -> CE2 d=3.73 ; C71 -> CG d=3.81 ,ligint: contatto idrofobico non riportato da PLIP
-1DWC,C,MIT:H:1,hydrophobic,PLIP,TRP 0H,d=3.72; d=3.78,PLIP: contatto idrofobico non riportato da ligint
-1DWC,C,MIT:H:1,hydrophobic,PLIP,TYR 0H,d=3.43,PLIP: contatto idrofobico non riportato da ligint
-1DWC,C,MIT:H:1,water,PLIP,LYS 0H,d=?,PLIP: ponte d'acqua non riportato da ligint
-1DWC,C,MIT:H:1,salt,PLIP,ASP 0H,d=5.23,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1DWC,C,MIT:H:1,salt,PLIP,HIS 57H,d=5.26,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1E3G,C,R18:A:1000,hydrophobic,ligint,MET 742A,C18 -> CE d=3.91 ,ligint: contatto idrofobico non riportato da PLIP
-1E3G,C,R18:A:1000,hydrophobic,ligint,MET 895A,C12 -> CE d=3.88 ; C18 -> CE d=3.85 ,ligint: contatto idrofobico non riportato da PLIP
-1E3G,C,R18:A:1000,hbond,ligint,ASN 705A,O97 -> OD1 d=2.79 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1E3G,C,R18:A:1000,hbond,PLIP,GLN 711A,d=3.88 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1E3G,C,R18:A:1000,water,ligint,GLN 711A,O83 -> OE1 d=3.18 via HOH 2011A:O; d(H2O-prot) 2.84,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1E3G,C,R18:A:1000,water,ligint,MET 749A,O83 -> N d=3.18 via HOH 2011A:O; d(H2O-prot) 3.39,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1E8X,C,ATP:A:3000,hbond,ligint,ASN 951A,O3G -> ND2 d=3.08 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1E8X,C,ATP:A:3000,hbond,ligint,GLU 880A,N6 -> O d=3.06 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1E8X,C,ATP:A:3000,hbond,PLIP,ASP 964A,d=2.51 don=O3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1E8X,C,ATP:A:3000,hbond,PLIP,LYS 807A,d=3.54 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1E8X,C,ATP:A:3000,hbond,PLIP,LYS 808A,d=4.06 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1E8X,C,ATP:A:3000,hbond,PLIP,LYS 890A,d=3.85 don=N3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1E8X,C,ATP:A:3000,hbond,PLIP,THR 887A,d=3.98 don=O3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1E8X,C,ATP:A:3000,water,ligint,ASN 951A,O2G -> OD1 d=2.51 via HOH 2253A:O; d(H2O-prot) 3.33,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1E8X,C,ATP:A:3000,salt,PLIP,LYS 807A,d=5.13; d=5.19,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1FJS,C,GOL:A:502,water,PLIP,ASP 126A,d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-1FJS,C,Z34:A:500,hydrophobic,ligint,PHE 174A,C23 -> CE2 d=3.93 ; C24 -> CE2 d=3.65 ; C24 -> CZ d=3.65 ; C24 -> CD2 d=3.90 ; C24 -> CE1 d=3.91 ,ligint: contatto idrofobico non riportato da PLIP
-1FJS,C,Z34:A:500,hbond,ligint,SER 195A,O11 -> OG d=2.38 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1FJS,C,Z34:A:500,hbond,PLIP,ASP 189A,d=3.01 don=Ng+ acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1FJS,C,Z34:A:500,hbond,PLIP,GLN 192A,d=3.80 don=Nam acc=O.co2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1FJS,C,Z34:A:500,water,ligint,GLU 146A,O34 -> O d=3.48 via HOH 723A:O; d(H2O-prot) 2.83,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1FJS,C,Z34:A:500,water,ligint,HIS 57A,O11 -> NE2 d=2.82 via HOH 606A:O; d(H2O-prot) 3.00; O11 -> NE2 d=3.07 via HOH 608A:O; d(H2O-prot) 2.86,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1FJS,C,Z34:A:500,water,ligint,ILE 227A,N12 -> O d=2.85 via HOH 605A:O; d(H2O-prot) 2.91; N12 -> N d=2.85 via HOH 605A:O; d(H2O-prot) 3.32,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1FJS,C,Z34:A:500,water,ligint,SER 214A,N5 -> O d=3.37 via HOH 606A:O; d(H2O-prot) 2.74; O11 -> O d=2.82 via HOH 606A:O; d(H2O-prot) 2.74,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1FJS,C,Z34:A:500,water,PLIP,GLY 218A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1FJS,C,Z34:A:500,salt,ligint,ASP 189A,N11 -> OD2 d=2.71 anche legame a idrogeno; N11 -> OD1 d=3.77 ; N12 -> OD1 d=3.01 anche legame a idrogeno; N12 -> OD2 d=3.44 ,ligint: ponte salino non riportato da PLIP
-1GD1,C,NAD:O:336,hydrophobic,ligint,CYS 149O,C4N -> CB d=3.90 ; C5N -> CB d=3.85 ,ligint: contatto idrofobico non riportato da PLIP
-1GD1,C,NAD:O:336,hbond,ligint,ASP 32O,O2B -> OD2 d=2.54 ; O3B -> OD1 d=2.61 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1GD1,C,NAD:O:336,hbond,ligint,SER 119O,O4D -> OG d=3.11 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1GD1,C,NAD:O:336,hbond,PLIP,ASN 31O,d=3.87 don=Nam acc=Nar,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1GD1,C,NAD:O:336,hbond,PLIP,PHE 8O,d=3.94 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1GD1,C,NAD:O:336,water,ligint,ARG 77O,N1A -> O d=2.83 via HOH 380O:O; d(H2O-prot) 3.31,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1GD1,C,NAD:O:336,water,ligint,ASN 31O,N1A -> ND2 d=2.83 via HOH 380O:O; d(H2O-prot) 3.29,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1GD1,C,NAD:O:336,water,ligint,GLU 76O,N1A -> O d=2.83 via HOH 380O:O; d(H2O-prot) 2.98,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1GD1,C,NAD:O:336,water,ligint,SER 95O,O2N -> O d=2.75 via HOH 352O:O; d(H2O-prot) 2.86,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1GD1,C,NAD:O:336,water,PLIP,GLY 97O,d=?,PLIP: ponte d'acqua non riportato da ligint
-1GD1,C,NAD:O:336,water,PLIP,LEU 185R,d=?,PLIP: ponte d'acqua non riportato da ligint
-1GD1,C,NAD:O:336,water,PLIP,THR 96O,d=?,PLIP: ponte d'acqua non riportato da ligint
-1GD1,C,SO4:O:338,water,ligint,ARG 231O,O1 -> NH1 d=2.78 via HOH 424O:O; d(H2O-prot) 3.26,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1HWK,C,117:A:2,hydrophobic,ligint,CYS 561B,C20 -> CB d=3.67 ; C93 -> CB d=3.51 ,ligint: contatto idrofobico non riportato da PLIP
-1HWK,C,117:A:2,hydrophobic,ligint,VAL 683A,C84 -> CG1 d=3.60 ,ligint: contatto idrofobico non riportato da PLIP
-1HWK,C,117:A:2,hbond,ligint,GLU 559B,O5 -> OE2 d=2.69 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1HWK,C,117:A:2,water,PLIP,ASN 686A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1HWK,C,ADP:A:101,hbond,ligint,TYR 479A,O2B -> OH d=2.93 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1HWK,C,ADP:A:101,hbond,PLIP,ASN 529A,d=4.09 don=Nam acc=Nar,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1HXW,C,RIT:B:301,hbond,ligint,ASP 25B,O41 -> OD1 d=2.65 ; O41 -> OD2 d=2.74 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1HXW,C,RIT:B:301,hbond,PLIP,GLY 27B,d=3.54 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1HXW,C,RIT:B:301,water,ligint,ASP 29A,O76 -> OD1 d=2.89 via HOH 101A:O; d(H2O-prot) 2.61,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1HXW,C,RIT:B:301,water,ligint,GLY 27A,O76 -> O d=2.89 via HOH 101A:O; d(H2O-prot) 2.90,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1HXW,C,RIT:B:301,water,PLIP,ARG 8B,d=?,PLIP: ponte d'acqua non riportato da ligint
-1KIF,C,BEZ:A:349,hydrophobic,ligint,TYR 224A,C1 -> CE2 d=3.61 ; C1 -> CD2 d=3.84 ; C2 -> CE2 d=3.50 ; C6 -> CE1 d=3.93 ,ligint: contatto idrofobico non riportato da PLIP
-1KIF,C,FAD:A:348,hbond,PLIP,GLY 315A,d=2.94 don=Nam acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1KIF,C,FAD:A:348,hbond,PLIP,GLY 9A,d=3.89 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1KIF,C,FAD:A:348,hbond,PLIP,TYR 314A,d=4.09 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1KIF,C,FAD:A:348,hbond,PLIP,VAL 10A,d=4.06 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1KIF,C,FAD:A:348,water,ligint,ASN 308A,O2P -> O d=2.95 via HOH 351A:O; d(H2O-prot) 3.02,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1KIF,C,FAD:A:348,water,ligint,CYS 181A,O1P -> O d=2.58 via HOH 364A:O; d(H2O-prot) 2.86; O2P -> O d=2.95 via HOH 351A:O; d(H2O-prot) 3.07,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1KIF,C,FAD:A:348,water,ligint,GLY 9A,O1P -> N d=2.58 via HOH 364A:O; d(H2O-prot) 3.03,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1KIF,C,FAD:A:348,water,ligint,HIS 311A,O2P -> ND1 d=2.89 via HOH 355A:O; d(H2O-prot) 2.45,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1KIF,C,FAD:A:348,water,ligint,THR 182A,O2P -> N d=2.95 via HOH 351A:O; d(H2O-prot) 3.26,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1KIF,C,FAD:A:348,water,PLIP,GLY 310A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1KIF,C,FAD:A:348,picat,ligint,ARG 283A,anello(C5X) -> CZ d=4.59 angolo asse-normale 23,ligint: cation-pi non riportato da PLIP (protonazione del ligando?)
-1O86,C,GLY:A:2000,water,PLIP,GLU 376A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1O86,C,LPR:A:702,hydrophobic,ligint,HIS 353A,C14 -> CD2 d=3.94 ,ligint: contatto idrofobico non riportato da PLIP
-1O86,C,LPR:A:702,hydrophobic,ligint,TYR 523A,C6 -> CD2 d=3.64 ; C6 -> CE2 d=3.88 ; C7 -> CD2 d=3.88 ,ligint: contatto idrofobico non riportato da PLIP
-1O86,C,LPR:A:702,hbond,ligint,ALA 354A,N1 -> O d=2.92 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1O86,C,LPR:A:702,hbond,ligint,TYR 520A,O4 -> OH d=2.56 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1O86,C,LPR:A:702,hbond,ligint,TYR 523A,O3 -> OH d=2.77 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1O86,C,LPR:A:702,hbond,PLIP,GLN 281A,d=3.22 don=Nam acc=O.co2,"PLIP: D-A entro 3,5 A, da esaminare"
-1O86,C,LPR:A:702,water,ligint,ASP 377A,N3 -> OD1 d=3.01 via HOH 2392A:O; d(H2O-prot) 2.66; N3 -> OD1 d=3.26 via HOH 2393A:O; d(H2O-prot) 2.92,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1O86,C,LPR:A:702,water,ligint,LYS 511A,O5 -> NZ d=2.68 via HOH 2569A:O; d(H2O-prot) 3.04,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1O86,C,LPR:A:702,water,PLIP,ALA 354A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1O86,C,LPR:A:702,water,PLIP,GLU 376A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1O86,C,LPR:A:702,water,PLIP,GLY 2000A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1O86,C,LPR:A:702,salt,PLIP,HIS 353A,d=5.39,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1O86,C,LPR:A:702,salt,PLIP,HIS 383A,d=4.44,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1O86,C,LPR:A:702,salt,PLIP,HIS 387A,d=4.35,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1O86,C,LPR:A:702,salt,PLIP,HIS 513A,d=4.52,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1OYA,C,FMN:A:401,hbond,PLIP,GLN 114A,d=3.76 don=Nar acc=O2; d=3.60 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1OYA,C,FMN:A:401,hbond,PLIP,GLU 299A,d=3.87 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1OYA,C,FMN:A:401,water,ligint,ARG 348A,O3P -> N d=2.73 via HOH 536A:O; d(H2O-prot) 3.40,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1OYA,C,FMN:A:401,water,ligint,ASN 325A,O3P -> N d=2.69 via HOH 540A:O; d(H2O-prot) 3.34,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1OYA,C,FMN:A:401,water,ligint,GLY 324A,O3P -> N d=2.69 via HOH 540A:O; d(H2O-prot) 2.98,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1OYA,C,FMN:A:401,water,PLIP,ASN 194A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1PAU,C,ASJ:C:505,hbond,ligint,HIS 237A,O -> ND1 d=3.00 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1PAU,C,ASJ:C:505,hbond,PLIP,CYS 285A,d=3.99 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1PAU,C,ASJ:C:505,hbond,PLIP,GLY 238A,d=3.92 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1PAU,C,ASJ:C:505,water,PLIP,HIS 237A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1PAU,C,ASJ:C:505,salt,PLIP,HIS 237A,d=5.34,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1PPB,C,0G6:H:1,hydrophobic,ligint,HIS 57H,C3 -> CG d=3.54 ; CB1 -> CD2 d=3.48 ; CB1 -> CG d=3.84 ,ligint: contatto idrofobico non riportato da PLIP
-1PPB,C,0G6:H:1,hydrophobic,ligint,TYR 60H,CG1 -> CE2 d=3.57 ,ligint: contatto idrofobico non riportato da PLIP
-1PPB,C,0G6:H:1,hydrophobic,PLIP,TYR 0H,d=3.57,PLIP: contatto idrofobico non riportato da ligint
-1PPB,C,0G6:H:1,hbond,PLIP,TRP 215H,d=3.72 don=Ng+ acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1PPB,C,0G6:H:1,water,ligint,GLU 192H,N -> OE2 d=2.85 via HOH 331H:O; d(H2O-prot) 3.17; N -> OE1 d=2.85 via HOH 331H:O; d(H2O-prot) 2.72; NE -> OE1 d=2.96 via HOH 303H:O; d(H2O-prot) 3.06; O1 -> OE2 d=2.79 via HOH 331H:O; d(H2O-prot) 3.17; O1 -> OE1 d=2.79 via HOH 331H:O; d(H2O-prot) 2.72,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1PPB,C,0G6:H:1,water,ligint,GLY 219H,NE -> O d=2.96 via HOH 303H:O; d(H2O-prot) 2.79,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1PPB,C,0G6:H:1,water,ligint,PHE 227H,NH1 -> O d=2.81 via HOH 305H:O; d(H2O-prot) 3.41,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1PPB,C,0G6:H:1,salt,PLIP,ASP 0H,d=3.52,"PLIP: entro 4,0 A, da esaminare"
-1QCF,C,PP1:A:532,hbond,ligint,THR 338A,N10 -> OG1 d=3.16 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1QCF,C,PP1:A:532,water,PLIP,GLY 344A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1QSG,C,GLC:A:1303,water,ligint,ASP 64A,O1 -> OD1 d=2.84 via HOH 1378A:O; d(H2O-prot) 3.27; O1 -> OD2 d=2.84 via HOH 1378A:O; d(H2O-prot) 2.74; O5 -> OD1 d=3.47 via HOH 1378A:O; d(H2O-prot) 3.27; O5 -> OD2 d=3.47 via HOH 1378A:O; d(H2O-prot) 2.74,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1QSG,C,NAD:A:1301,hbond,ligint,THR 194A,N7N -> OG1 d=3.31 ; O1N -> OG1 d=2.76 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1QSG,C,NAD:A:1301,hbond,PLIP,GLY 93A,d=3.76 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1QSG,C,NAD:A:1301,hbond,PLIP,ILE 92A,d=3.72 don=Nam acc=O3; d=3.39 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1QSG,C,NAD:A:1301,water,ligint,ILE 92A,O3D -> N d=2.75 via HOH 1308A:O; d(H2O-prot) 3.18,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1QSG,C,NAD:A:1301,water,ligint,SER 16A,O2A -> OG d=2.89 via HOH 1321A:O; d(H2O-prot) 3.17,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1QSG,C,NAD:A:1301,water,ligint,SER 91A,O2N -> OG d=2.88 via HOH 1324A:O; d(H2O-prot) 2.86,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1QSG,C,NAD:A:1301,water,PLIP,LEU 144A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1QSG,C,TCL:A:1302,hydrophobic,ligint,ALA 196A,C9 -> CB d=3.54 ,ligint: contatto idrofobico non riportato da PLIP
-1QSG,C,TCL:A:1302,hydrophobic,ligint,TYR 146A,C1 -> CG d=3.85 ; C1 -> CD2 d=3.96 ,ligint: contatto idrofobico non riportato da PLIP
-1QSG,C,TCL:A:1302,halogen,PLIP,ALA 95A,d=3.53,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-1S9J,C,ATP:A:535,hbond,ligint,GLN 153A,O2' -> OE1 d=3.10 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1S9J,C,ATP:A:535,hbond,PLIP,ASP 190A,d=4.06 don=O3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1S9J,C,ATP:A:535,water,ligint,ASN 195A,O1B -> ND2 d=2.49 via HOH 1097A:O; d(H2O-prot) 3.47; O2A -> ND2 d=2.69 via HOH 1097A:O; d(H2O-prot) 3.47; O2A -> OD1 d=2.69 via HOH 1097A:O; d(H2O-prot) 2.73; O2A -> OD1 d=2.96 via HOH 1098A:O; d(H2O-prot) 3.04; O2G -> ND2 d=2.65 via HOH 1097A:O; d(H2O-prot) 3.47; O2G -> OD1 d=2.65 via HOH 1097A:O; d(H2O-prot) 2.73; O5' -> OD1 d=3.34 via HOH 1098A:O; d(H2O-prot) 3.04,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,ATP:A:535,water,ligint,ASP 208A,O1B -> OD2 d=2.49 via HOH 1097A:O; d(H2O-prot) 2.70; O1B -> OD2 d=3.21 via HOH 1098A:O; d(H2O-prot) 2.85; O5' -> OD2 d=3.34 via HOH 1098A:O; d(H2O-prot) 2.85,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,ATP:A:535,water,ligint,GLN 153A,N3 -> OE1 d=3.17 via HOH 1007A:O; d(H2O-prot) 2.99,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,ATP:A:535,water,ligint,LEU 74A,N3 -> O d=3.17 via HOH 1007A:O; d(H2O-prot) 3.40; O2' -> O d=3.44 via HOH 1007A:O; d(H2O-prot) 3.40,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,ATP:A:535,water,ligint,SER 194A,O1B -> O d=3.21 via HOH 1098A:O; d(H2O-prot) 3.05; O2A -> O d=2.96 via HOH 1098A:O; d(H2O-prot) 3.05; O5' -> O d=3.34 via HOH 1098A:O; d(H2O-prot) 3.05,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,ATP:A:535,water,PLIP,LYS 97A,d=?; d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-1S9J,C,BBM:A:1001,hydrophobic,ligint,LEU 215A,C11 -> CD1 d=3.81 ; C12 -> CD1 d=3.91 ,ligint: contatto idrofobico non riportato da PLIP
-1S9J,C,BBM:A:1001,hydrophobic,ligint,MET 219A,C10 -> CE d=3.95 ; C9 -> CE d=3.58 ,ligint: contatto idrofobico non riportato da PLIP
-1S9J,C,BBM:A:1001,hbond,ligint,GLY 77A,O3 -> O d=3.01 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-1S9J,C,BBM:A:1001,hbond,PLIP,ASN 78A,d=3.54 don=O3 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1S9J,C,BBM:A:1001,water,ligint,ASN 195A,O4 -> ND2 d=2.79 via HOH 1097A:O; d(H2O-prot) 3.47; O4 -> OD1 d=2.79 via HOH 1097A:O; d(H2O-prot) 2.73,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1S9J,C,BBM:A:1001,halogen,PLIP,SER 212A,d=3.88,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-1T69,C,SHH:A:379,hydrophobic,ligint,HIS 143A,C2 -> CD2 d=3.80 ,ligint: contatto idrofobico non riportato da PLIP
-1T69,C,SHH:A:379,hydrophobic,ligint,MET 274A,C7 -> CE d=3.87 ,ligint: contatto idrofobico non riportato da PLIP
-1T69,C,SHH:A:379,hbond,ligint,HIS 142A,O1 -> NE2 d=2.68 ,ligint: partner istidina (tautomero assegnato da PLIP)
-1T69,C,SHH:A:379,hbond,ligint,TYR 306A,O2 -> OH d=2.60 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1T69,C,SHH:A:379,hbond,PLIP,HIS 180A,d=4.09 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1T69,C,SHH:A:379,salt,PLIP,ASP 178A,d=3.52,"PLIP: entro 4,0 A, da esaminare"
-1T69,C,SHH:A:379,salt,PLIP,ASP 267A,d=4.99,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1VID,C,DNC:A:302,water,ligint,ASP 141A,O1 -> OD2 d=3.35 via HOH 400A:O; d(H2O-prot) 2.71,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,DNC:A:302,water,ligint,LYS 144A,O4 -> N d=3.10 via HOH 381A:O; d(H2O-prot) 3.30,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,DNC:A:302,water,ligint,MET 40A,O1 -> O d=3.35 via HOH 400A:O; d(H2O-prot) 2.85,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,DNC:A:302,water,ligint,VAL 42A,O1 -> N d=3.35 via HOH 400A:O; d(H2O-prot) 2.93,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,SAM:A:301,hydrophobic,ligint,MET 40A,CE -> CG d=3.79 ; CE -> CB d=3.98 ,ligint: contatto idrofobico non riportato da PLIP
-1VID,C,SAM:A:301,hbond,ligint,ASP 141A,N -> OD2 d=2.85 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1VID,C,SAM:A:301,hbond,ligint,GLU 90A,O2' -> OE2 d=2.70 ; O3' -> OE1 d=2.79 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1VID,C,SAM:A:301,hbond,ligint,GLY 66A,N -> O d=2.93 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1VID,C,SAM:A:301,hbond,PLIP,ALA 67A,d=3.64 don=O.co2 acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1VID,C,SAM:A:301,hbond,PLIP,ASN 41A,d=3.93 don=Nam acc=O.co2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1VID,C,SAM:A:301,hbond,PLIP,TRP 143A,d=3.73 don=Nam acc=Nar,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1VID,C,SAM:A:301,hbond,PLIP,TYR 68A,d=3.36 don=Nam acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1VID,C,SAM:A:301,hbond,PLIP,TYR 71A,d=3.55 don=Nam acc=O.co2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-1VID,C,SAM:A:301,water,ligint,ASN 41A,OXT -> ND2 d=2.57 via HOH 359A:O; d(H2O-prot) 2.85,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,SAM:A:301,water,ligint,GLY 70A,OXT -> N d=2.57 via HOH 359A:O; d(H2O-prot) 3.22,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,SAM:A:301,water,ligint,TYR 71A,OXT -> N d=2.57 via HOH 359A:O; d(H2O-prot) 3.06,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1VID,C,SAM:A:301,salt,PLIP,ASP 141A,d=4.82,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-1X70,C,715:A:801,hydrophobic,ligint,TYR 666A,C4 -> CE2 d=3.89 ,ligint: contatto idrofobico non riportato da PLIP
-1X70,C,715:A:801,hbond,PLIP,GLU 205A,d=2.83 don=O3 acc=N3,"PLIP: D-A entro 3,5 A, da esaminare"
-1X70,C,715:A:801,hbond,PLIP,GLU 206A,d=3.09 don=N3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-1X70,C,715:A:801,water,PLIP,PHE 357A,d=?,PLIP: ponte d'acqua non riportato da ligint
-1X70,C,715:A:801,water,PLIP,SER 209A,d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-1X70,C,715:A:801,salt,ligint,GLU 205A,N20 -> OE2 d=2.83 anche legame a idrogeno,ligint: ponte salino non riportato da PLIP
-1X70,C,715:A:801,salt,ligint,GLU 206A,N20 -> OE2 d=2.70 anche legame a idrogeno; N20 -> OE1 d=3.09 ,ligint: ponte salino non riportato da PLIP
-1X70,C,715:A:801,halogen,PLIP,SER 209A,d=3.09,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-1X70,C,NDG:C:2,hydrophobic,ligint,VAL 78A,C8 -> CG1 d=3.88 ,ligint: contatto idrofobico non riportato da PLIP
-1X70,C,NDG:C:2,hbond,ligint,SER 87A,O7 -> OG d=2.93 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-1X70,C,NDG:C:2,water,ligint,ASN 80A,N2 -> ND2 d=2.87 via HOH 1790A:O; d(H2O-prot) 2.75,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1X70,C,NDG:C:2,water,ligint,GLU 67A,N2 -> OE2 d=2.87 via HOH 1790A:O; d(H2O-prot) 2.62,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-1XKK,C,FMM:A:91,hydrophobic,ligint,LEU 799A,C1 -> CD2 d=3.53 ; C1 -> CB d=3.77 ; C1 -> CG d=3.96 ,ligint: contatto idrofobico non riportato da PLIP
-1XKK,C,FMM:A:91,hydrophobic,ligint,MET 766A,C29 -> CE d=3.39 ; C30 -> CE d=3.32 ; C30 -> CG d=3.99 ; C31 -> CG d=3.85 ,ligint: contatto idrofobico non riportato da PLIP
-1XKK,C,FMM:A:91,hydrophobic,ligint,PHE 856A,C31 -> CE1 d=3.48 ; C31 -> CZ d=3.56 ; C31 -> CD1 d=3.79 ; C31 -> CE2 d=3.93 ; C32 -> CE1 d=3.64 ; C32 -> CZ d=3.65 ,ligint: contatto idrofobico non riportato da PLIP
-1XKK,C,FMM:A:91,salt,ligint,ARG 803A,O4 -> NH2 d=3.62 ,ligint: ponte salino non riportato da PLIP
-1XKK,C,FMM:A:91,halogen,PLIP,THR 790A,d=3.14,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-1XKK,C,PO4:A:81,salt,PLIP,LYS 913A,d=4.98,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-2A65,C,BOG:A:701,water,ligint,ARG 446A,O5 -> N d=3.26 via HOH 837A:O; d(H2O-prot) 3.44,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2A65,C,BOG:A:701,water,PLIP,VAL 444A,d=?,PLIP: ponte d'acqua non riportato da ligint
-2A65,C,LEU:A:601,hydrophobic,ligint,ILE 359A,CD1 -> CG2 d=3.90 ; CD2 -> CG2 d=3.82 ,ligint: contatto idrofobico non riportato da PLIP
-2A65,C,LEU:A:601,hydrophobic,PLIP,LEU 601A,d=1.52,PLIP: contatto idrofobico non riportato da ligint
-2A65,C,LEU:A:601,hbond,ligint,ALA 22A,N -> O d=2.90 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-2A65,C,LEU:A:601,hbond,ligint,PHE 253A,N -> O d=2.88 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-2A65,C,LEU:A:601,hbond,ligint,THR 254A,N -> O d=3.12 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-2A65,C,LEU:A:601,hbond,ligint,TYR 108A,O -> OH d=2.66 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-2A65,C,LEU:A:601,hbond,PLIP,LEU 601A,d=3.62 don=N3 acc=N3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-2CYP,C,HEM:A:295,hydrophobic,ligint,HIS 175A,CHD -> CD2 d=3.85 ,ligint: contatto idrofobico non riportato da PLIP
-2CYP,C,HEM:A:295,water,PLIP,HIS 52A,d=?,PLIP: ponte d'acqua non riportato da ligint
-2CYP,C,HEM:A:295,salt,PLIP,ARG 48A,d=5.09,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-2CYP,C,HEM:A:295,salt,PLIP,HIS 181A,d=4.29; d=4.03,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-2FDN,C,SF4:A:61,picat,PLIP,TYR 30A,d=3.79 off=1.33,PLIP: cation-pi non riportato
-2GQG,C,1N1:A:501,hydrophobic,ligint,ALA 269A,C2 -> CB d=3.52 ,ligint: contatto idrofobico non riportato da PLIP
-2GQG,C,1N1:A:501,hydrophobic,ligint,LEU 370A,C2 -> CD1 d=3.56 ,ligint: contatto idrofobico non riportato da PLIP
-2GQG,C,1N1:A:501,hydrophobic,ligint,MET 290A,C7 -> CE d=3.50 ,ligint: contatto idrofobico non riportato da PLIP
-2GQG,C,GOL:B:1,hbond,PLIP,TYR 456B,d=3.43 don=O3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-2GQG,C,GOL:B:1,water,ligint,GLY 442A,O1 -> O d=2.52 via HOH 516B:O; d(H2O-prot) 2.72,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2GQG,C,GOL:B:1,water,ligint,PRO 441B,O1 -> O d=2.52 via HOH 516B:O; d(H2O-prot) 2.60,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2HU4,C,G39:A:800,hydrophobic,PLIP,ASN 294A,d=3.90,PLIP: contatto idrofobico non riportato da ligint
-2HU4,C,G39:A:800,hbond,PLIP,GLU 119A,d=2.89 don=N3 acc=O3,"PLIP: D-A entro 3,5 A, da esaminare"
-2HU4,C,G39:A:800,salt,ligint,ASP 151A,N4 -> OD1 d=2.83 anche legame a idrogeno,ligint: ponte salino non riportato da PLIP
-2HU4,C,G39:A:800,salt,ligint,GLU 119A,N4 -> OE2 d=2.89 anche legame a idrogeno,ligint: ponte salino non riportato da PLIP
-2IFB,C,PLM:A:133,hydrophobic,ligint,ILE 23A,CD -> CD1 d=3.80 ; CF -> CD1 d=3.70 ,ligint: contatto idrofobico non riportato da PLIP
-2IFB,C,PLM:A:133,hydrophobic,PLIP,ASP 74A,d=3.88,PLIP: contatto idrofobico non riportato da ligint
-2IFB,C,PLM:A:133,hbond,ligint,TRP 82A,O1 -> NE1 d=2.38 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-2IFB,C,PLM:A:133,water,ligint,GLU 51A,O2 -> OE2 d=3.16 via HOH 170A:O; d(H2O-prot) 2.74,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2IFB,C,PLM:A:133,water,PLIP,TYR 70A,d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-2VCI,C,2GJ:A:1225,hydrophobic,ligint,MET 98A,C13 -> CE d=3.55 ; C3 -> CG d=3.98 ; C32 -> CE d=3.93 ; C6 -> CE d=3.89 ,ligint: contatto idrofobico non riportato da PLIP
-2VCI,C,2GJ:A:1225,hbond,ligint,ASP 93A,O33 -> OD2 d=2.36 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-2VCI,C,2GJ:A:1225,hbond,ligint,LYS 58A,O9 -> NZ d=3.28 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-2VCI,C,2GJ:A:1225,water,ligint,GLY 97A,O5 -> N d=2.57 via HOH 2233A:O; d(H2O-prot) 2.89,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2VCI,C,2GJ:A:1225,water,ligint,ILE 96A,N1 -> N d=3.15 via HOH 2233A:O; d(H2O-prot) 3.44; O33 -> N d=3.17 via HOH 2233A:O; d(H2O-prot) 3.44; O5 -> N d=2.57 via HOH 2233A:O; d(H2O-prot) 3.44,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2VCI,C,2GJ:A:1225,water,ligint,LEU 48A,O34 -> O d=2.51 via HOH 2232A:O; d(H2O-prot) 2.68,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2VCI,C,2GJ:A:1225,water,ligint,SER 52A,O34 -> OG d=2.51 via HOH 2232A:O; d(H2O-prot) 2.99,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2VCI,C,2GJ:A:1225,salt,PLIP,ASP 54A,d=5.28,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-2W26,C,RIV:A:1001,hydrophobic,ligint,ALA 190A,C24 -> CB d=3.84 ,ligint: contatto idrofobico non riportato da PLIP
-2W26,C,RIV:A:1001,hydrophobic,ligint,TYR 99A,C10 -> CE1 d=3.74 ; C10 -> CE2 d=3.79 ,ligint: contatto idrofobico non riportato da PLIP
-2W26,C,RIV:A:1001,pistack,ligint,TRP 215A,anello(C7) -> anello6 d=5.20 angolo normali 23; distanza piani 3.8; offset 2.6 A; anello(C7) -> anello5 d=5.29 angolo normali 23; distanza piani 3.9; offset 2.7 A,ligint: stacking non riportato da PLIP
-2XP2,C,VGH:A:9000,halogen,PLIP,GLY 1269A,d=3.04,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-2ZD1,C,EDO:B:429,hbond,PLIP,THR 403B,d=3.64 don=O3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-2ZD1,C,EDO:B:429,water,ligint,THR 400B,O2 -> O d=2.58 via HOH 545B:O; d(H2O-prot) 3.03,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2ZD1,C,EDO:B:429,water,ligint,TRP 401B,O2 -> N d=2.58 via HOH 545B:O; d(H2O-prot) 3.50,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2ZD1,C,EDO:B:429,water,ligint,TRP 402B,O2 -> N d=2.58 via HOH 545B:O; d(H2O-prot) 3.48,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-2ZD1,C,SO4:A:556,salt,PLIP,LYS 512A,d=5.13,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-2ZD1,C,T27:A:557,hbond,ligint,LEU 234A,N5 -> O d=3.26 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-2ZD1,C,T27:A:557,water,PLIP,ILE 180A,d=?,PLIP: ponte d'acqua non riportato da ligint
-2ZD1,C,T27:A:557,pistack,ligint,TYR 181A,anello(C1) -> anello d=4.37 angolo normali 12; distanza piani 3.5; offset 2.3 A,ligint: stacking non riportato da PLIP
-3GRS,C,FAD:A:479,hbond,ligint,GLU 50A,O2B -> OE2 d=2.65 ; O3B -> OE1 d=2.69 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-3GRS,C,FAD:A:479,hbond,PLIP,GLY 157A,d=4.00 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3GRS,C,FAD:A:479,hbond,PLIP,GLY 28A,d=3.98 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3GRS,C,FAD:A:479,hbond,PLIP,GLY 32A,d=4.06 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3GRS,C,FAD:A:479,hbond,PLIP,LEU 337A,d=3.46 don=O3 acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-3GRS,C,FAD:A:479,hbond,PLIP,TYR 197A,d=3.85 don=O3 acc=N2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3GRS,C,FAD:A:479,water,ligint,ALA 155A,O1P -> O d=2.66 via HOH 484A:O; d(H2O-prot) 2.88,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,ASP 331A,O1A -> OD1 d=3.10 via HOH 490A:O; d(H2O-prot) 2.76,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,CYS 58A,O2A -> N d=2.88 via HOH 839A:O; d(H2O-prot) 2.84,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,GLU 201A,O4 -> OE1 d=3.29 via HOH 498A:O; d(H2O-prot) 2.70,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,GLY 157A,O2P -> N d=2.55 via HOH 482A:O; d(H2O-prot) 2.86,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,GLY 158A,O1A -> N d=3.10 via HOH 490A:O; d(H2O-prot) 2.85,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,GLY 32A,O1P -> N d=2.66 via HOH 484A:O; d(H2O-prot) 2.96,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,GLY 55A,O2A -> O d=2.88 via HOH 839A:O; d(H2O-prot) 2.70,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,SER 30A,O2A -> OG d=2.88 via HOH 839A:O; d(H2O-prot) 2.63; O4' -> OG d=3.17 via HOH 839A:O; d(H2O-prot) 2.63; O4' -> N d=3.17 via HOH 839A:O; d(H2O-prot) 3.24,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,VAL 329A,O2P -> O d=2.55 via HOH 482A:O; d(H2O-prot) 2.80,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,ligint,VAL 370A,O4 -> O d=3.29 via HOH 498A:O; d(H2O-prot) 3.01,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,FAD:A:479,water,PLIP,ALA 342A,d=?,PLIP: ponte d'acqua non riportato da ligint
-3GRS,C,FAD:A:479,water,PLIP,SER 51A,d=?; d=?,PLIP: ponte d'acqua non riportato da ligint
-3GRS,C,FAD:A:479,water,PLIP,THR 57A,d=?,PLIP: ponte d'acqua non riportato da ligint
-3GRS,C,FAD:A:479,pistack,ligint,HIS 129A,anello(C5A) -> anello d=5.39 angolo normali 23; distanza piani 3.6; offset 3.5 A,ligint: stacking non riportato da PLIP
-3GRS,C,FAD:A:479,pistack,ligint,TYR 197A,anello(C4X) -> anello d=5.45 angolo normali 86; distanza piani 2.9; offset 0.9 A,ligint: stacking non riportato da PLIP
-3GRS,C,PO4:A:480,hbond,PLIP,ARG 218A,d=3.85 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3GRS,C,PO4:A:480,water,ligint,ALA 195A,O3 -> O d=2.72 via HOH 570A:O; d(H2O-prot) 3.07; O4 -> N d=3.20 via HOH 730A:O; d(H2O-prot) 3.06,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,PO4:A:480,water,ligint,ARG 218A,O2 -> N d=2.67 via HOH 595A:O; d(H2O-prot) 3.05; O4 -> N d=3.46 via HOH 595A:O; d(H2O-prot) 3.05,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,PO4:A:480,water,ligint,LEU 223A,O3 -> N d=2.72 via HOH 570A:O; d(H2O-prot) 3.24,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,PO4:A:480,water,ligint,LYS 221A,O2 -> O d=2.70 via HOH 499A:O; d(H2O-prot) 2.75; O3 -> O d=3.48 via HOH 499A:O; d(H2O-prot) 2.75,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3GRS,C,PO4:A:480,water,PLIP,GLY 196A,d=?,PLIP: ponte d'acqua non riportato da ligint
-3GRS,C,PO4:A:480,salt,PLIP,HIS 219A,d=5.18,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-3KS3,C,GOL:A:304,hbond,ligint,TYR 7A,O2 -> O d=3.35 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-3LN1,C,BOG:A:703,hydrophobic,ligint,ILE 428A,C5' -> CD1 d=3.88 ,ligint: contatto idrofobico non riportato da PLIP
-3LN1,C,BOG:A:703,hbond,ligint,GLU 165A,O2 -> OE2 d=2.63 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-3LN1,C,CEL:A:682,hbond,ligint,HIS 75A,O2 -> NE2 d=2.97 ,ligint: partner istidina (tautomero assegnato da PLIP)
-3LN1,C,CEL:A:682,hbond,ligint,LEU 338A,N3 -> O d=2.71 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-3LN1,C,CEL:A:682,hbond,PLIP,ARG 499A,d=3.34 don=Ng+ acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-3LN1,C,CEL:A:682,hbond,PLIP,PHE 504A,d=3.62 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3LN1,C,CEL:A:682,hbond,PLIP,TYR 341A,d=3.98 don=O3 acc=Nar,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3LN1,C,CEL:A:682,salt,ligint,ARG 499A,O2 -> NH1 d=3.34 anche legame a idrogeno,ligint: ponte salino non riportato da PLIP
-3LN1,C,CEL:A:682,picat,ligint,ARG 106A,anello(N2) -> CZ d=5.92 angolo asse-normale 22,ligint: cation-pi non riportato da PLIP (protonazione del ligando?)
-3LN1,C,CEL:A:682,halogen,PLIP,ARG 106A,d=3.61,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
-3LN1,C,HEM:A:605,hydrophobic,ligint,HIS 372A,C2D -> CD2 d=3.80 ; C3D -> CD2 d=3.96 ; CMD -> CD2 d=3.72 ,ligint: contatto idrofobico non riportato da PLIP
-3LN1,C,HEM:A:605,hydrophobic,PLIP,GLN 189A,d=3.93; d=3.67,PLIP: contatto idrofobico non riportato da ligint
-3LN1,C,HEM:A:605,hbond,ligint,HIS 200A,O1A -> NE2 d=2.87 ; O2A -> NE2 d=2.91 ,ligint: partner istidina (tautomero assegnato da PLIP)
-3LN1,C,HEM:A:605,hbond,PLIP,PHE 196A,d=3.13 don=O.co2 acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-3LN1,C,HEM:A:605,salt,PLIP,HIS 200A,d=3.52,"PLIP: entro 4,0 A, da esaminare"
-3LON,C,BME:A:998,hydrophobic,ligint,CYS 16A,C2 -> CB d=3.94 ,ligint: contatto idrofobico non riportato da PLIP
-3LON,C,BME:A:998,hbond,ligint,ALA 39A,O1 -> O d=3.24 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-3LON,C,NNA:A:999,hydrophobic,ligint,ALA 156A,C33 -> CB d=3.30 ; C7 -> CB d=3.95 ,ligint: contatto idrofobico non riportato da PLIP
-3LON,C,NNA:A:999,hydrophobic,ligint,HIS 57A,C29 -> CD2 d=3.84 ; C32 -> CG d=3.72 ,ligint: contatto idrofobico non riportato da PLIP
-3LON,C,NNA:A:999,hydrophobic,PLIP,ASP 168A,d=3.56,PLIP: contatto idrofobico non riportato da ligint
-3LON,C,NNA:A:999,hydrophobic,PLIP,GLN 41A,d=3.69,PLIP: contatto idrofobico non riportato da ligint
-3LON,C,NNA:A:999,hbond,ligint,CYS 159A,O12 -> N d=3.28 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-3LON,C,NNA:A:999,hbond,PLIP,GLN 41A,d=3.43 don=Nam acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-3LON,C,NNA:A:999,water,ligint,GLN 41A,O42 -> OE1 d=2.60 via HOH 202A:O; d(H2O-prot) 2.76,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3LON,C,NNA:A:999,pistack,ligint,HIS 57A,anello(N26) -> anello d=4.86 angolo normali 88; distanza piani 2.4; offset 1.5 A,ligint: stacking non riportato da PLIP
-3MEC,C,65B:A:561,hydrophobic,ligint,VAL 179A,C14 -> CG1 d=3.62 ,ligint: contatto idrofobico non riportato da PLIP
-3MEC,C,65B:A:561,water,ligint,GLU 138B,N18 -> OE2 d=3.18 via HOH 470B:O; d(H2O-prot) 2.63,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3MEC,C,65B:A:561,water,ligint,GLY 99A,N18 -> O d=3.18 via HOH 470B:O; d(H2O-prot) 2.73,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3MEC,C,65B:A:561,water,ligint,LYS 101A,N18 -> NZ d=3.18 via HOH 470B:O; d(H2O-prot) 3.05,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-3MEC,C,SO4:A:562,hbond,PLIP,GLY 436A,d=3.50 don=Nam acc=O2,"PLIP: D-A entro 3,5 A, da esaminare"
-3OG7,C,032:A:1,hydrophobic,ligint,LEU 514A,C18 -> CD2 d=3.94 ; C20 -> CD2 d=3.55 ; C33 -> CD2 d=3.60 ; C33 -> CB d=3.64 ; C33 -> CG d=3.76 ,ligint: contatto idrofobico non riportato da PLIP
-3OG7,C,032:A:1,hydrophobic,ligint,PHE 583A,C04 -> CE2 d=3.86 ; C08 -> CE2 d=3.90 ,ligint: contatto idrofobico non riportato da PLIP
-3OG7,C,032:A:1,hbond,ligint,GLN 530A,N14 -> O d=2.95 ,"ligint: contatto forte (<=3,0 A) non riportato da PLIP"
-3OG7,C,032:A:1,hbond,PLIP,THR 529A,d=3.54 don=O3 acc=N2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-3OG7,C,032:A:1,water,PLIP,LYS 483A,d=?,PLIP: ponte d'acqua non riportato da ligint
-3OG7,C,032:A:1,salt,ligint,LYS 483A,O30 -> NZ d=3.77 ,ligint: ponte salino non riportato da PLIP
-3OG7,C,032:A:1,pistack,ligint,TRP 531A,anello(C01) -> anello6 d=4.57 angolo normali 14; distanza piani 3.4; offset 2.7 A,ligint: stacking non riportato da PLIP
-4DKL,C,BF0:A:601,hydrophobic,ligint,ILE 296A,CAF -> CG1 d=3.86 ; CAH -> CG1 d=3.60 ,ligint: contatto idrofobico non riportato da PLIP
-4DKL,C,BF0:A:601,hbond,ligint,TYR 148A,OAA -> OH d=3.18 ,"ligint: contatto 3,0-3,5 A non riportato da PLIP"
-4DKL,C,BF0:A:601,water,ligint,LYS 233A,OAD -> O d=2.83 via HOH 718A:O; d(H2O-prot) 2.83,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-4DKL,C,BF0:A:601,water,PLIP,TYR 326A,d=?,PLIP: ponte d'acqua non riportato da ligint
-4DKL,C,BF0:A:601,salt,PLIP,LYS 233A,d=4.41,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-4DKL,C,BF0:A:601,salt,PLIP,LYS 303A,d=5.05,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-4DKL,C,BF0:A:601,picat,ligint,TYR 148A,NAJ -> anello d=5.91 angolo asse-normale 13,ligint: cation-pi non riportato da PLIP (protonazione del ligando?)
-4DKL,C,CLR:A:614,water,ligint,THR 311A,O1 -> OG1 d=2.62 via HOH 731A:O; d(H2O-prot) 3.46,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-4DKL,C,MPG:A:615,hydrophobic,PLIP,ASN 188A,d=3.64,PLIP: contatto idrofobico non riportato da ligint
-4DKL,C,MPG:A:615,hbond,PLIP,LYS 185A,d=4.07 don=N3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4DKL,C,MPG:A:615,salt,PLIP,LYS 100A,d=5.22,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-4DKL,C,MPG:A:615,salt,PLIP,LYS 185A,d=4.92,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-4DKL,C,SO4:A:602,hbond,PLIP,ALA 102A,d=3.69 don=Nam acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4DKL,C,SO4:A:602,hbond,PLIP,ARG 165A,d=4.00 don=Ng+ acc=O3; d=3.79 don=Ng+ acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4DKL,C,SO4:A:602,hbond,PLIP,THR 101A,d=3.53 don=O3 acc=O2; d=4.07 don=O3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4DKL,C,SO4:A:602,water,ligint,ALA 102A,O1 -> N d=2.70 via HOH 712A:O; d(H2O-prot) 3.45,ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP)
-4DKL,C,SO4:A:602,salt,ligint,ARG 165A,O3 -> NH2 d=3.79 ; O3 -> NH1 d=4.00 ,ligint: ponte salino non riportato da PLIP
-4G5J,C,0WM:A:1102,hydrophobic,ligint,HIS 988A,C30 -> CD2 d=3.91 ,ligint: contatto idrofobico non riportato da PLIP
-4G5J,C,0WM:A:1102,water,PLIP,GLY 810A,d=?,PLIP: ponte d'acqua non riportato da ligint
-4G5J,C,0WM:A:1102,picat,ligint,HIS 805A,N32 -> anello d=5.64 angolo asse-normale 27,ligint: cation-pi non riportato da PLIP (protonazione del ligando?)
-4G5J,C,0WM:A:1102,picat,ligint,TYR 813A,N32 -> anello d=4.25 angolo asse-normale 27,ligint: cation-pi non riportato da PLIP (protonazione del ligando?)
-4G5J,C,0WN:A:1101,hydrophobic,ligint,CYS 797A,C28 -> CB d=3.81 ,ligint: contatto idrofobico non riportato da PLIP
-4G5J,C,0WN:A:1101,hbond,PLIP,CYS 797A,d=3.53 don=Nam acc=O2,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4G5J,C,0WN:A:1101,hbond,PLIP,LYS 728A,d=3.89 don=N3 acc=O3,"PLIP: D-A oltre 3,5 A (fuori soglia di ligint)"
-4G5J,C,0WN:A:1101,salt,PLIP,ASP 800A,d=4.56,"PLIP: oltre 4,0 A (fuori soglia di ligint)"
-4G5J,C,0WN:A:1101,halogen,PLIP,LEU 788A,d=3.71,"PLIP: alogeno non riportato da ligint (F non trattato, soglia)"
+pdb,group,site,type,only_in,residue,detail,probable_cause
+1A28,C,STR:A:1,hydrophobic,ligint,CYS 891A,C18 -> CB d=3.97 ,ligint: hydrophobic contact not reported by PLIP
+1A28,C,STR:A:1,hydrophobic,ligint,MET 909A,C18 -> CE d=3.68 ,ligint: hydrophobic contact not reported by PLIP
+1A28,C,STR:A:1,hbond,PLIP,GLN 725A,d=3.28 don=Nam acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+1A28,C,STR:A:1,water,ligint,MET 759A,O3 -> O d=3.09 via HOH 1004A:O; d(H2O-prot) 2.71,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1A3K,C,NAG:B:1,hbond,ligint,ASN 160A,O4 -> OD1 d=3.19 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1A3K,C,NAG:B:1,hbond,ligint,HIS 158A,O4 -> NE2 d=2.59 ,ligint: histidine partner (tautomer assigned by PLIP)
+1A3K,C,NAG:B:1,water,ligint,GLU 184A,O6 -> OE2 d=2.90 via HOH 1075A:O; d(H2O-prot) 3.13,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1A3K,C,NAG:B:1,water,PLIP,TRP 181A,d=?,PLIP: water bridge not reported by ligint
+1A3K,C,NAG:B:1,salt,PLIP,ARG 162A,d=4.08,PLIP: beyond 4.0 A (outside the ligint threshold)
+1A6M,C,HEM:A:154,hydrophobic,ligint,LEU 104A,CHC -> CD2 d=3.70 ; CMC -> CD2 d=3.97 ,ligint: hydrophobic contact not reported by PLIP
+1A6M,C,HEM:A:154,hbond,ligint,HIS 97A,O2A -> NE2 d=2.73 ,ligint: histidine partner (tautomer assigned by PLIP)
+1A6M,C,HEM:A:154,hbond,PLIP,HIS 64A,d=3.08 don=N3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1A6M,C,HEM:A:154,water,ligint,LYS 96A,O2A -> NZ d=2.83 via HOH 1118A:O; d(H2O-prot) 3.09,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1A6M,C,HEM:A:154,salt,PLIP,HIS 93A,d=4.65,PLIP: beyond 4.0 A (outside the ligint threshold)
+1A6M,C,HEM:A:154,salt,PLIP,HIS 97A,d=4.32,PLIP: beyond 4.0 A (outside the ligint threshold)
+1A6M,C,HEM:A:154,pistack,ligint,PHE 43A,ring(C1D) -> ring d=4.83 normals angle 13; plane distance 3.3; offset 3.2 A,ligint: stacking not reported by PLIP
+1A6M,C,HEM:A:154,pistack,PLIP,HIS 93A,d=3.79 ang=89.84 off=1.91,PLIP: stacking not reported by ligint
+1A6M,C,SO4:A:155,hbond,ligint,SER 58A,O1 -> OG d=2.77 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1A6M,C,SO4:A:155,water,ligint,HIS 48A,O1 -> NE2 d=2.72 via HOH 1007A:O; d(H2O-prot) 2.80,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1A6M,C,SO4:A:155,water,PLIP,ALA 57A,d=?,PLIP: water bridge not reported by ligint
+1ABE,C,ARA:A:307,hbond,PLIP,ASP 90A,d=3.45 don=O3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1ABE,C,ARA:A:307,hbond,PLIP,GLU 14A,d=3.36 don=O3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1ABE,C,ARA:A:307,water,ligint,ASN 205A,O2 -> ND2 d=2.61 via HOH 309A:O; d(H2O-prot) 2.86; O2 -> ND2 d=2.60 via HOH 309A:O; d(H2O-prot) 2.86,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ABE,C,ARA:A:307,water,ligint,ASP 89A,O5 -> O d=2.80 via HOH 310A:O; d(H2O-prot) 2.71; O5 -> O d=2.74 via HOH 310A:O; d(H2O-prot) 2.71,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ABE,C,ARA:A:307,water,ligint,GLN 11A,O2 -> OE1 d=2.61 via HOH 309A:O; d(H2O-prot) 2.85; O3 -> OE1 d=3.23 via HOH 309A:O; d(H2O-prot) 2.85; O2 -> OE1 d=2.60 via HOH 309A:O; d(H2O-prot) 2.85; O3 -> OE1 d=3.19 via HOH 309A:O; d(H2O-prot) 2.85,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ABE,C,ARA:A:307,water,ligint,GLU 14A,O2 -> OE2 d=2.61 via HOH 309A:O; d(H2O-prot) 2.72; O2 -> OE2 d=2.60 via HOH 309A:O; d(H2O-prot) 2.72,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ABE,C,ARA:A:307,water,ligint,THR 147A,O5 -> OG1 d=2.80 via HOH 310A:O; d(H2O-prot) 2.79; O5 -> OG1 d=2.74 via HOH 310A:O; d(H2O-prot) 2.79,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ABE,C,ARA:A:307,salt,PLIP,ARG 151A,d=4.23,PLIP: beyond 4.0 A (outside the ligint threshold)
+1ABE,C,ARA:A:307,salt,PLIP,LYS 10A,d=4.11,PLIP: beyond 4.0 A (outside the ligint threshold)
+1ACJ,C,THA:A:999,hydrophobic,ligint,HIS 440A,C11 -> CD2 d=3.62 ,ligint: hydrophobic contact not reported by PLIP
+1ACJ,C,THA:A:999,hydrophobic,ligint,PHE 330A,C1 -> CD1 d=3.31 ; C1 -> CG d=3.82 ; C1 -> CE1 d=3.88 ; C2 -> CD1 d=3.65 ; C2 -> CG d=3.71 ; C4 -> CE1 d=3.72 ; C4 -> CZ d=3.88 ; C5 -> CE1 d=3.36 ; C5 -> CD1 d=3.74 ; C5 -> CZ d=3.95 ; C6 -> CD1 d=3.36 ; C6 -> CE1 d=3.45 ,ligint: hydrophobic contact not reported by PLIP
+1ACJ,C,THA:A:999,hbond,ligint,HIS 440A,N7 -> O d=3.24 ,ligint: histidine partner (tautomer assigned by PLIP)
+1ACJ,C,THA:A:999,water,ligint,SER 81A,N15 -> O d=3.16 via HOH 643A:O; d(H2O-prot) 2.89,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ACJ,C,THA:A:999,water,PLIP,ASN 85A,d=?,PLIP: water bridge not reported by ligint
+1AJ6,C,NOV:A:1,hbond,PLIP,THR 165A,d=3.81 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1AJ6,C,NOV:A:1,water,ligint,ASP 73A,O4 -> OD1 d=2.97 via HOH 227A:O; d(H2O-prot) 2.77,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1AJ6,C,NOV:A:1,water,ligint,THR 165A,O4 -> OG1 d=2.97 via HOH 227A:O; d(H2O-prot) 2.57,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1AJ6,C,NOV:A:1,water,ligint,VAL 43A,N1 -> O d=3.11 via HOH 230A:O; d(H2O-prot) 2.97,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1AJ6,C,NOV:A:1,salt,PLIP,ARG 76A,d=4.03,PLIP: beyond 4.0 A (outside the ligint threshold)
+1AQ1,C,STU:A:299,hydrophobic,PLIP,ASP 145A,d=3.50,PLIP: hydrophobic contact not reported by ligint
+1AQ1,C,STU:A:299,hbond,ligint,GLU 81A,N1 -> O d=2.75 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1AQ1,C,STU:A:299,salt,ligint,ASP 86A,N4 -> OD2 d=2.82 also hydrogen bond,ligint: salt bridge not reported by PLIP
+1ATK,C,E64:A:216,hbond,ligint,HIS 162A,O1 -> ND1 d=2.95 ,ligint: histidine partner (tautomer assigned by PLIP)
+1ATK,C,E64:A:216,hbond,PLIP,GLY 23A,d=3.66 don=O.co2 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1ATK,C,E64:A:216,hbond,PLIP,TRP 26A,d=4.09 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1ATK,C,E64:A:216,water,ligint,ASN 161A,O1 -> O d=2.66 via HOH 232A:O; d(H2O-prot) 2.88,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ATK,C,E64:A:216,water,ligint,GLY 64A,O3 -> O d=2.91 via HOH 225A:O; d(H2O-prot) 2.79,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ATK,C,E64:A:216,water,ligint,GLY 65A,O3 -> N d=2.91 via HOH 225A:O; d(H2O-prot) 3.33,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1ATK,C,E64:A:216,salt,PLIP,HIS 162A,d=4.53,PLIP: beyond 4.0 A (outside the ligint threshold)
+1BSX,C,T3:A:1,hydrophobic,ligint,HIS 435A,C10 -> CD2 d=3.71 ,ligint: hydrophobic contact not reported by PLIP
+1BSX,C,T3:A:1,hydrophobic,ligint,LEU 330A,C5 -> CD2 d=3.62 ; C5 -> CG d=3.99 ,ligint: hydrophobic contact not reported by PLIP
+1BSX,C,T3:A:1,hydrophobic,ligint,MET 313A,C11 -> CB d=3.99 ; C13 -> CB d=3.95 ,ligint: hydrophobic contact not reported by PLIP
+1BSX,C,T3:A:1,hbond,ligint,HIS 435A,O1 -> NE2 d=2.78 ,ligint: histidine partner (tautomer assigned by PLIP)
+1BSX,C,T3:A:1,hbond,PLIP,ARG 320A,d=3.98 don=Ng+ acc=O.co2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1BSX,C,T3:A:1,hbond,PLIP,ASN 331A,d=2.89 don=Nam acc=N3,"PLIP: D-A within 3.5 A, to be examined"
+1BSX,C,T3:A:1,salt,ligint,ARG 320A,OXT -> NH1 d=3.98 ,ligint: salt bridge not reported by PLIP
+1BSX,C,T3:A:1,halogen,PLIP,GLY 344A,d=3.95,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+1C3W,C,RET:A:301,hydrophobic,ligint,LEU 93A,C15 -> CD1 d=3.95 ; C20 -> CD1 d=3.79 ,ligint: hydrophobic contact not reported by PLIP
+1C3W,C,RET:A:301,hydrophobic,ligint,MET 118A,C19 -> CE d=3.61 ; C9 -> CE d=3.89 ,ligint: hydrophobic contact not reported by PLIP
+1C3W,C,RET:A:301,hydrophobic,ligint,TRP 138A,C3 -> CD1 d=3.67 ; C4 -> CD1 d=3.77 ,ligint: hydrophobic contact not reported by PLIP
+1C3W,C,SQU:A:701,hydrophobic,ligint,LEU 19A,C22 -> CD2 d=3.89 ,ligint: hydrophobic contact not reported by PLIP
+1D3G,C,ACT:A:401,hydrophobic,PLIP,ASP 311A,d=3.47,PLIP: hydrophobic contact not reported by ligint
+1D3G,C,ACT:A:401,hydrophobic,PLIP,GLN 315A,d=3.74,PLIP: hydrophobic contact not reported by ligint
+1D3G,C,ACT:A:401,hbond,PLIP,GLN 315A,d=3.36 don=N3 acc=O.co2,"PLIP: D-A within 3.5 A, to be examined"
+1D3G,C,BRE:A:397,hydrophobic,ligint,MET 43A,C1 -> CE d=3.72 ; C12 -> CE d=3.92 ; C23 -> CE d=3.80 ; C8 -> CE d=3.80 ; C9 -> CE d=3.96 ,ligint: hydrophobic contact not reported by PLIP
+1D3G,C,BRE:A:397,hydrophobic,PLIP,GLN 47A,d=3.90,PLIP: hydrophobic contact not reported by ligint
+1D3G,C,BRE:A:397,hbond,PLIP,PRO 52A,d=3.99 don=O.co2 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1D3G,C,BRE:A:397,pistack,ligint,HIS 56A,ring(C6) -> ring d=4.89 normals angle 21; plane distance 3.2; offset 3.1 A,ligint: stacking not reported by PLIP
+1D3G,C,DDQ:A:700,hydrophobic,ligint,MET 30A,C3 -> CE d=3.50 ; C4 -> CE d=3.57 ; C6 -> CE d=3.92 ,ligint: hydrophobic contact not reported by PLIP
+1D3G,C,FMN:A:398,hydrophobic,PLIP,ASN 145A,d=3.82,PLIP: hydrophobic contact not reported by ligint
+1D3G,C,FMN:A:398,hbond,ligint,ASN 212A,O2 -> ND2 d=2.95 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1D3G,C,FMN:A:398,hbond,ligint,THR 283A,O3' -> O d=2.98 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1D3G,C,FMN:A:398,hbond,PLIP,ASN 284A,d=3.79 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1D3G,C,FMN:A:398,hbond,PLIP,SER 305A,d=4.09 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1D3G,C,FMN:A:398,water,ligint,GLY 335A,O2P -> N d=2.63 via HOH 403A:O; d(H2O-prot) 3.24,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1D3G,C,ORO:A:399,hbond,ligint,ASN 212A,O4 -> ND2 d=3.08 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1D3G,C,ORO:A:399,hbond,ligint,TYR 147A,O72 -> N d=3.16 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1D3G,C,ORO:A:399,water,PLIP,SER 215A,d=?; d=?,PLIP: water bridge not reported by ligint
+1D3G,C,SO4:A:400,hbond,ligint,HIS 248A,O3 -> NE2 d=2.88 ,ligint: histidine partner (tautomer assigned by PLIP)
+1D3G,C,SO4:A:400,water,ligint,ARG 246A,O2 -> N d=3.25 via HOH 614A:O; d(H2O-prot) 3.40,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1D3G,C,SO4:A:400,salt,PLIP,HIS 248A,d=4.83,PLIP: beyond 4.0 A (outside the ligint threshold)
+1DWC,C,MIT:H:1,hydrophobic,ligint,HIS 57H,C31 -> CD2 d=3.45 ; C41 -> CD2 d=3.58 ; C41 -> CG d=3.97 ; C71 -> CD2 d=3.98 ,ligint: hydrophobic contact not reported by PLIP
+1DWC,C,MIT:H:1,hydrophobic,ligint,TRP 60H,C21 -> CZ3 d=3.78 ; C21 -> CH2 d=3.94 ; C6 -> CH2 d=3.72 ; C6 -> CZ2 d=3.79 ; C71 -> CZ3 d=3.73 ; C71 -> CE3 d=3.99 ,ligint: hydrophobic contact not reported by PLIP
+1DWC,C,MIT:H:1,hydrophobic,ligint,TYR 60H,C71 -> CD2 d=3.43 ; C71 -> CE2 d=3.73 ; C71 -> CG d=3.81 ,ligint: hydrophobic contact not reported by PLIP
+1DWC,C,MIT:H:1,hydrophobic,PLIP,TRP 0H,d=3.72; d=3.78,PLIP: hydrophobic contact not reported by ligint
+1DWC,C,MIT:H:1,hydrophobic,PLIP,TYR 0H,d=3.43,PLIP: hydrophobic contact not reported by ligint
+1DWC,C,MIT:H:1,water,PLIP,LYS 0H,d=?,PLIP: water bridge not reported by ligint
+1DWC,C,MIT:H:1,salt,PLIP,ASP 0H,d=5.23,PLIP: beyond 4.0 A (outside the ligint threshold)
+1DWC,C,MIT:H:1,salt,PLIP,HIS 57H,d=5.26,PLIP: beyond 4.0 A (outside the ligint threshold)
+1E3G,C,R18:A:1000,hydrophobic,ligint,MET 742A,C18 -> CE d=3.91 ,ligint: hydrophobic contact not reported by PLIP
+1E3G,C,R18:A:1000,hydrophobic,ligint,MET 895A,C12 -> CE d=3.88 ; C18 -> CE d=3.85 ,ligint: hydrophobic contact not reported by PLIP
+1E3G,C,R18:A:1000,hbond,ligint,ASN 705A,O97 -> OD1 d=2.79 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1E3G,C,R18:A:1000,hbond,PLIP,GLN 711A,d=3.88 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1E3G,C,R18:A:1000,water,ligint,GLN 711A,O83 -> OE1 d=3.18 via HOH 2011A:O; d(H2O-prot) 2.84,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1E3G,C,R18:A:1000,water,ligint,MET 749A,O83 -> N d=3.18 via HOH 2011A:O; d(H2O-prot) 3.39,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1E8X,C,ATP:A:3000,hbond,ligint,ASN 951A,O3G -> ND2 d=3.08 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1E8X,C,ATP:A:3000,hbond,ligint,GLU 880A,N6 -> O d=3.06 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1E8X,C,ATP:A:3000,hbond,PLIP,ASP 964A,d=2.51 don=O3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1E8X,C,ATP:A:3000,hbond,PLIP,LYS 807A,d=3.54 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1E8X,C,ATP:A:3000,hbond,PLIP,LYS 808A,d=4.06 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1E8X,C,ATP:A:3000,hbond,PLIP,LYS 890A,d=3.85 don=N3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1E8X,C,ATP:A:3000,hbond,PLIP,THR 887A,d=3.98 don=O3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1E8X,C,ATP:A:3000,water,ligint,ASN 951A,O2G -> OD1 d=2.51 via HOH 2253A:O; d(H2O-prot) 3.33,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1E8X,C,ATP:A:3000,salt,PLIP,LYS 807A,d=5.13; d=5.19,PLIP: beyond 4.0 A (outside the ligint threshold)
+1FJS,C,GOL:A:502,water,PLIP,ASP 126A,d=?; d=?,PLIP: water bridge not reported by ligint
+1FJS,C,Z34:A:500,hydrophobic,ligint,PHE 174A,C23 -> CE2 d=3.93 ; C24 -> CE2 d=3.65 ; C24 -> CZ d=3.65 ; C24 -> CD2 d=3.90 ; C24 -> CE1 d=3.91 ,ligint: hydrophobic contact not reported by PLIP
+1FJS,C,Z34:A:500,hbond,ligint,SER 195A,O11 -> OG d=2.38 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1FJS,C,Z34:A:500,hbond,PLIP,ASP 189A,d=3.01 don=Ng+ acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1FJS,C,Z34:A:500,hbond,PLIP,GLN 192A,d=3.80 don=Nam acc=O.co2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1FJS,C,Z34:A:500,water,ligint,GLU 146A,O34 -> O d=3.48 via HOH 723A:O; d(H2O-prot) 2.83,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1FJS,C,Z34:A:500,water,ligint,HIS 57A,O11 -> NE2 d=2.82 via HOH 606A:O; d(H2O-prot) 3.00; O11 -> NE2 d=3.07 via HOH 608A:O; d(H2O-prot) 2.86,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1FJS,C,Z34:A:500,water,ligint,ILE 227A,N12 -> O d=2.85 via HOH 605A:O; d(H2O-prot) 2.91; N12 -> N d=2.85 via HOH 605A:O; d(H2O-prot) 3.32,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1FJS,C,Z34:A:500,water,ligint,SER 214A,N5 -> O d=3.37 via HOH 606A:O; d(H2O-prot) 2.74; O11 -> O d=2.82 via HOH 606A:O; d(H2O-prot) 2.74,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1FJS,C,Z34:A:500,water,PLIP,GLY 218A,d=?,PLIP: water bridge not reported by ligint
+1FJS,C,Z34:A:500,salt,ligint,ASP 189A,N11 -> OD2 d=2.71 also hydrogen bond; N11 -> OD1 d=3.77 ; N12 -> OD1 d=3.01 also hydrogen bond; N12 -> OD2 d=3.44 ,ligint: salt bridge not reported by PLIP
+1GD1,C,NAD:O:336,hydrophobic,ligint,CYS 149O,C4N -> CB d=3.90 ; C5N -> CB d=3.85 ,ligint: hydrophobic contact not reported by PLIP
+1GD1,C,NAD:O:336,hbond,ligint,ASP 32O,O2B -> OD2 d=2.54 ; O3B -> OD1 d=2.61 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1GD1,C,NAD:O:336,hbond,ligint,SER 119O,O4D -> OG d=3.11 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1GD1,C,NAD:O:336,hbond,PLIP,ASN 31O,d=3.87 don=Nam acc=Nar,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1GD1,C,NAD:O:336,hbond,PLIP,PHE 8O,d=3.94 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1GD1,C,NAD:O:336,water,ligint,ARG 77O,N1A -> O d=2.83 via HOH 380O:O; d(H2O-prot) 3.31,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1GD1,C,NAD:O:336,water,ligint,ASN 31O,N1A -> ND2 d=2.83 via HOH 380O:O; d(H2O-prot) 3.29,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1GD1,C,NAD:O:336,water,ligint,GLU 76O,N1A -> O d=2.83 via HOH 380O:O; d(H2O-prot) 2.98,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1GD1,C,NAD:O:336,water,ligint,SER 95O,O2N -> O d=2.75 via HOH 352O:O; d(H2O-prot) 2.86,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1GD1,C,NAD:O:336,water,PLIP,GLY 97O,d=?,PLIP: water bridge not reported by ligint
+1GD1,C,NAD:O:336,water,PLIP,LEU 185R,d=?,PLIP: water bridge not reported by ligint
+1GD1,C,NAD:O:336,water,PLIP,THR 96O,d=?,PLIP: water bridge not reported by ligint
+1GD1,C,SO4:O:338,water,ligint,ARG 231O,O1 -> NH1 d=2.78 via HOH 424O:O; d(H2O-prot) 3.26,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1HWK,C,117:A:2,hydrophobic,ligint,CYS 561B,C20 -> CB d=3.67 ; C93 -> CB d=3.51 ,ligint: hydrophobic contact not reported by PLIP
+1HWK,C,117:A:2,hydrophobic,ligint,VAL 683A,C84 -> CG1 d=3.60 ,ligint: hydrophobic contact not reported by PLIP
+1HWK,C,117:A:2,hbond,ligint,GLU 559B,O5 -> OE2 d=2.69 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1HWK,C,117:A:2,water,PLIP,ASN 686A,d=?,PLIP: water bridge not reported by ligint
+1HWK,C,ADP:A:101,hbond,ligint,TYR 479A,O2B -> OH d=2.93 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1HWK,C,ADP:A:101,hbond,PLIP,ASN 529A,d=4.09 don=Nam acc=Nar,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1HXW,C,RIT:B:301,hbond,ligint,ASP 25B,O41 -> OD1 d=2.65 ; O41 -> OD2 d=2.74 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1HXW,C,RIT:B:301,hbond,PLIP,GLY 27B,d=3.54 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1HXW,C,RIT:B:301,water,ligint,ASP 29A,O76 -> OD1 d=2.89 via HOH 101A:O; d(H2O-prot) 2.61,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1HXW,C,RIT:B:301,water,ligint,GLY 27A,O76 -> O d=2.89 via HOH 101A:O; d(H2O-prot) 2.90,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1HXW,C,RIT:B:301,water,PLIP,ARG 8B,d=?,PLIP: water bridge not reported by ligint
+1KIF,C,BEZ:A:349,hydrophobic,ligint,TYR 224A,C1 -> CE2 d=3.61 ; C1 -> CD2 d=3.84 ; C2 -> CE2 d=3.50 ; C6 -> CE1 d=3.93 ,ligint: hydrophobic contact not reported by PLIP
+1KIF,C,FAD:A:348,hbond,PLIP,GLY 315A,d=2.94 don=Nam acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1KIF,C,FAD:A:348,hbond,PLIP,GLY 9A,d=3.89 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1KIF,C,FAD:A:348,hbond,PLIP,TYR 314A,d=4.09 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1KIF,C,FAD:A:348,hbond,PLIP,VAL 10A,d=4.06 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1KIF,C,FAD:A:348,water,ligint,ASN 308A,O2P -> O d=2.95 via HOH 351A:O; d(H2O-prot) 3.02,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1KIF,C,FAD:A:348,water,ligint,CYS 181A,O1P -> O d=2.58 via HOH 364A:O; d(H2O-prot) 2.86; O2P -> O d=2.95 via HOH 351A:O; d(H2O-prot) 3.07,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1KIF,C,FAD:A:348,water,ligint,GLY 9A,O1P -> N d=2.58 via HOH 364A:O; d(H2O-prot) 3.03,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1KIF,C,FAD:A:348,water,ligint,HIS 311A,O2P -> ND1 d=2.89 via HOH 355A:O; d(H2O-prot) 2.45,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1KIF,C,FAD:A:348,water,ligint,THR 182A,O2P -> N d=2.95 via HOH 351A:O; d(H2O-prot) 3.26,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1KIF,C,FAD:A:348,water,PLIP,GLY 310A,d=?,PLIP: water bridge not reported by ligint
+1KIF,C,FAD:A:348,picat,ligint,ARG 283A,ring(C5X) -> CZ d=4.59 axis-normal angle 23,ligint: cation-pi not reported by PLIP (ligand protonation?)
+1O86,C,GLY:A:2000,water,PLIP,GLU 376A,d=?,PLIP: water bridge not reported by ligint
+1O86,C,LPR:A:702,hydrophobic,ligint,HIS 353A,C14 -> CD2 d=3.94 ,ligint: hydrophobic contact not reported by PLIP
+1O86,C,LPR:A:702,hydrophobic,ligint,TYR 523A,C6 -> CD2 d=3.64 ; C6 -> CE2 d=3.88 ; C7 -> CD2 d=3.88 ,ligint: hydrophobic contact not reported by PLIP
+1O86,C,LPR:A:702,hbond,ligint,ALA 354A,N1 -> O d=2.92 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1O86,C,LPR:A:702,hbond,ligint,TYR 520A,O4 -> OH d=2.56 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1O86,C,LPR:A:702,hbond,ligint,TYR 523A,O3 -> OH d=2.77 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1O86,C,LPR:A:702,hbond,PLIP,GLN 281A,d=3.22 don=Nam acc=O.co2,"PLIP: D-A within 3.5 A, to be examined"
+1O86,C,LPR:A:702,water,ligint,ASP 377A,N3 -> OD1 d=3.01 via HOH 2392A:O; d(H2O-prot) 2.66; N3 -> OD1 d=3.26 via HOH 2393A:O; d(H2O-prot) 2.92,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1O86,C,LPR:A:702,water,ligint,LYS 511A,O5 -> NZ d=2.68 via HOH 2569A:O; d(H2O-prot) 3.04,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1O86,C,LPR:A:702,water,PLIP,ALA 354A,d=?,PLIP: water bridge not reported by ligint
+1O86,C,LPR:A:702,water,PLIP,GLU 376A,d=?,PLIP: water bridge not reported by ligint
+1O86,C,LPR:A:702,water,PLIP,GLY 2000A,d=?,PLIP: water bridge not reported by ligint
+1O86,C,LPR:A:702,salt,PLIP,HIS 353A,d=5.39,PLIP: beyond 4.0 A (outside the ligint threshold)
+1O86,C,LPR:A:702,salt,PLIP,HIS 383A,d=4.44,PLIP: beyond 4.0 A (outside the ligint threshold)
+1O86,C,LPR:A:702,salt,PLIP,HIS 387A,d=4.35,PLIP: beyond 4.0 A (outside the ligint threshold)
+1O86,C,LPR:A:702,salt,PLIP,HIS 513A,d=4.52,PLIP: beyond 4.0 A (outside the ligint threshold)
+1OYA,C,FMN:A:401,hbond,PLIP,GLN 114A,d=3.76 don=Nar acc=O2; d=3.60 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1OYA,C,FMN:A:401,hbond,PLIP,GLU 299A,d=3.87 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1OYA,C,FMN:A:401,water,ligint,ARG 348A,O3P -> N d=2.73 via HOH 536A:O; d(H2O-prot) 3.40,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1OYA,C,FMN:A:401,water,ligint,ASN 325A,O3P -> N d=2.69 via HOH 540A:O; d(H2O-prot) 3.34,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1OYA,C,FMN:A:401,water,ligint,GLY 324A,O3P -> N d=2.69 via HOH 540A:O; d(H2O-prot) 2.98,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1OYA,C,FMN:A:401,water,PLIP,ASN 194A,d=?,PLIP: water bridge not reported by ligint
+1PAU,C,ASJ:C:505,hbond,ligint,HIS 237A,O -> ND1 d=3.00 ,ligint: histidine partner (tautomer assigned by PLIP)
+1PAU,C,ASJ:C:505,hbond,PLIP,CYS 285A,d=3.99 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1PAU,C,ASJ:C:505,hbond,PLIP,GLY 238A,d=3.92 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1PAU,C,ASJ:C:505,water,PLIP,HIS 237A,d=?,PLIP: water bridge not reported by ligint
+1PAU,C,ASJ:C:505,salt,PLIP,HIS 237A,d=5.34,PLIP: beyond 4.0 A (outside the ligint threshold)
+1PPB,C,0G6:H:1,hydrophobic,ligint,HIS 57H,C3 -> CG d=3.54 ; CB1 -> CD2 d=3.48 ; CB1 -> CG d=3.84 ,ligint: hydrophobic contact not reported by PLIP
+1PPB,C,0G6:H:1,hydrophobic,ligint,TYR 60H,CG1 -> CE2 d=3.57 ,ligint: hydrophobic contact not reported by PLIP
+1PPB,C,0G6:H:1,hydrophobic,PLIP,TYR 0H,d=3.57,PLIP: hydrophobic contact not reported by ligint
+1PPB,C,0G6:H:1,hbond,PLIP,TRP 215H,d=3.72 don=Ng+ acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1PPB,C,0G6:H:1,water,ligint,GLU 192H,N -> OE2 d=2.85 via HOH 331H:O; d(H2O-prot) 3.17; N -> OE1 d=2.85 via HOH 331H:O; d(H2O-prot) 2.72; NE -> OE1 d=2.96 via HOH 303H:O; d(H2O-prot) 3.06; O1 -> OE2 d=2.79 via HOH 331H:O; d(H2O-prot) 3.17; O1 -> OE1 d=2.79 via HOH 331H:O; d(H2O-prot) 2.72,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1PPB,C,0G6:H:1,water,ligint,GLY 219H,NE -> O d=2.96 via HOH 303H:O; d(H2O-prot) 2.79,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1PPB,C,0G6:H:1,water,ligint,PHE 227H,NH1 -> O d=2.81 via HOH 305H:O; d(H2O-prot) 3.41,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1PPB,C,0G6:H:1,salt,PLIP,ASP 0H,d=3.52,"PLIP: within 4.0 A, to be examined"
+1QCF,C,PP1:A:532,hbond,ligint,THR 338A,N10 -> OG1 d=3.16 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1QCF,C,PP1:A:532,water,PLIP,GLY 344A,d=?,PLIP: water bridge not reported by ligint
+1QSG,C,GLC:A:1303,water,ligint,ASP 64A,O1 -> OD1 d=2.84 via HOH 1378A:O; d(H2O-prot) 3.27; O1 -> OD2 d=2.84 via HOH 1378A:O; d(H2O-prot) 2.74; O5 -> OD1 d=3.47 via HOH 1378A:O; d(H2O-prot) 3.27; O5 -> OD2 d=3.47 via HOH 1378A:O; d(H2O-prot) 2.74,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1QSG,C,NAD:A:1301,hbond,ligint,THR 194A,N7N -> OG1 d=3.31 ; O1N -> OG1 d=2.76 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1QSG,C,NAD:A:1301,hbond,PLIP,GLY 93A,d=3.76 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1QSG,C,NAD:A:1301,hbond,PLIP,ILE 92A,d=3.72 don=Nam acc=O3; d=3.39 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1QSG,C,NAD:A:1301,water,ligint,ILE 92A,O3D -> N d=2.75 via HOH 1308A:O; d(H2O-prot) 3.18,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1QSG,C,NAD:A:1301,water,ligint,SER 16A,O2A -> OG d=2.89 via HOH 1321A:O; d(H2O-prot) 3.17,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1QSG,C,NAD:A:1301,water,ligint,SER 91A,O2N -> OG d=2.88 via HOH 1324A:O; d(H2O-prot) 2.86,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1QSG,C,NAD:A:1301,water,PLIP,LEU 144A,d=?,PLIP: water bridge not reported by ligint
+1QSG,C,TCL:A:1302,hydrophobic,ligint,ALA 196A,C9 -> CB d=3.54 ,ligint: hydrophobic contact not reported by PLIP
+1QSG,C,TCL:A:1302,hydrophobic,ligint,TYR 146A,C1 -> CG d=3.85 ; C1 -> CD2 d=3.96 ,ligint: hydrophobic contact not reported by PLIP
+1QSG,C,TCL:A:1302,halogen,PLIP,ALA 95A,d=3.53,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+1S9J,C,ATP:A:535,hbond,ligint,GLN 153A,O2' -> OE1 d=3.10 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1S9J,C,ATP:A:535,hbond,PLIP,ASP 190A,d=4.06 don=O3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1S9J,C,ATP:A:535,water,ligint,ASN 195A,O1B -> ND2 d=2.49 via HOH 1097A:O; d(H2O-prot) 3.47; O2A -> ND2 d=2.69 via HOH 1097A:O; d(H2O-prot) 3.47; O2A -> OD1 d=2.69 via HOH 1097A:O; d(H2O-prot) 2.73; O2A -> OD1 d=2.96 via HOH 1098A:O; d(H2O-prot) 3.04; O2G -> OD1 d=2.65 via HOH 1097A:O; d(H2O-prot) 2.73; O2G -> ND2 d=2.65 via HOH 1097A:O; d(H2O-prot) 3.47; O5' -> OD1 d=3.34 via HOH 1098A:O; d(H2O-prot) 3.04,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,ATP:A:535,water,ligint,ASP 208A,O1B -> OD2 d=2.49 via HOH 1097A:O; d(H2O-prot) 2.70; O1B -> OD2 d=3.21 via HOH 1098A:O; d(H2O-prot) 2.85; O5' -> OD2 d=3.34 via HOH 1098A:O; d(H2O-prot) 2.85,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,ATP:A:535,water,ligint,GLN 153A,N3 -> OE1 d=3.17 via HOH 1007A:O; d(H2O-prot) 2.99,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,ATP:A:535,water,ligint,LEU 74A,N3 -> O d=3.17 via HOH 1007A:O; d(H2O-prot) 3.40; O2' -> O d=3.44 via HOH 1007A:O; d(H2O-prot) 3.40,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,ATP:A:535,water,ligint,SER 194A,O1B -> O d=3.21 via HOH 1098A:O; d(H2O-prot) 3.05; O2A -> O d=2.96 via HOH 1098A:O; d(H2O-prot) 3.05; O5' -> O d=3.34 via HOH 1098A:O; d(H2O-prot) 3.05,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,ATP:A:535,water,PLIP,LYS 97A,d=?; d=?; d=?,PLIP: water bridge not reported by ligint
+1S9J,C,BBM:A:1001,hydrophobic,ligint,LEU 215A,C11 -> CD1 d=3.81 ; C12 -> CD1 d=3.91 ,ligint: hydrophobic contact not reported by PLIP
+1S9J,C,BBM:A:1001,hydrophobic,ligint,MET 219A,C10 -> CE d=3.95 ; C9 -> CE d=3.58 ,ligint: hydrophobic contact not reported by PLIP
+1S9J,C,BBM:A:1001,hbond,ligint,GLY 77A,O3 -> O d=3.01 ,ligint: 3.0-3.5 A contact not reported by PLIP
+1S9J,C,BBM:A:1001,hbond,PLIP,ASN 78A,d=3.54 don=O3 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1S9J,C,BBM:A:1001,water,ligint,ASN 195A,O4 -> ND2 d=2.79 via HOH 1097A:O; d(H2O-prot) 3.47; O4 -> OD1 d=2.79 via HOH 1097A:O; d(H2O-prot) 2.73,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1S9J,C,BBM:A:1001,halogen,PLIP,SER 212A,d=3.88,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+1T69,C,SHH:A:379,hydrophobic,ligint,HIS 143A,C2 -> CD2 d=3.80 ,ligint: hydrophobic contact not reported by PLIP
+1T69,C,SHH:A:379,hydrophobic,ligint,MET 274A,C7 -> CE d=3.87 ,ligint: hydrophobic contact not reported by PLIP
+1T69,C,SHH:A:379,hbond,ligint,HIS 142A,O1 -> NE2 d=2.68 ,ligint: histidine partner (tautomer assigned by PLIP)
+1T69,C,SHH:A:379,hbond,ligint,TYR 306A,O2 -> OH d=2.60 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1T69,C,SHH:A:379,hbond,PLIP,HIS 180A,d=4.09 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1T69,C,SHH:A:379,salt,PLIP,ASP 178A,d=3.52,"PLIP: within 4.0 A, to be examined"
+1T69,C,SHH:A:379,salt,PLIP,ASP 267A,d=4.99,PLIP: beyond 4.0 A (outside the ligint threshold)
+1VID,C,DNC:A:302,water,ligint,ASP 141A,O1 -> OD2 d=3.35 via HOH 400A:O; d(H2O-prot) 2.71,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,DNC:A:302,water,ligint,LYS 144A,O4 -> N d=3.10 via HOH 381A:O; d(H2O-prot) 3.30,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,DNC:A:302,water,ligint,MET 40A,O1 -> O d=3.35 via HOH 400A:O; d(H2O-prot) 2.85,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,DNC:A:302,water,ligint,VAL 42A,O1 -> N d=3.35 via HOH 400A:O; d(H2O-prot) 2.93,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,SAM:A:301,hydrophobic,ligint,MET 40A,CE -> CG d=3.79 ; CE -> CB d=3.98 ,ligint: hydrophobic contact not reported by PLIP
+1VID,C,SAM:A:301,hbond,ligint,ASP 141A,N -> OD2 d=2.85 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1VID,C,SAM:A:301,hbond,ligint,GLU 90A,O2' -> OE2 d=2.70 ; O3' -> OE1 d=2.79 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1VID,C,SAM:A:301,hbond,ligint,GLY 66A,N -> O d=2.93 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1VID,C,SAM:A:301,hbond,PLIP,ALA 67A,d=3.64 don=O.co2 acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1VID,C,SAM:A:301,hbond,PLIP,ASN 41A,d=3.93 don=Nam acc=O.co2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1VID,C,SAM:A:301,hbond,PLIP,TRP 143A,d=3.73 don=Nam acc=Nar,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1VID,C,SAM:A:301,hbond,PLIP,TYR 68A,d=3.36 don=Nam acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1VID,C,SAM:A:301,hbond,PLIP,TYR 71A,d=3.55 don=Nam acc=O.co2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+1VID,C,SAM:A:301,water,ligint,ASN 41A,OXT -> ND2 d=2.57 via HOH 359A:O; d(H2O-prot) 2.85,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,SAM:A:301,water,ligint,GLY 70A,OXT -> N d=2.57 via HOH 359A:O; d(H2O-prot) 3.22,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,SAM:A:301,water,ligint,TYR 71A,OXT -> N d=2.57 via HOH 359A:O; d(H2O-prot) 3.06,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1VID,C,SAM:A:301,salt,PLIP,ASP 141A,d=4.82,PLIP: beyond 4.0 A (outside the ligint threshold)
+1X70,C,715:A:801,hydrophobic,ligint,TYR 666A,C4 -> CE2 d=3.89 ,ligint: hydrophobic contact not reported by PLIP
+1X70,C,715:A:801,hbond,PLIP,GLU 205A,d=2.83 don=O3 acc=N3,"PLIP: D-A within 3.5 A, to be examined"
+1X70,C,715:A:801,hbond,PLIP,GLU 206A,d=3.09 don=N3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+1X70,C,715:A:801,water,PLIP,PHE 357A,d=?,PLIP: water bridge not reported by ligint
+1X70,C,715:A:801,water,PLIP,SER 209A,d=?; d=?,PLIP: water bridge not reported by ligint
+1X70,C,715:A:801,salt,ligint,GLU 205A,N20 -> OE2 d=2.83 also hydrogen bond,ligint: salt bridge not reported by PLIP
+1X70,C,715:A:801,salt,ligint,GLU 206A,N20 -> OE2 d=2.70 also hydrogen bond; N20 -> OE1 d=3.09 ,ligint: salt bridge not reported by PLIP
+1X70,C,715:A:801,halogen,PLIP,SER 209A,d=3.09,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+1X70,C,NDG:C:2,hydrophobic,ligint,VAL 78A,C8 -> CG1 d=3.88 ,ligint: hydrophobic contact not reported by PLIP
+1X70,C,NDG:C:2,hbond,ligint,SER 87A,O7 -> OG d=2.93 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+1X70,C,NDG:C:2,water,ligint,ASN 80A,N2 -> ND2 d=2.87 via HOH 1790A:O; d(H2O-prot) 2.75,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1X70,C,NDG:C:2,water,ligint,GLU 67A,N2 -> OE2 d=2.87 via HOH 1790A:O; d(H2O-prot) 2.62,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+1XKK,C,FMM:A:91,hydrophobic,ligint,LEU 799A,C1 -> CD2 d=3.53 ; C1 -> CB d=3.77 ; C1 -> CG d=3.96 ,ligint: hydrophobic contact not reported by PLIP
+1XKK,C,FMM:A:91,hydrophobic,ligint,MET 766A,C29 -> CE d=3.39 ; C30 -> CE d=3.32 ; C30 -> CG d=3.99 ; C31 -> CG d=3.85 ,ligint: hydrophobic contact not reported by PLIP
+1XKK,C,FMM:A:91,hydrophobic,ligint,PHE 856A,C31 -> CE1 d=3.48 ; C31 -> CZ d=3.56 ; C31 -> CD1 d=3.79 ; C31 -> CE2 d=3.93 ; C32 -> CE1 d=3.64 ; C32 -> CZ d=3.65 ,ligint: hydrophobic contact not reported by PLIP
+1XKK,C,FMM:A:91,salt,ligint,ARG 803A,O4 -> NH2 d=3.62 ,ligint: salt bridge not reported by PLIP
+1XKK,C,FMM:A:91,halogen,PLIP,THR 790A,d=3.14,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+1XKK,C,PO4:A:81,salt,PLIP,LYS 913A,d=4.98,PLIP: beyond 4.0 A (outside the ligint threshold)
+2A65,C,BOG:A:701,water,ligint,ARG 446A,O5 -> N d=3.26 via HOH 837A:O; d(H2O-prot) 3.44,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2A65,C,BOG:A:701,water,PLIP,VAL 444A,d=?,PLIP: water bridge not reported by ligint
+2A65,C,LEU:A:601,hydrophobic,ligint,ILE 359A,CD1 -> CG2 d=3.90 ; CD2 -> CG2 d=3.82 ,ligint: hydrophobic contact not reported by PLIP
+2A65,C,LEU:A:601,hydrophobic,PLIP,LEU 601A,d=1.52,PLIP: hydrophobic contact not reported by ligint
+2A65,C,LEU:A:601,hbond,ligint,ALA 22A,N -> O d=2.90 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+2A65,C,LEU:A:601,hbond,ligint,PHE 253A,N -> O d=2.88 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+2A65,C,LEU:A:601,hbond,ligint,THR 254A,N -> O d=3.12 ,ligint: 3.0-3.5 A contact not reported by PLIP
+2A65,C,LEU:A:601,hbond,ligint,TYR 108A,O -> OH d=2.66 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+2A65,C,LEU:A:601,hbond,PLIP,LEU 601A,d=3.62 don=N3 acc=N3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+2CYP,C,HEM:A:295,hydrophobic,ligint,HIS 175A,CHD -> CD2 d=3.85 ,ligint: hydrophobic contact not reported by PLIP
+2CYP,C,HEM:A:295,water,PLIP,HIS 52A,d=?,PLIP: water bridge not reported by ligint
+2CYP,C,HEM:A:295,salt,PLIP,ARG 48A,d=5.09,PLIP: beyond 4.0 A (outside the ligint threshold)
+2CYP,C,HEM:A:295,salt,PLIP,HIS 181A,d=4.29; d=4.03,PLIP: beyond 4.0 A (outside the ligint threshold)
+2FDN,C,SF4:A:61,picat,PLIP,TYR 30A,d=3.79 off=1.33,PLIP: cation-pi not reported by ligint
+2GQG,C,1N1:A:501,hydrophobic,ligint,ALA 269A,C2 -> CB d=3.52 ,ligint: hydrophobic contact not reported by PLIP
+2GQG,C,1N1:A:501,hydrophobic,ligint,LEU 370A,C2 -> CD1 d=3.56 ,ligint: hydrophobic contact not reported by PLIP
+2GQG,C,1N1:A:501,hydrophobic,ligint,MET 290A,C7 -> CE d=3.50 ,ligint: hydrophobic contact not reported by PLIP
+2GQG,C,GOL:B:1,hbond,PLIP,TYR 456B,d=3.43 don=O3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+2GQG,C,GOL:B:1,water,ligint,GLY 442A,O1 -> O d=2.52 via HOH 516B:O; d(H2O-prot) 2.72,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2GQG,C,GOL:B:1,water,ligint,PRO 441B,O1 -> O d=2.52 via HOH 516B:O; d(H2O-prot) 2.60,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2HU4,C,G39:A:800,hydrophobic,PLIP,ASN 294A,d=3.90,PLIP: hydrophobic contact not reported by ligint
+2HU4,C,G39:A:800,hbond,PLIP,GLU 119A,d=2.89 don=N3 acc=O3,"PLIP: D-A within 3.5 A, to be examined"
+2HU4,C,G39:A:800,salt,ligint,ASP 151A,N4 -> OD1 d=2.83 also hydrogen bond,ligint: salt bridge not reported by PLIP
+2HU4,C,G39:A:800,salt,ligint,GLU 119A,N4 -> OE2 d=2.89 also hydrogen bond,ligint: salt bridge not reported by PLIP
+2IFB,C,PLM:A:133,hydrophobic,ligint,ILE 23A,CD -> CD1 d=3.80 ; CF -> CD1 d=3.70 ,ligint: hydrophobic contact not reported by PLIP
+2IFB,C,PLM:A:133,hydrophobic,PLIP,ASP 74A,d=3.88,PLIP: hydrophobic contact not reported by ligint
+2IFB,C,PLM:A:133,hbond,ligint,TRP 82A,O1 -> NE1 d=2.38 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+2IFB,C,PLM:A:133,water,ligint,GLU 51A,O2 -> OE2 d=3.16 via HOH 170A:O; d(H2O-prot) 2.74,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2IFB,C,PLM:A:133,water,PLIP,TYR 70A,d=?; d=?,PLIP: water bridge not reported by ligint
+2VCI,C,2GJ:A:1225,hydrophobic,ligint,MET 98A,C13 -> CE d=3.55 ; C3 -> CG d=3.98 ; C32 -> CE d=3.93 ; C6 -> CE d=3.89 ,ligint: hydrophobic contact not reported by PLIP
+2VCI,C,2GJ:A:1225,hbond,ligint,ASP 93A,O33 -> OD2 d=2.36 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+2VCI,C,2GJ:A:1225,hbond,ligint,LYS 58A,O9 -> NZ d=3.28 ,ligint: 3.0-3.5 A contact not reported by PLIP
+2VCI,C,2GJ:A:1225,water,ligint,GLY 97A,O5 -> N d=2.57 via HOH 2233A:O; d(H2O-prot) 2.89,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2VCI,C,2GJ:A:1225,water,ligint,ILE 96A,N1 -> N d=3.15 via HOH 2233A:O; d(H2O-prot) 3.44; O33 -> N d=3.17 via HOH 2233A:O; d(H2O-prot) 3.44; O5 -> N d=2.57 via HOH 2233A:O; d(H2O-prot) 3.44,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2VCI,C,2GJ:A:1225,water,ligint,LEU 48A,O34 -> O d=2.51 via HOH 2232A:O; d(H2O-prot) 2.68,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2VCI,C,2GJ:A:1225,water,ligint,SER 52A,O34 -> OG d=2.51 via HOH 2232A:O; d(H2O-prot) 2.99,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2VCI,C,2GJ:A:1225,salt,PLIP,ASP 54A,d=5.28,PLIP: beyond 4.0 A (outside the ligint threshold)
+2W26,C,RIV:A:1001,hydrophobic,ligint,ALA 190A,C24 -> CB d=3.84 ,ligint: hydrophobic contact not reported by PLIP
+2W26,C,RIV:A:1001,hydrophobic,ligint,TYR 99A,C10 -> CE1 d=3.74 ; C10 -> CE2 d=3.79 ,ligint: hydrophobic contact not reported by PLIP
+2W26,C,RIV:A:1001,pistack,ligint,TRP 215A,ring(C7) -> ring6 d=5.20 normals angle 23; plane distance 3.8; offset 2.6 A; ring(C7) -> ring5 d=5.29 normals angle 23; plane distance 3.9; offset 2.7 A,ligint: stacking not reported by PLIP
+2XP2,C,VGH:A:9000,halogen,PLIP,GLY 1269A,d=3.04,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+2ZD1,C,EDO:B:429,hbond,PLIP,THR 403B,d=3.64 don=O3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+2ZD1,C,EDO:B:429,water,ligint,THR 400B,O2 -> O d=2.58 via HOH 545B:O; d(H2O-prot) 3.03,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2ZD1,C,EDO:B:429,water,ligint,TRP 401B,O2 -> N d=2.58 via HOH 545B:O; d(H2O-prot) 3.50,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2ZD1,C,EDO:B:429,water,ligint,TRP 402B,O2 -> N d=2.58 via HOH 545B:O; d(H2O-prot) 3.48,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+2ZD1,C,SO4:A:556,salt,PLIP,LYS 512A,d=5.13,PLIP: beyond 4.0 A (outside the ligint threshold)
+2ZD1,C,T27:A:557,hbond,ligint,LEU 234A,N5 -> O d=3.26 ,ligint: 3.0-3.5 A contact not reported by PLIP
+2ZD1,C,T27:A:557,water,PLIP,ILE 180A,d=?,PLIP: water bridge not reported by ligint
+2ZD1,C,T27:A:557,pistack,ligint,TYR 181A,ring(C1) -> ring d=4.37 normals angle 12; plane distance 3.5; offset 2.3 A,ligint: stacking not reported by PLIP
+3GRS,C,FAD:A:479,hbond,ligint,GLU 50A,O2B -> OE2 d=2.65 ; O3B -> OE1 d=2.69 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+3GRS,C,FAD:A:479,hbond,PLIP,GLY 157A,d=4.00 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3GRS,C,FAD:A:479,hbond,PLIP,GLY 28A,d=3.98 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3GRS,C,FAD:A:479,hbond,PLIP,GLY 32A,d=4.06 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3GRS,C,FAD:A:479,hbond,PLIP,LEU 337A,d=3.46 don=O3 acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+3GRS,C,FAD:A:479,hbond,PLIP,TYR 197A,d=3.85 don=O3 acc=N2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3GRS,C,FAD:A:479,water,ligint,ALA 155A,O1P -> O d=2.66 via HOH 484A:O; d(H2O-prot) 2.88,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,ASP 331A,O1A -> OD1 d=3.10 via HOH 490A:O; d(H2O-prot) 2.76,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,CYS 58A,O2A -> N d=2.88 via HOH 839A:O; d(H2O-prot) 2.84,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,GLU 201A,O4 -> OE1 d=3.29 via HOH 498A:O; d(H2O-prot) 2.70,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,GLY 157A,O2P -> N d=2.55 via HOH 482A:O; d(H2O-prot) 2.86,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,GLY 158A,O1A -> N d=3.10 via HOH 490A:O; d(H2O-prot) 2.85,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,GLY 32A,O1P -> N d=2.66 via HOH 484A:O; d(H2O-prot) 2.96,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,GLY 55A,O2A -> O d=2.88 via HOH 839A:O; d(H2O-prot) 2.70,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,SER 30A,O2A -> OG d=2.88 via HOH 839A:O; d(H2O-prot) 2.63; O4' -> OG d=3.17 via HOH 839A:O; d(H2O-prot) 2.63; O4' -> N d=3.17 via HOH 839A:O; d(H2O-prot) 3.24,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,VAL 329A,O2P -> O d=2.55 via HOH 482A:O; d(H2O-prot) 2.80,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,ligint,VAL 370A,O4 -> O d=3.29 via HOH 498A:O; d(H2O-prot) 3.01,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,FAD:A:479,water,PLIP,ALA 342A,d=?,PLIP: water bridge not reported by ligint
+3GRS,C,FAD:A:479,water,PLIP,SER 51A,d=?; d=?,PLIP: water bridge not reported by ligint
+3GRS,C,FAD:A:479,water,PLIP,THR 57A,d=?,PLIP: water bridge not reported by ligint
+3GRS,C,FAD:A:479,pistack,ligint,HIS 129A,ring(C5A) -> ring d=5.39 normals angle 23; plane distance 3.6; offset 3.5 A,ligint: stacking not reported by PLIP
+3GRS,C,FAD:A:479,pistack,ligint,TYR 197A,ring(C4X) -> ring d=5.45 normals angle 86; plane distance 2.9; offset 0.9 A,ligint: stacking not reported by PLIP
+3GRS,C,PO4:A:480,hbond,PLIP,ARG 218A,d=3.85 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3GRS,C,PO4:A:480,water,ligint,ALA 195A,O3 -> O d=2.72 via HOH 570A:O; d(H2O-prot) 3.07; O4 -> N d=3.20 via HOH 730A:O; d(H2O-prot) 3.06,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,PO4:A:480,water,ligint,ARG 218A,O2 -> N d=2.67 via HOH 595A:O; d(H2O-prot) 3.05; O4 -> N d=3.46 via HOH 595A:O; d(H2O-prot) 3.05,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,PO4:A:480,water,ligint,LEU 223A,O3 -> N d=2.72 via HOH 570A:O; d(H2O-prot) 3.24,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,PO4:A:480,water,ligint,LYS 221A,O2 -> O d=2.70 via HOH 499A:O; d(H2O-prot) 2.75; O3 -> O d=3.48 via HOH 499A:O; d(H2O-prot) 2.75,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3GRS,C,PO4:A:480,water,PLIP,GLY 196A,d=?,PLIP: water bridge not reported by ligint
+3GRS,C,PO4:A:480,salt,PLIP,HIS 219A,d=5.18,PLIP: beyond 4.0 A (outside the ligint threshold)
+3KS3,C,GOL:A:304,hbond,ligint,TYR 7A,O2 -> O d=3.35 ,ligint: 3.0-3.5 A contact not reported by PLIP
+3LN1,C,BOG:A:703,hydrophobic,ligint,ILE 428A,C5' -> CD1 d=3.88 ,ligint: hydrophobic contact not reported by PLIP
+3LN1,C,BOG:A:703,hbond,ligint,GLU 165A,O2 -> OE2 d=2.63 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+3LN1,C,CEL:A:682,hbond,ligint,HIS 75A,O2 -> NE2 d=2.97 ,ligint: histidine partner (tautomer assigned by PLIP)
+3LN1,C,CEL:A:682,hbond,ligint,LEU 338A,N3 -> O d=2.71 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+3LN1,C,CEL:A:682,hbond,PLIP,ARG 499A,d=3.34 don=Ng+ acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+3LN1,C,CEL:A:682,hbond,PLIP,PHE 504A,d=3.62 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3LN1,C,CEL:A:682,hbond,PLIP,TYR 341A,d=3.98 don=O3 acc=Nar,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3LN1,C,CEL:A:682,salt,ligint,ARG 499A,O2 -> NH1 d=3.34 also hydrogen bond,ligint: salt bridge not reported by PLIP
+3LN1,C,CEL:A:682,picat,ligint,ARG 106A,ring(N2) -> CZ d=5.92 axis-normal angle 22,ligint: cation-pi not reported by PLIP (ligand protonation?)
+3LN1,C,CEL:A:682,halogen,PLIP,ARG 106A,d=3.61,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"
+3LN1,C,HEM:A:605,hydrophobic,ligint,HIS 372A,C2D -> CD2 d=3.80 ; C3D -> CD2 d=3.96 ; CMD -> CD2 d=3.72 ,ligint: hydrophobic contact not reported by PLIP
+3LN1,C,HEM:A:605,hydrophobic,PLIP,GLN 189A,d=3.93; d=3.67,PLIP: hydrophobic contact not reported by ligint
+3LN1,C,HEM:A:605,hbond,ligint,HIS 200A,O1A -> NE2 d=2.87 ; O2A -> NE2 d=2.91 ,ligint: histidine partner (tautomer assigned by PLIP)
+3LN1,C,HEM:A:605,hbond,PLIP,PHE 196A,d=3.13 don=O.co2 acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+3LN1,C,HEM:A:605,salt,PLIP,HIS 200A,d=3.52,"PLIP: within 4.0 A, to be examined"
+3LON,C,BME:A:998,hydrophobic,ligint,CYS 16A,C2 -> CB d=3.94 ,ligint: hydrophobic contact not reported by PLIP
+3LON,C,BME:A:998,hbond,ligint,ALA 39A,O1 -> O d=3.24 ,ligint: 3.0-3.5 A contact not reported by PLIP
+3LON,C,NNA:A:999,hydrophobic,ligint,ALA 156A,C33 -> CB d=3.30 ; C7 -> CB d=3.95 ,ligint: hydrophobic contact not reported by PLIP
+3LON,C,NNA:A:999,hydrophobic,ligint,HIS 57A,C29 -> CD2 d=3.84 ; C32 -> CG d=3.72 ,ligint: hydrophobic contact not reported by PLIP
+3LON,C,NNA:A:999,hydrophobic,PLIP,ASP 168A,d=3.56,PLIP: hydrophobic contact not reported by ligint
+3LON,C,NNA:A:999,hydrophobic,PLIP,GLN 41A,d=3.69,PLIP: hydrophobic contact not reported by ligint
+3LON,C,NNA:A:999,hbond,ligint,CYS 159A,O12 -> N d=3.28 ,ligint: 3.0-3.5 A contact not reported by PLIP
+3LON,C,NNA:A:999,hbond,PLIP,GLN 41A,d=3.43 don=Nam acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+3LON,C,NNA:A:999,water,ligint,GLN 41A,O42 -> OE1 d=2.60 via HOH 202A:O; d(H2O-prot) 2.76,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3LON,C,NNA:A:999,pistack,ligint,HIS 57A,ring(N26) -> ring d=4.86 normals angle 88; plane distance 2.4; offset 1.5 A,ligint: stacking not reported by PLIP
+3MEC,C,65B:A:561,hydrophobic,ligint,VAL 179A,C14 -> CG1 d=3.62 ,ligint: hydrophobic contact not reported by PLIP
+3MEC,C,65B:A:561,water,ligint,GLU 138B,N18 -> OE2 d=3.18 via HOH 470B:O; d(H2O-prot) 2.63,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3MEC,C,65B:A:561,water,ligint,GLY 99A,N18 -> O d=3.18 via HOH 470B:O; d(H2O-prot) 2.73,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3MEC,C,65B:A:561,water,ligint,LYS 101A,N18 -> NZ d=3.18 via HOH 470B:O; d(H2O-prot) 3.05,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+3MEC,C,SO4:A:562,hbond,PLIP,GLY 436A,d=3.50 don=Nam acc=O2,"PLIP: D-A within 3.5 A, to be examined"
+3OG7,C,032:A:1,hydrophobic,ligint,LEU 514A,C18 -> CD2 d=3.94 ; C20 -> CD2 d=3.55 ; C33 -> CD2 d=3.60 ; C33 -> CB d=3.64 ; C33 -> CG d=3.76 ,ligint: hydrophobic contact not reported by PLIP
+3OG7,C,032:A:1,hydrophobic,ligint,PHE 583A,C04 -> CE2 d=3.86 ; C08 -> CE2 d=3.90 ,ligint: hydrophobic contact not reported by PLIP
+3OG7,C,032:A:1,hbond,ligint,GLN 530A,N14 -> O d=2.95 ,ligint: strong contact (<=3.0 A) not reported by PLIP
+3OG7,C,032:A:1,hbond,PLIP,THR 529A,d=3.54 don=O3 acc=N2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+3OG7,C,032:A:1,water,PLIP,LYS 483A,d=?,PLIP: water bridge not reported by ligint
+3OG7,C,032:A:1,salt,ligint,LYS 483A,O30 -> NZ d=3.77 ,ligint: salt bridge not reported by PLIP
+3OG7,C,032:A:1,pistack,ligint,TRP 531A,ring(C01) -> ring6 d=4.57 normals angle 14; plane distance 3.4; offset 2.7 A,ligint: stacking not reported by PLIP
+4DKL,C,BF0:A:601,hydrophobic,ligint,ILE 296A,CAF -> CG1 d=3.86 ; CAH -> CG1 d=3.60 ,ligint: hydrophobic contact not reported by PLIP
+4DKL,C,BF0:A:601,hbond,ligint,TYR 148A,OAA -> OH d=3.18 ,ligint: 3.0-3.5 A contact not reported by PLIP
+4DKL,C,BF0:A:601,water,ligint,LYS 233A,OAD -> O d=2.83 via HOH 718A:O; d(H2O-prot) 2.83,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+4DKL,C,BF0:A:601,water,PLIP,TYR 326A,d=?,PLIP: water bridge not reported by ligint
+4DKL,C,BF0:A:601,salt,PLIP,LYS 233A,d=4.41,PLIP: beyond 4.0 A (outside the ligint threshold)
+4DKL,C,BF0:A:601,salt,PLIP,LYS 303A,d=5.05,PLIP: beyond 4.0 A (outside the ligint threshold)
+4DKL,C,BF0:A:601,picat,ligint,TYR 148A,NAJ -> ring d=5.91 axis-normal angle 13,ligint: cation-pi not reported by PLIP (ligand protonation?)
+4DKL,C,CLR:A:614,water,ligint,THR 311A,O1 -> OG1 d=2.62 via HOH 731A:O; d(H2O-prot) 3.46,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+4DKL,C,MPG:A:615,hydrophobic,PLIP,ASN 188A,d=3.64,PLIP: hydrophobic contact not reported by ligint
+4DKL,C,MPG:A:615,hbond,PLIP,LYS 185A,d=4.07 don=N3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4DKL,C,MPG:A:615,salt,PLIP,LYS 100A,d=5.22,PLIP: beyond 4.0 A (outside the ligint threshold)
+4DKL,C,MPG:A:615,salt,PLIP,LYS 185A,d=4.92,PLIP: beyond 4.0 A (outside the ligint threshold)
+4DKL,C,SO4:A:602,hbond,PLIP,ALA 102A,d=3.69 don=Nam acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4DKL,C,SO4:A:602,hbond,PLIP,ARG 165A,d=4.00 don=Ng+ acc=O3; d=3.79 don=Ng+ acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4DKL,C,SO4:A:602,hbond,PLIP,THR 101A,d=3.53 don=O3 acc=O2; d=4.07 don=O3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4DKL,C,SO4:A:602,water,ligint,ALA 102A,O1 -> N d=2.70 via HOH 712A:O; d(H2O-prot) 3.45,ligint: water bridge not reported by PLIP (PLIP applies its own filters)
+4DKL,C,SO4:A:602,salt,ligint,ARG 165A,O3 -> NH2 d=3.79 ; O3 -> NH1 d=4.00 ,ligint: salt bridge not reported by PLIP
+4G5J,C,0WM:A:1102,hydrophobic,ligint,HIS 988A,C30 -> CD2 d=3.91 ,ligint: hydrophobic contact not reported by PLIP
+4G5J,C,0WM:A:1102,water,PLIP,GLY 810A,d=?,PLIP: water bridge not reported by ligint
+4G5J,C,0WM:A:1102,picat,ligint,HIS 805A,N32 -> ring d=5.64 axis-normal angle 27,ligint: cation-pi not reported by PLIP (ligand protonation?)
+4G5J,C,0WM:A:1102,picat,ligint,TYR 813A,N32 -> ring d=4.25 axis-normal angle 27,ligint: cation-pi not reported by PLIP (ligand protonation?)
+4G5J,C,0WN:A:1101,hydrophobic,ligint,CYS 797A,C28 -> CB d=3.81 ,ligint: hydrophobic contact not reported by PLIP
+4G5J,C,0WN:A:1101,hbond,PLIP,CYS 797A,d=3.53 don=Nam acc=O2,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4G5J,C,0WN:A:1101,hbond,PLIP,LYS 728A,d=3.89 don=N3 acc=O3,PLIP: D-A beyond 3.5 A (outside the ligint threshold)
+4G5J,C,0WN:A:1101,salt,PLIP,ASP 800A,d=4.56,PLIP: beyond 4.0 A (outside the ligint threshold)
+4G5J,C,0WN:A:1101,halogen,PLIP,LEU 788A,d=3.71,"PLIP: halogen bond not reported by ligint (F not handled, threshold)"

@@ -1,15 +1,15 @@
-// ligint - interazioni non covalenti ligando-proteina da un file PDB
+// ligint - non-covalent ligand-protein interactions from a PDB file
 //
-// API pubblica della libreria. Il flusso tipico:
+// Public API of the library. Typical use:
 //
-//     ligint::Options opt;            // soglie, ligando da analizzare, template SDF/MOL2...
+//     ligint::Options opt;            // thresholds, ligand to analyze, SDF/MOL2 templates...
 //     opt.ligName = "ATP";
 //     ligint::Result r = ligint::analyzeFile("1ATP.pdb", opt);
 //     for (const auto& lig : r.ligands)
 //         for (const auto& h : lig.hits) { /* h.type, h.ligandAtom, h.proteinAtom, h.distance ... */ }
 //
-// Senza ligName si ottiene solo l'elenco dei ligandi presenti (Result::listingOnly).
-// La libreria non stampa nulla: avvisi e informazioni sono restituiti in Result.
+// Without ligName only the list of ligands present is returned (Result::listingOnly).
+// The library never prints: warnings and information are returned in Result.
 #pragma once
 
 #include <array>
@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.1.0"
+#define LIGINT_VERSION "0.2.0"
 #endif
 
 namespace ligint {
@@ -30,37 +30,56 @@ namespace ligint {
 using V3 = std::array<double, 3>;
 
 // ---------------------------------------------------------------------------------------------
-// Soglie
+// Interaction types (values of HitRecord::type)
+// ---------------------------------------------------------------------------------------------
+namespace type {
+inline constexpr const char* HydrogenBond = "Hydrogen bond";
+inline constexpr const char* SaltBridge = "Salt bridge";
+inline constexpr const char* ElectrostaticRepulsion = "Electrostatic repulsion";
+inline constexpr const char* Hydrophobic = "Hydrophobic contact";
+inline constexpr const char* BackboneApolar = "Apolar contact (backbone)";
+inline constexpr const char* PiStackingParallel = "pi-stacking (parallel)";
+inline constexpr const char* PiStackingT = "pi-stacking (T-shaped)";
+inline constexpr const char* CationPi = "Cation-pi";
+inline constexpr const char* HalogenBond = "Halogen bond";
+inline constexpr const char* MetalCoordination = "Metal coordination";
+inline constexpr const char* WaterBridge = "Water bridge";
+inline constexpr const char* StericClash = "Steric clash";
+inline constexpr const char* PossibleCovalent = "Possible covalent bond";
+}  // namespace type
+
+// ---------------------------------------------------------------------------------------------
+// Thresholds
 // ---------------------------------------------------------------------------------------------
 struct Params {
-    static constexpr double kMaxGridRadius = 6.0;   // massimo raggio di ricerca supportato (Angstrom)
+    static constexpr double kMaxGridRadius = 6.0;   // maximum supported search radius (Angstrom)
 
-    double hbMin = 2.2, hbMax = 3.5, hbHA = 2.7, hbDHA = 120.0;          // legami a idrogeno
-    double hydMin = 3.3, hydMax = 4.0, saltMax = 4.0, repMax = 4.5;       // idrofobici, ponti salini, repulsioni
-    double halMax = 3.5, halAngle = 140.0, metalMax = 3.5;                // alogeni, metalli (tetto globale)
+    double hbMin = 2.2, hbMax = 3.5, hbHA = 2.7, hbDHA = 120.0;          // hydrogen bonds
+    double hydMin = 3.3, hydMax = 4.0, saltMax = 4.0, repMax = 4.5;       // hydrophobic, salt bridges, repulsions
+    double halMax = 3.5, halAngle = 140.0, metalMax = 3.5;                // halogens, metals (global cap)
     double piMax = 5.5, piOffset = 3.5, piAngle = 30.0, cpMax = 6.0, clash = 0.5;
-    double wbMin = 75.0, wbMax = 140.0;                                   // angolo ligando-O(acqua)-proteina
-    double hbLong = 0.0, hbLongTol = 40.0;                                // H-bond lunghi (0 = spento)
-    double saltCentroid = 0.0;                                            // ponti salini per centroidi (0 = spento)
-    double hbAnte = 90.0;                                                 // angolo antecedente-atomo...partner
+    double wbMin = 75.0, wbMax = 140.0;                                   // ligand-O(water)-protein angle
+    double hbLong = 0.0, hbLongTol = 40.0;                                // long H-bonds (0 = off)
+    double saltCentroid = 0.0;                                            // salt bridges by centroids (0 = off)
+    double hbAnte = 90.0;                                                 // antecedent-atom...partner angle
 
-    // Imposta una soglia per nome (come nella riga di comando, senza "--"); false se il nome e' sconosciuto.
+    // Sets a threshold by name (as on the command line, without "--"); false if the name is unknown.
     bool set(const std::string& name, double value);
-    // Preset per il confronto con PLIP: hbLong 4.1, saltCentroid 5.5, halMax 4.0.
+    // Preset for comparison with PLIP: hbLong 4.1, saltCentroid 5.5, halMax 4.0.
     void applyPlipLike();
-    // Limita a kMaxGridRadius le soglie usate dalla ricerca a griglia; restituisce gli avvisi.
+    // Limits to kMaxGridRadius the thresholds used by the grid search; returns the warnings.
     std::vector<std::string> clampToGrid();
 };
 
 // ---------------------------------------------------------------------------------------------
-// Template chimici (SDF / MOL2)
+// Chemical templates (SDF / MOL2)
 // ---------------------------------------------------------------------------------------------
 struct TAtom { std::string el, type; V3 p{0, 0, 0}; int fc = 0; };
-struct TBond { int a, b, order; };          // indici 0-based; ordine 4 = aromatico
+struct TBond { int a, b, order; };          // 0-based indices; order 4 = aromatic
 struct Tmpl { std::string name; std::vector<TAtom> at; std::vector<TBond> bd; };
 
-// Leggono tutte le molecole del file. Ritorna false se il file non si apre; i problemi su singole
-// molecole (V3000, file malformato) sono aggiunti a `warnings` e la molecola e' saltata.
+// Read all molecules in the file. Return false if the file cannot be opened; problems with single
+// molecules (V3000, malformed file) are appended to `warnings` and the molecule is skipped.
 bool loadSdf(const std::string& path, std::vector<Tmpl>& out, std::vector<std::string>& warnings);
 bool loadMol2(const std::string& path, std::vector<Tmpl>& out, std::vector<std::string>& warnings);
 
@@ -69,14 +88,14 @@ bool loadMol2(const std::string& path, std::vector<Tmpl>& out, std::vector<std::
 // ---------------------------------------------------------------------------------------------
 struct Options {
     Params params;
-    std::string ligName;            // nome del residuo HETATM (es. "ATP"); vuoto = solo elenco dei ligandi
-    std::string chain;              // opzionale: catena del ligando
-    int resi = INT_MIN;             // opzionale: numero di residuo (INT_MIN = qualsiasi)
-    bool useWater = true;           // considera le acque (ponti d'acqua)
-    bool metalDonors = false;       // O/N coordinati a un metallo restano possibili donatori
-    bool backboneHyd = false;       // contatti apolari con CA/C della catena principale
-    bool mergeLinked = true;        // unisce i residui HETATM legati covalentemente in un solo ligando
-    std::vector<Tmpl> templates;    // annotazione chimica dei ligandi (abbinamento per coordinate)
+    std::string ligName;            // HETATM residue name (e.g. "ATP"); empty = only list the ligands
+    std::string chain;              // optional: ligand chain
+    int resi = INT_MIN;             // optional: residue number (INT_MIN = any)
+    bool useWater = true;           // consider waters (water bridges)
+    bool metalDonors = false;       // O/N coordinated to a metal remain possible donors
+    bool backboneHyd = false;       // apolar contacts with backbone CA/C
+    bool mergeLinked = true;        // merge covalently linked HETATM residues into one ligand
+    std::vector<Tmpl> templates;    // chemical annotation of the ligands (matched by coordinates)
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -89,40 +108,40 @@ struct AtomRecord {
     V3 pos{0, 0, 0};
     bool hetero = false;
 };
-struct BondRecord { int a, b, order; };     // indici nel vettore di atomi; order 0 = ignoto, 4 = aromatico
+struct BondRecord { int a, b, order; };     // indices into the atom vector; order 0 = unknown, 4 = aromatic
 
 struct HitRecord {
-    std::string type;               // es. "Legame a idrogeno", "Ponte salino", "pi-stacking (parallelo)"
-    std::string ligandAtom;         // etichetta "RES nnnC:ATOMO" (o dell'anello/gruppo)
+    std::string type;               // one of ligint::type::*
+    std::string ligandAtom;         // label "RES nnnC:ATOM" (or of the ring/group)
     std::string proteinAtom;
-    std::string residue;            // residuo della proteina, es. "ASP 189A"
+    std::string residue;            // protein residue, e.g. "ASP 189A"
     std::string note;
     double distance = 0;            // Angstrom
-    bool favorable = true;          // false per clash e repulsioni
-    V3 ligandPos{0, 0, 0};          // punto del ligando (atomo, centroide dell'anello o del gruppo carico)
+    bool favorable = true;          // false for clashes and repulsions
+    V3 ligandPos{0, 0, 0};          // ligand point (atom, ring centroid or charged-group centroid)
     V3 proteinPos{0, 0, 0};
-    V3 waterPos{0, 0, 0};           // solo ponti d'acqua
+    V3 waterPos{0, 0, 0};           // water bridges only
     bool hasWater = false;
 };
 
 struct LigandResult {
-    std::string id;                 // etichetta del ligando, es. "BZC 201A"
-    std::string resName, chain;     // primo residuo
+    std::string id;                 // ligand label, e.g. "BZC 201A"
+    std::string resName, chain;     // first residue
     int resi = 0;
-    std::vector<std::string> residues;      // residui uniti nel ligando composto (se piu' di uno)
-    std::string annotation;                 // come e' stata ottenuta la chimica (template, H del PDB, euristica)
-    std::vector<std::string> info;          // righe informative (composto, annotazione, B-factor)
-    std::vector<AtomRecord> atoms;          // atomi pesanti del ligando
+    std::vector<std::string> residues;      // residues merged into the composite ligand (if more than one)
+    std::string annotation;                 // how the chemistry was obtained (template, PDB hydrogens, heuristics)
+    std::vector<std::string> info;          // informational lines (composite, annotation, B-factor)
+    std::vector<AtomRecord> atoms;          // heavy atoms of the ligand
     std::vector<BondRecord> bonds;
     std::size_t nRings = 0;
-    std::vector<HitRecord> hits;            // ordinati per tipo, atomo, distanza
-    std::vector<AtomRecord> contactAtoms;   // tutti gli atomi dei residui di proteina che interagiscono
+    std::vector<HitRecord> hits;            // sorted by type, atom, distance
+    std::vector<AtomRecord> contactAtoms;   // all atoms of the protein residues that interact
     std::vector<BondRecord> contactBonds;
-    std::vector<V3> waters;                 // acque coinvolte nei ponti d'acqua
-    std::string metalSphere;                // testo: sfera di coordinazione dei metalli toccati
+    std::vector<V3> waters;                 // waters involved in water bridges
+    std::string metalSphere;                // text: coordination sphere of the metals touched
 };
 
-struct LigandId {                           // un residuo HETATM presente nel file
+struct LigandId {                           // a HETATM residue present in the file
     std::string res, chain;
     int resi = 0;
     char icode = ' ';
@@ -130,23 +149,23 @@ struct LigandId {                           // un residuo HETATM presente nel fi
 };
 
 struct Result {
-    bool listingOnly = false;               // nessun ligando richiesto o trovato: solo elenco
-    std::map<std::string, int> hetCounts;   // nome -> numero di residui (solo se listingOnly)
-    std::vector<LigandId> hetResidues;      // idem, residuo per residuo
-    std::string notFound;                   // nome richiesto ma assente (solo se listingOnly)
-    std::vector<std::string> warnings;      // avvisi (coordinate non valide, soglie limitate...)
-    std::vector<std::string> info;          // informazioni globali (H della proteina, template caricati)
+    bool listingOnly = false;               // no ligand requested or found: only the listing
+    std::map<std::string, int> hetCounts;   // name -> number of residues (only if listingOnly)
+    std::vector<LigandId> hetResidues;      // same, residue by residue
+    std::string notFound;                   // requested name that is absent (only if listingOnly)
+    std::vector<std::string> warnings;      // warnings (invalid coordinates, limited thresholds...)
+    std::vector<std::string> info;          // global information (protein hydrogens, templates loaded)
     std::vector<LigandResult> ligands;
 };
 
-// Analizza il PDB. Lancia std::runtime_error se il file non si apre.
+// Analyze the PDB. Throws std::runtime_error if the file cannot be opened.
 Result analyzeFile(const std::string& path, const Options& opt);
 Result analyzeStream(std::istream& in, const Options& opt);
 
 // ---------------------------------------------------------------------------------------------
-// Rapporti testuali (identici all'output del programma da riga di comando)
+// Text reports (identical to the command-line output)
 // ---------------------------------------------------------------------------------------------
-void printText(std::ostream& out, const Result& r);                       // tabella leggibile
-void printCsv(std::ostream& out, std::ostream& info, const Result& r);    // CSV su `out`, informazioni su `info`
+void printText(std::ostream& out, const Result& r);                       // readable table
+void printCsv(std::ostream& out, std::ostream& info, const Result& r);    // CSV on `out`, information on `info`
 
 }  // namespace ligint

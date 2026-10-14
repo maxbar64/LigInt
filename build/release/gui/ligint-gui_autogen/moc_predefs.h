@@ -93,7 +93,7 @@
 #define __GCC_ATOMIC_CHAR16_T_LOCK_FREE 2
 #define __cpp_aligned_new 201606L
 #define __FLT32_MAX_10_EXP__ 38
-#define LIGINT_VERSION "0.1.0"
+#define LIGINT_VERSION "0.2.0"
 #define __FLT64X_EPSILON__ 1.08420217248550443400745280086994171e-19F64x
 #define __STDC_HOSTED__ 1
 #define __DEC64_MIN_EXP__ (-382)

@@ -4,7 +4,7 @@
   "configurePresets": [
     {
       "name": "release",
-      "displayName": "Release (GUI se Qt e' disponibile)",
+      "displayName": "Release (GUI if Qt is available)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
@@ -18,14 +18,14 @@
     },
     {
       "name": "cli-only",
-      "displayName": "Solo libreria e riga di comando (senza Qt)",
+      "displayName": "Library and command line only (no Qt)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/cli-only",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "LIGINT_BUILD_GUI": "OFF" }
     },
     {
       "name": "sanitize",
-      "displayName": "AddressSanitizer + UBSan (senza GUI)",
+      "displayName": "AddressSanitizer + UBSan (no GUI)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/sanitize",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "LIGINT_SANITIZE": "ON", "LIGINT_BUILD_GUI": "OFF" }

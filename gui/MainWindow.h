@@ -1,4 +1,4 @@
-// Finestra principale di ligint-gui.
+// Main window of ligint-gui.
 #pragma once
 
 #include <QFutureWatcher>
@@ -37,14 +37,14 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
-    // Con interactive = false gli errori non aprono finestre di dialogo (usato dai test).
+    // With interactive = false errors do not open dialog boxes (used by the tests).
     void setInteractive(bool on) { interactive_ = on; }
 
-    bool openStructure(const QString& path);      // legge il PDB ed elenca i ligandi
+    bool openStructure(const QString& path);      // reads the PDB and lists the ligands
     int ligandCount() const;
     void selectLigand(int index);
-    void analyze(bool wait = false);              // wait = true: attende il risultato (test)
-    bool addTemplate(const QString& path);        // SDF o MOL2
+    void analyze(bool wait = false);              // wait = true: waits for the result (tests)
+    bool addTemplate(const QString& path);        // SDF or MOL2
 
     const ligint::Result& result() const { return result_; }
     ViewerWidget* viewer() const { return viewer_; }
@@ -87,7 +87,7 @@ private:
     QStringList templateNames_;
     ligint::Result result_;
 
-    // pannello di controllo
+    // control panel
     QLabel* fileLabel_ = nullptr;
     QComboBox* ligandCombo_ = nullptr;
     QCheckBox* showSmall_ = nullptr;
@@ -98,7 +98,7 @@ private:
     QPushButton* runButton_ = nullptr;
     QListWidget* typeList_ = nullptr;
 
-    // risultati
+    // results
     ViewerWidget* viewer_ = nullptr;
     QTabWidget* tabs_ = nullptr;
     QTableView* table_ = nullptr;

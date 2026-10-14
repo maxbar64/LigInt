@@ -1,16 +1,16 @@
-// Anelli e ruoli chimici (donatore, accettore, carica...) di ligando e proteina.
+// Rings and chemical roles (donor, acceptor, charge...) of ligand and protein.
 #include "internal.hpp"
 
 namespace ligint {
 namespace detail {
 
-// ---------- anelli ----------
+// ---------- rings ----------
 bool makeRing(const vector<const Atom*>& pts, const string& lab, const string& pres,
                      double tol, Ring& out) {
     size_t m = pts.size();
     V3 c = {0, 0, 0}, n = {0, 0, 0};
     for (auto p : pts) { V3 q = pos(*p); for (int i = 0; i < 3; i++) c[i] += q[i] / m; }
-    for (size_t i = 0; i < m; i++) {  // metodo di Newell
+    for (size_t i = 0; i < m; i++) {  // Newell's method
         V3 a = pos(*pts[i]), b = pos(*pts[(i + 1) % m]);
         n[0] += (a[1]-b[1]) * (a[2]+b[2]);
         n[1] += (a[2]-b[2]) * (a[0]+b[0]);
@@ -23,7 +23,7 @@ bool makeRing(const vector<const Atom*>& pts, const string& lab, const string& p
     out = {c, n, lab, pres};
     return true;
 }
-vector<vector<int>> findRings(const vector<Atom>& L) {  // cicli di 5-6 atomi
+vector<vector<int>> findRings(const vector<Atom>& L) {  // cycles of 5-6 atoms
     set<vector<int>> seen; vector<vector<int>> out;
     function<void(int,int,vector<int>&)> dfs = [&](int s, int cur, vector<int>& path) {
         for (int nx : L[cur].nb) {
@@ -40,7 +40,7 @@ vector<vector<int>> findRings(const vector<Atom>& L) {  // cicli di 5-6 atomi
     return out;
 }
 
-// ---------- ruoli ----------
+// ---------- roles ----------
 bool isNuc(const string& R) {
     static const set<string> s = {"A","C","G","U","T","I","DA","DC","DG","DT","DU","DI"};
     return s.count(R);
@@ -49,7 +49,7 @@ Role proteinRole(const Atom& a) {
     Role r;
     const string &R = a.res, &N = a.name;
     if (isMetal(a.el)) { r.metal = true; return r; }
-    if (isNuc(R)) {  // DNA / RNA: fosfato, zucchero, basi
+    if (isNuc(R)) {  // DNA / RNA: phosphate, sugar, bases
         string n = N;
         for (auto& c : n) if (c == '*') c = '\'';
         char b = R.back();
@@ -86,7 +86,7 @@ Role proteinRole(const Atom& a) {
         if (R=="HIS" && in({"CB","CG","CD2"})) r.hyd = true;
         if (R=="THR" && N=="CG2") r.hyd = true;
     }
-    // con idrogeni espliciti nel PDB (applicato da main) i ruoli vengono raffinati
+    // with explicit hydrogens in the PDB (applied by the analysis) the roles are refined
     return r;
 }
 void refineProteinRoleWithH(const Atom& a, Role& r) {
@@ -94,12 +94,12 @@ void refineProteinRoleWithH(const Atom& a, Role& r) {
     bool hasH = !a.hs.empty();
     r.don = hasH;
     if (a.res == "HIS" && hasH && (a.name == "ND1" || a.name == "NE2")) r.acc = false;
-    if (hasH && (a.res == "ASP" || a.res == "GLU") && r.q < 0) r.q = 0;   // carbossile protonato
-    if (!hasH && a.res == "LYS" && a.name == "NZ") r.q = 0;               // lisina neutra
+    if (hasH && (a.res == "ASP" || a.res == "GLU") && r.q < 0) r.q = 0;   // protonated carboxyl
+    if (!hasH && a.res == "LYS" && a.name == "NZ") r.q = 0;               // neutral lysine
     if (a.res == "ARG" && !hasH) r.q = 0;
 }
 
-// esiste un cammino u -> v di al massimo maxD legami che non passa per 'avoid'? (rileva appartenenza ad anelli)
+// is there a path u -> v of at most maxD bonds that does not go through 'avoid'? (detects ring membership)
 static bool connectedAvoiding(const vector<Atom>& L, int u, int v, int avoid, int maxD) {
     vector<int> dep(L.size(), -1);
     deque<int> q;
@@ -112,7 +112,7 @@ static bool connectedAvoiding(const vector<Atom>& L, int u, int v, int avoid, in
     }
     return false;
 }
-// carbonio sp3 (tutti i legami lunghi quanto un singolo legame); serve a riconoscere le ammine alifatiche
+// sp3 carbon (all bonds as long as single bonds); used to recognize aliphatic amines
 static bool sp3C(const vector<Atom>& L, int k) {
     const Atom& c = L[k];
     if (c.el != "C") return false;
@@ -124,7 +124,7 @@ static bool sp3C(const vector<Atom>& L, int k) {
     }
     return true;
 }
-static bool inRingC(const vector<Atom>& L, int k) {  // l'atomo k fa parte di un anello (cicli fino a 7 atomi)?
+static bool inRingC(const vector<Atom>& L, int k) {  // is atom k part of a ring (cycles up to 7 atoms)?
     const Atom& c = L[k];
     for (size_t x = 0; x < c.nb.size(); x++)
         for (size_t y = x + 1; y < c.nb.size(); y++)
@@ -143,19 +143,19 @@ Role ligandRole(const vector<Atom>& L, int i, bool hKnown) {
 
     if (a.el == "O") {
         if (deg == 0) r.don = r.acc = true;
-        else if (deg >= 2) r.acc = true;          // etere / estere / ponte fosfato: solo accettore
+        else if (deg >= 2) r.acc = true;          // ether / ester / phosphate bridge: acceptor only
         else {
             const Atom& X = L[a.nb[0]];
             r.acc = true;
             if (hKnown) r.don = nh > 0;
             else {
                 double d = dist(a, X);
-                r.don = (X.el == "C" || X.el == "N") ? d > 1.32 : d > 1.52;   // C-OH / N-OH / P-OH contro C=O / N=O / P=O
+                r.don = (X.el == "C" || X.el == "N") ? d > 1.32 : d > 1.52;   // C-OH / N-OH / P-OH versus C=O / N=O / P=O
             }
             if (X.el == "C" || X.el == "P" || X.el == "S") {
                 vector<int> sib;
                 for (int k : X.nb) if (termO(L, k)) sib.push_back(k);
-                bool anion = sib.size() >= 2;      // carbossilato / fosfato / solfonato (pH fisiologico)
+                bool anion = sib.size() >= 2;      // carboxylate / phosphate / sulfonate (physiological pH)
                 if (anion && hKnown) {
                     if (X.el == "C") { for (int k : sib) if (!L[k].hs.empty()) anion = false; }
                     else if (nh > 0) anion = false;
@@ -167,14 +167,14 @@ Role ligandRole(const vector<Atom>& L, int i, bool hKnown) {
     if (a.el == "N") {
         int tO = 0;
         for (int k : a.nb) if (termO(L, k)) tO++;
-        if (tO >= 2) {                        // nitro: neutro, accettore debole -> ignorato
+        if (tO >= 2) {                        // nitro: neutral, weak acceptor -> ignored
             r.q = 0;
         } else if (hKnown) {
             r.don = nh > 0;
             size_t tot = deg + nh;
             if (a.fc > 0 || tot >= 4) { r.q = +1; r.acc = false; }
-            else if (tot <= 2) r.acc = true;                 // N sp2 con coppia solitaria / nitrile
-            else {                                           // 3 sostituenti: planare (ammide, pirrolo) o piramidale
+            else if (tot <= 2) r.acc = true;                 // sp2 N with a lone pair / nitrile
+            else {                                           // 3 substituents: planar (amide, pyrrole) or pyramidal
                 vector<V3> s;
                 for (int k : a.nb) s.push_back(pos(L[k]));
                 for (auto& h : a.hs) s.push_back(h);
@@ -189,7 +189,7 @@ Role ligandRole(const vector<Atom>& L, int i, bool hKnown) {
                 if (s < 345.0) r.acc = true;
             } else { r.don = true; r.q = +1; }
         }
-        if (!hKnown) {  // N legato a un C carbonilico (ammide, carbammato, urea): la coppia solitaria e' delocalizzata
+        if (!hKnown) {  // N bonded to a carbonyl C (amide, carbamate, urea): the lone pair is delocalized
             for (int k : a.nb) {
                 const Atom& C = L[k];
                 if (C.el != "C") continue;
@@ -197,24 +197,24 @@ Role ligandRole(const vector<Atom>& L, int i, bool hKnown) {
                     if (L[j].el == "O" && L[j].nb.size() == 1 && dist(C, L[j]) < 1.30) r.acc = false;
             }
         }
-        if (!hKnown && tO < 2 && deg >= 1 && deg <= 3) {  // ammina alifatica: protonata a pH fisiologico
+        if (!hKnown && tO < 2 && deg >= 1 && deg <= 3) {  // aliphatic amine: protonated at physiological pH
             bool amine = true;
             for (int k : a.nb) if (!sp3C(L, k)) { amine = false; break; }
             if (amine) { r.q = +1; r.don = true; r.acc = false; }
         }
-        for (int k : a.nb) {                  // guanidinio / amidinio / imidazolio: carica delocalizzata
+        for (int k : a.nb) {                  // guanidinium / amidinium / imidazolium: delocalized charge
             const Atom& C = L[k];
             if (C.el != "C" || C.nb.size() < 2) continue;
             int nN = 0; bool anyCat = false;
             for (int j : C.nb) if (L[j].el == "N") { nN++; if (L[j].fc > 0) anyCat = true; }
             if (nN >= 2 && anyCat && (nh > 0 || a.fc > 0)) { r.q = +1; r.acc = false; if (nh > 0) r.don = true; }
-            if (!hKnown && C.nb.size() == 3 && nN == 3 && !inRingC(L, k)) { r.q = +1; r.don = true; r.acc = false; }  // guanidinio (non in anello)
-            if (!hKnown && C.nb.size() == 3 && nN == 2) {  // amidina R-C(N)=N: protonata (amidinio) a pH fisiologico
+            if (!hKnown && C.nb.size() == 3 && nN == 3 && !inRingC(L, k)) { r.q = +1; r.don = true; r.acc = false; }  // guanidinium (not in a ring)
+            if (!hKnown && C.nb.size() == 3 && nN == 2) {  // amidine R-C(N)=N: protonated (amidinium) at physiological pH
                 int third = -1; vector<int> ns;
                 for (int j : C.nb) { if (L[j].el == "N") ns.push_back(j); else third = j; }
                 bool amid = third >= 0 && L[third].el == "C";
-                for (int j : ns) if (dist(C, L[j]) > 1.38 || L[j].nb.size() > 2) amid = false;  // legami C-N corti, N non sostituiti due volte
-                if (amid) {                                                                      // C non in anello (esclude amminopiridine, imidazoli...)
+                for (int j : ns) if (dist(C, L[j]) > 1.38 || L[j].nb.size() > 2) amid = false;  // short C-N bonds, N not substituted twice
+                if (amid) {                                                                      // C not in a ring (excludes aminopyridines, imidazoles...)
                     int ci = k;
                     for (size_t x = 0; x < C.nb.size() && amid; x++)
                         for (size_t y = x + 1; y < C.nb.size() && amid; y++)

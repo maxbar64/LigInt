@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
-"""Suite di test per ligint (regole chimiche, geometria, robustezza degli input).
+"""Test suite for ligint (chemical rules, geometry, robustness to malformed input).
 
-Uso:
-    python3 tests/run_tests.py                      compila i sorgenti ed esegue tutto
-    python3 tests/run_tests.py --bin build/src/ligint   usa un binario gia' compilato (es. da CMake)
-    python3 tests/run_tests.py --sanitize           compila con ASan+UBSan (rileva crash e comportamenti indefiniti)
-    python3 tests/run_tests.py -k pi_              solo i test il cui nome contiene "pi_"
-    python3 tests/run_tests.py --list               elenca i test
-    python3 tests/run_tests.py --real-dir DIR       cartella con i PDB reali per i test "golden" (default: tests/data;
-                                                    i test con file mancanti vengono saltati)
+Usage:
+    python3 tests/run_tests.py                      build the sources and run everything
+    python3 tests/run_tests.py --bin build/src/ligint   use an already built binary (e.g. from CMake)
+    python3 tests/run_tests.py --sanitize           build with ASan+UBSan (detects crashes and undefined behavior)
+    python3 tests/run_tests.py -k pi_              only the tests whose name contains "pi_"
+    python3 tests/run_tests.py --list               list the tests
+    python3 tests/run_tests.py --real-dir DIR       folder with the real PDB files for the "golden" tests (default: tests/data;
+                                                    tests with missing files are skipped)
 
-Gruppi:
-    chem   regole chimiche e geometriche su frammenti sintetici (geometria nota, esito atteso noto)
-    tmpl   template SDF / MOL2 (abbinamento per coordinate, H espliciti, fallback)
-    pdb    parsing del PDB (altloc, codici di inserzione, modelli, selezione del ligando, CSV)
-    robust input malformati / anomali: il programma non deve andare in crash ne' stampare nan
-    golden complessi reali: elenco di interazioni gia' verificate a mano contro diagrammi (sono test di
-           REGRESSIONE, non di validazione)
+Groups:
+    chem   chemical and geometric rules on synthetic fragments (known geometry, known expected outcome)
+    tmpl   SDF / MOL2 templates (matching by coordinates, explicit H, fallback)
+    pdb    PDB parsing (altlocs, insertion codes, models, ligand selection, CSV)
+    robust malformed / anomalous input: the program must not crash nor print nan
+    golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
+           tests, not validation tests)
 
-Codice di uscita: 0 se tutti i test passano, 1 altrimenti.
+Exit code: 0 if all the tests pass, 1 otherwise.
 """
 import argparse
 import math
@@ -32,12 +32,12 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import _build  # noqa: E402
-TESTS = []          # (gruppo, nome, funzione)
-CFG = {}            # binario, tmp, ...
+TESTS = []          # (group, name, function)
+CFG = {}            # binary, tmp, ...
 
 
 # ----------------------------------------------------------------------------------------------
-# infrastruttura minima
+# minimal infrastructure
 # ----------------------------------------------------------------------------------------------
 class Fail(Exception):
     pass
@@ -70,18 +70,18 @@ def v_unit(a):
 def v_cross(a, b):
     return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
 def at(origin, direction, dist):
-    """punto a 'dist' da 'origin' lungo 'direction'"""
+    """point at 'dist' from 'origin' along 'direction'"""
     return v_add(origin, v_mul(v_unit(direction), dist))
 
 
 # ----------------------------------------------------------------------------------------------
-# molecole sintetiche (coordinate in Angstrom, geometria realistica)
+# synthetic molecules (coordinates in Angstrom, realistic geometry)
 # ----------------------------------------------------------------------------------------------
 class Mol:
     def __init__(self):
-        self.atoms = []   # (nome, elemento, xyz, tipo mol2, carica formale)
-        self.bonds = []   # (i, j, ordine)  indici 0-based
-        self.hs = []      # (indice atomo pesante, xyz)
+        self.atoms = []   # (name, element, xyz, mol2 type, formal charge)
+        self.bonds = []   # (i, j, order)  0-based indices
+        self.hs = []      # (heavy atom index, xyz)
 
     def add(self, name, el, xyz, typ=None, charge=0):
         self.atoms.append((name, el, tuple(xyz), typ or el, charge))
@@ -136,7 +136,7 @@ def carboxylate():
     o1 = m.add("O1", "O", (0.62, 1.07, 0), "O.co2")
     o2 = m.add("O2", "O", (0.62, -1.07, 0), "O.co2")
     m.bond(c1, c2); m.bond(c2, o1, 2); m.bond(c2, o2, 1)
-    m.h(o2, (1.12, -1.90, 0))        # presente solo nella versione "acido"
+    m.h(o2, (1.12, -1.90, 0))        # present only in the "acid" version
     return m
 
 
@@ -162,7 +162,7 @@ def guanidinium(types=False):
 
 
 def aminopyrimidine():
-    """2-amminopirimidina: C2 con tre N vicini ma IN ANELLO (non e' un guanidinio)."""
+    """2-aminopyrimidine: C2 with three N neighbors but IN A RING (not a guanidinium)."""
     m = Mol()
     r = 1.35
     ang = {"C2": 90, "N3": 150, "C4": 210, "C5": 270, "C6": 330, "N1": 30}
@@ -199,7 +199,7 @@ def acetamide():
     return m
 
 
-HDIR = (0.317, 0.948, 0.0)   # direzione O-H del metanolo (angolo C-O-H = 108.5 gradi)
+HDIR = (0.317, 0.948, 0.0)   # O-H direction of methanol (C-O-H angle = 108.5 degrees)
 
 
 def methanol():
@@ -253,7 +253,7 @@ PHE_RING = ["CG", "CD1", "CE1", "CZ", "CE2", "CD2"]
 
 
 # ----------------------------------------------------------------------------------------------
-# costruzione dei PDB e esecuzione
+# construction of the PDB files and execution
 # ----------------------------------------------------------------------------------------------
 class Sys:
     def __init__(self):
@@ -296,21 +296,21 @@ class Res:
         self.rc, self.out, self.err = rc, out, err
         self.rows = []
         lines = [l for l in out.splitlines() if l.strip()]
-        if lines and lines[0].startswith("ligando,tipo"):
+        if lines and lines[0].startswith("ligand,type"):
             for l in lines[1:]:
                 f = l.split(",", 6)
                 if len(f) == 7:
-                    self.rows.append({"lig": f[0], "tipo": f[1], "fav": f[2], "la": f[3], "pa": f[4], "d": f[5], "note": f[6]})
+                    self.rows.append({"lig": f[0], "kind": f[1], "fav": f[2], "la": f[3], "pa": f[4], "d": f[5], "note": f[6]})
 
-    def find(self, tipo=None, la=None, pa=None):
-        return [r for r in self.rows if (tipo is None or r["tipo"] == tipo) and (la is None or la in r["la"])
+    def find(self, kind=None, la=None, pa=None):
+        return [r for r in self.rows if (kind is None or r["kind"] == kind) and (la is None or la in r["la"])
                 and (pa is None or pa in r["pa"])]
 
-    def has(self, tipo, la=None, pa=None):
-        return bool(self.find(tipo, la, pa))
+    def has(self, kind, la=None, pa=None):
+        return bool(self.find(kind, la, pa))
 
     def types(self):
-        return sorted({r["tipo"] for r in self.rows})
+        return sorted({r["kind"] for r in self.rows})
 
 
 def run_raw(args, timeout=120):
@@ -318,7 +318,7 @@ def run_raw(args, timeout=120):
     try:
         p = subprocess.run([CFG["bin"]] + args, capture_output=True, timeout=timeout, cwd=CFG["tmp"])
     except subprocess.TimeoutExpired:
-        raise Fail("timeout dopo %d s" % timeout)
+        raise Fail("timeout after %d s" % timeout)
     out = p.stdout.decode("utf-8", "replace")
     err = p.stderr.decode("utf-8", "replace")
     CFG["last_time"] = time.time() - t0
@@ -351,57 +351,57 @@ def go(sysobj, args=(), lig=("LIG",), sdf=None, mol2=None, csv=True, text=None, 
         a += ["--mol2", tmpfile(mol2, ".mol2")]
     a += list(args)
     r = run_raw(a, timeout)
-    check(r.rc == 0, "codice di uscita %d; stderr: %s" % (r.rc, r.err[:300]))
+    check(r.rc == 0, "exit code %d; stderr: %s" % (r.rc, r.err[:300]))
     return r
 
 
 def no_crash(r):
-    check("nan" not in r.out.lower().replace("annot", ""), "output contiene 'nan'")
+    check("nan" not in r.out.lower().replace("annot", ""), "output contains 'nan'")
     check("AddressSanitizer" not in r.err and "runtime error" not in r.err, "sanitizer: " + r.err[:400])
 
 
 # ----------------------------------------------------------------------------------------------
-# GRUPPO chem: regole chimiche
+# GROUP chem: chemical rules
 # ----------------------------------------------------------------------------------------------
 @test("chem")
 def carboxylate_forms_salt_bridge_with_lysine():
     s = Sys().ligand(carboxylate()).prot("LYS", "NZ", at((0.62, 1.07, 0), (0.5, 0.866, 0), 2.8))
     r = go(s)
-    check(r.has("Ponte salino", la=":O1", pa="LYS"), "atteso ponte salino carbossilato-lisina: " + str(r.types()))
+    check(r.has("Salt bridge", la=":O1", pa="LYS"), "expected salt bridge carboxylate-lysine: " + str(r.types()))
 
 
 @test("chem")
 def carboxylate_repels_glutamate():
     s = Sys().ligand(carboxylate()).prot("GLU", "OE1", at((0.62, 1.07, 0), (0.5, 0.866, 0), 3.4))
     r = go(s)
-    check(r.has("Repulsione elettrostatica"), "attesa repulsione carbossilato-carbossilato")
-    check(not r.has("Ponte salino"), "ponte salino tra cariche uguali")
+    check(r.has("Electrostatic repulsion"), "expected carboxylate-carboxylate repulsion")
+    check(not r.has("Salt bridge"), "salt bridge between like charges")
 
 
 @test("chem")
 def amidine_is_cationic():
     s = Sys().ligand(amidine()).prot("ASP", "OD1", at((0.67, 1.15, 0), (0.5, 0.866, 0), 2.9))
     r = go(s)
-    check(r.has("Ponte salino", la=":N1"), "attesa amidina cationica: " + str(r.types()))
+    check(r.has("Salt bridge", la=":N1"), "expected cationic amidine: " + str(r.types()))
 
 
 @test("chem")
 def guanidinium_is_cationic():
     s = Sys().ligand(guanidinium()).prot("GLU", "OE1", at((0, 1.33, 0), (0, 1, 0), 2.9))
     r = go(s)
-    check(r.has("Ponte salino", la=":N1"), "atteso guanidinio cationico: " + str(r.types()))
+    check(r.has("Salt bridge", la=":N1"), "expected cationic guanidinium: " + str(r.types()))
 
 
 @test("chem")
 def aminopyrimidine_is_not_cationic():
-    """Regressione: il guanidinio 'N-C(N)-N' in anello (2-amminopirimidina) NON e' un catione."""
+    """Regression: the 'N-C(N)-N' guanidinium in a ring (2-aminopyrimidine) is NOT a cation."""
     m = aminopyrimidine()
     n1 = m.atoms[5][2]                       # N1
     d = v_unit(n1)
     s = Sys().ligand(m).prot("LYS", "NZ", at(n1, d, 3.4))
     r = go(s)
-    check(not r.has("Repulsione elettrostatica"), "N di pirimidina trattato come catione (falso guanidinio)")
-    check(not r.has("Ponte salino"), "ponte salino con anello neutro")
+    check(not r.has("Electrostatic repulsion"), "pyrimidine N treated as a cation (false guanidinium)")
+    check(not r.has("Salt bridge"), "salt bridge with a neutral ring")
 
 
 @test("chem")
@@ -410,14 +410,14 @@ def ring_nitrogen_is_acceptor():
     n1 = m.atoms[5][2]
     s = Sys().ligand(m).prot("LYS", "NZ", at(n1, v_unit(n1), 2.9))
     r = go(s)
-    check(r.has("Legame a idrogeno", la=":N1"), "N di anello deve poter accettare un H-bond: " + str(r.types()))
+    check(r.has("Hydrogen bond", la=":N1"), "ring N must be able to accept an H-bond: " + str(r.types()))
 
 
 @test("chem")
 def aliphatic_amine_is_protonated():
     s = Sys().ligand(trimethylamine()).prot("ASP", "OD1", (0, 0, 2.9))
     r = go(s)
-    check(r.has("Ponte salino", la=":N1"), "ammina alifatica assunta protonata: " + str(r.types()))
+    check(r.has("Salt bridge", la=":N1"), "aliphatic amine assumed protonated: " + str(r.types()))
 
 
 @test("chem")
@@ -425,12 +425,12 @@ def amide_nitrogen_is_not_acceptor():
     m = acetamide()
     n = m.atoms[3][2]
     dirn = (0.52, -0.85, 0)
-    # donatore (LYS NZ) vicino all'N ammidico: l'N non e' accettore -> nessun H-bond
+    # donor (LYS NZ) near the amide N: the N is not an acceptor -> no H-bond
     r1 = go(Sys().ligand(m).prot("LYS", "NZ", at(n, dirn, 2.9)))
-    check(not r1.has("Legame a idrogeno", la=":N1"), "N ammidico trattato da accettore")
-    # accettore (ASN OD1) vicino all'N: l'N-H ammidico e' donatore -> H-bond
+    check(not r1.has("Hydrogen bond", la=":N1"), "amide N treated as an acceptor")
+    # acceptor (ASN OD1) near the N: the amide N-H is a donor -> H-bond
     r2 = go(Sys().ligand(m).prot("ASN", "OD1", at(n, dirn, 2.9)))
-    check(r2.has("Legame a idrogeno", la=":N1"), "N-H ammidico deve poter donare")
+    check(r2.has("Hydrogen bond", la=":N1"), "amide N-H must be able to donate")
 
 
 @test("chem")
@@ -439,13 +439,13 @@ def hydroxyl_donates_unless_metal_coordinated():
     o1 = m.atoms[1][2]
     glu = at(o1, (1, 0, 0), 2.7)
     r0 = go(Sys().ligand(m).prot("GLU", "OE1", glu))
-    check(r0.has("Legame a idrogeno", la=":O1"), "idrossile libero: atteso H-bond")
+    check(r0.has("Hydrogen bond", la=":O1"), "free hydroxyl: expected H-bond")
     mg = (o1[0], o1[1] + 2.1, 0)
     r1 = go(Sys().ligand(m).prot("GLU", "OE1", glu).metal("Mg", mg))
-    check(r1.has("Coordinazione metallica", la=":O1"), "atteso O1-Mg")
-    check(not r1.has("Legame a idrogeno", la=":O1"), "O coordinato a Mg trattato come donatore")
+    check(r1.has("Metal coordination", la=":O1"), "expected O1-Mg")
+    check(not r1.has("Hydrogen bond", la=":O1"), "O coordinated to Mg treated as a donor")
     r2 = go(Sys().ligand(m).prot("GLU", "OE1", glu).metal("Mg", mg), args=["--metal-donors"])
-    check(r2.has("Legame a idrogeno", la=":O1"), "--metal-donors dovrebbe ripristinare il donatore")
+    check(r2.has("Hydrogen bond", la=":O1"), "--metal-donors should restore the donor")
 
 
 @test("chem")
@@ -455,7 +455,7 @@ def metal_distance_limits_per_element():
     d = (0.49, 0.87, 0)
     for el, dist, expect in [("Mg", 2.4, True), ("Mg", 2.7, False), ("Zn", 2.55, True), ("Zn", 2.75, False)]:
         r = go(Sys().ligand(m).metal(el, at(o, d, dist)))
-        check(r.has("Coordinazione metallica", la=":O1") == expect, "%s a %.2f A: atteso %s" % (el, dist, expect))
+        check(r.has("Metal coordination", la=":O1") == expect, "%s at %.2f A: expected %s" % (el, dist, expect))
 
 
 @test("chem")
@@ -463,7 +463,7 @@ def metal_needs_lone_pair():
     m = acetamide()
     n = m.atoms[3][2]
     r = go(Sys().ligand(m).metal("Zn", at(n, (0.52, -0.85, 0), 2.3)))
-    check(not r.has("Coordinazione metallica", la=":N1"), "N ammidico (senza coppia solitaria) coordinato a Zn")
+    check(not r.has("Metal coordination", la=":N1"), "amide N (no lone pair) coordinated to Zn")
 
 
 @test("chem")
@@ -473,31 +473,31 @@ def histidine_bound_to_zinc_does_not_donate():
     d = v_unit(n1)
     ne2 = at(n1, d, 3.0)
     r0 = go(Sys().ligand(m).prot("HIS", "NE2", ne2))
-    check(r0.has("Legame a idrogeno", la=":N1", pa="HIS"), "controllo: senza Zn l'H-bond con His deve esserci")
+    check(r0.has("Hydrogen bond", la=":N1", pa="HIS"), "control: without Zn the H-bond with His must be there")
     r1 = go(Sys().ligand(m).prot("HIS", "NE2", ne2).metal("Zn", at(ne2, d, 2.1)))
-    check(not r1.has("Legame a idrogeno", la=":N1", pa="HIS"), "His coordinata a Zn trattata da donatore")
+    check(not r1.has("Hydrogen bond", la=":N1", pa="HIS"), "His coordinated to Zn treated as a donor")
 
 
 @test("chem")
 def hydrophobic_rules():
     leu = (0.765, 0, 3.72)
     r = go(Sys().ligand(ethane()).prot("LEU", "CD1", leu))
-    check(r.has("Contatto idrofobico"), "atteso contatto idrofobico C-C")
+    check(r.has("Hydrophobic contact"), "expected C-C hydrophobic contact")
     r = go(Sys().ligand(methanol()).prot("LEU", "CD1", (-2.0, 0, 3.23)))
-    check(not r.has("Contatto idrofobico", la=":C1"), "C legato a O trattato da idrofobico")
+    check(not r.has("Hydrophobic contact", la=":C1"), "C bonded to O treated as hydrophobic")
     r = go(Sys().ligand(ethane()).prot("GLU", "CG", leu))
-    check(not r.has("Contatto idrofobico"), "GLU CG non deve essere idrofobico")
+    check(not r.has("Hydrophobic contact"), "GLU CG must not be hydrophobic")
     r = go(Sys().ligand(ethane()).prot("ALA", "CA", leu))
-    check(not r.has("Contatto idrofobico") and not r.has("Contatto apolare (backbone)"), "CA non conta di default")
+    check(not r.has("Hydrophobic contact") and not r.has("Apolar contact (backbone)"), "CA does not count by default")
     r = go(Sys().ligand(ethane()).prot("ALA", "CA", leu), args=["--backbone-hyd"])
-    check(r.has("Contatto apolare (backbone)"), "--backbone-hyd deve contare CA")
+    check(r.has("Apolar contact (backbone)"), "--backbone-hyd must count CA")
 
 
 @test("chem")
 def hydrophobic_thresholds_are_configurable():
     s = lambda: Sys().ligand(ethane()).prot("LEU", "CD1", at((0.765, 0, 0), (0, 0, 1), 4.2))
-    check(not go(s()).has("Contatto idrofobico"), "4,2 A fuori dalla soglia di default")
-    check(go(s(), args=["--hyd-max", "4.5"]).has("Contatto idrofobico"), "--hyd-max 4.5 deve includerlo")
+    check(not go(s()).has("Hydrophobic contact"), "4.2 A outside the default threshold")
+    check(go(s(), args=["--hyd-max", "4.5"]).has("Hydrophobic contact"), "--hyd-max 4.5 must include it")
 
 
 @test("chem")
@@ -505,51 +505,51 @@ def pi_stacking_parallel_and_offset_limit():
     for ox, expect in [(1.0, True), (3.0, True), (3.7, False), (6.0, False)]:
         s = Sys().ligand(benzene()).ring("PHE", (ox, 0, 3.6), (0, 0, 1))
         r = go(s)
-        found = r.has("pi-stacking (parallelo)")
-        check(found == expect, "offset %.1f: atteso %s, trovato %s" % (ox, expect, found))
+        found = r.has("pi-stacking (parallel)")
+        check(found == expect, "offset %.1f: expected %s, found %s" % (ox, expect, found))
 
 
 @test("chem")
 def pi_stacking_angle_threshold():
     n = (0, -math.sin(math.radians(36)), math.cos(math.radians(36)))
     mk = lambda: Sys().ligand(benzene()).ring("PHE", (0.5, 0, 3.7), n)
-    check(not go(mk()).has("pi-stacking (parallelo)"), "36 gradi oltre il limite di 30")
-    check(go(mk(), args=["--pi-angle", "40"]).has("pi-stacking (parallelo)"), "--pi-angle 40 deve accettarlo")
+    check(not go(mk()).has("pi-stacking (parallel)"), "36 degrees beyond the 30 limit")
+    check(go(mk(), args=["--pi-angle", "40"]).has("pi-stacking (parallel)"), "--pi-angle 40 must accept it")
 
 
 @test("chem")
 def pi_stacking_t_shaped():
     s = Sys().ligand(benzene()).ring("PHE", (0, 0, 4.8), (0, 1, 0))
     r = go(s)
-    check(r.has("pi-stacking (a T)"), "atteso stacking a T: " + str(r.types()))
+    check(r.has("pi-stacking (T-shaped)"), "expected T-shaped stacking: " + str(r.types()))
 
 
 @test("chem")
 def cation_pi_geometry():
     r = go(Sys().ligand(benzene()).prot("LYS", "NZ", (0, 0, 4.0)))
-    check(r.has("Cation-pi"), "LYS sull'asse dell'anello: atteso cation-pi")
+    check(r.has("Cation-pi"), "LYS on the ring axis: expected cation-pi")
     r = go(Sys().ligand(benzene()).prot("LYS", "NZ", (3.46, 0, 2.0)))
-    check(not r.has("Cation-pi"), "LYS a 60 gradi dall'asse: nessun cation-pi")
+    check(not r.has("Cation-pi"), "LYS at 60 degrees from the axis: no cation-pi")
     r = go(Sys().ligand(trimethylamine()).ring("PHE", (0, 0, 4.2), (0, 0, 1)))
-    check(r.has("Cation-pi", la=":N1"), "catione del ligando sopra l'anello della proteina: " + str(r.types()))
+    check(r.has("Cation-pi", la=":N1"), "ligand cation above the protein ring: " + str(r.types()))
 
 
 @test("chem")
 def halogen_bond_needs_linear_geometry():
     cl = (1.78, 0, 0)
     r = go(Sys().ligand(chloromethane()).prot("ASN", "OD1", at(cl, (1, 0, 0), 3.2)))
-    check(r.has("Legame ad alogeno"), "C-Cl...O lineare: atteso legame ad alogeno")
+    check(r.has("Halogen bond"), "linear C-Cl...O: expected halogen bond")
     r = go(Sys().ligand(chloromethane()).prot("ASN", "OD1", at(cl, (0, 1, 0), 3.2)))
-    check(not r.has("Legame ad alogeno"), "C-Cl...O a 90 gradi: nessun legame ad alogeno")
+    check(not r.has("Halogen bond"), "C-Cl...O at 90 degrees: no halogen bond")
 
 
 @test("chem")
 def clash_and_covalent_distances():
     r = go(Sys().ligand(ethane()).prot("LEU", "CD1", (0, 0, 2.5)))
-    check(r.has("Clash sterico"), "2,5 A tra due C: atteso clash")
-    r = go(Sys().ligand(ethane()).prot("LEU", "CD1", (-1.6, 0, 0)))      # 1,6 A da C1 e 3,1 A da C2
-    check(r.has("Possibile legame covalente", la=":C1") and not r.has("Clash sterico"),
-          "1,6 A: atteso possibile legame covalente: " + str(r.types()))
+    check(r.has("Steric clash"), "2.5 A between two C: expected clash")
+    r = go(Sys().ligand(ethane()).prot("LEU", "CD1", (-1.6, 0, 0)))      # 1.6 A from C1 and 3.1 A from C2
+    check(r.has("Possible covalent bond", la=":C1") and not r.has("Steric clash"),
+          "1.6 A: expected possible covalent bond: " + str(r.types()))
 
 
 @test("chem")
@@ -559,35 +559,50 @@ def water_bridge():
     w = at(o1, (1, 0, 0), 2.8)
     p = at(w, (0.5, 0.866, 0), 2.8)
     mk = lambda: Sys().ligand(m).water(w).prot("ASN", "ND2", p)
-    check(go(mk()).has("Ponte d'acqua"), "atteso ponte d'acqua")
-    check(not go(mk(), args=["--no-water"]).has("Ponte d'acqua"), "--no-water ignorato")
-    # contatto diretto: nessun ponte
+    check(go(mk()).has("Water bridge"), "expected water bridge")
+    check(not go(mk(), args=["--no-water"]).has("Water bridge"), "--no-water ignored")
+    # direct contact: no bridge
     s = Sys().ligand(m).water(w).prot("ASN", "ND2", at(o1, (1, 0.3, 0), 3.0))
-    check(not go(s).has("Ponte d'acqua"), "ponte d'acqua tra atomi gia' a contatto diretto")
+    check(not go(s).has("Water bridge"), "water bridge between atoms already in direct contact")
 
 
 @test("chem")
 def ligand_metal_coordination_removes_hbond_partners():
-    """Regressione (eme): N del ligando e N della proteina coordinati allo stesso Fe del ligando non fanno H-bond."""
-    m = Mol()                                   # controllo: stesso ligando SENZA Fe
+    """Regression (heme): ligand N and protein N coordinated to the same ligand Fe do not make H-bonds."""
+    m = Mol()                                   # control: same ligand WITHOUT Fe
     n1 = m.add("N1", "N", (2.0, 0, 0))
     c1 = m.add("C1", "C", (2.7, 1.1, 0))
     c2 = m.add("C2", "C", (2.7, -1.1, 0))
     m.bond(n1, c1); m.bond(n1, c2)
     nz = (2.0, 0.0, -2.9)
     r = go(Sys().ligand(m).prot("LYS", "NZ", nz))
-    check(r.has("Legame a idrogeno", la=":N1"), "controllo: senza Fe l'N del ligando deve accettare dalla lisina")
-    # con N coordinato al Fe del ligando serve il metallo vicino: il Fe e' a 2,0 A -> N coordinato
+    check(r.has("Hydrogen bond", la=":N1"), "control: without Fe the ligand N must accept from the lysine")
+    # with N coordinated to the ligand Fe the metal must be close: the Fe is at 2.0 A -> N coordinated
     m2 = Mol()
     fe2 = m2.add("FE", "Fe", (0, 0, 0))
     n = m2.add("N1", "N", (2.0, 0, 0))
     a = m2.add("C1", "C", (2.7, 1.1, 0)); b = m2.add("C2", "C", (2.7, -1.1, 0))
     m2.bond(n, a); m2.bond(n, b)
     r = go(Sys().ligand(m2).prot("LYS", "NZ", nz))
-    check(not r.has("Legame a idrogeno", la=":N1"), "N coordinato al Fe del ligando trattato da accettore")
-    # istidina che coordina il Fe del ligando: nessun H-bond con l'N del ligando
+    check(not r.has("Hydrogen bond", la=":N1"), "N coordinated to the ligand Fe treated as an acceptor")
+    # histidine coordinating the ligand Fe: no H-bond with the ligand N
     r = go(Sys().ligand(m2).prot("HIS", "NE2", (0, 0, 2.1)))
-    check(not r.has("Legame a idrogeno", pa="HIS"), "His coordinata al Fe del ligando trattata da donatore/accettore")
+    check(not r.has("Hydrogen bond", pa="HIS"), "His coordinated to the ligand Fe treated as donor/acceptor")
+
+
+@test("chem")
+def coordination_sphere_lists_protein_nitrogens():
+    """Regression: a His N bound to a metal must still appear in the coordination sphere of that metal."""
+    m = methanol()
+    o1 = m.atoms[1][2]
+    zn = (o1[0], o1[1] + 2.0, 0)
+    ne2 = at(zn, (1, 0.5, 0), 2.1)
+    s = Sys().ligand(m).metal("Zn", zn).prot("HIS", "NE2", ne2)
+    r = run_raw([tmpfile(s.text()), "LIG"])
+    check(r.rc == 0, "exit code %d: %s" % (r.rc, r.err[:200]))
+    check("Coordination sphere" in r.out, "coordination sphere missing: " + r.out)
+    sphere = r.out.split("Coordination sphere")[1]
+    check("HIS 10A:NE2" in sphere and "LIG 1L:O1" in sphere, "sphere without the His N or the ligand O: " + sphere)
 
 
 @test("chem")
@@ -596,9 +611,9 @@ def water_bridge_needs_realistic_angle():
     o1 = m.atoms[1][2]
     w = at(o1, (1, 0, 0), 2.8)
     s = lambda p: Sys().ligand(m).water(w).prot("ASN", "ND2", p)
-    check(go(s(at(w, (0.5, 0.866, 0), 2.8))).has("Ponte d'acqua"), "angolo a 120 gradi: ponte atteso")
-    check(not go(s(at(w, (1, 0, 0), 2.8))).has("Ponte d'acqua"), "acqua collineare (180 gradi): nessun ponte")
-    check(go(s(at(w, (1, 0, 0), 2.8)), args=["--wb-max", "180"]).has("Ponte d'acqua"), "--wb-max 180 deve riammettere l'angolo")
+    check(go(s(at(w, (0.5, 0.866, 0), 2.8))).has("Water bridge"), "120 degree angle: bridge expected")
+    check(not go(s(at(w, (1, 0, 0), 2.8))).has("Water bridge"), "collinear water (180 degrees): no bridge")
+    check(go(s(at(w, (1, 0, 0), 2.8)), args=["--wb-max", "180"]).has("Water bridge"), "--wb-max 180 must readmit the angle")
 
 
 def rot2(v, deg):
@@ -608,43 +623,43 @@ def rot2(v, deg):
 
 @test("chem")
 def long_hbond_needs_possible_hydrogen_geometry():
-    # idrossile (metanolo): l'H ruota, ma l'angolo C-O...A deve essere vicino a 109,5 gradi
+    # hydroxyl (methanol): the H rotates, but the C-O...A angle must be close to 109.5 degrees
     m = methanol()
     o1 = m.atoms[1][2]
-    good = at(o1, rot2((-1, 0, 0), -110), 3.9)        # C-O...A = 110 gradi, D...A = 3,9 A
-    bad = at(o1, rot2((-1, 0, 0), -40), 3.9)           # 40 gradi: l'H non puo' puntare all'accettore
+    good = at(o1, rot2((-1, 0, 0), -110), 3.9)        # C-O...A = 110 degrees, D...A = 3.9 A
+    bad = at(o1, rot2((-1, 0, 0), -40), 3.9)           # 40 degrees: the H cannot point to the acceptor
     s = lambda p: Sys().ligand(m).prot("ASN", "OD1", p)
-    check(not go(s(good)).has("Legame a idrogeno", la=":O1"), "3,9 A senza --hb-long: nessun H-bond")
+    check(not go(s(good)).has("Hydrogen bond", la=":O1"), "3.9 A without --hb-long: no H-bond")
     r = go(s(good), args=["--hb-long", "4.1"])
-    check(r.has("Legame a idrogeno", la=":O1") and "lungo" in r.find("Legame a idrogeno")[0]["note"], "3,9 A con geometria possibile: atteso H-bond lungo")
-    check(not go(s(bad), args=["--hb-long", "4.1"]).has("Legame a idrogeno", la=":O1"), "geometria impossibile: nessun H-bond lungo")
-    check(not go(s(good), args=["--hb-long", "3.8"]).has("Legame a idrogeno", la=":O1"), "oltre il limite --hb-long")
-    # NH2 ammidico: l'angolo C-N...A atteso e' ~120 gradi
+    check(r.has("Hydrogen bond", la=":O1") and "long" in r.find("Hydrogen bond")[0]["note"], "3.9 A with a possible geometry: expected long H-bond")
+    check(not go(s(bad), args=["--hb-long", "4.1"]).has("Hydrogen bond", la=":O1"), "impossible geometry: no long H-bond")
+    check(not go(s(good), args=["--hb-long", "3.8"]).has("Hydrogen bond", la=":O1"), "beyond the --hb-long limit")
+    # amide NH2: the expected C-N...A angle is ~120 degrees
     a = acetamide()
     n = a.atoms[3][2]
     v1 = v_unit(v_sub(a.atoms[1][2], n))
     ok = at(n, rot2(v1, 120), 3.9)
     r = go(Sys().ligand(a).prot("ASN", "OD1", ok), args=["--hb-long", "4.1"])
-    check(r.has("Legame a idrogeno", la=":N1"), "NH2 ammidico con geometria possibile: " + str(r.types()))
-    no = at(n, v1, 3.9)                               # accettore dal lato del C: impossibile
+    check(r.has("Hydrogen bond", la=":N1"), "amide NH2 with a possible geometry: " + str(r.types()))
+    no = at(n, v1, 3.9)                               # acceptor on the C side: impossible
     r = go(Sys().ligand(a).prot("ASN", "OD1", no), args=["--hb-long", "4.1"])
-    check(not r.has("Legame a idrogeno", la=":N1"), "NH2 con accettore dal lato sbagliato")
+    check(not r.has("Hydrogen bond", la=":N1"), "NH2 with the acceptor on the wrong side")
 
 
 @test("chem")
 def salt_bridge_by_group_centroid():
     c = carboxylate()
-    near = (0.62 + 4.6, 0, 0)                          # atomo-atomo 4,7 A (>4,0), centroide-centroide 4,6 A
+    near = (0.62 + 4.6, 0, 0)                          # atom-atom 4.7 A (>4.0), centroid-centroid 4.6 A
     s = lambda: Sys().ligand(c).prot("LYS", "NZ", near)
-    check(not go(s()).has("Ponte salino"), "default: 4,7 A atomo-atomo oltre salt-max 4,0")
+    check(not go(s()).has("Salt bridge"), "default: 4.7 A atom-atom beyond salt-max 4.0")
     r = go(s(), args=["--salt-centroid", "5.0"])
-    check(len(r.find("Ponte salino")) == 1, "centroidi a 4,6 A: atteso un ponte salino: " + str(r.types()))
-    check(not go(s(), args=["--salt-centroid", "4.0"]).has("Ponte salino"), "centroidi oltre il limite")
-    # un gruppo carico = un solo contatto, non uno per coppia di atomi
+    check(len(r.find("Salt bridge")) == 1, "centroids at 4.6 A: expected a salt bridge: " + str(r.types()))
+    check(not go(s(), args=["--salt-centroid", "4.0"]).has("Salt bridge"), "centroids beyond the limit")
+    # one charged group = one contact, not one per atom pair
     g = guanidinium()
     mk = lambda: Sys().ligand(g).prot("GLU", "OE1", (-0.5, 4.5, 0)).prot("GLU", "OE2", (0.5, 4.5, 0))
-    check(len(go(mk()).find("Ponte salino")) > 1, "default: piu' coppie atomo-atomo")
-    check(len(go(mk(), args=["--salt-centroid", "5.0"]).find("Ponte salino")) == 1, "per gruppo: un solo ponte salino")
+    check(len(go(mk()).find("Salt bridge")) > 1, "default: several atom-atom pairs")
+    check(len(go(mk(), args=["--salt-centroid", "5.0"]).find("Salt bridge")) == 1, "per group: a single salt bridge")
 
 
 @test("chem")
@@ -653,20 +668,20 @@ def plip_like_preset_and_explicit_override():
     o1 = m.atoms[1][2]
     good = at(o1, rot2((-1, 0, 0), -110), 3.9)
     s = lambda: Sys().ligand(m).prot("ASN", "OD1", good)
-    check(not go(s()).has("Legame a idrogeno", la=":O1"), "default: nessun H-bond a 3,9 A")
-    check(go(s(), args=["--plip-like"]).has("Legame a idrogeno", la=":O1"), "--plip-like deve ammettere l'H-bond lungo")
-    check(not go(s(), args=["--plip-like", "--hb-long", "0"]).has("Legame a idrogeno", la=":O1"), "opzione esplicita dopo il preset")
-    check(not go(s(), args=["--hb-long", "0", "--plip-like"]).has("Legame a idrogeno", la=":O1"), "opzione esplicita prima del preset")
+    check(not go(s()).has("Hydrogen bond", la=":O1"), "default: no H-bond at 3.9 A")
+    check(go(s(), args=["--plip-like"]).has("Hydrogen bond", la=":O1"), "--plip-like must admit the long H-bond")
+    check(not go(s(), args=["--plip-like", "--hb-long", "0"]).has("Hydrogen bond", la=":O1"), "explicit option after the preset")
+    check(not go(s(), args=["--hb-long", "0", "--plip-like"]).has("Hydrogen bond", la=":O1"), "explicit option before the preset")
     c = carboxylate()
     near = (0.62 + 4.6, 0, 0)
     mk = lambda: Sys().ligand(c).prot("LYS", "NZ", near)
-    check(go(mk(), args=["--plip-like"]).has("Ponte salino"), "--plip-like: ponte salino per centroidi a 4,6 A")
-    check(not go(mk(), args=["--plip-like", "--salt-centroid", "0"]).has("Ponte salino"), "--salt-centroid 0 spegne i centroidi")
+    check(go(mk(), args=["--plip-like"]).has("Salt bridge"), "--plip-like: salt bridge by centroids at 4.6 A")
+    check(not go(mk(), args=["--plip-like", "--salt-centroid", "0"]).has("Salt bridge"), "--salt-centroid 0 turns the centroids off")
 
 
 @test("chem")
 def nucleic_acid_stacking_and_phosphate():
-    # base adeninica (6+5 atomi) in z=0, ligando benzenico sopra
+    # adenine base (6+5 atoms) at z=0, benzene ligand above it
     c6 = ring_points((0, 0, 0), (0, 0, 1), 1.38)            # N1 C2 N3 C4 C5 C6
     names6 = ["N1", "C2", "N3", "C4", "C5", "C6"]
     s = Sys()
@@ -692,26 +707,26 @@ def nucleic_acid_stacking_and_phosphate():
         lig.bond(k, (k + 1) % 6, 1 + (k % 2))
     s.ligand(lig)
     r = go(s)
-    check(r.has("pi-stacking (parallelo)", pa="DA 17D"), "atteso stacking su base di DNA: " + str(r.types()))
-    # fosfato anionico + ammina del ligando
+    check(r.has("pi-stacking (parallel)", pa="DA 17D"), "expected stacking on a DNA base: " + str(r.types()))
+    # anionic phosphate + ligand amine
     s = Sys().ligand(trimethylamine()).prot("DA", "OP1", (0, 0, 3.0), resi=5, chain="D", el="O")
     r = go(s)
-    check(r.has("Ponte salino", pa="DA 5D:OP1"), "atteso ponte salino con fosfato del DNA: " + str(r.types()))
+    check(r.has("Salt bridge", pa="DA 5D:OP1"), "expected salt bridge with the DNA phosphate: " + str(r.types()))
 
 
 # ----------------------------------------------------------------------------------------------
-# GRUPPO tmpl: template SDF / MOL2
+# GROUP tmpl: SDF / MOL2 templates
 # ----------------------------------------------------------------------------------------------
 @test("tmpl")
 def sdf_with_explicit_h_distinguishes_acid_from_carboxylate():
     m = carboxylate()
     probe = at((0.62, 1.07, 0), (0.5, 0.866, 0), 2.8)
     s = lambda: Sys().ligand(m).prot("LYS", "NZ", probe)
-    check(go(s()).has("Ponte salino"), "senza template: carbossilato anionico (assunzione a pH fisiologico)")
+    check(go(s()).has("Salt bridge"), "without template: anionic carboxylate (physiological pH assumption)")
     r = go(s(), sdf=m.sdf(with_h=True))
-    check("template" in r.err, "template non applicato: " + r.err)
-    check(not r.has("Ponte salino"), "con H sull'ossigeno il gruppo e' un acido: nessun ponte salino")
-    check(r.has("Legame a idrogeno", la=":O1"), "O=C dell'acido deve accettare l'H-bond dalla lisina")
+    check("template" in r.err, "template not applied: " + r.err)
+    check(not r.has("Salt bridge"), "with H on the oxygen the group is an acid: no salt bridge")
+    check(r.has("Hydrogen bond", la=":O1"), "the acid O=C must accept the H-bond from the lysine")
 
 
 @test("tmpl")
@@ -719,26 +734,26 @@ def template_hbond_uses_hydrogen_geometry():
     m = methanol()
     o1 = m.atoms[1][2]
     h = v_add(o1, v_mul(HDIR, 0.96))
-    aligned = at(o1, HDIR, 2.8)                       # H punta verso l'accettore
-    mirror = at(o1, (0.317, -0.948, 0), 2.8)           # H punta altrove
+    aligned = at(o1, HDIR, 2.8)                       # the H points towards the acceptor
+    mirror = at(o1, (0.317, -0.948, 0), 2.8)           # the H points elsewhere
     sdf = m.sdf(with_h=True)
     r = go(Sys().ligand(m).prot("ASN", "OD1", aligned), sdf=sdf)
-    check(r.has("Legame a idrogeno", la=":O1") and "D-H...A" in r.find("Legame a idrogeno")[0]["note"],
-          "H allineato: atteso H-bond con angolo D-H...A")
+    check(r.has("Hydrogen bond", la=":O1") and "D-H...A" in r.find("Hydrogen bond")[0]["note"],
+          "aligned H: expected H-bond with D-H...A angle")
     r = go(Sys().ligand(m).prot("ASN", "OD1", mirror), sdf=sdf)
-    check(not r.has("Legame a idrogeno", la=":O1"), "H che punta altrove: nessun H-bond con template")
+    check(not r.has("Hydrogen bond", la=":O1"), "H pointing elsewhere: no H-bond with template")
     r = go(Sys().ligand(m).prot("ASN", "OD1", mirror))
-    check(r.has("Legame a idrogeno", la=":O1"), "senza H (euristica) il contatto e' accettato")
+    check(r.has("Hydrogen bond", la=":O1"), "without H (heuristics) the contact is accepted")
 
 
 @test("tmpl")
 def template_without_hydrogens_keeps_donors():
-    """Regressione: un SDF senza H non deve azzerare i donatori (si usa l'euristica)."""
+    """Regression: an SDF without H must not zero the donors (heuristics are used)."""
     m = methanol()
     o1 = m.atoms[1][2]
     r = go(Sys().ligand(m).prot("ASN", "OD1", at(o1, HDIR, 2.8)), sdf=m.sdf(with_h=False))
-    check("template" in r.err, "template non applicato")
-    check(r.has("Legame a idrogeno", la=":O1"), "template senza H: O-H del metanolo deve donare")
+    check("template" in r.err, "template not applied")
+    check(r.has("Hydrogen bond", la=":O1"), "template without H: the methanol O-H must donate")
 
 
 @test("tmpl")
@@ -746,12 +761,12 @@ def template_mismatch_falls_back_to_heuristics():
     m = methanol()
     s = lambda: Sys().ligand(m).prot("ASN", "OD1", at(m.atoms[1][2], HDIR, 2.8))
     r = go(s(), sdf=m.sdf(shift=(1.0, 0, 0)))
-    check("nessun template" in r.err, "SDF traslato di 1 A non deve combaciare: " + r.err)
+    check("no template matches" in r.err, "SDF shifted by 1 A must not match: " + r.err)
     other = ethane()
     r = go(s(), sdf=other.sdf())
-    check("nessun template" in r.err, "numero di atomi diverso: fallback atteso")
-    r = go(s(), sdf=other.sdf(name="altra") + m.sdf(name="giusta"))
-    check("giusta" in r.err, "file multi-molecola: deve scegliere la molecola che combacia: " + r.err)
+    check("no template matches" in r.err, "different number of atoms: fallback expected")
+    r = go(s(), sdf=other.sdf(name="other") + m.sdf(name="right"))
+    check("right" in r.err, "multi-molecule file: must choose the molecule that matches: " + r.err)
 
 
 @test("tmpl")
@@ -759,8 +774,8 @@ def mol2_guanidinium_via_cationic_type():
     g = guanidinium(types=True)
     s = Sys().ligand(g).prot("GLU", "OE1", at((0, 1.33, 0), (0, 1, 0), 2.9))
     r = go(s, mol2=g.mol2())
-    check("template" in r.err, "mol2 non applicato: " + r.err)
-    check(r.has("Ponte salino", la=":N1"), "C.cat deve rendere cationici i tre N: " + str(r.types()))
+    check("template" in r.err, "mol2 not applied: " + r.err)
+    check(r.has("Salt bridge", la=":N1"), "C.cat must make the three N cationic: " + str(r.types()))
 
 
 @test("tmpl")
@@ -768,11 +783,11 @@ def mol2_aromatic_bonds_give_rings():
     b = benzene(types=True)
     s = Sys().ligand(b).ring("PHE", (1.0, 0, 3.6), (0, 0, 1))
     r = go(s, mol2=b.mol2())
-    check("template" in r.err and r.has("pi-stacking (parallelo)"), "stacking con template mol2: " + r.err + str(r.types()))
+    check("template" in r.err and r.has("pi-stacking (parallel)"), "stacking with mol2 template: " + r.err + str(r.types()))
 
 
 # ----------------------------------------------------------------------------------------------
-# GRUPPO pdb: parsing
+# GROUP pdb: parsing
 # ----------------------------------------------------------------------------------------------
 def lys_salt_system(**kw):
     m = carboxylate()
@@ -784,10 +799,10 @@ def altloc_first_encountered_is_used():
     s, p = lys_salt_system()
     far = (30.0, 30.0, 30.0)
     s.prot("LYS", "NZ", p, alt="A").prot("LYS", "NZ", far, alt="B")
-    check(go(s).has("Ponte salino"), "altloc A vicino, B lontano: atteso contatto")
+    check(go(s).has("Salt bridge"), "altloc A near, B far: expected contact")
     s, p = lys_salt_system()
     s.prot("LYS", "NZ", far, alt="B").prot("LYS", "NZ", p, alt="A")
-    check(not go(s).has("Ponte salino"), "si usa la prima altloc incontrata (B, lontana)")
+    check(not go(s).has("Salt bridge"), "the first altloc encountered is used (B, far)")
 
 
 @test("pdb")
@@ -796,8 +811,8 @@ def insertion_codes_are_distinct_residues():
     s.prot("LYS", "NZ", p, resi=52, icode=" ")
     s.prot("LYS", "NZ", at((0.62, -1.07, 0), (0.5, -0.866, 0), 2.8), resi=52, icode="A")
     r = go(s)
-    check(len(r.find("Ponte salino")) == 2, "attesi due ponti salini (52 e 52A): " + str([x["pa"] for x in r.rows]))
-    check(any("52AA" in x["pa"] for x in r.rows), "il codice di inserzione deve comparire nell'etichetta")
+    check(len(r.find("Salt bridge")) == 2, "expected two salt bridges (52 and 52A): " + str([x["pa"] for x in r.rows]))
+    check(any("52AA" in x["pa"] for x in r.rows), "the insertion code must appear in the label")
 
 
 @test("pdb")
@@ -807,7 +822,7 @@ def only_first_model_is_read():
     txt = "MODEL        1\n" + s.prot("LYS", "NZ", far).text().replace("END\n", "") + "ENDMDL\n"
     s2, _ = lys_salt_system()
     txt += "MODEL        2\n" + s2.prot("LYS", "NZ", p).text() + "ENDMDL\nEND\n"
-    check(not go(None, text=txt).has("Ponte salino"), "il secondo modello deve essere ignorato")
+    check(not go(None, text=txt).has("Salt bridge"), "the second model must be ignored")
 
 
 @test("pdb")
@@ -819,16 +834,16 @@ def ligand_selection_and_listing():
         s.atom("HETATM", name, "LIG", "M", 2, v_add(xyz, (40, 0, 0)), el)
     s.prot("LYS", "NZ", at((0.62, 1.07, 0), (0.5, 0.866, 0), 2.8))
     s.prot("LYS", "NZ", at(v_add((0.62, 1.07, 0), (40, 0, 0)), (0.5, 0.866, 0), 2.8), resi=11)
-    check(len({r["lig"] for r in go(s).rows}) == 2, "senza filtro: due copie del ligando")
+    check(len({r["lig"] for r in go(s).rows}) == 2, "without filter: two copies of the ligand")
     r = go(s, lig=("LIG", "M", "2"))
-    check({r_["lig"] for r_ in r.rows} == {"LIG 2M"}, "filtro catena/residuo: " + str({r_["lig"] for r_ in r.rows}))
+    check({r_["lig"] for r_ in r.rows} == {"LIG 2M"}, "chain/residue filter: " + str({r_["lig"] for r_ in r.rows}))
     r = run_raw([tmpfile(s.text())])
-    check("LIG(2)" in r.out, "elenco dei ligandi con conteggio copie: " + r.out)
+    check("LIG(2)" in r.out, "ligand listing with copy count: " + r.out)
 
 
 @test("pdb")
 def linked_hetero_residues_form_one_ligand():
-    """Residui HETATM legati covalentemente (glicani, dipeptidi) = un solo ligando, come in PLIP."""
+    """Covalently linked HETATM residues (glycans, dipeptides) = a single ligand, as in PLIP."""
     def build(gap):
         s = Sys().ligand(methanol(), res="LIG", chain="L", resi=1)
         x = 1.43 + gap
@@ -837,13 +852,13 @@ def linked_hetero_residues_form_one_ligand():
         s.prot("ASN", "OD1", at((x + 1.43, 0, 0), (0.5, 0.866, 0), 2.8))
         return s
     r = go(build(1.42))
-    check("composto" in r.err, "unione non segnalata: " + r.err)
-    check(r.has("Legame a idrogeno", la="MOL 2L:O1"), "gli atomi del residuo legato devono far parte del ligando: " + str(r.types()))
-    check(not any("MOL 2L" in x["pa"] for x in r.rows), "il residuo legato e' stato contato anche come partner proteico")
+    check("Composite" in r.err, "merge not reported: " + r.err)
+    check(r.has("Hydrogen bond", la="MOL 2L:O1"), "the atoms of the linked residue must be part of the ligand: " + str(r.types()))
+    check(not any("MOL 2L" in x["pa"] for x in r.rows), "the linked residue was also counted as a protein partner")
     r = go(build(1.42), args=["--no-merge"])
-    check(not r.has("Legame a idrogeno", la="MOL 2L:O1"), "--no-merge deve tenere separati i residui")
+    check(not r.has("Hydrogen bond", la="MOL 2L:O1"), "--no-merge must keep the residues separate")
     r = go(build(3.2))
-    check("composto" not in r.err and not any("MOL 2L" in x["la"] for x in r.rows), "residui non legati uniti per errore")
+    check("Composite" not in r.err and not any("MOL 2L" in x["la"] for x in r.rows), "unlinked residues merged by mistake")
 
 
 @test("pdb")
@@ -852,14 +867,14 @@ def csv_is_well_formed():
     s.prot("LYS", "NZ", p)
     r = go(s)
     lines = r.out.strip().splitlines()
-    check(lines[0] == "ligando,tipo,favorevole,atomo_ligando,atomo_proteina,distanza,note", "intestazione CSV: " + lines[0])
+    check(lines[0] == "ligand,type,favorable,ligand_atom,protein_atom,distance,notes", "CSV header: " + lines[0])
     for l in lines[1:]:
-        check(len(l.split(",")) == 7, "riga CSV con numero di campi errato: " + l)
-    check("Annotazione" not in r.out and "B-factor" not in r.out, "informazioni di servizio su stdout in modalita' CSV")
+        check(len(l.split(",")) == 7, "CSV row with the wrong number of fields: " + l)
+    check("annotation" not in r.out.lower() and "B-factor" not in r.out, "service information on stdout in CSV mode")
 
 
 # ----------------------------------------------------------------------------------------------
-# GRUPPO robust: input malformati
+# GROUP robust: malformed input
 # ----------------------------------------------------------------------------------------------
 def base_system():
     s, p = lys_salt_system()
@@ -870,27 +885,27 @@ def base_system():
 @test("robust")
 def missing_pdb_file():
     r = run_raw([os.path.join(CFG["tmp"], "non_esiste.pdb")])
-    check(r.rc == 1 and "Impossibile" in r.err, "rc=%d err=%s" % (r.rc, r.err))
+    check(r.rc == 1 and "Cannot open" in r.err, "rc=%d err=%s" % (r.rc, r.err))
 
 
 @test("robust")
 def no_arguments_prints_usage():
     r = run_raw([])
-    check(r.rc == 1 and "Uso" in r.err, "rc=%d" % r.rc)
+    check(r.rc == 1 and "Usage" in r.err, "rc=%d" % r.rc)
 
 
 @test("robust")
 def empty_and_whitespace_files():
     for content in ["", "\n\n\n", "   \n"]:
         r = run_raw([tmpfile(content)])
-        check(r.rc == 0, "file vuoto: rc=%d %s" % (r.rc, r.err[:200]))
+        check(r.rc == 0, "empty file: rc=%d %s" % (r.rc, r.err[:200]))
         no_crash(r)
 
 
 @test("robust")
 def ligand_not_present():
     r = run_raw([tmpfile(base_system().text()), "XXX"])
-    check(r.rc == 0 and "Nessun ligando" in r.out, r.out + r.err)
+    check(r.rc == 0 and "No ligand" in r.out, r.out + r.err)
 
 
 @test("robust")
@@ -929,14 +944,14 @@ def huge_and_nan_coordinates():
     for token in ["1e30    ", "-1e30   ", "nan     ", "inf     ", "99999999"]:
         bad = "\n".join(l[:30] + token + l[38:] if l.startswith("ATOM") else l for l in txt.splitlines())
         r = run_raw([tmpfile(bad), "LIG", "--csv"])
-        check(r.rc == 0, "coordinata '%s': rc=%d %s" % (token.strip(), r.rc, r.err[:300]))
+        check(r.rc == 0, "coordinate '%s': rc=%d %s" % (token.strip(), r.rc, r.err[:300]))
         no_crash(r)
 
 
 @test("robust")
 def coincident_atoms_zero_distance():
     s = Sys().ligand(carboxylate())
-    s.prot("LYS", "NZ", (0.62, 1.07, 0))                  # esattamente sopra O1
+    s.prot("LYS", "NZ", (0.62, 1.07, 0))                  # exactly above O1
     s.prot("ASP", "OD1", (0.62, -1.07, 0))
     r = go(s)
     no_crash(r)
@@ -947,7 +962,7 @@ def crlf_line_endings_give_same_result():
     txt = base_system().text()
     a = go(None, text=txt)
     b = go(None, text=txt.replace("\n", "\r\n"))
-    check(a.rows == b.rows and a.rows, "CRLF cambia il risultato")
+    check(a.rows == b.rows and a.rows, "CRLF changes the result")
 
 
 @test("robust")
@@ -956,11 +971,11 @@ def missing_or_lowercase_element_column():
     a = go(None, text=txt)
     nocol = "\n".join(l[:76] if l.startswith(("ATOM", "HETATM")) else l for l in txt.splitlines()) + "\n"
     b = go(None, text=nocol)
-    check(sorted(x["tipo"] for x in a.rows) == sorted(x["tipo"] for x in b.rows) and b.rows,
-          "senza colonna elemento: %s contro %s" % (a.types(), b.types()))
+    check(sorted(x["kind"] for x in a.rows) == sorted(x["kind"] for x in b.rows) and b.rows,
+          "without element column: %s versus %s" % (a.types(), b.types()))
     low = "\n".join(l[:76] + l[76:].lower() if l.startswith(("ATOM", "HETATM")) else l for l in txt.splitlines()) + "\n"
     c = go(None, text=low)
-    check(sorted(x["tipo"] for x in a.rows) == sorted(x["tipo"] for x in c.rows), "elemento minuscolo")
+    check(sorted(x["kind"] for x in a.rows) == sorted(x["kind"] for x in c.rows), "lowercase element")
 
 
 @test("robust")
@@ -968,7 +983,7 @@ def single_atom_ligand():
     s = Sys().prot("HIS", "NE2", (2.1, 0, 0), el="N").metal("Zn", (0, 0, 0))
     r = go(s, lig=("ZN",))
     no_crash(r)
-    check(r.has("Coordinazione metallica"), "ligando di un solo atomo (Zn): " + str(r.types()))
+    check(r.has("Metal coordination"), "single-atom ligand (Zn): " + str(r.types()))
 
 
 @test("robust")
@@ -976,7 +991,7 @@ def ligand_with_only_hydrogens():
     s = Sys().prot("LYS", "NZ", (5, 5, 5))
     s.atom("HETATM", "H1", "LIG", "L", 1, (0, 0, 0), "H")
     r = run_raw([tmpfile(s.text()), "LIG"])
-    check(r.rc == 0 and "Nessun ligando" in r.out, r.out)
+    check(r.rc == 0 and "No ligand" in r.out, r.out)
 
 
 def sdf_system():
@@ -1029,21 +1044,21 @@ def malformed_mol2_files():
 @test("robust")
 def invalid_command_line_is_rejected():
     pdb = tmpfile(base_system().text())
-    for args, what in [([pdb, "--sdf"], "--sdf senza file"), ([pdb, "--foo", "1"], "opzione sconosciuta"),
-                       ([pdb, "LIG", "--hb-max"], "soglia senza valore"),
-                       ([pdb, "LIG", "--hb-max", "abc"], "soglia non numerica"),
-                       ([pdb, "LIG", "--sdf", "/non/esiste.sdf"], "file SDF inesistente"),
-                       ([pdb, "LIG", "--mol2", "/non/esiste.mol2"], "file MOL2 inesistente")]:
+    for args, what in [([pdb, "--sdf"], "--sdf without a file"), ([pdb, "--foo", "1"], "unknown option"),
+                       ([pdb, "LIG", "--hb-max"], "threshold without a value"),
+                       ([pdb, "LIG", "--hb-max", "abc"], "non-numeric threshold"),
+                       ([pdb, "LIG", "--sdf", "/no/such.sdf"], "nonexistent SDF file"),
+                       ([pdb, "LIG", "--mol2", "/no/such.mol2"], "nonexistent MOL2 file")]:
         r = run_raw(args)
-        check(r.rc == 1, "%s: atteso codice 1, ottenuto %d (%s)" % (what, r.rc, r.err[:120]))
+        check(r.rc == 1, "%s: expected code 1, got %d (%s)" % (what, r.rc, r.err[:120]))
         no_crash(r)
 
 
 @test("robust")
 def oversized_thresholds_are_clamped_not_silent():
     r = go(base_system(), args=["--hb-max", "9", "--salt-max", "12"])
-    check("limitat" in r.err.lower() or "clamp" in r.err.lower() or "massimo" in r.err.lower(),
-          "soglia oltre il limite della griglia (6 A) senza avviso: " + r.err[:200])
+    check("limited" in r.err.lower() or "clamp" in r.err.lower() or "massimo" in r.err.lower(),
+          "threshold beyond the grid limit (6 A) without a warning: " + r.err[:200])
 
 
 @test("robust")
@@ -1059,50 +1074,50 @@ def large_system_runs_in_reasonable_time():
             s.atom("ATOM", nm, resname, "A", i % 9999 + 1, p, nm[0])
     limit = 120 if CFG["sanitize"] else 40
     r = go(s, timeout=limit * 3)
-    check(CFG["last_time"] < limit, "200000 atomi: %.1f s (limite %d s)" % (CFG["last_time"], limit))
+    check(CFG["last_time"] < limit, "200000 atoms: %.1f s (limit %d s)" % (CFG["last_time"], limit))
     no_crash(r)
 
 
 # ----------------------------------------------------------------------------------------------
-# GRUPPO golden: complessi reali (regressione di risultati verificati a mano)
+# GROUP golden: real complexes (regression of results verified by hand)
 # ----------------------------------------------------------------------------------------------
 GOLDEN = [
-    # (pdb, argomenti ligando, opzioni, [attesi (tipo, ligando contiene, proteina contiene)], [vietati (tipo, ...)])
+    # (pdb, ligand arguments, options, [expected (kind, ligand contains, protein contains)], [forbidden (kind, ...)])
     ("2OZR.pdb", ["GG1", "A", "2001"], [],
-     [("Legame a idrogeno", ":O2", "THR 226A:N"), ("Ponte salino", ":O6", "LYS 119A:NZ"),
-      ("pi-stacking (parallelo)", "", "PHE 231A")], []),
+     [("Hydrogen bond", ":O2", "THR 226A:N"), ("Salt bridge", ":O6", "LYS 119A:NZ"),
+      ("pi-stacking (parallel)", "", "PHE 231A")], []),
     ("1efy.pdb", ["BZC"], ["--sdf", "1efy.sdf"],
-     [("Legame a idrogeno", ":N1", "GLY 863A:O"), ("Legame a idrogeno", ":O1", "GLY 863A:N"),
-      ("pi-stacking (parallelo)", "", "TYR 907A")], []),
+     [("Hydrogen bond", ":N1", "GLY 863A:O"), ("Hydrogen bond", ":O1", "GLY 863A:N"),
+      ("pi-stacking (parallel)", "", "TYR 907A")], []),
     ("4IKF.pdb", ["M76"], [],
-     [("Coordinazione metallica", ":O14", "MG 405A"), ("Coordinazione metallica", ":O16", "MG 404A"),
-      ("Coordinazione metallica", ":O18", "MG 404A"), ("pi-stacking (parallelo)", "", "DA 17D"),
-      ("pi-stacking (parallelo)", "", "DC 16D")],
-     [("Legame a idrogeno", "", ""), ("Coordinazione metallica", ":N15", "")]),
+     [("Metal coordination", ":O14", "MG 405A"), ("Metal coordination", ":O16", "MG 404A"),
+      ("Metal coordination", ":O18", "MG 404A"), ("pi-stacking (parallel)", "", "DA 17D"),
+      ("pi-stacking (parallel)", "", "DC 16D")],
+     [("Hydrogen bond", "", ""), ("Metal coordination", ":N15", "")]),
     ("3PTB.pdb", ["BEN"], ["--no-water"],
-     [("Ponte salino", ":N1", "ASP 189A"), ("Ponte salino", ":N2", "ASP 189A"),
-      ("Legame a idrogeno", ":N1", "GLY 219A:O"), ("Legame a idrogeno", ":N2", "SER 190A:OG")], []),
+     [("Salt bridge", ":N1", "ASP 189A"), ("Salt bridge", ":N2", "ASP 189A"),
+      ("Hydrogen bond", ":N1", "GLY 219A:O"), ("Hydrogen bond", ":N2", "SER 190A:OG")], []),
     ("3PTB.pdb", ["BEN"], ["--backbone-hyd"],
-     [("Contatto apolare (backbone)", "", "TRP 215A:C"), ("Contatto apolare (backbone)", "", "CYS 191A:CA")], []),
+     [("Apolar contact (backbone)", "", "TRP 215A:C"), ("Apolar contact (backbone)", "", "CYS 191A:CA")], []),
     ("1STP.pdb", ["BTN"], ["--no-water"],
-     [("Legame a idrogeno", ":N1", "ASP 128A"), ("Legame a idrogeno", ":N2", "SER 45A"),
-      ("Legame a idrogeno", ":O11", "SER 88A"), ("Legame a idrogeno", ":O12", "ASN 49A:N"),
-      ("Legame a idrogeno", ":O3", "TYR 43A"), ("Legame a idrogeno", ":O3", "SER 27A"),
-      ("Legame a idrogeno", ":O3", "ASN 23A")], []),
+     [("Hydrogen bond", ":N1", "ASP 128A"), ("Hydrogen bond", ":N2", "SER 45A"),
+      ("Hydrogen bond", ":O11", "SER 88A"), ("Hydrogen bond", ":O12", "ASN 49A:N"),
+      ("Hydrogen bond", ":O3", "TYR 43A"), ("Hydrogen bond", ":O3", "SER 27A"),
+      ("Hydrogen bond", ":O3", "ASN 23A")], []),
     ("1IEP.pdb", ["STI", "A", "201"], ["--no-water", "--pi-angle", "40"],
-     [("Legame a idrogeno", ":N13", "THR 315A"), ("Legame a idrogeno", ":N21", "GLU 286A"),
-      ("Legame a idrogeno", ":N3", "MET 318A"), ("Legame a idrogeno", ":O29", "ASP 381A"),
-      ("Legame a idrogeno", ":N51", "ILE 360A:O"), ("pi-stacking (parallelo)", "", "PHE 317A"),
-      ("pi-stacking (parallelo)", "", "PHE 382A")],
+     [("Hydrogen bond", ":N13", "THR 315A"), ("Hydrogen bond", ":N21", "GLU 286A"),
+      ("Hydrogen bond", ":N3", "MET 318A"), ("Hydrogen bond", ":O29", "ASP 381A"),
+      ("Hydrogen bond", ":N51", "ILE 360A:O"), ("pi-stacking (parallel)", "", "PHE 317A"),
+      ("pi-stacking (parallel)", "", "PHE 382A")],
      [("Cation-pi", "", "")]),
     ("1HSG.pdb", ["MK1"], ["--no-water"],
-     [("Legame a idrogeno", ":O2", "ASP 25B"), ("Legame a idrogeno", ":O2", "ASP 25A"),
-      ("Legame a idrogeno", ":N4", "GLY 27B:O"), ("Legame a idrogeno", ":O4", "ASP 29B:N"),
-      ("Legame a idrogeno", ":O4", "GLY 27B:O")], []),
+     [("Hydrogen bond", ":O2", "ASP 25B"), ("Hydrogen bond", ":O2", "ASP 25A"),
+      ("Hydrogen bond", ":N4", "GLY 27B:O"), ("Hydrogen bond", ":O4", "ASP 29B:N"),
+      ("Hydrogen bond", ":O4", "GLY 27B:O")], []),
     ("1AZM.pdb", ["AZM"], ["--no-water"],
-     [("Coordinazione metallica", ":N1", "ZN 261A"), ("Legame a idrogeno", ":N1", "THR 199A:OG1"),
-      ("Legame a idrogeno", ":O2", "THR 199A:N")],
-     [("Legame a idrogeno", "", "HIS 94A"), ("Legame a idrogeno", "", "HIS 96A"), ("Legame a idrogeno", "", "HIS 119A")]),
+     [("Metal coordination", ":N1", "ZN 261A"), ("Hydrogen bond", ":N1", "THR 199A:OG1"),
+      ("Hydrogen bond", ":O2", "THR 199A:N")],
+     [("Hydrogen bond", "", "HIS 94A"), ("Hydrogen bond", "", "HIS 96A"), ("Hydrogen bond", "", "HIS 119A")]),
 ]
 
 
@@ -1112,14 +1127,14 @@ def make_golden(idx, entry):
     def fn():
         path = os.path.join(CFG["real_dir"], pdb)
         if not os.path.exists(path):
-            raise Skip("manca %s" % path)
+            raise Skip("missing %s" % path)
         extra = []
         i = 0
         while i < len(opts):
             if opts[i] in ("--sdf", "--mol2"):
                 p = os.path.join(CFG["real_dir"], opts[i + 1])
                 if not os.path.exists(p):
-                    raise Skip("manca %s" % p)
+                    raise Skip("missing %s" % p)
                 extra += [opts[i], p]
                 i += 2
             else:
@@ -1127,10 +1142,10 @@ def make_golden(idx, entry):
         r = run_raw([path] + lig + ["--csv"] + extra)
         check(r.rc == 0, "rc=%d %s" % (r.rc, r.err[:200]))
         no_crash(r)
-        for tipo, la, pa in expect:
-            check(r.has(tipo, la or None, pa or None), "atteso e non trovato: %s %s %s" % (tipo, la, pa))
-        for tipo, la, pa in forbid:
-            check(not r.has(tipo, la or None, pa or None), "trovato un contatto vietato: %s %s %s" % (tipo, la, pa))
+        for kind, la, pa in expect:
+            check(r.has(kind, la or None, pa or None), "expected but not found: %s %s %s" % (kind, la, pa))
+        for kind, la, pa in forbid:
+            check(not r.has(kind, la or None, pa or None), "found a forbidden contact: %s %s %s" % (kind, la, pa))
     fn.__name__ = "golden_%s_%s" % (pdb.split(".")[0], "_".join(lig).replace(" ", "")) + ("_%d" % idx if idx else "")
     return fn
 
@@ -1145,13 +1160,13 @@ for _i, _e in enumerate(GOLDEN):
 # ----------------------------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--bin", default="", help="binario di ligint gia' compilato (default: compila i sorgenti)")
+    ap.add_argument("--bin", default="", help="already built ligint binary (default: build the sources)")
     ap.add_argument("--sanitize", action="store_true")
-    ap.add_argument("-k", default="", help="esegue solo i test con questa sottostringa nel nome")
-    ap.add_argument("--group", default="", help="chem, tmpl, pdb, robust, golden (separati da virgola)")
+    ap.add_argument("-k", default="", help="run only the tests with this substring in the name")
+    ap.add_argument("--group", default="", help="chem, tmpl, pdb, robust, golden (comma-separated)")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--real-dir", default=os.path.join(HERE, "data"))
-    ap.add_argument("-v", action="store_true", help="mostra il messaggio anche dei test riusciti/saltati")
+    ap.add_argument("-v", action="store_true", help="show the message also for passed/skipped tests")
     a = ap.parse_args()
     if a.list:
         for g, n, _ in TESTS:
@@ -1163,13 +1178,13 @@ def main():
     if a.bin:
         CFG["bin"] = os.path.abspath(a.bin)
         if not os.path.exists(CFG["bin"]):
-            sys.exit("binario non trovato: " + CFG["bin"])
-        print("binario: %s (precompilato)" % CFG["bin"])
+            sys.exit("binary not found: " + CFG["bin"])
+        print("binary: %s (prebuilt)" % CFG["bin"])
     else:
         warn = _build.build_ligint(CFG["bin"], a.sanitize)
-        print("binario: %s (%s)" % (CFG["bin"], "ASan+UBSan" if a.sanitize else "-O2"))
+        print("binary: %s (%s)" % (CFG["bin"], "ASan+UBSan" if a.sanitize else "-O2"))
     if warn:
-        print("avvisi del compilatore:\n" + warn)
+        print("compiler warnings:\n" + warn)
     groups = {g for g in a.group.split(",") if g}
     ok = fail = skip = 0
     failures = []
@@ -1187,11 +1202,11 @@ def main():
             fail += 1
             failures.append((g, n, str(e)))
             print("  FAIL  %-7s %s\n          -> %s" % (g, n, str(e).replace("\n", " ")[:600]))
-        except Exception as e:   # errore nel test stesso
+        except Exception as e:   # error in the test itself
             fail += 1
-            failures.append((g, n, "errore nel test: %r" % e))
+            failures.append((g, n, "error in the test: %r" % e))
             print("  ERROR %-7s %s\n          -> %r" % (g, n, e))
-    print("\nrisultato: %d ok, %d falliti, %d saltati" % (ok, fail, skip))
+    print("\nresult: %d passed, %d failed, %d skipped" % (ok, fail, skip))
     return 1 if fail else 0
 
 

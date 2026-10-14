@@ -1,4 +1,4 @@
-// Lettura dei template SDF / MOL2 e abbinamento al ligando del PDB (per coordinate).
+// Reading of SDF / MOL2 templates and matching to the PDB ligand (by coordinates).
 #include "internal.hpp"
 
 namespace ligint {
@@ -15,7 +15,7 @@ bool loadSdf(const string& path, vector<Tmpl>& out, vector<string>& warnings) {
         t.name = trim(l1);
         if (!getline(f, l2) || !getline(f, l3) || !getline(f, cnt)) break;
         if (cnt.find("V3000") != string::npos) {
-            warnings.push_back("SDF V3000 non supportato (molecola '" + t.name + "' saltata)");
+            warnings.push_back("SDF V3000 not supported (molecule '" + t.name + "' skipped)");
             while (getline(f, line) && line.compare(0, 4, "$$$$") != 0) {}
             continue;
         }
@@ -40,7 +40,7 @@ bool loadSdf(const string& path, vector<Tmpl>& out, vector<string>& warnings) {
             t.bd.push_back({ba, bb, atoi(line.substr(6, 3).c_str())});
         }
         if (bad) {
-            warnings.push_back("SDF: molecola '" + t.name + "' malformata, ignorata");
+            warnings.push_back("SDF: molecule '" + t.name + "' malformed, ignored");
             while (getline(f, line) && line.compare(0, 4, "$$$$") != 0) {}
             continue;
         }
@@ -71,7 +71,7 @@ bool loadMol2(const string& path, vector<Tmpl>& out, vector<string>& warnings) {
     map<string,int> idmap;
     auto flush = [&]() {
         if (have && !cur.at.empty()) {
-            // cariche formali dedotte dai tipi SYBYL
+            // formal charges inferred from the SYBYL types
             for (auto& a : cur.at) {
                 if (a.type == "N.4") a.fc = +1;
                 if (a.type == "O.co2") a.fc = -1;
@@ -117,6 +117,7 @@ bool loadMol2(const string& path, vector<Tmpl>& out, vector<string>& warnings) {
 
 namespace detail {
 
+// Applies the template to the PDB ligand (matching by coordinates). Returns false if it does not match.
 bool applyTemplate(const Tmpl& t, vector<Atom>& L, string& info, bool& hasH) {
     vector<int> th;
     for (size_t i = 0; i < t.at.size(); i++) if (!isHel(t.at[i].el)) th.push_back(i);
@@ -149,8 +150,8 @@ bool applyTemplate(const Tmpl& t, vector<Atom>& L, string& info, bool& hasH) {
         }
     }
     hasH = nH > 0;
-    info = "template '" + t.name + "': " + to_string(th.size()) + " atomi pesanti, " + to_string(nH) + " H" +
-           (hasH ? "" : " (senza H: donatori/accettori da euristica)");
+    info = "template '" + t.name + "': " + to_string(th.size()) + " heavy atoms, " + to_string(nH) + " H" +
+           (hasH ? "" : " (no H: donors/acceptors from heuristics)");
     return true;
 }
 

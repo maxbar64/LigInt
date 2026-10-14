@@ -1,4 +1,4 @@
-// Colori e stili condivisi tra vista grafica, tabelle e legenda.
+// Colors and styles shared between the graphic view, the tables and the legend.
 #pragma once
 
 #include <QColor>
@@ -9,18 +9,18 @@
 namespace gui {
 
 struct TypeStyle {
-    QString type;        // stringa restituita dalla libreria (es. "Legame a idrogeno")
+    QString type;        // string returned by the library (one of ligint::type::*)
     QColor color;
     Qt::PenStyle pen;
-    double width;        // spessore in pixel
+    double width;        // thickness in pixels
 };
 
-// Tutti i tipi di interazione noti, nell'ordine di visualizzazione.
+// All known interaction types, in display order.
 const QVector<TypeStyle>& typeStyles();
 const TypeStyle& styleForType(const QString& type);
 
 QColor elementColor(const QString& element, bool ligand);
-double elementRadius(const QString& element);          // raggio relativo (carbonio = 1)
+double elementRadius(const QString& element);          // relative radius (carbon = 1)
 bool isMetalElement(const QString& element);
 
 }  // namespace gui

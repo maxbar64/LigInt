@@ -1,4 +1,4 @@
-// Dettagli interni della libreria (non fanno parte dell'API pubblica).
+// Internal details of the library (not part of the public API).
 #pragma once
 
 #include "ligint/ligint.hpp"
@@ -39,14 +39,14 @@ struct Atom {
     string name, res, chain, el, ttype;
     char icode = ' ';
     int resi = 0, fc = 0;
-    bool het = false;   // record HETATM
+    bool het = false;   // HETATM record
     double x = 0, y = 0, z = 0, bf = 0;
-    vector<int> nb;   // legami (solo ligando)
-    vector<int> bo;   // ordine di legame parallelo a nb (vuoto = ignoto; 4 = aromatico)
-    vector<V3> hs;    // idrogeni espliciti legati
+    vector<int> nb;   // bonds (ligand only)
+    vector<int> bo;   // bond order, parallel to nb (empty = unknown; 4 = aromatic)
+    vector<V3> hs;    // bonded explicit hydrogens
 };
 struct Role { bool don = false, acc = false, hyd = false, metal = false, hal = false; int q = 0; };
-// Interazione trovata (versione interna di HitRecord, con le coordinate per la grafica).
+// Interaction found (internal version of HitRecord, with the coordinates for the graphics).
 struct Hit {
     string type, la, pa, pres, note;
     double d;
@@ -65,7 +65,7 @@ inline V3 sub(const V3& a, const V3& b) { return {a[0]-b[0], a[1]-b[1], a[2]-b[2
 inline double dot(const V3& a, const V3& b) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
 inline double nrm(const V3& a) { return sqrt(dot(a, a)); }
 inline double dist(const Atom& a, const Atom& b) { return nrm(sub(pos(a), pos(b))); }
-inline double angV(const V3& a, const V3& v, const V3& c) {  // angolo a-v-c in gradi
+inline double angV(const V3& a, const V3& v, const V3& c) {  // angle a-v-c in degrees
     V3 u = sub(a, v), w = sub(c, v);
     double den = nrm(u) * nrm(w);
     if (den < 1e-9) return 180.0;
@@ -109,7 +109,7 @@ inline string resLabel(const Atom& a) {
 inline string label(const Atom& a) { return resLabel(a) + ":" + a.name; }
 inline bool isHel(const string& e) { return e == "H" || e == "D"; }
 
-// ---------- griglia spaziale ----------
+// ---------- spatial grid ----------
 struct Grid {
     static constexpr double CS = Params::kMaxGridRadius;
     unordered_map<long long, vector<int>> cells;
@@ -134,7 +134,7 @@ struct Grid {
     }
 };
 
-// ---------- funzioni condivise tra i file sorgente ----------
+// ---------- functions shared between source files ----------
 // templates.cpp
 bool applyTemplate(const Tmpl& t, vector<Atom>& L, string& info, bool& hasH);
 // chemistry.cpp

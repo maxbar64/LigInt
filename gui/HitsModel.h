@@ -1,4 +1,4 @@
-// Modello della tabella delle interazioni e filtro per tipo.
+// Model of the interactions table and filter by type.
 #pragma once
 
 #include <QAbstractTableModel>
@@ -34,7 +34,7 @@ class HitsFilterProxy : public QSortFilterProxyModel {
     Q_OBJECT
 public:
     explicit HitsFilterProxy(QObject* parent = nullptr);
-    void setVisibleTypes(const QSet<QString>& types);   // insieme vuoto = nessun tipo visibile
+    void setVisibleTypes(const QSet<QString>& types);   // empty set = no type visible
     const QSet<QString>& visibleTypes() const { return visible_; }
 
 protected:

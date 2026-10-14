@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Confronta ligint con PLIP su uno o piu' PDB (precisione/sensibilita' per tipo di interazione).
+"""Compare ligint with PLIP on one or more PDB files (precision/sensitivity per interaction type).
 
-Uso:
-    python3 tests/compare_plip.py 1AZM.pdb 3PTB.pdb ...            ligint con le sue soglie
-    python3 tests/compare_plip.py --plip-thr *.pdb                   ligint con soglie "alla PLIP"
-    python3 tests/compare_plip.py -v *.pdb                           elenca anche i singoli disaccordi
-    python3 tests/compare_plip.py --first-copy *.pdb                 una sola copia per ligando e PDB
-    python3 tests/compare_plip.py --sdf-dir DIR *.pdb                usa DIR/<pdb>_<LIG>.sdf se presente
+Usage:
+    python3 tests/compare_plip.py 1AZM.pdb 3PTB.pdb ...            ligint with its own thresholds
+    python3 tests/compare_plip.py --plip-thr *.pdb                   ligint with "PLIP-like" thresholds
+    python3 tests/compare_plip.py -v *.pdb                           also list the individual disagreements
+    python3 tests/compare_plip.py --first-copy *.pdb                 one copy per ligand and PDB
+    python3 tests/compare_plip.py --sdf-dir DIR *.pdb                use DIR/<pdb>_<LIG>.sdf if present
 
-Requisiti: pip install plip openbabel-wheel
+Requirements: pip install plip openbabel-wheel
 
-Come si confronta: PLIP analizza da solo tutti i ligandi (piccole molecole, anche con ioni) del PDB; per ogni
-sito si lancia ligint sullo stesso ligando. Le interazioni sono confrontate a livello di RESIDUO e TIPO
-(hydrophobic, hbond, salt, water, pistack, picat, halogen): (tipo, residuo, numero, catena).
+How the comparison works: PLIP analyzes all the ligands (small molecules, also with ions) of the PDB by itself; for
+each site ligint is run on the same ligand. The interactions are compared at the level of RESIDUE and TYPE
+(hydrophobic, hbond, salt, water, pistack, picat, halogen): (type, residue, number, chain).
 
-Attenzione: PLIP NON e' la verita'. Ha le sue convenzioni (protonazione con Open Babel, soglie diverse,
-centroidi dei gruppi carichi). Un disaccordo e' un motivo per guardare il caso, non un errore automatico.
-Non sono confrontati: clash, repulsioni, legami covalenti, contatti con la catena principale e coordinazione
-metallica (PLIP la descrive tra proteina e metallo, ligint tra ligando e metallo).
+Warning: PLIP is NOT the truth. It has its own conventions (protonation with Open Babel, different thresholds,
+centroids of charged groups). A disagreement is a reason to look at the case, not an automatic error.
+Not compared: clashes, repulsions, covalent bonds, contacts with the backbone and metal coordination
+(PLIP describes it between protein and metal, ligint between ligand and metal).
 """
 import argparse
 import collections
@@ -34,11 +34,11 @@ import _build  # noqa: E402
 PLIP_TAGS = {"hydrophobic_interaction": "hydrophobic", "hydrogen_bond": "hbond", "water_bridge": "water",
              "salt_bridge": "salt", "pi_stack": "pistack", "pi_cation_interaction": "picat",
              "halogen_bond": "halogen"}
-LIG_TYPES = {"Contatto idrofobico": "hydrophobic", "Legame a idrogeno": "hbond", "Ponte d'acqua": "water",
-             "Ponte salino": "salt", "pi-stacking (parallelo)": "pistack", "pi-stacking (a T)": "pistack",
-             "Cation-pi": "picat", "Legame ad alogeno": "halogen"}
+LIG_TYPES = {"Hydrophobic contact": "hydrophobic", "Hydrogen bond": "hbond", "Water bridge": "water",
+             "Salt bridge": "salt", "pi-stacking (parallel)": "pistack", "pi-stacking (T-shaped)": "pistack",
+             "Cation-pi": "picat", "Halogen bond": "halogen"}
 CATS = ["hydrophobic", "hbond", "water", "salt", "pistack", "picat", "halogen"]
-# solo le soglie confrontabili: il limite di 4,1 A degli H-bond di PLIP vale con la geometria degli H, ligint senza H no
+# only the comparable thresholds: the 4.1 A limit of PLIP's H-bonds applies with computed H geometry, ligint without H does not
 PLIP_LIKE = ["--salt-max", "5.5", "--hal-max", "4.0"]
 
 
@@ -51,7 +51,7 @@ def run_plip(pdb, outdir):
             cand = [f for f in os.listdir(outdir) if f.endswith("_report.xml")
                     and f.upper().startswith(os.path.splitext(os.path.basename(pdb))[0].upper())]
             if not cand:
-                raise RuntimeError("PLIP non ha prodotto il report per %s:\n%s" % (pdb, p.stderr[-500:]))
+                raise RuntimeError("PLIP did not produce the report for %s:\n%s" % (pdb, p.stderr[-500:]))
             xml = os.path.join(outdir, cand[0])
     return xml
 
@@ -62,7 +62,7 @@ def parse_plip(xml):
         ident = bs.find("identifiers")
         ligtype = ident.findtext("ligtype", "")
         if not ligtype.startswith("SMALLMOLECULE"):
-            continue                                    # peptidi, DNA/RNA, ioni isolati: fuori da questo confronto
+            continue                                    # peptides, DNA/RNA, isolated ions: outside this comparison
         inter = set()
         detail = {}
         node = bs.find("interactions")
@@ -91,7 +91,7 @@ def run_ligint(binary, pdb, site, extra):
     cmd = [binary, pdb, site["hetid"], site["chain"], site["pos"], "--csv"] + extra
     p = subprocess.run(cmd, capture_output=True, text=True)
     if p.returncode != 0:
-        raise RuntimeError("ligint fallito su %s %s: %s" % (pdb, site["hetid"], p.stderr[-300:]))
+        raise RuntimeError("ligint failed on %s %s: %s" % (pdb, site["hetid"], p.stderr[-300:]))
     inter = set()
     detail = {}
     for line in p.stdout.splitlines()[1:]:
@@ -104,25 +104,25 @@ def run_ligint(binary, pdb, site, extra):
         res, num, tail = m.group(1), m.group(2), m.group(3)
         chain = tail[-1] if tail else " "
         cat = LIG_TYPES[f[1]]
-        if cat == "hbond" and "assistito da carica" in f[6]:   # H-bond tra gruppi di carica opposta: come il ponte salino, fuori dal punteggio
+        if cat == "hbond" and "charge-assisted" in f[6]:   # H-bond between oppositely charged groups: like the salt bridge, outside the score
             continue
         inter.add((cat, res, num, chain))
         detail.setdefault((cat, res, num, chain), []).append("%s -> %s d=%s %s" % (f[3].split(":")[-1], f[4].split(":")[-1], f[5], f[6]))
-        # ligint fonde ponte salino e H-bond sullo stesso contatto; PLIP li riporta insieme solo nel ~13% dei casi:
-        # questi H-bond "derivati" NON entrano nel punteggio dell'H-bond (convenzione di PLIP)
+        # ligint merges salt bridge and H-bond on the same contact; PLIP reports them together only in ~13% of cases:
+        # these "derived" H-bonds do NOT enter the H-bond score (PLIP convention)
     return inter, detail
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pdb", nargs="+")
-    ap.add_argument("--ligint", default="", help="binario di ligint (default: compila i sorgenti)")
-    ap.add_argument("--plip-thr", action="store_true", help="soglie di ligint simili a quelle di PLIP")
-    ap.add_argument("--plip-dir", default="", help="cartella per i report PLIP (riusati se gia' presenti)")
-    ap.add_argument("--sdf-dir", default="", help="cartella con <pdb>_<LIG>.sdf (facoltativo)")
-    ap.add_argument("--extra", default="", help="opzioni aggiuntive per ligint, tra apici")
+    ap.add_argument("--ligint", default="", help="ligint binary (default: build from the sources)")
+    ap.add_argument("--plip-thr", action="store_true", help="ligint thresholds similar to those of PLIP")
+    ap.add_argument("--plip-dir", default="", help="folder for the PLIP reports (reused if already present)")
+    ap.add_argument("--sdf-dir", default="", help="folder with <pdb>_<LIG>.sdf (optional)")
+    ap.add_argument("--extra", default="", help="additional options for ligint, in quotes")
     ap.add_argument("--first-copy", action="store_true",
-                    help="conta una sola copia per (PDB, ligando): evita che i complessi con molte catene dominino i totali")
+                    help="count only one copy per (PDB, ligand): prevents complexes with many chains from dominating the totals")
     ap.add_argument("-v", action="store_true")
     a = ap.parse_args()
 
@@ -136,7 +136,7 @@ def main():
     extra = (PLIP_LIKE if a.plip_thr else []) + a.extra.split()
 
     tot = {c: collections.Counter() for c in CATS}
-    print("%-28s %5s | %s" % ("sito", "PLIP", "  ".join("%-11s" % c for c in CATS)))
+    print("%-28s %5s | %s" % ("site", "PLIP", "  ".join("%-11s" % c for c in CATS)))
     print("%-28s %5s | %s" % ("", "", "  ".join("%-11s" % "TP/FP/FN" for _ in CATS)))
     for pdb in a.pdb:
         base = os.path.splitext(os.path.basename(pdb))[0]
@@ -162,11 +162,11 @@ def main():
                 cells.append("%-11s" % ("%d/%d/%d" % (tp, fp, fn) if (tp or fp or fn) else "."))
                 if a.v and (fp or fn):
                     for x in sorted(l - p):
-                        print("      solo ligint: %-11s %s %s%s  [%s]" % (c, x[1], x[2], x[3], "; ".join(ldet.get(x, []))[:90]))
+                        print("      ligint only: %-11s %s %s%s  [%s]" % (c, x[1], x[2], x[3], "; ".join(ldet.get(x, []))[:90]))
                     for x in sorted(p - l):
-                        print("      solo PLIP:   %-11s %s %s%s  [%s]" % (c, x[1], x[2], x[3], "; ".join(s["detail"].get(x, []))[:90]))
+                        print("      PLIP only:   %-11s %s %s%s  [%s]" % (c, x[1], x[2], x[3], "; ".join(s["detail"].get(x, []))[:90]))
             print("%-28s %5d | %s" % ("%s %s:%s:%s" % (base, s["hetid"], s["chain"], s["pos"]), len(s["inter"]), "  ".join(cells)))
-    print("\n%-12s %5s %5s %5s  %12s %12s" % ("tipo", "TP", "FP", "FN", "sensibilita'", "precisione"))
+    print("\n%-12s %5s %5s %5s  %12s %12s" % ("type", "TP", "FP", "FN", "sensitivity", "precision"))
     gtp = gfp = gfn = 0
     for c in CATS:
         t = tot[c]
@@ -176,9 +176,9 @@ def main():
         pre = t["tp"] / (t["tp"] + t["fp"]) if (t["tp"] + t["fp"]) else float("nan")
         print("%-12s %5d %5d %5d  %11.0f%% %11.0f%%" % (c, t["tp"], t["fp"], t["fn"], 100 * rec, 100 * pre))
         gtp += t["tp"]; gfp += t["fp"]; gfn += t["fn"]
-    print("%-12s %5d %5d %5d  %11.0f%% %11.0f%%" % ("TOTALE", gtp, gfp, gfn, 100 * gtp / max(1, gtp + gfn),
+    print("%-12s %5d %5d %5d  %11.0f%% %11.0f%%" % ("TOTAL", gtp, gfp, gfn, 100 * gtp / max(1, gtp + gfn),
                                                     100 * gtp / max(1, gtp + gfp)))
-    print("(sensibilita' = quante interazioni PLIP ritrova ligint; precisione = quante di ligint sono anche in PLIP)")
+    print("(sensitivity = how many PLIP interactions ligint finds; precision = how many of ligint's are also in PLIP)")
 
 
 if __name__ == "__main__":

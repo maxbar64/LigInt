@@ -41,7 +41,7 @@ QVariant HitsModel::data(const QModelIndex& index, int role) const {
 
 QVariant HitsModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole) return {};
-    static const char* names[] = {"Tipo", "F/S", "Atomo ligando", "Atomo proteina", "d (Å)", "Note"};
+    static const char* names[] = {"Type", "Fav", "Ligand atom", "Protein atom", "d (Å)", "Notes"};
     return section >= 0 && section < ColumnCount ? QString::fromUtf8(names[section]) : QVariant();
 }
 

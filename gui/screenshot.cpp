@@ -1,5 +1,5 @@
-// Strumento per la documentazione: apre un PDB, analizza il ligando piu' grande e salva uno screenshot.
-//   ligint-screenshot file.pdb out.png [--viewer] [--plip-like]     (usare QT_QPA_PLATFORM=offscreen senza schermo)
+// Documentation tool: opens a PDB, analyzes the largest ligand and saves a screenshot.
+//   ligint-screenshot file.pdb out.png [--viewer] [--plip-like]     (use QT_QPA_PLATFORM=offscreen without a display)
 #include <QApplication>
 #include <QImage>
 #include <QString>
@@ -18,17 +18,17 @@ int main(int argc, char** argv) {
         else if (pdb.isEmpty()) pdb = a;
         else if (out.isEmpty()) out = a;
     }
-    if (pdb.isEmpty() || out.isEmpty()) { std::cerr << "uso: ligint-screenshot file.pdb out.png [--viewer]\n"; return 2; }
+    if (pdb.isEmpty() || out.isEmpty()) { std::cerr << "usage: ligint-screenshot file.pdb out.png [--viewer]\n"; return 2; }
     gui::MainWindow w;
     w.setInteractive(false);
     w.resize(1280, 800);
     w.show();
-    if (!w.openStructure(pdb) || w.ligandCount() == 0) { std::cerr << "nessun ligando\n"; return 1; }
+    if (!w.openStructure(pdb) || w.ligandCount() == 0) { std::cerr << "no ligand\n"; return 1; }
     w.selectLigand(0);
     w.analyze(true);
-    if (w.result().ligands.empty()) { std::cerr << "analisi fallita\n"; return 1; }
+    if (w.result().ligands.empty()) { std::cerr << "analysis failed\n"; return 1; }
     QImage img = viewerOnly ? w.viewer()->renderImage(QSize(1100, 760)) : w.grab().toImage();
-    if (!img.save(out)) { std::cerr << "salvataggio fallito\n"; return 1; }
-    std::cout << "salvato " << out.toStdString() << "\n";
+    if (!img.save(out)) { std::cerr << "saving failed\n"; return 1; }
+    std::cout << "saved " << out.toStdString() << "\n";
     return 0;
 }

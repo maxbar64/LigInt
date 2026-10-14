@@ -41,7 +41,7 @@ V3 rotateVec(const Mat3& m, const V3& v) {
             m[6] * v[0] + m[7] * v[1] + m[8] * v[2]};
 }
 
-// Autovettori di una matrice simmetrica 3x3 (Jacobi). Ritorna le righe ordinate per autovalore decrescente.
+// Eigenvectors of a symmetric 3x3 matrix (Jacobi). Returns the rows sorted by decreasing eigenvalue.
 Mat3 principalAxes(const std::vector<V3>& pts) {
     V3 c{0, 0, 0};
     for (auto& p : pts) for (int i = 0; i < 3; i++) c[i] += p[i] / std::max<size_t>(1, pts.size());
@@ -77,7 +77,7 @@ Mat3 principalAxes(const std::vector<V3>& pts) {
     std::sort(order, order + 3, [&](int x, int y) { return a[x][x] > a[y][y]; });
     V3 e1{v[0][order[0]], v[1][order[0]], v[2][order[0]]};
     V3 e2{v[0][order[1]], v[1][order[1]], v[2][order[1]]};
-    V3 e3{e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]};   // destrorso
+    V3 e3{e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]};   // right-handed
     return {e1[0], e1[1], e1[2], e2[0], e2[1], e2[2], e3[0], e3[1], e3[2]};
 }
 
@@ -87,7 +87,7 @@ ViewerWidget::ViewerWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(320, 240);
     setMouseTracking(false);
     setFocusPolicy(Qt::StrongFocus);
-    setToolTip(tr("Trascina: ruota · tasto destro/centrale: sposta · rotellina: zoom · doppio clic: ripristina"));
+    setToolTip(tr("Drag: rotate · right/middle button: pan · wheel: zoom · double click: reset"));
 }
 
 void ViewerWidget::setLigand(const ligint::LigandResult& r) {
@@ -123,9 +123,9 @@ void ViewerWidget::orient() {
         double d = std::sqrt(std::pow(a.pos[0] - center_[0], 2) + std::pow(a.pos[1] - center_[1], 2) + std::pow(a.pos[2] - center_[2], 2));
         radius_ = std::max(radius_, d);
     }
-    radius_ = std::min(radius_, 1.35 * hitRadius);       // i residui piu' lontani possono uscire dall'inquadratura
+    radius_ = std::min(radius_, 1.35 * hitRadius);       // the farthest residues may fall outside the frame
     radius_ = std::max(radius_, 4.0);
-    // orientazione iniziale: il ligando (con i suoi contatti) si mostra con la massima estensione sullo schermo
+    // initial orientation: the ligand (with its contacts) is shown with the maximum extent on screen
     rot_ = principalAxes(pts);
     zoom_ = 1.0;
     pan_ = QPointF(0, 0);
@@ -168,12 +168,12 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
     p.fillRect(rect, QColor("#fbfbfd"));
     if (!hasData_) {
         p.setPen(QColor("#868e96"));
-        p.drawText(rect, Qt::AlignCenter, QObject::tr("Apri un file PDB, scegli un ligando e premi «Analizza»"));
+        p.drawText(rect, Qt::AlignCenter, QObject::tr("Open a PDB file, choose a ligand and press \u00abAnalyze\u00bb"));
         return;
     }
     const double s = fitScale(rect);
 
-    // ---- profondita' per l'attenuazione dei colori
+    // ---- depth, for color attenuation
     double zmin = 1e9, zmax = -1e9;
     auto track = [&](const V3& v) { double z = project(v, rect).z; zmin = std::min(zmin, z); zmax = std::max(zmax, z); };
     for (auto& a : data_.atoms) track(a.pos);
@@ -181,7 +181,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
     if (zmax - zmin < 1e-6) zmax = zmin + 1;
     auto depthAlpha = [&](double z) { return 0.55 + 0.45 * (z - zmin) / (zmax - zmin); };
 
-    struct Item { double z; int kind; int a, b; bool lig; };   // kind 0 = legame, 1 = atomo
+    struct Item { double z; int kind; int a, b; bool lig; };   // kind 0 = bond, 1 = atom
     std::vector<Item> items;
     auto zOf = [&](const ligint::AtomRecord& a) { return project(a.pos, rect).z; };
     for (size_t i = 0; i < data_.bonds.size(); i++) {
@@ -239,7 +239,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
     }
     p.setOpacity(1.0);
 
-    // ---- interazioni
+    // ---- interactions
     QFont small = p.font();
     small.setPointSizeF(std::max(7.5, small.pointSizeF() * 0.9));
     std::map<std::string, QPointF> labelPos;
@@ -271,14 +271,14 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
         } else {
             strokeLine(a, b);
         }
-        if (h.type.rfind("pi-stacking", 0) == 0 || h.type == "Cation-pi") {
+        if (h.type.rfind("pi-stacking", 0) == 0 || h.type == ligint::type::CationPi) {
             p.setPen(QPen(st.color, 1.6));
             p.setBrush(Qt::NoBrush);
             p.drawEllipse(a, 6, 6);
             p.drawEllipse(b, 6, 6);
         }
         if (!labelPos.count(h.residue)) labelPos[h.residue] = b;
-        if (showDistances_ && (hl || (h.type != "Contatto idrofobico" && h.type != "Contatto apolare (backbone)"))) {
+        if (showDistances_ && (hl || (h.type != ligint::type::Hydrophobic && h.type != ligint::type::BackboneApolar))) {
             QPointF mid = (a + b) / 2;
             QString t = QString::number(h.distance, 'f', 2);
             p.setFont(small);
@@ -295,7 +295,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
         if (!seen) typesUsed.push_back({h.type, 1});
     }
 
-    // ---- etichette dei residui
+    // ---- residue labels
     if (showLabels_) {
         p.setFont(small);
         QFontMetricsF fm(small);
@@ -311,7 +311,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
         }
     }
 
-    // ---- legenda e titolo
+    // ---- legend and title
     p.setFont(small);
     QFontMetricsF fm(small);
     if (showLegend_ && !typesUsed.empty()) {

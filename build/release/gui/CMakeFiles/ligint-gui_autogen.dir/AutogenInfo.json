@@ -14,7 +14,7 @@
 	"MOC_COMPILATION_FILE" : "/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/mocs_compilation.cpp",
 	"MOC_DEFINITIONS" : 
 	[
-		"LIGINT_VERSION=\"0.1.0\"",
+		"LIGINT_VERSION=\"0.2.0\"",
 		"QT_CONCURRENT_LIB",
 		"QT_CORE_LIB",
 		"QT_GUI_LIB",

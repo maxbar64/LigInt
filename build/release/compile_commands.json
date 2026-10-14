@@ -1,85 +1,85 @@
 [
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/analysis.cpp.o -c /home/massimo/devel/LigInt/src/core/analysis.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/analysis.cpp.o -c /home/massimo/devel/LigInt/src/core/analysis.cpp",
   "file": "/home/massimo/devel/LigInt/src/core/analysis.cpp",
   "output": "src/CMakeFiles/ligint_core.dir/core/analysis.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/chemistry.cpp.o -c /home/massimo/devel/LigInt/src/core/chemistry.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/chemistry.cpp.o -c /home/massimo/devel/LigInt/src/core/chemistry.cpp",
   "file": "/home/massimo/devel/LigInt/src/core/chemistry.cpp",
   "output": "src/CMakeFiles/ligint_core.dir/core/chemistry.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/report.cpp.o -c /home/massimo/devel/LigInt/src/core/report.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/report.cpp.o -c /home/massimo/devel/LigInt/src/core/report.cpp",
   "file": "/home/massimo/devel/LigInt/src/core/report.cpp",
   "output": "src/CMakeFiles/ligint_core.dir/core/report.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/templates.cpp.o -c /home/massimo/devel/LigInt/src/core/templates.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -I/home/massimo/devel/LigInt/src/core -O3 -DNDEBUG -std=c++17 -fPIC -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint_core.dir/core/templates.cpp.o -c /home/massimo/devel/LigInt/src/core/templates.cpp",
   "file": "/home/massimo/devel/LigInt/src/core/templates.cpp",
   "output": "src/CMakeFiles/ligint_core.dir/core/templates.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint.dir/cli/main.cpp.o -c /home/massimo/devel/LigInt/src/cli/main.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -Wall -Wextra -o src/CMakeFiles/ligint.dir/cli/main.cpp.o -c /home/massimo/devel/LigInt/src/cli/main.cpp",
   "file": "/home/massimo/devel/LigInt/src/cli/main.cpp",
   "output": "src/CMakeFiles/ligint.dir/cli/main.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/ligint_gui_lib_autogen/mocs_compilation.cpp.o -c /home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/mocs_compilation.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/ligint_gui_lib_autogen/mocs_compilation.cpp.o -c /home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/mocs_compilation.cpp",
   "file": "/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/mocs_compilation.cpp",
   "output": "gui/CMakeFiles/ligint_gui_lib.dir/ligint_gui_lib_autogen/mocs_compilation.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/HitsModel.cpp.o -c /home/massimo/devel/LigInt/gui/HitsModel.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/HitsModel.cpp.o -c /home/massimo/devel/LigInt/gui/HitsModel.cpp",
   "file": "/home/massimo/devel/LigInt/gui/HitsModel.cpp",
   "output": "gui/CMakeFiles/ligint_gui_lib.dir/HitsModel.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/MainWindow.cpp.o -c /home/massimo/devel/LigInt/gui/MainWindow.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/MainWindow.cpp.o -c /home/massimo/devel/LigInt/gui/MainWindow.cpp",
   "file": "/home/massimo/devel/LigInt/gui/MainWindow.cpp",
   "output": "gui/CMakeFiles/ligint_gui_lib.dir/MainWindow.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/Style.cpp.o -c /home/massimo/devel/LigInt/gui/Style.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/Style.cpp.o -c /home/massimo/devel/LigInt/gui/Style.cpp",
   "file": "/home/massimo/devel/LigInt/gui/Style.cpp",
   "output": "gui/CMakeFiles/ligint_gui_lib.dir/Style.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/ViewerWidget.cpp.o -c /home/massimo/devel/LigInt/gui/ViewerWidget.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint_gui_lib_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint_gui_lib.dir/ViewerWidget.cpp.o -c /home/massimo/devel/LigInt/gui/ViewerWidget.cpp",
   "file": "/home/massimo/devel/LigInt/gui/ViewerWidget.cpp",
   "output": "gui/CMakeFiles/ligint_gui_lib.dir/ViewerWidget.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint-gui.dir/ligint-gui_autogen/mocs_compilation.cpp.o -c /home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/mocs_compilation.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint-gui.dir/ligint-gui_autogen/mocs_compilation.cpp.o -c /home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/mocs_compilation.cpp",
   "file": "/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/mocs_compilation.cpp",
   "output": "gui/CMakeFiles/ligint-gui.dir/ligint-gui_autogen/mocs_compilation.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint-gui.dir/main.cpp.o -c /home/massimo/devel/LigInt/gui/main.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/build/release/gui/ligint-gui_autogen/include -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o gui/CMakeFiles/ligint-gui.dir/main.cpp.o -c /home/massimo/devel/LigInt/gui/main.cpp",
   "file": "/home/massimo/devel/LigInt/gui/main.cpp",
   "output": "gui/CMakeFiles/ligint-gui.dir/main.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -I/home/massimo/devel/LigInt/include -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -Wall -Wextra -o tests/CMakeFiles/ligint_core_tests.dir/unit/test_core.cpp.o -c /home/massimo/devel/LigInt/tests/unit/test_core.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -I/home/massimo/devel/LigInt/include -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -Wall -Wextra -o tests/CMakeFiles/ligint_core_tests.dir/unit/test_core.cpp.o -c /home/massimo/devel/LigInt/tests/unit/test_core.cpp",
   "file": "/home/massimo/devel/LigInt/tests/unit/test_core.cpp",
   "output": "tests/CMakeFiles/ligint_core_tests.dir/unit/test_core.cpp.o"
 },
 {
   "directory": "/home/massimo/devel/LigInt/build/release",
-  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o tests/CMakeFiles/ligint_gui_smoke.dir/gui/gui_smoke.cpp.o -c /home/massimo/devel/LigInt/tests/gui/gui_smoke.cpp",
+  "command": "/usr/bin/x86_64-linux-gnu-g++-13 -DLIGINT_VERSION=\\\"0.2.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_WIDGETS_LIB -I/home/massimo/devel/LigInt/gui -I/home/massimo/devel/LigInt/include -isystem /home/massimo/miniconda3/include/qt6/QtWidgets -isystem /home/massimo/miniconda3/include/qt6 -isystem /home/massimo/miniconda3/include/qt6/QtCore -isystem /home/massimo/miniconda3/lib/qt6/mkspecs/linux-g++ -isystem /home/massimo/miniconda3/include/qt6/QtGui -isystem /home/massimo/miniconda3/include/qt6/QtConcurrent -O3 -DNDEBUG -std=c++17 -fdiagnostics-color=always -fPIC -Wall -Wextra -o tests/CMakeFiles/ligint_gui_smoke.dir/gui/gui_smoke.cpp.o -c /home/massimo/devel/LigInt/tests/gui/gui_smoke.cpp",
   "file": "/home/massimo/devel/LigInt/tests/gui/gui_smoke.cpp",
   "output": "tests/CMakeFiles/ligint_gui_smoke.dir/gui/gui_smoke.cpp.o"
 }

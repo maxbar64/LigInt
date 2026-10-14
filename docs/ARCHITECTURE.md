@@ -1,57 +1,57 @@
-# Architettura
+# Architecture
 
-## Livelli
+## Layers
 
 ```
-include/ligint/ligint.hpp   API pubblica: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv
+include/ligint/ligint.hpp   public API: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv, ligint::type
 src/core/
-  internal.hpp              tipi interni (Atom, Role, Hit, Ring, Grid) e funzioni condivise tra i file
-  analysis.cpp              Params, lettura del PDB e analisi (analyzeStream)
-  chemistry.cpp             anelli e ruoli chimici (donatore, accettore, carica) di proteina e ligando
-  templates.cpp             lettura SDF/MOL2 e abbinamento al ligando per coordinate
-  report.cpp                rapporti testuali (tabella e CSV)
-src/cli/main.cpp            riga di comando: argomenti -> Options -> analyzeFile -> printText/printCsv
-gui/                        Qt: MainWindow, ViewerWidget (vista 3D), HitsModel/HitsFilterProxy, Style
+  internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
+  analysis.cpp              Params, PDB reading and analysis (analyzeStream)
+  chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
+  templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
+  report.cpp                text reports (table and CSV)
+src/cli/main.cpp            command line: arguments -> Options -> analyzeFile -> printText/printCsv
+gui/                        Qt: MainWindow, ViewerWidget (3D view), HitsModel/HitsFilterProxy, Style
 ```
 
-La libreria non dipende da Qt e non stampa: tutto ciò che il programma comunica (avvisi, informazioni, risultati)
-è in `Result`. La GUI e la CLI sono due client della stessa API.
+The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
+results) is in `Result`. The GUI and the CLI are two clients of the same API.
 
-## Flusso di `analyzeStream`
+## Flow of `analyzeStream`
 
-1. **Lettura del PDB** (primo modello): atomi pesanti, conformazione alternativa (la prima incontrata per residuo),
-   coordinate non valide scartate, acque a parte, H del PDB assegnati all'atomo pesante vicino (se ≥ 10 per la proteina).
-   Se non è richiesto alcun ligando (o non esiste) il risultato è solo l'elenco (`listingOnly`).
-2. **Ruoli della proteina:** donatore/accettore/carica/idrofobico per residuo e atomo; raffinati con gli H espliciti;
-   N/O coordinati a un metallo non fanno H-bond.
-3. **Ligandi composti:** i residui HETATM legati covalentemente (non metalli) sono uniti in un solo ligando.
-4. **Per ogni ligando:** connettività da template (SDF/MOL2, per coordinate) o geometrica; ruoli del ligando
-   (`ligandRole`); coordinazione ai metalli; ricerca atomo-atomo su una griglia spaziale (H-bond, ponti salini,
-   idrofobici, alogeni, metalli, clash); ponti salini per centroidi (opzionali); anelli (π-stacking, cation-π);
-   ponti d'acqua.
-5. **Risultato:** interazioni ordinate, con coordinate (per la grafica), atomi e legami del ligando, atomi dei residui a
-   contatto e sfera di coordinazione dei metalli.
+1. **PDB reading** (first model): heavy atoms, alternative conformation (the first encountered per residue), invalid
+   coordinates discarded, waters kept apart, PDB hydrogens assigned to the nearby heavy atom (if there are at least 10 for the protein).
+   If no ligand is requested (or it does not exist) the result is only the listing (`listingOnly`).
+2. **Protein roles:** donor/acceptor/charge/hydrophobic per residue and atom; refined with explicit hydrogens;
+   N/O coordinated to a metal make no H-bonds.
+3. **Composite ligands:** covalently linked HETATM residues (not metals) are merged into a single ligand.
+4. **For each ligand:** connectivity from a template (SDF/MOL2, by coordinates) or geometric; ligand roles
+   (`ligandRole`); coordination to metals; atom-atom search on a spatial grid (H-bonds, salt bridges,
+   hydrophobic, halogens, metals, clashes); salt bridges by centroids (optional); rings (π-stacking, cation-π);
+   water bridges.
+5. **Result:** sorted interactions, with coordinates (for the graphics), ligand atoms and bonds, atoms of the residues in
+   contact and the coordination sphere of the metals.
 
-## Aggiungere un tipo di interazione
+## Adding an interaction type
 
-1. Calcolarlo in `analysis.cpp` (nel ciclo atomo-atomo o dopo, come per anelli e ponti d'acqua) con una nuova stringa di tipo
-   e le coordinate `p1`/`p2` (e `pw` per l'acqua).
-2. Dargli uno stile in `gui/Style.cpp` e, se va confrontato con PLIP, mapparlo in `tests/compare_plip.py`.
-3. Scrivere il test sintetico in `tests/run_tests.py` e documentare la soglia (`Params`, `Params::set`, `--help`, README).
+1. Add a constant in `ligint::type` (`ligint.hpp`) and compute the interaction in `analysis.cpp` (inside the atom-atom
+   loop or afterwards, as for rings and water bridges) with the coordinates `p1`/`p2` (and `pw` for water).
+2. Give it a style in `gui/Style.cpp` and, if it must be compared with PLIP, map it in `tests/compare_plip.py`.
+3. Write the synthetic test in `tests/run_tests.py` and document the threshold (`Params`, `Params::set`, `--help`, README).
 
 ## GUI
 
-`MainWindow` possiede un `HitsModel` (tabella) con `HitsFilterProxy` (filtro per tipo, ordinamento numerico), un `ViewerWidget` e
-le tabelle dei residui e del registro. L'analisi gira con `QtConcurrent::run` e `QFutureWatcher`; `analyze(true)` la esegue in modo
-sincrono (usato dai test). `ViewerWidget` fa il rendering in software con `QPainter` (proiezione ortografica, ordinamento per
-profondità, orientazione iniziale sugli assi principali) e può disegnare su un `QImage` (`renderImage`), usato per salvare le
-immagini e nei test.
+`MainWindow` owns a `HitsModel` (table) with a `HitsFilterProxy` (filter by type, numeric sorting), a `ViewerWidget` and
+the tables of residues and log. The analysis runs with `QtConcurrent::run` and `QFutureWatcher`; `analyze(true)` runs it
+synchronously (used by the tests). `ViewerWidget` renders in software with `QPainter` (orthographic projection, depth
+sorting, initial orientation along the principal axes) and can draw on a `QImage` (`renderImage`), used to save the
+images and in the tests.
 
-## Test
+## Tests
 
-| Livello | Dove | Cosa |
+| Level | Where | What |
 |---|---|---|
-| API | `tests/unit/test_core.cpp` | soglie, rapporti, template, ligandi composti, input malformati |
-| Chimica e parsing | `tests/run_tests.py` | frammenti sintetici con esito noto, SDF/MOL2, altloc, modelli, input anomali, 9 complessi reali in `tests/data/` |
-| GUI | `tests/gui/gui_smoke.cpp` | apertura, analisi, filtri, rendering e salvataggio (piattaforma offscreen) |
-| Accordo con PLIP | `tests/compare_plip.py`, `tests/benchmark.py` | misura contro uno strumento esterno (non in CTest) |
+| API | `tests/unit/test_core.cpp` | thresholds, reports, templates, composite ligands, malformed input |
+| Chemistry and parsing | `tests/run_tests.py` | synthetic fragments with known outcome, SDF/MOL2, altlocs, models, anomalous input, 9 real complexes in `tests/data/` |
+| GUI | `tests/gui/gui_smoke.cpp` | opening, analysis, filters, rendering and saving (offscreen platform) |
+| Agreement with PLIP | `tests/compare_plip.py`, `tests/benchmark.py` | measurement against an external tool (not in CTest) |

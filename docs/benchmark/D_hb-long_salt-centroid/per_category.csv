@@ -1,4 +1,4 @@
-pdb,gruppo,sito,tipo,tp,fp,fn
+pdb,group,site,type,tp,fp,fn
 1AGM,D,GLC:D:1,hydrophobic,2,0,0
 1AGM,D,GLC:D:1,hbond,4,1,3
 1AGM,D,GLC:D:1,water,2,1,1

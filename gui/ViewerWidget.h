@@ -1,5 +1,5 @@
-// Vista grafica 3D (proiezione ortografica, rendering software con QPainter).
-// Mostra il ligando, i residui a contatto, gli ioni, le acque e le interazioni trovate.
+// 3D graphic view (orthographic projection, software rendering with QPainter).
+// Shows the ligand, the residues in contact, the ions, the waters and the interactions found.
 #pragma once
 
 #include <QImage>
@@ -19,18 +19,18 @@ class ViewerWidget : public QWidget {
 public:
     explicit ViewerWidget(QWidget* parent = nullptr);
 
-    void setLigand(const ligint::LigandResult& r);   // copia i dati e orienta la vista
+    void setLigand(const ligint::LigandResult& r);   // copies the data and orients the view
     void clear();
     bool hasData() const { return hasData_; }
 
     void setVisibleTypes(const QSet<QString>& types);
-    void setHighlight(int hitIndex);                 // indice in LigandResult::hits, -1 = nessuno
+    void setHighlight(int hitIndex);                 // index in LigandResult::hits, -1 = none
     void setShowLabels(bool on);
     void setShowResidues(bool on);
     void setShowDistances(bool on);
     void setShowLegend(bool on);
 
-    // Disegna la scena su un'immagine (stesso rendering dello schermo): usata per "Salva immagine" e nei test.
+    // Draws the scene on an image (same rendering as the screen): used for "Save image" and in the tests.
     QImage renderImage(const QSize& size);
 
     QSize sizeHint() const override { return {640, 480}; }
@@ -46,7 +46,7 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent* e) override;
 
 private:
-    using Mat3 = std::array<double, 9>;   // matrice di rotazione per righe
+    using Mat3 = std::array<double, 9>;   // rotation matrix, row-major
     struct Proj { QPointF pt; double z; };
 
     void render(QPainter& p, const QRectF& rect) const;

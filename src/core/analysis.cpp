@@ -1,4 +1,4 @@
-// Analisi: lettura del PDB, ruoli chimici, ricerca delle interazioni.
+// Analysis: PDB reading, chemical roles, interaction search.
 #include "internal.hpp"
 
 namespace ligint {
@@ -33,7 +33,7 @@ std::vector<std::string> Params::clampToGrid() {
     auto clampv = [&](double& x, const char* name) {
         if (x > kMaxGridRadius) {
             char b[160];
-            std::snprintf(b, sizeof b, "Attenzione: --%s %g limitato a %g A (massimo della ricerca a griglia)", name, x, kMaxGridRadius);
+            std::snprintf(b, sizeof b, "Warning: --%s %g limited to %g A (maximum of the grid search)", name, x, kMaxGridRadius);
             warnings.push_back(b);
             x = kMaxGridRadius;
         }
@@ -44,7 +44,7 @@ std::vector<std::string> Params::clampToGrid() {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Analisi
+// Analysis
 // ---------------------------------------------------------------------------------------------
 namespace {
 using namespace detail;
@@ -61,7 +61,7 @@ AtomRecord toRecord(const Atom& a) {
 
 Result analyzeFile(const std::string& path, const Options& opt) {
     std::ifstream in(path);
-    if (!in) throw std::runtime_error("Impossibile aprire " + path);
+    if (!in) throw std::runtime_error("Cannot open " + path);
     return analyzeStream(in, opt);
 }
 
@@ -78,15 +78,15 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     const int wantResi = opt.resi;
 
     vector<Atom> prot, waters;
-    vector<pair<Atom,bool>> hatoms;  // idrogeni del PDB (bool = appartiene a un ligando bersaglio)
+    vector<pair<Atom,bool>> hatoms;  // PDB hydrogens (bool = belongs to a target ligand)
     map<LKey, vector<Atom>> ligs;
-    map<LKey, vector<Atom>> hetRes;   // tutti i residui HETATM (acqua esclusa), per unire quelli legati
+    map<LKey, vector<Atom>> hetRes;   // all HETATM residues (water excluded), to merge the linked ones
     map<string, set<LKey>> hetNames;
     map<string, char> altSeen;
     string line;
     long nBadCoord = 0;
     while (getline(in, line)) {
-        if (line.compare(0, 6, "ENDMDL") == 0) break;  // solo primo modello
+        if (line.compare(0, 6, "ENDMDL") == 0) break;  // first model only
         if (line.size() < 54) continue;
         string rec = line.substr(0, 6);
         if (rec != "ATOM  " && rec != "HETATM") continue;
@@ -97,7 +97,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         a.resi = atoi(line.substr(22, 4).c_str());
         a.icode = line[26];
         char alt = line[16];
-        if (alt != ' ') {  // per ogni residuo si tiene la prima conformazione incontrata
+        if (alt != ' ') {  // for each residue the first conformation encountered is kept
             string rk = line.substr(21, 6) + line.substr(17, 3);
             auto it = altSeen.find(rk);
             if (it == altSeen.end()) altSeen[rk] = alt;
@@ -135,7 +135,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         if (isLig) ligs[{a.chain, a.resi, a.icode}].push_back(a);
         else prot.push_back(a);
     }
-    if (nBadCoord > 0) res.warnings.push_back("Attenzione: " + to_string(nBadCoord) + " atomi con coordinate non valide ignorati");
+    if (nBadCoord > 0) res.warnings.push_back("Warning: " + to_string(nBadCoord) + " atoms with invalid coordinates ignored");
     if (ligName.empty() || ligs.empty()) {
         res.listingOnly = true;
         for (auto& [n, s] : hetNames) res.hetCounts[n] = (int)s.size();
@@ -151,7 +151,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     Grid grid; grid.build(prot);
     vector<int> tmp;
 
-    // idrogeni del PDB: proteina -> atomo pesante piu' vicino nello stesso residuo; ligando -> da parte
+    // PDB hydrogens: protein -> nearest heavy atom in the same residue; ligand -> set aside
     map<LKey, vector<V3>> ligH;
     int nHprot = 0;
     for (auto& [h, isl] : hatoms) {
@@ -174,7 +174,11 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         if (hKnownProt) refineProteinRoleWithH(prot[i], pr[i]);
     }
 
-    // N/O della proteina che coordinano un metallo (es. His di uno zinc finger) non hanno H da donare
+    // lone-pair availability before the metal-coordination adjustment below (used for the coordination spheres)
+    vector<char> prLonePair(prot.size(), 0);
+    for (size_t i = 0; i < prot.size(); i++) prLonePair[i] = pr[i].acc;
+
+    // protein N/O coordinated to a metal (e.g. His of a zinc finger) have no H to donate
     if (!hKnownProt) {
         for (size_t k = 0; k < prot.size(); k++) {
             if (!isNO(prot[k].el) || pr[k].metal || (!pr[k].don && !pr[k].acc)) continue;
@@ -182,13 +186,13 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             for (int m : tmp)
                 if (pr[m].metal && dist(prot[m], prot[k]) <= metalLimit(prot[m].el, prot[k].el)) {
                     pr[k].don = false;
-                    if (prot[k].el == "N") pr[k].acc = false;   // His/N legata al metallo: coppia solitaria impegnata
+                    if (prot[k].el == "N") pr[k].acc = false;   // His/N bound to the metal: lone pair engaged
                     break;
                 }
         }
     }
 
-    // connettivita' della proteina, calcolata su richiesta
+    // protein connectivity, computed on demand
     unordered_map<int, vector<int>> pnbCache;
     auto pnb = [&](int k) -> const vector<int>& {
         auto it = pnbCache.find(k);
@@ -214,58 +218,58 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                 if (ang >= P.hbDHA && ang > bestAng) { bestAng = ang; bestD = dha; }
             }
             if (bestAng >= 0) {
-                char b[80]; snprintf(b, sizeof b, "H...A %.2f; D-H...A %.0f gradi", bestD, bestAng);
+                char b[80]; snprintf(b, sizeof b, "H...A %.2f; D-H...A %.0f deg", bestD, bestAng);
                 r.ok = true; r.note = b;
             }
-        } else if (dnb.size() == 3) {  // ammina a tre sostituenti: l'H (coppia solitaria) punta opposto ai sostituenti
+        } else if (dnb.size() == 3) {  // amine with three substituents: the H (lone pair) points opposite to the substituents
             V3 u = {0, 0, 0};
             for (int j : dnb) {
                 V3 v = sub(pos(arr[j]), pos(D)); double n = nrm(v);
                 for (int i = 0; i < 3; i++) u[i] += v[i] / n;
             }
             double nu = nrm(u);
-            if (nu < 0.3) r.ok = angleOk(D, dnb, arr, A);   // planare (ammide, anilina): criterio generico
+            if (nu < 0.3) r.ok = angleOk(D, dnb, arr, A);   // planar (amide, aniline): generic criterion
             else {
                 V3 w = sub(pos(A), pos(D));
                 double ang = acos(max(-1.0, min(1.0, -dot(u, w) / (nu * nrm(w))))) * 180.0 / M_PI;
-                if (ang <= 50.0) { char b[80]; snprintf(b, sizeof b, "asse N-H atteso: %.0f gradi", ang); r.ok = true; r.note = b; }
+                if (ang <= 50.0) { char b[80]; snprintf(b, sizeof b, "expected N-H axis: %.0f deg", ang); r.ok = true; r.note = b; }
             }
         } else r.ok = angleOk(D, dnb, arr, A);
         return r;
     };
-    // H-bond LUNGO (D...A oltre hb-max): serve che l'H possa davvero puntare verso l'accettore
+    // LONG H-bond (D...A beyond hb-max): the H must really be able to point towards the acceptor
     auto donorTestLong = [&](const Atom& D, const vector<int>& dnb, const vector<Atom>& arr, const Atom& A) {
         HBres r;
         V3 w = sub(pos(A), pos(D));
         double nw = nrm(w);
         if (nw < 1e-6) return r;
         char b[80];
-        if (!D.hs.empty()) {                                   // H noti: angolo D-H...A reale
+        if (!D.hs.empty()) {                                   // known H: real D-H...A angle
             double best = -1;
             for (auto& h : D.hs) best = max(best, angV(pos(D), h, pos(A)));
-            if (best >= 180.0 - P.hbLongTol) { snprintf(b, sizeof b, "lungo; D-H...A %.0f gradi", best); r.ok = true; r.note = b; }
-        } else if (dnb.size() >= 2) {                          // H in posizione fissa, opposta ai sostituenti
+            if (best >= 180.0 - P.hbLongTol) { snprintf(b, sizeof b, "long; D-H...A %.0f deg", best); r.ok = true; r.note = b; }
+        } else if (dnb.size() >= 2) {                          // H in a fixed position, opposite to the substituents
             V3 u = {0, 0, 0};
             for (int j : dnb) {
                 V3 v = sub(pos(arr[j]), pos(D)); double n = nrm(v);
                 for (int i = 0; i < 3; i++) u[i] += v[i] / n;
             }
             double nu = nrm(u);
-            if (nu > 0.3) {                                    // planare ammide N-H, ammina sp3...
+            if (nu > 0.3) {                                    // planar amide N-H, sp3 amine...
                 double ang = acos(max(-1.0, min(1.0, -dot(u, w) / (nu * nw)))) * 180.0 / M_PI;
-                if (ang <= P.hbLongTol) { snprintf(b, sizeof b, "lungo; asse N-H atteso: %.0f gradi", ang); r.ok = true; r.note = b; }
+                if (ang <= P.hbLongTol) { snprintf(b, sizeof b, "long; expected N-H axis: %.0f deg", ang); r.ok = true; r.note = b; }
             }
-        } else if (dnb.size() == 1) {                          // idrossile, NH2, NH3+: l'H ruota attorno al legame
+        } else if (dnb.size() == 1) {                          // hydroxyl, NH2, NH3+: the H rotates around the bond
             const Atom& X = arr[dnb[0]];
             V3 v1 = sub(pos(X), pos(D));
             double th = acos(max(-1.0, min(1.0, dot(v1, w) / (nrm(v1) * nw)))) * 180.0 / M_PI;   // X-D...A
-            double th0 = (D.el == "O" || dist(D, X) >= 1.42) ? 109.5 : 120.0;                      // angolo X-D-H atteso
-            if (fabs(th - th0) <= P.hbLongTol) { snprintf(b, sizeof b, "lungo; X-D...A %.0f gradi (atteso %.0f)", th, th0); r.ok = true; r.note = b; }
-        } else { r.ok = true; r.note = "lungo; donatore senza vicini"; }
+            double th0 = (D.el == "O" || dist(D, X) >= 1.42) ? 109.5 : 120.0;                      // expected X-D-H angle
+            if (fabs(th - th0) <= P.hbLongTol) { snprintf(b, sizeof b, "long; X-D...A %.0f deg (expected %.0f)", th, th0); r.ok = true; r.note = b; }
+        } else { r.ok = true; r.note = "long; donor without neighbors"; }
         return r;
     };
 
-    // gruppi carichi della proteina (centroide per residuo e segno), per --salt-centroid
+    // charged groups of the protein (centroid per residue and sign), for --salt-centroid
     struct QGroup { V3 c{0, 0, 0}; int q = 0; vector<int> idx; };
     vector<QGroup> pQ;
     if (P.saltCentroid > 0) {
@@ -280,7 +284,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         }
     }
 
-    // anelli aromatici e cationi della proteina
+    // aromatic rings and cations of the protein
     vector<Ring> pRings;
     struct Cation { int idx; string pres; };
     vector<Cation> pCations;
@@ -290,18 +294,18 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         for (auto& [k, am] : ra) {
             const Atom& any = prot[am.begin()->second];
             const string& R = any.res;
-            const map<string,int>& atomsOfRes = am;   // le lambda non possono catturare i structured binding (C++17)
+            const map<string,int>& atomsOfRes = am;   // lambdas cannot capture structured bindings (C++17)
             auto tryRing = [&](vector<string> names, const string& suffix) {
                 vector<const Atom*> pts;
                 for (auto& n : names) { auto it = atomsOfRes.find(n); if (it == atomsOfRes.end()) return; pts.push_back(&prot[it->second]); }
                 Ring rg;
                 if (makeRing(pts, resLabel(any) + ":" + suffix, resLabel(any), 0.25, rg)) pRings.push_back(rg);
             };
-            if (R == "PHE" || R == "TYR") tryRing({"CG","CD1","CE1","CZ","CE2","CD2"}, "anello");
-            if (R == "HIS") tryRing({"CG","ND1","CE1","NE2","CD2"}, "anello");
+            if (R == "PHE" || R == "TYR") tryRing({"CG","CD1","CE1","CZ","CE2","CD2"}, "ring");
+            if (R == "HIS") tryRing({"CG","ND1","CE1","NE2","CD2"}, "ring");
             if (R == "TRP") {
-                tryRing({"CG","CD1","NE1","CE2","CD2"}, "anello5");
-                tryRing({"CD2","CE2","CZ2","CH2","CZ3","CE3"}, "anello6");
+                tryRing({"CG","CD1","NE1","CE2","CD2"}, "ring5");
+                tryRing({"CD2","CE2","CZ2","CH2","CZ3","CE3"}, "ring6");
             }
             if (isNuc(R)) {
                 char b = R.back();
@@ -318,10 +322,10 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     for (auto& a : prot) protB += a.bf;
     protB /= max<size_t>(1, prot.size());
     double scanR = min(6.0, max({P.hbMax, P.hbLong, P.hydMax, P.saltMax, P.repMax, P.halMax, P.metalMax, 3.6}));
-    if (hKnownProt) res.info.push_back("Proteina: " + to_string(nHprot) + " idrogeni espliciti nel PDB, ruoli donatore/accettore raffinati.");
-    if (!templates.empty()) res.info.push_back("Template caricati: " + to_string(templates.size()));
+    if (hKnownProt) res.info.push_back("Protein: " + to_string(nHprot) + " explicit hydrogens in the PDB, donor/acceptor roles refined.");
+    if (!templates.empty()) res.info.push_back("Templates loaded: " + to_string(templates.size()));
 
-    // ligandi composti: residui HETATM legati covalentemente (glicani, dipeptidi) formano un unico ligando, come in PLIP
+    // composite ligands: covalently linked HETATM residues (glycans, dipeptides) form a single ligand, as in PLIP
     struct Work { LKey key; vector<Atom> L; set<LKey> comp; };
     vector<Work> works;
     {
@@ -358,10 +362,10 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     for (auto& wk : works) {
         const LKey& key = wk.key;
         vector<Atom>& L = wk.L;
-        vector<char> excl(prot.size(), 0);   // atomi di proteina che in realta' sono residui del ligando composto
+        vector<char> excl(prot.size(), 0);   // protein atoms that are actually residues of the composite ligand
         for (size_t k = 0; k < prot.size(); k++)
             if (prot[k].het && wk.comp.count(LKey(prot[k].chain, prot[k].resi, prot[k].icode))) excl[k] = 1;
-        // connettivita': dal template (per coordinate) oppure geometrica
+        // connectivity: from the template (by coordinates) or geometric
         string annot;
         bool tmplOK = false, tmplH = false;
         for (auto& t : templates) {
@@ -383,42 +387,42 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     for (size_t i = 0; i < L.size(); i++) { double d = nrm(sub(pos(L[i]), h)); if (d < bd) { bd = d; best = i; } }
                     if (best >= 0) { L[best].hs.push_back(h); n++; }
                 }
-                if (n > 0) { hKnown = true; annot = "idrogeni del PDB (" + to_string(n) + " H), connettivita' geometrica"; }
+                if (n > 0) { hKnown = true; annot = "PDB hydrogens (" + to_string(n) + " H), geometric connectivity"; }
             }
-            if (!hKnown) annot = templates.empty() ? "euristica geometrica" : "euristica geometrica (nessun template corrisponde)";
+            if (!hKnown) annot = templates.empty() ? "geometric heuristics" : "geometric heuristics (no template matches)";
         }
         string lid = resLabel(L[0]);
         LigandResult lres;
         if (wk.comp.size() > 1) {
             string names;
             for (auto& k : wk.comp) names += (names.empty() ? "" : " + ") + get<0>(k) + ":" + to_string(get<1>(k));
-            lres.info.push_back("Ligando composto da " + to_string(wk.comp.size()) + " residui legati (" + names + ")");
+            lres.info.push_back("Composite ligand of " + to_string(wk.comp.size()) + " linked residues (" + names + ")");
         }
-        lres.info.push_back("Annotazione ligando " + lid + ": " + annot);
+        lres.info.push_back("Ligand annotation " + lid + ": " + annot);
         {
             double lb = 0;
             for (auto& a : L) lb += a.bf;
             lb /= L.size();
-            char bb[120]; snprintf(bb, sizeof bb, "B-factor medio: ligando %.1f, resto della struttura %.1f%s", lb, protB,
-                                   lb > 2.0 * protB ? "  (attenzione: ligando poco definito)" : "");
+            char bb[120]; snprintf(bb, sizeof bb, "Mean B-factor: ligand %.1f, rest of the structure %.1f%s", lb, protB,
+                                   lb > 2.0 * protB ? "  (warning: poorly defined ligand)" : "");
             lres.info.push_back(bb);
         }
 
         vector<Role> lroles(L.size());
         for (size_t i = 0; i < L.size(); i++) lroles[i] = ligandRole(L, i, hKnown);
-        vector<vector<int>> lmet(L.size());  // metalli coordinati da ciascun atomo O/N del ligando
+        vector<vector<int>> lmet(L.size());  // metals coordinated by each O/N atom of the ligand
         for (size_t i = 0; i < L.size(); i++) {
             if (!isNO(L[i].el)) continue;
             vector<int> cm;
             grid.near(pos(L[i]), 3.5, cm);
             for (int k : cm)
                 if (pr[k].metal && dist(L[i], prot[k]) <= metalLimit(prot[k].el, L[i].el)) lmet[i].push_back(k);
-            // O/N coordinati a un metallo sono di norma deprotonati; si rispetta pero' un H esplicito (template/PDB)
+            // O/N coordinated to a metal are normally deprotonated; an explicit H (template/PDB) is respected
             if (!metalDonors && !hKnown && !lmet[i].empty()) lroles[i].don = false;
         }
 
-        // metalli che fanno parte del ligando (es. Fe dell'eme): gli N/O coordinati hanno la coppia solitaria impegnata
-        vector<char> pcoord(prot.size(), 0);   // atomi della proteina coordinati a un metallo del ligando
+        // metals that are part of the ligand (e.g. heme Fe): coordinated N/O have their lone pair engaged
+        vector<char> pcoord(prot.size(), 0);   // protein atoms coordinated to a metal of the ligand
         for (size_t j = 0; j < L.size(); j++) {
             if (!lroles[j].metal) continue;
             for (size_t i = 0; i < L.size(); i++) {
@@ -436,7 +440,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         char buf[160];
         vector<int> cand;
 
-        // --- interazioni atomo-atomo ---
+        // --- atom-atom interactions ---
         for (size_t i = 0; i < L.size(); i++) {
             const Atom& l = L[i];
             const Role& lr = lroles[i];
@@ -454,17 +458,17 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     if (lr.metal && r.metal) continue;
                     const Atom& other = lr.metal ? p : l;
                     const Atom& metal = lr.metal ? l : p;
-                    const Role& orole = lr.metal ? pr[k] : lr;   // ruoli originali: la coordinazione usa la coppia solitaria
-                    bool donor = other.el == "S" || (isNO(other.el) && orole.acc);  // serve una coppia solitaria
+                    const Role& orole = lr.metal ? pr[k] : lr;   // original roles: coordination uses the lone pair
+                    bool donor = other.el == "S" || (isNO(other.el) && orole.acc);  // a lone pair is required
                     if (donor && d <= min(P.metalMax, metalLimit(metal.el, other.el)))
-                        add("Coordinazione metallica", true, d < 1.9 ? "distanza molto corta (modello a bassa risoluzione?)" : "");
+                        add(ligint::type::MetalCoordination, true, d < 1.9 ? "very short distance (low-resolution model?)" : "");
                     continue;
                 }
-                if (d < 2.0) { add("Possibile legame covalente", true); continue; }
+                if (d < 2.0) { add(ligint::type::PossibleCovalent, true); continue; }
 
                 int qq = lr.q * r.q;
-                bool sb = P.saltCentroid <= 0 && qq < 0 && d <= P.saltMax;   // con --salt-centroid i ponti salini si valutano per gruppo
-                if (qq > 0 && d <= P.repMax) add("Repulsione elettrostatica", false);
+                bool sb = P.saltCentroid <= 0 && qq < 0 && d <= P.saltMax;   // with --salt-centroid salt bridges are evaluated per group
+                if (qq > 0 && d <= P.repMax) add(ligint::type::ElectrostaticRepulsion, false);
 
                 bool polar = isNO(l.el) && isNO(p.el);
                 bool hb = false; string hnote;
@@ -479,27 +483,27 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                         if (dr.ok && angleOk(l, l.nb, L, p)) { hb = true; hnote = dr.note; }
                     }
                 }
-                if (sb && hb) add("Ponte salino", true, "anche legame a idrogeno" + (hnote.empty() ? "" : "; " + hnote));
-                else if (sb) add("Ponte salino", true);
-                else if (hb) add("Legame a idrogeno", true, qq < 0 ? "assistito da carica" + (hnote.empty() ? "" : "; " + hnote) : hnote);
+                if (sb && hb) add(ligint::type::SaltBridge, true, "also hydrogen bond" + (hnote.empty() ? "" : "; " + hnote));
+                else if (sb) add(ligint::type::SaltBridge, true);
+                else if (hb) add(ligint::type::HydrogenBond, true, qq < 0 ? "charge-assisted" + (hnote.empty() ? "" : "; " + hnote) : hnote);
 
                 if (lr.hal && isNOS(p.el) && d <= P.halMax && !l.nb.empty() &&
-                    angleDeg(L[l.nb[0]], l, p) >= P.halAngle) add("Legame ad alogeno", true);
+                    angleDeg(L[l.nb[0]], l, p) >= P.halAngle) add(ligint::type::HalogenBond, true);
 
-                if (lr.hyd && r.hyd && d >= P.hydMin && d <= P.hydMax) add("Contatto idrofobico", true);
+                if (lr.hyd && r.hyd && d >= P.hydMin && d <= P.hydMax) add(ligint::type::Hydrophobic, true);
                 else if (backboneHyd && lr.hyd && p.el == "C" && (p.name == "CA" || p.name == "C") && !isNuc(p.res) &&
-                         d >= P.hydMin && d <= P.hydMax) add("Contatto apolare (backbone)", true);
+                         d >= P.hydMin && d <= P.hydMax) add(ligint::type::BackboneApolar, true);
 
                 double thr = polar ? 2.2 : vdw(l.el) + vdw(p.el) - P.clash;
                 if (d < thr) {
-                    bool shell = false;  // stessa sfera di coordinazione di un metallo: non e' un vero clash
+                    bool shell = false;  // same coordination sphere of a metal: not a real clash
                     for (int m : lmet[i]) if (dist(prot[m], p) <= 3.5) shell = true;
-                    if (!shell) add("Clash sterico", false);
+                    if (!shell) add(ligint::type::StericClash, false);
                 }
             }
         }
 
-        // --- ponti salini tra centroidi dei gruppi carichi (stessa idea di PLIP) ---
+        // --- salt bridges between charged-group centroids (same idea as PLIP) ---
         if (P.saltCentroid > 0) {
             vector<int> par(L.size());
             for (size_t i = 0; i < L.size(); i++) par[i] = i;
@@ -522,22 +526,22 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     if (dc > P.saltCentroid) continue;
                     int k0 = pg.idx[0];
                     if (excl[k0]) continue;
-                    hits.push_back({"Ponte salino", label(L[g.idx[0]]), label(prot[k0]), resLabel(prot[k0]),
-                                    "centroidi dei gruppi carichi", dc, true, g.c, pg.c});
+                    hits.push_back({ligint::type::SaltBridge, label(L[g.idx[0]]), label(prot[k0]), resLabel(prot[k0]),
+                                    "charged-group centroids", dc, true, g.c, pg.c});
                 }
             }
         }
 
-        // --- anelli: pi-stacking e cation-pi ---
+        // --- rings: pi-stacking and cation-pi ---
         vector<Ring> lRings;
         for (auto& path : findRings(L)) {
             vector<const Atom*> pts;
             for (int i : path) pts.push_back(&L[i]);
             Ring rg;
-            if (makeRing(pts, lid + ":anello(" + L[path[0]].name + ")", lid, 0.15, rg)) lRings.push_back(rg);
+            if (makeRing(pts, lid + ":ring(" + L[path[0]].name + ")", lid, 0.15, rg)) lRings.push_back(rg);
         }
         {
-            map<pair<string,string>, Hit> bestStack;  // per (tipo, anello proteina) si tiene l'anello del ligando piu' vicino
+            map<pair<string,string>, Hit> bestStack;  // for each (type, protein ring) the nearest ligand ring is kept
             for (auto& lg : lRings) {
                 for (auto& pg : pRings) {
                     V3 v = sub(pg.c, lg.c);
@@ -548,10 +552,10 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     double offL = sqrt(max(0.0, d*d - hL*hL)), offP = sqrt(max(0.0, d*d - hP*hP));
                     double off = min(offL, offP), h = 0.5 * (hL + hP);
                     string type;
-                    if (ang <= P.piAngle && h >= 3.0 && h <= 4.5 && off <= P.piOffset) type = "pi-stacking (parallelo)";
-                    else if (ang >= 60.0 && off <= 2.0) type = "pi-stacking (a T)";
+                    if (ang <= P.piAngle && h >= 3.0 && h <= 4.5 && off <= P.piOffset) type = ligint::type::PiStackingParallel;
+                    else if (ang >= 60.0 && off <= 2.0) type = ligint::type::PiStackingT;
                     else continue;
-                    snprintf(buf, sizeof buf, "angolo normali %.0f; distanza piani %.1f; offset %.1f A", ang, h, off);
+                    snprintf(buf, sizeof buf, "normals angle %.0f; plane distance %.1f; offset %.1f A", ang, h, off);
                     Hit h2{type, lg.label, pg.label, pg.pres, buf, d, true, lg.c, pg.c};
                     auto k = make_pair(type, pg.label);
                     auto it = bestStack.find(k);
@@ -566,8 +570,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             if (d > P.cpMax || d < 1.0) return;
             double ang = acos(min(1.0, fabs(dot(v, rg.n)) / d)) * 180.0 / M_PI;
             if (ang > 30.0) return;
-            snprintf(buf, sizeof buf, "angolo asse-normale %.0f", ang);
-            hits.push_back({"Cation-pi", la, pa_, pres, buf, d, true, ringIsLigand ? rg.c : pos(cat), ringIsLigand ? pos(cat) : rg.c});
+            snprintf(buf, sizeof buf, "axis-normal angle %.0f", ang);
+            hits.push_back({ligint::type::CationPi, la, pa_, pres, buf, d, true, ringIsLigand ? rg.c : pos(cat), ringIsLigand ? pos(cat) : rg.c});
         };
         for (auto& lg : lRings)
             for (auto& c : pCations) catpi(prot[c.idx], lg, lg.label, label(prot[c.idx]), c.pres, true);
@@ -576,7 +580,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             for (auto& pg : pRings) catpi(L[i], pg, label(L[i]), pg.label, pg.pres, false);
         }
 
-        // --- ponti mediati da acqua ---
+        // --- water-mediated bridges ---
         for (size_t i = 0; i < L.size(); i++) {
             const Atom& l = L[i];
             if (!isNO(l.el) || !(lroles[i].don || lroles[i].acc)) continue;
@@ -589,11 +593,11 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                     const Atom& p = prot[k];
                     double dp = dist(w, p);
                     if (dp < P.hbMin || !isNO(p.el) || !(pr[k].don || pr[k].acc)) continue;
-                    if (dist(l, p) <= P.hbMax) continue;  // gia' contatto diretto
+                    if (dist(l, p) <= P.hbMax) continue;  // already a direct contact
                     double wa = angleDeg(l, w, p);
-                    if (wa < P.wbMin || wa > P.wbMax) continue;   // acqua non ponte realistico (quasi collineare o troppo chiusa)
+                    if (wa < P.wbMin || wa > P.wbMax) continue;   // not a realistic water bridge (nearly collinear or too closed)
                     snprintf(buf, sizeof buf, "via %s; d(H2O-prot) %.2f", label(w).c_str(), dp);
-                    hits.push_back({"Ponte d'acqua", label(l), label(p), resLabel(p), buf, dw, true, pos(l), pos(p), pos(w), true});
+                    hits.push_back({ligint::type::WaterBridge, label(l), label(p), resLabel(p), buf, dw, true, pos(l), pos(p), pos(w), true});
                 }
             }
         }
@@ -603,7 +607,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             return tie(a.type, a.la, a.d) < tie(b.type, b.la, b.d);
         });
 
-        // ---- risultato per questo ligando
+        // ---- result for this ligand
         lres.id = lid;
         lres.resName = L[0].res;
         lres.chain = L[0].chain;
@@ -623,7 +627,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             if (h.hasW) lres.waters.push_back(h.pw);
             lres.hits.push_back(hr);
         }
-        {   // atomi dei residui di proteina che interagiscono (per la grafica)
+        {   // atoms of the interacting protein residues (for the graphics)
             set<string> need;
             for (auto& h : hits) need.insert(h.pres);
             vector<int> sel;
@@ -636,6 +640,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                         lres.contactBonds.push_back({(int)a, (int)b, 0});
         }
 
+        // coordination sphere of the metals touched by the ligand (ligand + protein + waters)
         {
             auto isDonorAtom = [&](const Atom& a, const Role& r) { return a.el == "S" || (isNO(a.el) && r.acc); };
             string out;
@@ -653,13 +658,13 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                 if (!touch) continue;
                 grid.near(pos(prot[k]), 3.0, c2);
                 for (int j : c2)
-                    if ((int)k != j && !excl[j] && !pr[j].metal && isDonorAtom(prot[j], pr[j]) &&
+                    if ((int)k != j && !excl[j] && !pr[j].metal && (prot[j].el == "S" || (isNO(prot[j].el) && prLonePair[j])) &&
                         dist(prot[j], prot[k]) <= metalLimit(prot[k].el, prot[j].el))
                         items.push_back({dist(prot[j], prot[k]), label(prot[j])});
                 for (auto& w : waters)
                     if (dist(w, prot[k]) <= metalLimit(prot[k].el, "O")) items.push_back({dist(w, prot[k]), label(w)});
                 sort(items.begin(), items.end());
-                char hd[80]; snprintf(hd, sizeof hd, "  %-10s %zu atomi:", label(prot[k]).c_str(), items.size());
+                char hd[80]; snprintf(hd, sizeof hd, "  %-10s %zu atoms:", label(prot[k]).c_str(), items.size());
                 out += hd;
                 for (auto& it : items) { char b2[80]; snprintf(b2, sizeof b2, " %s (%.2f)", it.second.c_str(), it.first); out += b2; }
                 out += "\n";

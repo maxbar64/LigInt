@@ -1,14 +1,14 @@
-# Benchmark ligint contro PLIP
+# Benchmark of ligint against PLIP
 
-Data: 2026-10-14. PDB: 50, siti confrontati: 83 (una copia per ligando e PDB).
+Date: 2026-10-14. PDB files: 50, sites compared: 83 (one copy per ligand and PDB).
 
-Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di ligint sono anche in PLIP. PLIP non è la verità: un disaccordo è un motivo per guardare il caso.
+Sensitivity = how many PLIP interactions ligint finds. Precision = how many of ligint's are also in PLIP. PLIP is not the truth: a disagreement is a reason to look at the case.
 
-## soglie di ligint
+## ligint thresholds
 
-### gruppo C
+### group C
 
-| tipo | TP | FP | FN | sensibilità | precisione |
+| type | TP | FP | FN | sensitivity | precision |
 |---|---:|---:|---:|---:|---:|
 | hydrophobic | 242 | 60 | 15 |  94% |  80% |
 | hbond | 176 | 54 | 70 |  72% |  77% |
@@ -17,11 +17,11 @@ Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di
 | pistack | 21 | 8 | 1 |  95% |  72% |
 | picat | 5 | 5 | 1 |  83% |  50% |
 | halogen | 3 | 0 | 8 |  27% | 100% |
-| **totale** | 546 | 235 | 162 |  77% |  70% |
+| **total** | 546 | 235 | 162 |  77% |  70% |
 
-### gruppo TUTTI
+### group ALL
 
-| tipo | TP | FP | FN | sensibilità | precisione |
+| type | TP | FP | FN | sensitivity | precision |
 |---|---:|---:|---:|---:|---:|
 | hydrophobic | 242 | 60 | 15 |  94% |  80% |
 | hbond | 176 | 54 | 70 |  72% |  77% |
@@ -30,13 +30,13 @@ Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di
 | pistack | 21 | 8 | 1 |  95% |  72% |
 | picat | 5 | 5 | 1 |  83% |  50% |
 | halogen | 3 | 0 | 8 |  27% | 100% |
-| **totale** | 546 | 235 | 162 |  77% |  70% |
+| **total** | 546 | 235 | 162 |  77% |  70% |
 
-## soglie alla PLIP (ponti salini 5,5 A, alogeni 4,0 A)
+## PLIP-like thresholds (salt bridges 5.5 A, halogens 4.0 A)
 
-### gruppo C
+### group C
 
-| tipo | TP | FP | FN | sensibilità | precisione |
+| type | TP | FP | FN | sensitivity | precision |
 |---|---:|---:|---:|---:|---:|
 | hydrophobic | 242 | 60 | 15 |  94% |  80% |
 | hbond | 176 | 54 | 70 |  72% |  77% |
@@ -45,11 +45,11 @@ Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di
 | pistack | 21 | 8 | 1 |  95% |  72% |
 | picat | 5 | 5 | 1 |  83% |  50% |
 | halogen | 6 | 1 | 5 |  55% |  86% |
-| **totale** | 555 | 247 | 153 |  78% |  69% |
+| **total** | 555 | 247 | 153 |  78% |  69% |
 
-### gruppo TUTTI
+### group ALL
 
-| tipo | TP | FP | FN | sensibilità | precisione |
+| type | TP | FP | FN | sensitivity | precision |
 |---|---:|---:|---:|---:|---:|
 | hydrophobic | 242 | 60 | 15 |  94% |  80% |
 | hbond | 176 | 54 | 70 |  72% |  77% |
@@ -58,33 +58,33 @@ Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di
 | pistack | 21 | 8 | 1 |  95% |  72% |
 | picat | 5 | 5 | 1 |  83% |  50% |
 | halogen | 6 | 1 | 5 |  55% |  86% |
-| **totale** | 555 | 247 | 153 |  78% |  69% |
+| **total** | 555 | 247 | 153 |  78% |  69% |
 
-## Cause probabili dei disaccordi (soglie di ligint, tutti i gruppi)
+## Probable causes of the disagreements (ligint thresholds, all groups)
 
-| tipo | causa | n |
+| type | cause | n |
 |---|---|---:|
-| hydrophobic | ligint: contatto idrofobico non riportato da PLIP | 60 |
-| hydrophobic | PLIP: contatto idrofobico non riportato da ligint | 15 |
-| hbond | PLIP: D-A oltre 3,5 A (fuori soglia di ligint) | 50 |
-| hbond | ligint: contatto forte (<=3,0 A) non riportato da PLIP | 27 |
-| hbond | PLIP: D-A entro 3,5 A, da esaminare | 20 |
-| hbond | ligint: contatto 3,0-3,5 A non riportato da PLIP | 17 |
-| hbond | ligint: partner istidina (tautomero assegnato da PLIP) | 10 |
-| water | ligint: ponte d'acqua non riportato da PLIP (filtri propri di PLIP) | 97 |
-| water | PLIP: ponte d'acqua non riportato da ligint | 35 |
-| salt | PLIP: oltre 4,0 A (fuori soglia di ligint) | 29 |
-| salt | ligint: ponte salino non riportato da PLIP | 11 |
-| salt | PLIP: entro 4,0 A, da esaminare | 3 |
-| pistack | ligint: stacking non riportato da PLIP | 8 |
-| pistack | PLIP: stacking non riportato da ligint | 1 |
-| picat | ligint: cation-pi non riportato da PLIP (protonazione del ligando?) | 5 |
-| picat | PLIP: cation-pi non riportato | 1 |
-| halogen | PLIP: alogeno non riportato da ligint (F non trattato, soglia) | 8 |
+| hydrophobic | ligint: hydrophobic contact not reported by PLIP | 60 |
+| hydrophobic | PLIP: hydrophobic contact not reported by ligint | 15 |
+| hbond | PLIP: D-A beyond 3.5 A (outside the ligint threshold) | 50 |
+| hbond | ligint: strong contact (<=3.0 A) not reported by PLIP | 27 |
+| hbond | PLIP: D-A within 3.5 A, to be examined | 20 |
+| hbond | ligint: 3.0-3.5 A contact not reported by PLIP | 17 |
+| hbond | ligint: histidine partner (tautomer assigned by PLIP) | 10 |
+| water | ligint: water bridge not reported by PLIP (PLIP applies its own filters) | 97 |
+| water | PLIP: water bridge not reported by ligint | 35 |
+| salt | PLIP: beyond 4.0 A (outside the ligint threshold) | 29 |
+| salt | ligint: salt bridge not reported by PLIP | 11 |
+| salt | PLIP: within 4.0 A, to be examined | 3 |
+| pistack | ligint: stacking not reported by PLIP | 8 |
+| pistack | PLIP: stacking not reported by ligint | 1 |
+| picat | ligint: cation-pi not reported by PLIP (ligand protonation?) | 5 |
+| picat | PLIP: cation-pi not reported by ligint | 1 |
+| halogen | PLIP: halogen bond not reported by ligint (F not handled, threshold) | 8 |
 
-## Esito per struttura (soglie di ligint)
+## Outcome per structure (ligint thresholds)
 
-| PDB | gruppo | sito | interazioni PLIP | TP | FP | FN |
+| PDB | group | site | PLIP interactions | TP | FP | FN |
 |---|---|---|---:|---:|---:|---:|
 | 1A28 | C | STR:A:1 | 10 | 9 | 3 | 1 |
 | 1A3K | C | NAG:B:1 | 9 | 7 | 3 | 2 |
@@ -170,6 +170,6 @@ Sensibilità = quante interazioni di PLIP ritrova ligint. Precisione = quante di
 | 4G5J | C | 0WM:A:1102 | 1 | 0 | 3 | 1 |
 | 4G5J | C | 0WN:A:1101 | 8 | 4 | 1 | 4 |
 
-## Problemi
+## Problems
 
-- 2HNP: nessun ligando a piccola molecola per PLIP
+- 2HNP: no small-molecule ligand for PLIP

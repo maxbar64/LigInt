@@ -1,205 +1,208 @@
 # ligint
 
-Interazioni non covalenti **ligando-proteina** da un file PDB: legami a idrogeno, ponti salini, contatti
-idrofobici, π-stacking, cation-π, legami ad alogeno, coordinazione di metalli e ponti d'acqua, più clash e
-repulsioni. Il progetto contiene:
+Non-covalent **ligand-protein interactions** from a PDB file: hydrogen bonds, salt bridges, hydrophobic contacts,
+π-stacking, cation-π, halogen bonds, metal coordination and water bridges, plus clashes and repulsions. The project
+contains:
 
-| Componente | Cosa è |
+| Component | What it is |
 |---|---|
-| `ligint_core` | libreria C++17 senza dipendenze (API in `include/ligint/ligint.hpp`) |
-| `ligint` | programma a riga di comando (tabella leggibile o CSV) |
-| `ligint-gui` | interfaccia grafica Qt con vista 3D delle interazioni, tabelle e filtri |
-| `tests/` | test C++, suite Python, test di fumo della GUI, confronto con PLIP |
+| `ligint_core` | C++17 library with no dependencies (API in `include/ligint/ligint.hpp`) |
+| `ligint` | command-line program (readable table or CSV) |
+| `ligint-gui` | Qt graphical interface with a 3D view of the interactions, tables and filters |
+| `tests/` | C++ tests, Python suite, GUI smoke test, comparison with PLIP |
 
-![GUI su 1HSG (indinavir)](docs/img/gui-1HSG-window.png)
+![GUI on 1HSG (indinavir)](docs/img/gui-1HSG-window.png)
 
-## Compilare
+## Building
 
-Requisiti: **CMake ≥ 3.16**, un compilatore **C++17**; per la GUI **Qt 6** (o Qt 5) con Widgets e Concurrent.
-Se Qt non c'è, CMake avvisa e compila solo libreria e riga di comando.
+Requirements: **CMake ≥ 3.16**, a **C++17** compiler; for the GUI **Qt 6** (or Qt 5) with Widgets and Concurrent.
+If Qt is not found, CMake warns and builds only the library and the command line.
 
 ```
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure      # con QT_QPA_PLATFORM=offscreen se non c'è uno schermo
-cmake --install build --prefix /percorso/di/installazione
+ctest --test-dir build --output-on-failure      # with QT_QPA_PLATFORM=offscreen if there is no display
+cmake --install build --prefix /installation/path
 ```
 
-Con CMake ≥ 3.21 si possono usare i preset: `cmake --preset release && cmake --build --preset release`
-(altri preset: `debug`, `cli-only`, `sanitize`).
+With CMake ≥ 3.21 you can use the presets: `cmake --preset release && cmake --build --preset release`
+(other presets: `debug`, `cli-only`, `sanitize`).
 
-| Opzione CMake | Default | Significato |
+| CMake option | Default | Meaning |
 |---|---|---|
-| `LIGINT_BUILD_CLI` | ON | eseguibile `ligint` |
-| `LIGINT_BUILD_GUI` | ON | `ligint-gui` (richiede Qt; se manca, avviso e prosegue) |
-| `LIGINT_BUILD_TESTS` | ON | test registrati in CTest |
-| `LIGINT_SANITIZE` | OFF | AddressSanitizer + UBSan (GCC/Clang; meglio senza GUI) |
-| `LIGINT_WARNINGS_AS_ERRORS` | OFF | avvisi del compilatore come errori |
-| `LIGINT_BUILD_SCREENSHOT_TOOL` | OFF | `ligint-screenshot`, per le immagini della documentazione |
+| `LIGINT_BUILD_CLI` | ON | `ligint` executable |
+| `LIGINT_BUILD_GUI` | ON | `ligint-gui` (requires Qt; if missing, a warning and the build continues) |
+| `LIGINT_BUILD_TESTS` | ON | tests registered in CTest |
+| `LIGINT_SANITIZE` | OFF | AddressSanitizer + UBSan (GCC/Clang; better without the GUI) |
+| `LIGINT_WARNINGS_AS_ERRORS` | OFF | compiler warnings as errors |
+| `LIGINT_BUILD_SCREENSHOT_TOOL` | OFF | `ligint-screenshot`, for the documentation images |
 
-## Uso
+## Usage
 
-### Riga di comando
-
-```
-ligint struttura.pdb                       elenca i ligandi (HETATM) presenti, con il numero di copie
-ligint struttura.pdb ATP                   analizza tutti i ligandi ATP
-ligint struttura.pdb ATP A 501             solo catena A, residuo 501
-ligint struttura.pdb ATP --csv             output CSV (le informazioni di servizio vanno su stderr)
-ligint struttura.pdb LIG --sdf lig.sdf     annotazione chimica da SDF (anche --mol2)
-ligint struttura.pdb LIG --plip-like       preset per il confronto con PLIP
-ligint --help                              soglie e valori di default
-```
-
-Opzioni: `--csv`, `--no-water`, `--no-merge`, `--plip-like`, `--sdf F`, `--mol2 F`, `--metal-donors`,
-`--backbone-hyd`, `--hb-long X`, `--salt-centroid X`, `--version` e tutte le soglie (`--hb-max`, `--salt-max`,
-`--hyd-max`, …; vedi `--help`). Opzioni sconosciute, soglie non numeriche o file mancanti terminano con errore
-(codice 1); soglie oltre 6 Å per le ricerche a griglia vengono limitate con un avviso.
-
-### Interfaccia grafica
+### Command line
 
 ```
-ligint-gui [struttura.pdb]
+ligint structure.pdb                       list the ligands (HETATM) present, with the number of copies
+ligint structure.pdb ATP                   analyze all ATP ligands
+ligint structure.pdb ATP A 501             only chain A, residue 501
+ligint structure.pdb ATP --csv             CSV output (service information goes to stderr)
+ligint structure.pdb LIG --sdf lig.sdf     chemical annotation from SDF (also --mol2)
+ligint structure.pdb LIG --plip-like       preset for the comparison with PLIP
+ligint --help                              thresholds and default values
 ```
 
-Apri un PDB (menu, trascinamento o argomento), scegli il ligando, regola opzioni e soglie, premi **Analizza**.
-La vista 3D (trascina: ruota; tasto destro o centrale: sposta; rotellina: zoom; doppio clic: ripristina) mostra
-ligando, residui a contatto, ioni e acque, con le interazioni colorate per tipo, distanze, etichette e legenda.
-Selezionando una riga della tabella l'interazione si evidenzia nella vista. Si possono filtrare i tipi, aggiungere
-template SDF/MOL2, esportare le interazioni in CSV e salvare l'immagine in PNG. L'analisi gira in un thread separato.
+Options: `--csv`, `--no-water`, `--no-merge`, `--plip-like`, `--sdf F`, `--mol2 F`, `--metal-donors`,
+`--backbone-hyd`, `--hb-long X`, `--salt-centroid X`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
+`--hyd-max`, ...; see `--help`). Unknown options, non-numeric thresholds or missing files end with an error
+(exit code 1); thresholds above 6 Å for the grid searches are limited with a warning.
 
-![Vista 3D su 4IKF (inibitore dell'integrasi, Mg, DNA)](docs/img/gui-4IKF-viewer.png)
+The CSV columns are `ligand,type,favorable,ligand_atom,protein_atom,distance,notes`; the interaction types are
+listed below and are available as constants in `ligint::type`.
 
-### Come libreria
+### Graphical interface
+
+```
+ligint-gui [structure.pdb]
+```
+
+Open a PDB (menu, drag and drop or argument), choose the ligand, adjust options and thresholds, press **Analyze**.
+The 3D view (drag: rotate; right or middle button: pan; wheel: zoom; double click: reset) shows the ligand, the
+residues in contact, ions and waters, with the interactions colored by type, distances, labels and a legend.
+Selecting a row of the table highlights the interaction in the view. You can filter the types, add SDF/MOL2
+templates, export the interactions to CSV and save the image as PNG. The analysis runs in a separate thread.
+
+![3D view on 4IKF (integrase inhibitor, Mg, DNA)](docs/img/gui-4IKF-viewer.png)
+
+### As a library
 
 ```cpp
 #include <ligint/ligint.hpp>
 
 ligint::Options opt;
 opt.ligName = "ATP";
-opt.params.applyPlipLike();                    // facoltativo
+opt.params.applyPlipLike();                    // optional
 ligint::Result r = ligint::analyzeFile("1ATP.pdb", opt);
 for (const auto& lig : r.ligands)
-    for (const auto& h : lig.hits)             // tipo, atomi, distanza, coordinate per la grafica...
+    for (const auto& h : lig.hits)             // type, atoms, distance, coordinates for the graphics...
         std::cout << h.type << " " << h.ligandAtom << " " << h.proteinAtom << " " << h.distance << "\n";
 ```
 
-La libreria non stampa nulla: avvisi e informazioni sono nel `Result`. `printText` e `printCsv` riproducono
-l'output della riga di comando. In un altro progetto CMake, dopo `cmake --install`:
+The library prints nothing: warnings and information are in the `Result`. `printText` and `printCsv` reproduce the
+command-line output. In another CMake project, after `cmake --install`:
 
 ```cmake
 find_package(ligint REQUIRED)
-target_link_libraries(mio_programma PRIVATE ligint::core)
+target_link_libraries(my_program PRIVATE ligint::core)
 ```
 
-## Cosa riconosce (soglie di default)
+## What it recognizes (default thresholds)
 
-| Tipo | Criterio |
+| Type | Criterion |
 |---|---|
-| Legame a idrogeno | D···A 2,2–3,5 Å, donatore e accettore compatibili; con H noti D–H···A ≥ 120° e H···A ≤ 2,7 Å, altrimenti angolo antecedente ≥ 90° (ammine a tre sostituenti: asse N–H entro 50°) |
-| Ponte salino | cariche opposte, atomi a ≤ 4,0 Å; con H-bond sulla stessa coppia riga unica "anche legame a idrogeno" |
-| Repulsione elettrostatica | cariche uguali a ≤ 4,5 Å |
-| Contatto idrofobico | C–C apolari a 3,3–4,0 Å (carboni non legati a N/O/P) |
-| π-stacking | centroidi ≤ 5,5 Å; parallelo (normali ≤ 30°, piani a 3,0–4,5 Å, offset ≤ 3,5 Å) o a T (≥ 60°, offset ≤ 2,0 Å) |
-| Cation-π | catione–centroide ≤ 6,0 Å, entro 30° dall'asse dell'anello |
-| Legame ad alogeno | Cl/Br/I···N/O/S ≤ 3,5 Å, angolo C–X···A ≥ 140° (il fluoro non è considerato) |
-| Coordinazione metallica | O/N con coppia solitaria o S entro il limite per elemento (Mg 2,5; Zn 2,6; Ca 2,8; …) |
-| Ponte d'acqua | acqua a 2,2–3,5 Å da ligando e proteina, angolo ligando–O–proteina 75–140°, senza contatto diretto |
-| Clash | distanza < somma dei raggi di van der Waals − 0,5 Å |
-| Possibile legame covalente | distanza < 2,0 Å |
+| Hydrogen bond | D···A 2.2–3.5 Å, compatible donor and acceptor; with known H: D–H···A ≥ 120° and H···A ≤ 2.7 Å, otherwise antecedent angle ≥ 90° (amines with three substituents: N–H axis within 50°) |
+| Salt bridge | opposite charges, atoms ≤ 4.0 Å; with an H-bond on the same pair a single row "also hydrogen bond" |
+| Electrostatic repulsion | like charges ≤ 4.5 Å |
+| Hydrophobic contact | apolar C–C at 3.3–4.0 Å (carbons not bonded to N/O/P) |
+| pi-stacking | centroids ≤ 5.5 Å; parallel (normals ≤ 30°, planes 3.0–4.5 Å apart, offset ≤ 3.5 Å) or T-shaped (≥ 60°, offset ≤ 2.0 Å) |
+| Cation-pi | cation–centroid ≤ 6.0 Å, within 30° of the ring axis |
+| Halogen bond | Cl/Br/I···N/O/S ≤ 3.5 Å, C–X···A angle ≥ 140° (fluorine is not considered) |
+| Metal coordination | O/N with a lone pair or S within the per-element limit (Mg 2.5; Zn 2.6; Ca 2.8; ...) |
+| Water bridge | water 2.2–3.5 Å from both ligand and protein, ligand–O–protein angle 75–140°, without direct contact |
+| Steric clash | distance < sum of the van der Waals radii − 0.5 Å |
+| Possible covalent bond | distance < 2.0 Å |
 
-### Assunzioni chimiche
+### Chemical assumptions
 
-I PDB cristallografici non hanno idrogeni, quindi la chimica del ligando è dedotta dalla geometria:
+Crystallographic PDB files have no hydrogens, so the ligand chemistry is inferred from the geometry:
 
-- **pH fisiologico:** carbossilati, fosfati e solfonati (due O terminali sullo stesso atomo) sono anionici; ammine
-  alifatiche con soli sostituenti sp3, amidine e guanidini non in anello sono cationiche.
-- **Ammidi:** un N legato a un C carbonilico non è accettore. N di anello con coppia solitaria è accettore.
-- **Metalli:** O/N coordinati a un metallo sono considerati deprotonati (non donatori) salvo `--metal-donors`;
-  His e altri N legati a un metallo non fanno H-bond.
-- **Istidina:** donatore e accettore, mai carica.
-- **Proteina:** DNA/RNA sono partner (fosfati, basi, stacking); se il PDB contiene gli H della proteina vengono usati.
-- **Si legge solo il primo modello;** di ogni residuo si tiene la prima conformazione alternativa incontrata.
-- **Ligandi di più residui** (disaccaridi, glicani, dipeptidi) legati covalentemente sono un unico ligando
-  (come in PLIP); `--no-merge` li tiene separati.
+- **Physiological pH:** carboxylates, phosphates and sulfonates (two terminal O on the same atom) are anionic;
+  aliphatic amines with only sp3 substituents, and amidines and guanidines not in a ring, are cationic.
+- **Amides:** an N bonded to a carbonyl C is not an acceptor. A ring N with a lone pair is an acceptor.
+- **Metals:** O/N coordinated to a metal are considered deprotonated (not donors) unless `--metal-donors`;
+  His and other N bound to a metal make no H-bonds.
+- **Histidine:** donor and acceptor, never charged.
+- **Protein:** DNA/RNA are partners (phosphates, bases, stacking); if the PDB contains the protein hydrogens they are used.
+- **Only the first model is read;** for each residue the first alternative conformation encountered is kept.
+- **Multi-residue ligands** (disaccharides, glycans, dipeptides) covalently linked are a single ligand
+  (as in PLIP); `--no-merge` keeps them separate.
 
-### SDF e MOL2
+### SDF and MOL2
 
-`--sdf` / `--mol2` forniscono ordini di legame, idrogeni espliciti e cariche formali. Il ligando del PDB è abbinato al
-template **per coordinate** (tolleranza 0,6 Å, stesso numero di atomi pesanti): il file deve avere le stesse
-coordinate del PDB. Con idrogeni nel template, donatori/accettori e angoli D–H···A sono reali; senza H, o se
-l'abbinamento fallisce, si ricade sull'euristica geometrica (il programma lo dichiara). SDF V3000 non supportato.
+`--sdf` / `--mol2` provide bond orders, explicit hydrogens and formal charges. The PDB ligand is matched to the
+template **by coordinates** (tolerance 0.6 Å, same number of heavy atoms): the file must have the same coordinates as
+the PDB. With hydrogens in the template, donors/acceptors and D–H···A angles are real; without H, or if the matching
+fails, the geometric heuristics are used (the program says so). SDF V3000 is not supported.
 
-### Preset e opzioni per il confronto con PLIP
+### Presets and options for the comparison with PLIP
 
-- `--hb-long 4.1`: H-bond con D···A fino a 4,1 Å solo se l'H (reale o ideale) può puntare all'accettore.
-- `--salt-centroid 5.5`: ponti salini tra i centroidi dei gruppi carichi (un contatto per gruppo).
-- `--plip-like` = `--hb-long 4.1 --salt-centroid 5.5 --hal-max 4.0`; le opzioni esplicite prevalgono.
+- `--hb-long 4.1`: H-bonds with D···A up to 4.1 Å only if the H (real or ideal) can point to the acceptor.
+- `--salt-centroid 5.5`: salt bridges between the centroids of the charged groups (one contact per group).
+- `--plip-like` = `--hb-long 4.1 --salt-centroid 5.5 --hal-max 4.0`; explicit options take precedence.
 
-Sono spente di default: `--hb-long` è stata confermata su dati non usati per la taratura, `--salt-centroid` ha un
-effetto piccolo e incerto.
+They are off by default: `--hb-long` was confirmed on data not used for the tuning, `--salt-centroid` has a small and
+uncertain effect.
 
-## Verifiche
+## Verification
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     66 test Python (regole chimiche, SDF/MOL2,
-                                                     parsing, input malformati, complessi reali in tests/data)
-python3 tests/compare_plip.py *.pdb                  ligint contro PLIP (pip install plip openbabel-wheel)
-python3 tests/benchmark.py cartella/ --groups g.txt  pipeline completa con report e CSV dei disaccordi
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     67 Python tests (chemical rules, SDF/MOL2,
+                                                     parsing, malformed input, real complexes in tests/data)
+python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
+python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
 ```
 
-**Accordo con PLIP** (una copia per ligando e PDB; sensibilità = interazioni di PLIP ritrovate; precisione =
-interazioni di ligint presenti anche in PLIP; intervalli al 95% con bootstrap sulle strutture):
+**Agreement with PLIP** (one copy per ligand and PDB; sensitivity = PLIP interactions found; precision =
+ligint interactions also present in PLIP; 95% intervals by bootstrap over the structures):
 
-| Gruppo | Siti | Sensibilità | Precisione |
+| Group | Sites | Sensitivity | Precision |
 |---|---:|---|---|
-| A, B (usati per le correzioni) | 84 | 81% [77–84] | 75% [71–78] |
-| C (cieco, poi esaminato) | 83 | 77% [73–80] | 70% [66–73] |
-| D (cieco), default | 47 strutture | 75% [70–80] | 70% [66–74] |
-| D, `--plip-like` | 47 strutture | 79% [74–84] | 70% [65–74] |
+| A, B (used for the corrections) | 84 | 81% [77–84] | 75% [71–78] |
+| C (blind, examined afterwards) | 83 | 77% [73–80] | 70% [66–73] |
+| D (blind), default | 47 structures | 75% [70–80] | 70% [66–74] |
+| D, `--plip-like` | 47 structures | 79% [74–84] | 70% [65–74] |
 
-Dettagli, metodo e limiti in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); report e CSV dei disaccordi in `docs/benchmark/`.
-**PLIP non è la verità:** molti disaccordi sono convenzioni (vedi sotto), e il confronto non sostituisce una
-validazione con dati sperimentali.
+Details, method and limits in [`docs/BENCHMARK.md`](docs/BENCHMARK.md); reports and CSV of the disagreements in `docs/benchmark/`.
+**PLIP is not the truth:** many disagreements are conventions (see below), and the comparison does not replace a
+validation with experimental data.
 
-## Limiti noti e differenze da PLIP
+## Known limits and differences from PLIP
 
-- PLIP conta come legami ad alogeno anche quelli del **fluoro**; ligint no.
-- PLIP tratta l'**istidina come carica positiva** (circa un terzo dei ponti salini mancanti); ligint no.
-- PLIP conta contatti idrofobici di carboni di residui polari e dell'eme; ligint li limita ai residui idrofobici.
-- **Ponti d'acqua:** PLIP applica filtri propri (un donatore già in un H-bond non forma un ponte, al massimo due ponti
-  da donatore per acqua); ligint no e riporta molti più ponti (precisione ≈ 40%).
-- PLIP non analizza acidi nucleici come partner; ligint sì (non validati contro un riferimento).
-- Non coperti: SDF V3000, strutture NMR con più modelli, pH diversi da quello fisiologico, legami covalenti con la
-  proteina (segnalati solo come "possibile legame covalente"), MOL2/SDF reali da docking (provati solo l'SDF di 1EFY
-  e un MOL2 sintetico).
+- PLIP counts **fluorine** halogen bonds too; ligint does not.
+- PLIP treats **histidine as positively charged** (about a third of the missing salt bridges); ligint does not.
+- PLIP counts hydrophobic contacts of carbons of polar residues and of heme; ligint limits them to hydrophobic residues.
+- **Water bridges:** PLIP applies its own filters (a donor already in an H-bond cannot form a bridge, at most two
+  bridges per donor water); ligint does not and reports many more bridges (precision ≈ 40%).
+- PLIP does not analyze nucleic acids as partners; ligint does (not validated against a reference).
+- Not covered: SDF V3000, NMR structures with several models, pH values other than physiological, covalent bonds with the
+  protein (only flagged as "possible covalent bond"), real SDF/MOL2 files from docking (only the 1EFY SDF and a synthetic
+  MOL2 were tried).
 
-## Stato dei test
+## Test status
 
-Verificato: Linux, GCC 13 e Clang 18 con `-Wall -Wextra -Werror`, Qt 6.4 con piattaforma offscreen (test di fumo e
-screenshot), build con ASan+UBSan, installazione e uso come pacchetto CMake. **Non verificato:** macOS e Windows, Qt 5 (il
-codice evita API solo-Qt6, ma non è stato compilato). I workflow in `.github/workflows/` **non sono mai stati
-eseguiti**: i comandi sono quelli provati qui in locale su Linux (compresi `-Werror`, clang e sanitizer), ma la prima
-esecuzione su GitHub potrebbe richiedere ritocchi. Le GUI sono provate in modalità offscreen: l'uso interattivo con mouse e finestre di dialogo non è stato
-provato a mano.
+Verified: Linux, GCC 13 and Clang 18 with `-Wall -Wextra -Werror`, Qt 6.4 with the offscreen platform (smoke test and
+screenshots), build with ASan+UBSan, installation and use as a CMake package. **Not verified:** macOS and Windows, Qt 5
+(the code avoids Qt6-only APIs, but it was not compiled). The workflows in `.github/workflows/` **have never been
+run**: the commands are the ones tried here locally on Linux (including `-Werror`, clang and sanitizers), but the first
+run on GitHub may need adjustments. The GUI was tried in offscreen mode: interactive use with mouse and dialog boxes
+was not tried by hand.
 
-## Struttura
+## Layout
 
 ```
-include/ligint/ligint.hpp   API pubblica
-src/core/                   libreria: analysis.cpp, chemistry.cpp, templates.cpp, report.cpp, internal.hpp
-src/cli/main.cpp            riga di comando
-gui/                        GUI Qt (MainWindow, ViewerWidget, HitsModel, Style) e strumento per gli screenshot
-tests/                      unit/ (C++), gui/ (test di fumo), run_tests.py, compare_plip.py, benchmark.py, data/ (PDB di prova)
-docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (report), img/
-cmake/                      file di configurazione del pacchetto CMake
+include/ligint/ligint.hpp   public API
+src/core/                   library: analysis.cpp, chemistry.cpp, templates.cpp, report.cpp, internal.hpp
+src/cli/main.cpp            command line
+gui/                        Qt GUI (MainWindow, ViewerWidget, HitsModel, Style) and screenshot tool
+tests/                      unit/ (C++), gui/ (smoke test), run_tests.py, compare_plip.py, benchmark.py, data/ (test PDB files)
+docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (reports), img/
+cmake/                      CMake package configuration files
 ```
 
-Altri documenti: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
+Other documents: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
 
-## Licenza
+## License
 
-MIT, vedi [`LICENSE`](LICENSE) (il titolare del copyright è un segnaposto: modificalo prima di pubblicare). I file PDB in
-`tests/data/` sono dati del Protein Data Bank (dominio pubblico, CC0); `1efy.sdf` è stato generato con Protoss
-(ProteinsPlus) a partire dal PDB 1EFY.
+MIT, see [`LICENSE`](LICENSE) (the copyright holder is a placeholder: change it before publishing). The PDB files in
+`tests/data/` are Protein Data Bank data (public domain, CC0); `1efy.sdf` was generated with Protoss
+(ProteinsPlus) from PDB entry 1EFY.

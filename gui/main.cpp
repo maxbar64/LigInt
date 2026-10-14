@@ -1,4 +1,4 @@
-// ligint-gui: interfaccia grafica Qt.
+// ligint-gui: Qt graphical interface.
 #include <QApplication>
 #include <QCommandLineParser>
 
@@ -12,10 +12,10 @@ int main(int argc, char** argv) {
     QApplication::setApplicationVersion(LIGINT_VERSION);
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Interazioni ligando-proteina da file PDB");
+    parser.setApplicationDescription("Ligand-protein interactions from PDB files");
     parser.addHelpOption();
     parser.addVersionOption();
-    parser.addPositionalArgument("file", "File PDB da aprire (facoltativo)");
+    parser.addPositionalArgument("file", "PDB file to open (optional)");
     parser.process(app);
 
     gui::MainWindow w;

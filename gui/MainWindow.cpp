@@ -64,7 +64,7 @@ QDoubleSpinBox* spin(double lo, double hi, double value, double step = 0.1, int 
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
-    setWindowTitle(tr("ligint — interazioni ligando-proteina"));
+    setWindowTitle(tr("ligint — ligand-protein interactions"));
     setAcceptDrops(true);
     model_ = new HitsModel(this);
     proxy_ = new HitsFilterProxy(this);
@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
     resize(1280, 820);
-    statusBar()->showMessage(tr("Apri un file PDB (File → Apri, oppure trascinalo qui)"));
+    statusBar()->showMessage(tr("Open a PDB file (File → Open, or drag it here)"));
 }
 
 MainWindow::~MainWindow() {
@@ -90,87 +90,87 @@ void MainWindow::buildUi() {
         menu->addAction(a);
         return a;
     };
-    makeAction(file, tr("&Apri PDB…"), &MainWindow::onOpen, QKeySequence::Open);
-    exportAct_ = makeAction(file, tr("Esporta interazioni (&CSV)…"), &MainWindow::onExportCsv);
-    imageAct_ = makeAction(file, tr("&Salva immagine…"), &MainWindow::onSaveImage);
+    makeAction(file, tr("&Open PDB…"), &MainWindow::onOpen, QKeySequence::Open);
+    exportAct_ = makeAction(file, tr("Export interactions (&CSV)…"), &MainWindow::onExportCsv);
+    imageAct_ = makeAction(file, tr("&Save image…"), &MainWindow::onSaveImage);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(false);
     file->addSeparator();
-    makeAction(file, tr("&Esci"), &QWidget::close, QKeySequence::Quit);
-    auto* help = menuBar()->addMenu(tr("&Aiuto"));
-    makeAction(help, tr("&Informazioni su ligint…"), &MainWindow::onAbout);
+    makeAction(file, tr("&Quit"), &QWidget::close, QKeySequence::Quit);
+    auto* help = menuBar()->addMenu(tr("&Help"));
+    makeAction(help, tr("&About ligint…"), &MainWindow::onAbout);
 
-    // ---- pannello di controllo (sinistra)
+    // ---- control panel (left)
     auto* left = new QWidget;
     auto* lv = new QVBoxLayout(left);
 
-    auto* gStruct = new QGroupBox(tr("Struttura"));
+    auto* gStruct = new QGroupBox(tr("Structure"));
     auto* sv = new QVBoxLayout(gStruct);
-    fileLabel_ = new QLabel(tr("(nessun file)"));
+    fileLabel_ = new QLabel(tr("(no file)"));
     fileLabel_->setWordWrap(true);
-    auto* openBtn = new QPushButton(tr("Apri PDB…"));
+    auto* openBtn = new QPushButton(tr("Open PDB…"));
     connect(openBtn, &QPushButton::clicked, this, &MainWindow::onOpen);
     ligandCombo_ = new QComboBox;
-    ligandCombo_->setToolTip(tr("Ligandi (residui HETATM) presenti nel file"));
-    showSmall_ = new QCheckBox(tr("Mostra anche ioni e molecole piccole"));
+    ligandCombo_->setToolTip(tr("Ligands (HETATM residues) present in the file"));
+    showSmall_ = new QCheckBox(tr("Also show ions and small molecules"));
     connect(showSmall_, &QCheckBox::toggled, this, [this] { refreshLigandCombo(); });
     sv->addWidget(openBtn);
     sv->addWidget(fileLabel_);
-    sv->addWidget(new QLabel(tr("Ligando:")));
+    sv->addWidget(new QLabel(tr("Ligand:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
     lv->addWidget(gStruct);
 
-    auto* gOpt = new QGroupBox(tr("Opzioni"));
+    auto* gOpt = new QGroupBox(tr("Options"));
     auto* ov = new QVBoxLayout(gOpt);
-    water_ = new QCheckBox(tr("Considera le acque (ponti d'acqua)"));
+    water_ = new QCheckBox(tr("Consider waters (water bridges)"));
     water_->setChecked(true);
-    merge_ = new QCheckBox(tr("Unisci residui legati (glicani, dipeptidi)"));
+    merge_ = new QCheckBox(tr("Merge linked residues (glycans, dipeptides)"));
     merge_->setChecked(true);
-    plipLike_ = new QCheckBox(tr("Preset «alla PLIP»"));
-    plipLike_->setToolTip(tr("H-bond fino a 4,1 Å se la geometria è possibile, ponti salini per centroidi a 5,5 Å, alogeni a 4,0 Å"));
-    backbone_ = new QCheckBox(tr("Contatti apolari con la catena principale"));
-    metalDonors_ = new QCheckBox(tr("O/N coordinati a metalli possono donare H"));
+    plipLike_ = new QCheckBox(tr("\u00abPLIP-like\u00bb preset"));
+    plipLike_->setToolTip(tr("H-bonds up to 4.1 \u00c5 if the geometry is possible, salt bridges by centroids at 5.5 \u00c5, halogens at 4.0 \u00c5"));
+    backbone_ = new QCheckBox(tr("Apolar contacts with the backbone"));
+    metalDonors_ = new QCheckBox(tr("O/N coordinated to metals may donate H"));
     for (auto* c : {water_, merge_, plipLike_, backbone_, metalDonors_}) ov->addWidget(c);
     connect(plipLike_, &QCheckBox::toggled, this, &MainWindow::onPresetToggled);
     lv->addWidget(gOpt);
 
-    auto* gThr = new QGroupBox(tr("Soglie"));
+    auto* gThr = new QGroupBox(tr("Thresholds"));
     auto* form = new QFormLayout(gThr);
     hbMax_ = spin(2.5, 6.0, 3.5);
     hbLong_ = spin(0.0, 6.0, 0.0);
-    hbLong_->setSpecialValueText(tr("spento"));
+    hbLong_->setSpecialValueText(tr("off"));
     saltMax_ = spin(2.5, 6.0, 4.0);
     saltCentroid_ = spin(0.0, 8.0, 0.0);
-    saltCentroid_->setSpecialValueText(tr("spento"));
+    saltCentroid_->setSpecialValueText(tr("off"));
     hydMax_ = spin(3.3, 6.0, 4.0);
     piAngle_ = spin(10.0, 60.0, 30.0, 1.0, 0);
     piAngle_->setSuffix(QStringLiteral("°"));
     form->addRow(tr("H-bond, D···A max"), hbMax_);
-    form->addRow(tr("H-bond lungo, fino a"), hbLong_);
-    form->addRow(tr("Ponte salino (atomi)"), saltMax_);
-    form->addRow(tr("Ponte salino (centroidi)"), saltCentroid_);
-    form->addRow(tr("Idrofobico max"), hydMax_);
-    form->addRow(tr("π-stacking, angolo max"), piAngle_);
+    form->addRow(tr("Long H-bond, up to"), hbLong_);
+    form->addRow(tr("Salt bridge (atoms)"), saltMax_);
+    form->addRow(tr("Salt bridge (centroids)"), saltCentroid_);
+    form->addRow(tr("Hydrophobic max"), hydMax_);
+    form->addRow(tr("π-stacking, max angle"), piAngle_);
     lv->addWidget(gThr);
 
-    auto* gTmpl = new QGroupBox(tr("Template chimici (SDF / MOL2)"));
+    auto* gTmpl = new QGroupBox(tr("Chemical templates (SDF / MOL2)"));
     auto* tv = new QVBoxLayout(gTmpl);
-    templateLabel_ = new QLabel(tr("nessuno: chimica dedotta dalla geometria"));
+    templateLabel_ = new QLabel(tr("none: chemistry inferred from the geometry"));
     templateLabel_->setWordWrap(true);
-    auto* tbtn = new QPushButton(tr("Aggiungi template…"));
+    auto* tbtn = new QPushButton(tr("Add template…"));
     connect(tbtn, &QPushButton::clicked, this, &MainWindow::onAddTemplate);
     tv->addWidget(tbtn);
     tv->addWidget(templateLabel_);
     lv->addWidget(gTmpl);
 
-    runButton_ = new QPushButton(tr("Analizza"));
+    runButton_ = new QPushButton(tr("Analyze"));
     runButton_->setEnabled(false);
     runButton_->setDefault(true);
     connect(runButton_, &QPushButton::clicked, this, [this] { analyze(false); });
     lv->addWidget(runButton_);
 
-    auto* gTypes = new QGroupBox(tr("Tipi di interazione"));
+    auto* gTypes = new QGroupBox(tr("Interaction types"));
     auto* yv = new QVBoxLayout(gTypes);
     typeList_ = new QListWidget;
     typeList_->setMinimumHeight(120);
@@ -178,7 +178,7 @@ void MainWindow::buildUi() {
     yv->addWidget(typeList_);
     lv->addWidget(gTypes, 1);
 
-    // ---- vista e tabelle (destra)
+    // ---- view and tables (right)
     viewer_ = new ViewerWidget;
     tabs_ = new QTabWidget;
     table_ = new QTableView;
@@ -192,15 +192,15 @@ void MainWindow::buildUi() {
     table_->horizontalHeader()->setStretchLastSection(true);
     connect(table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this, [this] { onRowChanged(); });
     residueTable_ = new QTableWidget(0, 3);
-    residueTable_->setHorizontalHeaderLabels({tr("Residuo"), tr("Contatti"), tr("Tipi")});
+    residueTable_->setHorizontalHeaderLabels({tr("Residue"), tr("Contacts"), tr("Types")});
     residueTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     residueTable_->horizontalHeader()->setStretchLastSection(true);
     residueTable_->verticalHeader()->setVisible(false);
     log_ = new QPlainTextEdit;
     log_->setReadOnly(true);
-    tabs_->addTab(table_, tr("Interazioni"));
-    tabs_->addTab(residueTable_, tr("Residui"));
-    tabs_->addTab(log_, tr("Registro"));
+    tabs_->addTab(table_, tr("Interactions"));
+    tabs_->addTab(residueTable_, tr("Residues"));
+    tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
     right->addWidget(viewer_);
@@ -215,8 +215,8 @@ void MainWindow::buildUi() {
     left->setMaximumWidth(360);
     setCentralWidget(split);
 
-    // ---- barra degli strumenti della vista
-    auto* tb = addToolBar(tr("Vista"));
+    // ---- view toolbar
+    auto* tb = addToolBar(tr("View"));
     tb->setMovable(false);
     auto addToggle = [&](const QString& text, bool on, auto setter) {
         QAction* a = tb->addAction(text);
@@ -225,17 +225,17 @@ void MainWindow::buildUi() {
         connect(a, &QAction::toggled, viewer_, setter);
         return a;
     };
-    addToggle(tr("Etichette"), true, &ViewerWidget::setShowLabels);
-    addToggle(tr("Residui"), true, &ViewerWidget::setShowResidues);
-    addToggle(tr("Distanze"), true, &ViewerWidget::setShowDistances);
-    addToggle(tr("Legenda"), true, &ViewerWidget::setShowLegend);
+    addToggle(tr("Labels"), true, &ViewerWidget::setShowLabels);
+    addToggle(tr("Residues"), true, &ViewerWidget::setShowResidues);
+    addToggle(tr("Distances"), true, &ViewerWidget::setShowDistances);
+    addToggle(tr("Legend"), true, &ViewerWidget::setShowLegend);
     tb->addSeparator();
-    QAction* reset = tb->addAction(tr("Ripristina vista"));
+    QAction* reset = tb->addAction(tr("Reset view"));
     connect(reset, &QAction::triggered, viewer_, &ViewerWidget::resetView);
 }
 
 // ------------------------------------------------------------------------------------------------
-// apertura del file e scelta del ligando
+// opening the file and choosing the ligand
 // ------------------------------------------------------------------------------------------------
 void MainWindow::log(const QString& line) { log_->appendPlainText(line); }
 
@@ -252,7 +252,7 @@ bool MainWindow::openStructure(const QString& path) {
     try {
         listing = ligint::analyzeFile(path.toStdString(), ligint::Options());
     } catch (const std::exception& e) {
-        showError(tr("Impossibile aprire il file"), QString::fromUtf8(e.what()));
+        showError(tr("Cannot open the file"), QString::fromUtf8(e.what()));
         return false;
     }
     path_ = path;
@@ -265,13 +265,13 @@ bool MainWindow::openStructure(const QString& path) {
     fileLabel_->setText(QFileInfo(path).fileName());
     setWindowTitle(tr("ligint — %1").arg(QFileInfo(path).fileName()));
     for (const auto& w : listing.warnings) log(QString::fromStdString(w));
-    log(tr("Aperto %1: %2 residui HETATM").arg(path).arg(allLigands_.size()));
+    log(tr("Opened %1: %2 HETATM residues").arg(path).arg(allLigands_.size()));
     refreshLigandCombo();
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(false);
-    if (ligandCombo_->count() == 0) statusBar()->showMessage(tr("Nessun ligando HETATM in questo file"));
-    else statusBar()->showMessage(tr("%1 ligandi: scegli e premi «Analizza»").arg(ligandCombo_->count()));
+    if (ligandCombo_->count() == 0) statusBar()->showMessage(tr("No HETATM ligand in this file"));
+    else statusBar()->showMessage(tr("%1 ligands: choose one and press \u00abAnalyze\u00bb").arg(ligandCombo_->count()));
     return true;
 }
 
@@ -279,11 +279,11 @@ void MainWindow::refreshLigandCombo() {
     shownLigands_.clear();
     for (const auto& l : allLigands_)
         if (showSmall_->isChecked() || l.atoms >= 6) shownLigands_.push_back(l);
-    if (shownLigands_.empty()) shownLigands_ = allLigands_;       // solo ioni o molecole piccole
+    if (shownLigands_.empty()) shownLigands_ = allLigands_;       // only ions or small molecules
     std::stable_sort(shownLigands_.begin(), shownLigands_.end(), [](const ligint::LigandId& a, const ligint::LigandId& b) { return a.atoms > b.atoms; });
     ligandCombo_->clear();
     for (const auto& l : shownLigands_)
-        ligandCombo_->addItem(tr("%1 %2 %3%4  (%5 atomi)")
+        ligandCombo_->addItem(tr("%1 %2 %3%4  (%5 atoms)")
                                   .arg(QString::fromStdString(l.res))
                                   .arg(QString::fromStdString(l.chain))
                                   .arg(l.resi)
@@ -302,20 +302,20 @@ bool MainWindow::addTemplate(const QString& path) {
     bool ok = mol2 ? ligint::loadMol2(path.toStdString(), t, warnings) : ligint::loadSdf(path.toStdString(), t, warnings);
     for (const auto& w : warnings) log(QString::fromStdString(w));
     if (!ok || t.empty()) {
-        showError(tr("Template non valido"), tr("Nessuna molecola leggibile in %1").arg(path));
+        showError(tr("Invalid template"), tr("No readable molecule in %1").arg(path));
         return false;
     }
     templates_.insert(templates_.end(), t.begin(), t.end());
-    templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecole)").arg(t.size());
+    templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecules)").arg(t.size());
     templateLabel_->setText(templateNames_.join("\n"));
-    log(tr("Template caricato: %1").arg(path));
+    log(tr("Template loaded: %1").arg(path));
     return true;
 }
 
 void MainWindow::onAddTemplate() {
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getOpenFileName(this, tr("Template SDF o MOL2"), s.value("lastDir").toString(),
-                                             tr("Molecole (*.sdf *.mol2);;Tutti i file (*)"));
+    QString f = QFileDialog::getOpenFileName(this, tr("SDF or MOL2 template"), s.value("lastDir").toString(),
+                                             tr("Molecules (*.sdf *.mol2);;All files (*)"));
     if (!f.isEmpty()) addTemplate(f);
 }
 
@@ -355,7 +355,7 @@ ligint::Options MainWindow::buildOptions() const {
 }
 
 // ------------------------------------------------------------------------------------------------
-// analisi
+// analysis
 // ------------------------------------------------------------------------------------------------
 void MainWindow::analyze(bool wait) {
     if (path_.isEmpty() || ligandCombo_->currentIndex() < 0) return;
@@ -363,7 +363,7 @@ void MainWindow::analyze(bool wait) {
     const ligint::Options opt = buildOptions();
     const QString path = path_;
     runButton_->setEnabled(false);
-    statusBar()->showMessage(tr("Analisi in corso…"));
+    statusBar()->showMessage(tr("Analysis in progress…"));
     if (wait) {
         applyOutcome(runAnalysis(path, opt));
         return;
@@ -376,7 +376,7 @@ void MainWindow::onFinished() { applyOutcome(watcher_->result()); }
 void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     runButton_->setEnabled(true);
     if (!o.error.isEmpty()) {
-        showError(tr("Analisi fallita"), o.error);
+        showError(tr("Analysis failed"), o.error);
         emit analysisFinished(false);
         return;
     }
@@ -386,13 +386,13 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     if (result_.ligands.empty()) {
         model_->setHits({});
         viewer_->clear();
-        statusBar()->showMessage(tr("Nessun ligando analizzato"));
+        statusBar()->showMessage(tr("No ligand analyzed"));
         emit analysisFinished(false);
         return;
     }
     const ligint::LigandResult& lig = result_.ligands.front();
     for (const auto& s : lig.info) log(QString::fromStdString(s));
-    if (!lig.metalSphere.empty()) log(tr("Sfera di coordinazione dei metalli:\n") + QString::fromStdString(lig.metalSphere));
+    if (!lig.metalSphere.empty()) log(tr("Coordination sphere of the metals:\n") + QString::fromStdString(lig.metalSphere));
     model_->setHits(lig.hits);
     viewer_->setLigand(lig);
     fillTypeList();
@@ -401,7 +401,7 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     table_->sortByColumn(HitsModel::Type, Qt::AscendingOrder);
     exportAct_->setEnabled(true);
     imageAct_->setEnabled(true);
-    statusBar()->showMessage(tr("%1: %2 interazioni, %3 residui").arg(QString::fromStdString(lig.id)).arg(lig.hits.size()).arg(residueTable_->rowCount()));
+    statusBar()->showMessage(tr("%1: %2 interactions, %3 residues").arg(QString::fromStdString(lig.id)).arg(lig.hits.size()).arg(residueTable_->rowCount()));
     emit analysisFinished(true);
 }
 
@@ -458,12 +458,12 @@ void MainWindow::onRowChanged() {
 }
 
 // ------------------------------------------------------------------------------------------------
-// file e dialoghi
+// files and dialogs
 // ------------------------------------------------------------------------------------------------
 void MainWindow::onOpen() {
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getOpenFileName(this, tr("Apri struttura"), s.value("lastDir").toString(),
-                                             tr("Strutture PDB (*.pdb *.ent);;Tutti i file (*)"));
+    QString f = QFileDialog::getOpenFileName(this, tr("Open structure"), s.value("lastDir").toString(),
+                                             tr("PDB structures (*.pdb *.ent);;All files (*)"));
     if (f.isEmpty()) return;
     s.setValue("lastDir", QFileInfo(f).absolutePath());
     openStructure(f);
@@ -472,28 +472,28 @@ void MainWindow::onOpen() {
 void MainWindow::onExportCsv() {
     if (result_.ligands.empty()) return;
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getSaveFileName(this, tr("Esporta interazioni"), s.value("lastDir").toString() + "/interazioni.csv", tr("CSV (*.csv)"));
+    QString f = QFileDialog::getSaveFileName(this, tr("Export interactions"), s.value("lastDir").toString() + "/interactions.csv", tr("CSV (*.csv)"));
     if (f.isEmpty()) return;
     std::ostringstream out, info;
     ligint::printCsv(out, info, result_);
     std::ofstream file(f.toStdString());
     file << out.str();
-    statusBar()->showMessage(tr("Esportato %1").arg(f), 5000);
+    statusBar()->showMessage(tr("Exported %1").arg(f), 5000);
 }
 
 void MainWindow::onSaveImage() {
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getSaveFileName(this, tr("Salva immagine"), s.value("lastDir").toString() + "/ligint.png", tr("Immagine PNG (*.png)"));
+    QString f = QFileDialog::getSaveFileName(this, tr("Save image"), s.value("lastDir").toString() + "/ligint.png", tr("PNG image (*.png)"));
     if (f.isEmpty()) return;
-    if (!viewer_->renderImage(QSize(1600, 1200)).save(f)) showError(tr("Salvataggio fallito"), f);
-    else statusBar()->showMessage(tr("Salvata %1").arg(f), 5000);
+    if (!viewer_->renderImage(QSize(1600, 1200)).save(f)) showError(tr("Saving failed"), f);
+    else statusBar()->showMessage(tr("Saved %1").arg(f), 5000);
 }
 
 void MainWindow::onAbout() {
-    QMessageBox::about(this, tr("Informazioni su ligint"),
-                       tr("<b>ligint %1</b><br>Interazioni non covalenti ligando-proteina da file PDB.<br><br>"
-                          "Le interazioni sono calcolate dalla geometria; la chimica del ligando è dedotta "
-                          "(o letta da SDF/MOL2). Il confronto con PLIP è descritto nella documentazione.")
+    QMessageBox::about(this, tr("About ligint"),
+                       tr("<b>ligint %1</b><br>Non-covalent ligand-protein interactions from PDB files.<br><br>"
+                          "The interactions are computed from the geometry; the chemistry of the ligand is inferred "
+                          "(or read from SDF/MOL2). The comparison with PLIP is described in the documentation.")
                            .arg(LIGINT_VERSION));
 }
 

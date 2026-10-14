@@ -1,24 +1,26 @@
 #include "Style.h"
 
+#include "ligint/ligint.hpp"
+
 #include <QSet>
 
 namespace gui {
 
 const QVector<TypeStyle>& typeStyles() {
     static const QVector<TypeStyle> styles = {
-        {"Legame a idrogeno",           QColor("#1c7ed6"), Qt::DashLine,       2.2},
-        {"Ponte salino",                QColor("#e8590c"), Qt::DashDotLine,    2.4},
-        {"Repulsione elettrostatica",   QColor("#c92a2a"), Qt::DashDotDotLine, 1.6},
-        {"Contatto idrofobico",         QColor("#74b816"), Qt::DotLine,        1.2},
-        {"Contatto apolare (backbone)", QColor("#a9b79c"), Qt::DotLine,        1.0},
-        {"pi-stacking (parallelo)",     QColor("#2f9e44"), Qt::DashLine,       2.6},
-        {"pi-stacking (a T)",           QColor("#099268"), Qt::DashLine,       2.6},
-        {"Cation-pi",                   QColor("#f08c00"), Qt::DashLine,       2.4},
-        {"Legame ad alogeno",           QColor("#0ca678"), Qt::DashLine,       2.2},
-        {"Coordinazione metallica",     QColor("#7048e8"), Qt::SolidLine,      2.4},
-        {"Ponte d'acqua",               QColor("#4dabf7"), Qt::DashLine,       1.8},
-        {"Clash sterico",               QColor("#fa5252"), Qt::SolidLine,      2.6},
-        {"Possibile legame covalente",  QColor("#212529"), Qt::SolidLine,      3.0},
+        {QString(ligint::type::HydrogenBond),             QColor("#1c7ed6"), Qt::DashLine,       2.2},
+        {QString(ligint::type::SaltBridge),                 QColor("#e8590c"), Qt::DashDotLine,    2.4},
+        {QString(ligint::type::ElectrostaticRepulsion),  QColor("#c92a2a"), Qt::DashDotDotLine, 1.6},
+        {QString(ligint::type::Hydrophobic),           QColor("#74b816"), Qt::DotLine,        1.2},
+        {QString(ligint::type::BackboneApolar),    QColor("#a9b79c"), Qt::DotLine,        1.0},
+        {QString(ligint::type::PiStackingParallel),     QColor("#2f9e44"), Qt::DashLine,       2.6},
+        {QString(ligint::type::PiStackingT),           QColor("#099268"), Qt::DashLine,       2.6},
+        {QString(ligint::type::CationPi),                     QColor("#f08c00"), Qt::DashLine,       2.4},
+        {QString(ligint::type::HalogenBond),             QColor("#0ca678"), Qt::DashLine,       2.2},
+        {QString(ligint::type::MetalCoordination),       QColor("#7048e8"), Qt::SolidLine,      2.4},
+        {QString(ligint::type::WaterBridge),                 QColor("#4dabf7"), Qt::DashLine,       1.8},
+        {QString(ligint::type::StericClash),                 QColor("#fa5252"), Qt::SolidLine,      2.6},
+        {QString(ligint::type::PossibleCovalent),     QColor("#212529"), Qt::SolidLine,      3.0},
     };
     return styles;
 }

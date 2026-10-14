@@ -1,9 +1,9 @@
-# ---- test C++ della libreria (senza dipendenze esterne)
+# ---- C++ tests of the library (no external dependencies)
 add_executable(ligint_core_tests unit/test_core.cpp)
 target_link_libraries(ligint_core_tests PRIVATE ligint::core ligint_options)
 add_test(NAME core_unit COMMAND ligint_core_tests)
 
-# ---- suite Python (regole chimiche, SDF/MOL2, parsing, input malformati, complessi reali in tests/data)
+# ---- Python suite (chemical rules, SDF/MOL2, parsing, malformed input, real complexes in tests/data)
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_FOUND AND TARGET ligint)
     add_test(NAME python_suite
@@ -12,7 +12,7 @@ if(Python3_FOUND AND TARGET ligint)
     set_tests_properties(python_suite PROPERTIES TIMEOUT 600)
 endif()
 
-# ---- test di fumo della GUI (piattaforma Qt "offscreen": non serve uno schermo)
+# ---- GUI smoke test (Qt "offscreen" platform: no display needed)
 if(TARGET ligint_gui_lib)
     add_executable(ligint_gui_smoke gui/gui_smoke.cpp)
     target_link_libraries(ligint_gui_smoke PRIVATE ligint_gui_lib ligint_options)
