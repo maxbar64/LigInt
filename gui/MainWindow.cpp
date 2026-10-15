@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 #include "ligint/klifs.hpp"
+#include "ligint/rcsb.hpp"
+#include <QStandardPaths>
 #include <QInputDialog>
 #include <QLineEdit>
 
@@ -103,6 +105,7 @@ void MainWindow::buildUi() {
         return a;
     };
     makeAction(file, tr("&Open structure…"), &MainWindow::onOpen, QKeySequence::Open);
+    makeAction(file, tr("Download from &RCSB…"), &MainWindow::onDownloadRcsb);
     exportAct_ = makeAction(file, tr("Export interactions (&CSV)…"), &MainWindow::onExportCsv);
     imageAct_ = makeAction(file, tr("&Save image…"), &MainWindow::onSaveImage);
     fpAct_ = makeAction(file, tr("Export &fingerprint…"), &MainWindow::onExportFingerprint);
@@ -149,6 +152,9 @@ void MainWindow::buildUi() {
     showSmall_ = new QCheckBox(tr("Also show ions and small molecules"));
     connect(showSmall_, &QCheckBox::toggled, this, [this] { refreshLigandCombo(); });
     sv->addWidget(openBtn);
+    auto* rcsbBtn = new QPushButton(tr("Download from RCSB…"));
+    connect(rcsbBtn, &QPushButton::clicked, this, &MainWindow::onDownloadRcsb);
+    sv->addWidget(rcsbBtn);
     sv->addWidget(fileLabel_);
     sv->addWidget(new QLabel(tr("Ligand:")));
     sv->addWidget(ligandCombo_);
@@ -790,6 +796,35 @@ void MainWindow::onRowChanged() {
 // ------------------------------------------------------------------------------------------------
 // files and dialogs
 // ------------------------------------------------------------------------------------------------
+void MainWindow::onDownloadRcsb() {
+    bool ok=false;
+    QString id=QInputDialog::getText(this,tr("Download from RCSB"),tr("PDB ID (four characters):"),QLineEdit::Normal,"3EYG",&ok).trimmed().toUpper();
+    if(!ok)return;
+    if(id.size()!=4 || !std::all_of(id.begin(),id.end(),[](QChar c){return c.isLetterOrNumber() && c.unicode()<128;})) {
+        showError(tr("RCSB"),tr("Enter a valid four-character PDB ID."));return;
+    }
+    const QStringList formats={"PDB (.pdb)","mmCIF (.cif)"};
+    QString format=QInputDialog::getItem(this,tr("RCSB format"),tr("Download format:"),formats,0,false,&ok);
+    if(!ok)return;
+    ligint::RcsbDownloadOptions options;
+    options.pdbId=id.toStdString();
+    options.format=(format==formats[0])?"pdb":"cif";
+    QString directory=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/rcsb";
+    options.cacheDir=directory.toStdString();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    statusBar()->showMessage(tr("Downloading %1 from RCSB…").arg(id));
+    try {
+        const QString downloaded=QString::fromStdString(ligint::downloadRcsbStructure(options));
+        QApplication::restoreOverrideCursor();
+        log(tr("RCSB: structure %1 saved to %2").arg(id,downloaded));
+        if(openStructure(downloaded)) statusBar()->showMessage(tr("Loaded %1 from RCSB; select a ligand to analyze.").arg(id),10000);
+    }catch(const std::exception& e){
+        QApplication::restoreOverrideCursor();
+        statusBar()->clearMessage();
+        showError(tr("RCSB download failed"),QString::fromUtf8(e.what()));
+    }
+}
+
 void MainWindow::onOpen() {
     QSettings s("ligint", "ligint-gui");
     QString f = QFileDialog::getOpenFileName(this, tr("Open structure"), s.value("lastDir").toString(),

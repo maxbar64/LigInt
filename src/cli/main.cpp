@@ -2,6 +2,7 @@
 #include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
 #include "ligint/klifs.hpp"
+#include "ligint/rcsb.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -17,6 +18,7 @@ using namespace ligint;
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
+         << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-output FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
@@ -34,7 +36,7 @@ int main(int argc, char** argv) {
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
-    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false;
+    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
         string s = argv[i];
         if (s == "--help" || s == "-h") { usage(argv[0], P); return 0; }
@@ -69,6 +71,16 @@ int main(int argc, char** argv) {
             else if(s=="--klifs-output")klifsOutput=v;
             else {try{size_t n=0;klifs.structureId=stoi(v,&n);if(n!=v.size()||klifs.structureId<=0)throw invalid_argument("id");}catch(...){cerr<<"Invalid KLIFS structure ID\n";return 1;}}
         }
+        else if(s=="--download-refresh") {rcsb.refresh=true;}
+        else if(s=="--download-only") {downloadOnly=true;}
+        else if(s=="--download-pdb" || s=="--download-format" || s=="--download-output" || s=="--download-cache") {
+            if(i+1>=argc){cerr<<s<<" requires a value\n";return 1;}
+            string v=argv[++i];
+            if(s=="--download-pdb"){rcsb.pdbId=v;useRcsb=true;}
+            else if(s=="--download-format") rcsb.format=v;
+            else if(s=="--download-output") rcsb.outputFile=v;
+            else rcsb.cacheDir=v;
+        }
         else if (s == "--fingerprint" || s == "--pocket") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             string v = argv[++i];
@@ -96,6 +108,9 @@ int main(int argc, char** argv) {
             i++;
         } else pa.push_back(s);
     }
+    if(downloadOnly && !useRcsb){cerr<<"--download-only requires --download-pdb\n";return 1;}
+    if(useRcsb && !pa.empty()){cerr<<"Use --download-pdb without a separate structure path\n";return 1;}
+    if(useRcsb){try{string path=downloadRcsbStructure(rcsb);cerr<<"RCSB structure: "<<path<<"\n";if(downloadOnly){cout<<path<<"\n";return 0;}pa.push_back(path);}catch(const exception& e){cerr<<"RCSB: "<<e.what()<<"\n";return 1;}}
     if (pa.empty() && !useKlifs) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";

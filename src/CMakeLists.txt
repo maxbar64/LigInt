@@ -9,6 +9,7 @@ add_library(ligint_core
     core/svg.cpp
     core/templates.cpp
     klifs/klifs.cpp
+    core/rcsb.cpp
     core/internal.hpp)
 add_library(ligint::core ALIAS ligint_core)
 target_include_directories(ligint_core
@@ -75,4 +76,16 @@ else()
         message(FATAL_ERROR "Native KLIFS HTTPS requires both libcurl and json-c. Install their development packages or vcpkg ports curl and json-c and configure with the vcpkg toolchain file.")
     endif()
     message(WARNING "ligint: KLIFS online disabled (curl target='${_klifs_curl_target}', json-c target='${_klifs_json_target}'); local KLIFS mappings still work")
+endif()
+
+# RCSB downloads only need curl, independently of JSON-C / KLIFS availability.
+option(LIGINT_RCSB_REQUIRE_ONLINE "Fail configure if native RCSB HTTPS is unavailable" OFF)
+if(_klifs_curl_target)
+    target_compile_definitions(ligint_core PRIVATE LIGINT_RCSB_ONLINE)
+    target_link_libraries(ligint_core PRIVATE ${_klifs_curl_target})
+    message(STATUS "ligint: RCSB HTTPS enabled")
+elseif(LIGINT_RCSB_REQUIRE_ONLINE)
+    message(FATAL_ERROR "RCSB HTTPS requires libcurl. Install curl via vcpkg and configure with the vcpkg toolchain.")
+else()
+    message(WARNING "ligint: RCSB HTTPS disabled (libcurl not detected)")
 endif()

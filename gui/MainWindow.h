@@ -81,6 +81,7 @@ protected:
 
 private slots:
     void onOpen();
+    void onDownloadRcsb();
     void onExportCsv();
     void onSaveImage();
     void onAbout();
