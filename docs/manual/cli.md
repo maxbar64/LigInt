@@ -33,6 +33,18 @@ check the output, not only the exit code, in scripts.
 | `--altloc X` | use the alternate conformation `X` for the residues that have it; the others keep their first conformation. The program reports for how many residues `X` was used and warns if the file has no conformation `X` |
 | `--format F` | `auto` (default: recognized from the content), `pdb` or `cif` |
 | `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`) instead of the interaction table, optionally with a pocket definition |
+| `--download-pdb ID` | download a structure from RCSB by its four-character PDB identifier |
+| `--download-format pdb|cif` | choose the RCSB coordinate format (PDB or mmCIF) |
+| `--download-output FILE` | save the downloaded structure to an explicit path |
+| `--download-cache DIR` | use the specified local download cache |
+| `--download-refresh` | fetch a fresh copy rather than reusing the cached structure |
+| `--download-only` | download the structure without analyzing a ligand; requires `--download-pdb` |
+| `--klifs-pdb ID` | select the PDB entry for KLIFS kinase-pocket annotations |
+| `--klifs-chain C` | select its protein chain |
+| `--klifs-model M` | choose a KLIFS alternate model when appropriate |
+| `--klifs-id N` | select a specific KLIFS structure record |
+| `--klifs-mapping FILE` | use an offline KLIFS CSV/TSV mapping instead of live lookup |
+| `--klifs-output FILE` | save the KLIFS-aligned pocket definition as TSV |
 | `--version` | print the version |
 | `--help`, `-h` | print the usage and the default values of the thresholds |
 
