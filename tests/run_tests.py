@@ -1292,7 +1292,7 @@ def cif_robustness():
         "null coordinates": re.sub(r"(\d+\.\d{3}) (\d+\.\d{3}) (\d+\.\d{3}) 1\.00", r"? ? ? 1.00", valid, count=1),
     }
     for name, text in cases.items():
-        r = run_raw([tmpfile(text, ".cif"), "LIG", "--csv"])
+        r = run_raw([tmpfile(text.encode("latin-1"), ".cif", binary=True) if name == "binary" else tmpfile(text, ".cif"), "LIG", "--csv"])
         check(r.rc == 0, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
         no_crash(r)
     # random mutations of a valid file
@@ -1427,7 +1427,7 @@ def manual_quickstart_example_is_the_real_output():
         raise Skip("missing 1AZM.pdb or the manual")
     page = html.unescape(open(os.path.join(MANUAL_DIR, "quickstart.html"), encoding="utf-8").read())
     for args in ([], ["AZM"]):
-        out = run_raw([pdb] + args).out.rstrip()
+        out = run_raw([pdb] + args).out.replace("\r\n", "\n").rstrip()
         check(out and out in page, "the example of the quick start differs from the output of: ligint 1AZM.pdb %s\n%s" % (" ".join(args), out[:300]))
 
 
