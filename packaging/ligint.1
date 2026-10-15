@@ -1,0 +1,151 @@
+.TH LIGINT 1 "" "ligint @VERSION@" "User Commands"
+.SH NAME
+ligint \- non-covalent ligand-protein interactions from a PDB file
+.SH SYNOPSIS
+.B ligint
+.I file.pdb
+.RI [ RESNAME
+.RI [ chain
+.RI [ resseq\c
+.RB [ A | \- ]]]]
+.RI [ options ]
+.SH DESCRIPTION
+.B ligint
+finds the non-covalent interactions between a ligand (a HETATM residue) and the protein of a PDB file:
+hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, halogen bonds, metal coordination
+and water bridges, plus steric clashes and electrostatic repulsions.
+It can also summarize them as an interaction fingerprint (one row per protein residue, one column per
+interaction class) in CSV, JSON or SVG.
+.PP
+With only
+.I file.pdb
+it lists the ligands present (and the alternate conformations of the file, if any).
+With
+.I RESNAME
+it analyzes every copy of that ligand; a chain and a residue number select a single copy.
+The residue number accepts an insertion code:
+.B 501
+(any code),
+.B 501A
+(code A) or
+.B 501\-
+(no code).
+.PP
+The chemistry of the ligand (donors, acceptors, charges) is inferred from the geometry unless an SDF or MOL2
+template is given. See the documentation for the assumptions.
+.SH OPTIONS
+.TP
+.B \-\-csv
+Write the interactions as CSV on standard output (service information goes to standard error).
+.TP
+.BI \-\-sdf " FILE" ", " \-\-mol2 " FILE"
+Chemical annotation of the ligand (bond orders, explicit hydrogens, formal charges). The ligand of the PDB file is
+matched to the molecule by coordinates.
+.TP
+.B \-\-no\-water
+Ignore water molecules (no water bridges).
+.TP
+.B \-\-no\-merge
+Do not merge covalently linked HETATM residues (glycans, dipeptides) into a single ligand.
+.TP
+.B \-\-plip\-like
+Preset for the comparison with PLIP:
+.BR "\-\-hb\-long 4.1 \-\-salt\-centroid 5.5 \-\-hal\-max 4.0" .
+Explicit options take precedence.
+.TP
+.B \-\-metal\-donors
+Let O and N coordinated to a metal remain possible hydrogen-bond donors.
+.TP
+.B \-\-backbone\-hyd
+Count apolar contacts with the protein backbone.
+.TP
+.BI \-\-altloc " X"
+Use the alternate conformation
+.I X
+for the residues that have it; the others keep their first conformation.
+.TP
+.BI \-\-fingerprint " FORMAT"
+Write the interaction fingerprint instead of the interaction table.
+.I FORMAT
+is
+.BR csv ,
+.B json
+or
+.BR svg .
+.TP
+.BI \-\-pocket " FILE"
+Pocket definition for the fingerprint (residue, position label and region, one position per line).
+Requires
+.BR \-\-fingerprint .
+.TP
+.B \-\-version
+Print the version.
+.TP
+.B \-\-help
+Print the usage and the default thresholds.
+.PP
+All the geometric thresholds can be changed from the command line:
+.BR \-\-hb\-min ,
+.BR \-\-hb\-max ,
+.BR \-\-hb\-ha ,
+.BR \-\-hb\-angle ,
+.BR \-\-hb\-long ,
+.BR \-\-hb\-long\-tol ,
+.BR \-\-hb\-ante ,
+.BR \-\-hyd\-min ,
+.BR \-\-hyd\-max ,
+.BR \-\-salt\-max ,
+.BR \-\-salt\-centroid ,
+.BR \-\-rep\-max ,
+.BR \-\-hal\-max ,
+.BR \-\-hal\-angle ,
+.BR \-\-metal\-max ,
+.BR \-\-pi\-max ,
+.BR \-\-pi\-offset ,
+.BR \-\-pi\-angle ,
+.BR \-\-cp\-max ,
+.BR \-\-clash ,
+.BR \-\-wb\-min ,
+.BR \-\-wb\-max .
+Run
+.B ligint \-\-help
+for the default values.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Error: file that cannot be opened, unknown option, missing or non-numeric value, malformed residue number.
+.SH EXAMPLES
+List the ligands of a structure:
+.PP
+.RS
+.nf
+ligint 1AZM.pdb
+.fi
+.RE
+.PP
+Interactions of the ligand AZM, as CSV, with the PLIP-like preset:
+.PP
+.RS
+.nf
+ligint 1AZM.pdb AZM \-\-plip\-like \-\-csv > interactions.csv
+.fi
+.RE
+.PP
+Interaction fingerprint as a figure, using alternate conformation B and a pocket definition:
+.PP
+.RS
+.nf
+ligint 3EYG.pdb LIG A 1 \-\-altloc B \-\-fingerprint svg \-\-pocket pocket.tsv > figure.svg
+.fi
+.RE
+.SH FILES
+.TP
+.I /usr/share/doc/ligint
+Documentation, including the fingerprint format and an example pocket definition.
+.SH SEE ALSO
+.BR ligint\-gui (1)
+.SH AUTHORS
+The ligint authors.

@@ -1,0 +1,176 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux-gui:
+    name: Linux (GCC, GUI Qt6)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+  linux-clang:
+    name: Linux (Clang, GUI Qt6)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DLIGINT_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+  sanitizers:
+    name: Linux (ASan + UBSan, no GUI)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLIGINT_SANITIZE=ON -DLIGINT_BUILD_GUI=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  macos-cli:
+    name: macOS (library and CLI only)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLIGINT_BUILD_GUI=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # ---------------------------------------------------------------------------------------------
+  # Installers and packages. They are built after the tests pass, tried (installed, started,
+  # removed) and kept as artifacts; a version tag (v*) publishes them in a GitHub release.
+  # ---------------------------------------------------------------------------------------------
+  linux-packages:
+    name: Linux packages (.deb, .tar.gz)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Package
+        run: cd build && cpack -G "DEB;TGZ"
+      - name: Check the packages (lintian)
+        run: lintian --fail-on error build/ligint_*_amd64.deb build/ligint-dev_*_amd64.deb
+      - name: Install, run, remove
+        run: |
+          sudo apt-get install -y ./build/ligint_*_amd64.deb ./build/ligint-dev_*_amd64.deb
+          ligint --version
+          ligint tests/data/1AZM.pdb AZM --csv | head -3
+          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
+          desktop-file-validate /usr/share/applications/ligint-gui.desktop
+          sudo apt-get remove -y ligint ligint-dev
+          ! command -v ligint
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            build/ligint_*_amd64.deb
+            build/ligint-dev_*_amd64.deb
+            build/ligint-*-linux-*.tar.gz
+
+  windows:
+    name: Windows (MSVC, Qt 6) installer
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.7.*"
+          arch: win64_msvc2019_64
+          cache: true
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        id: build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Package
+        run: cd build && cpack
+      - name: Try the installer (silent install, run, uninstall)
+        shell: pwsh
+        run: |
+          $installer = (Get-ChildItem build\ligint-*-win64.exe | Select-Object -First 1).FullName
+          Write-Host "installer: $installer"
+          Start-Process -FilePath $installer -ArgumentList '/S', '/D=C:\ligint-test' -Wait
+          & 'C:\ligint-test\bin\ligint.exe' --version
+          & 'C:\ligint-test\bin\ligint.exe' tests\data\1AZM.pdb AZM --csv | Select-Object -First 3
+          $gui = Start-Process -FilePath 'C:\ligint-test\bin\ligint-gui.exe' -ArgumentList 'tests\data\1AZM.pdb' -PassThru
+          Start-Sleep -Seconds 6
+          if ($gui.HasExited) { throw "ligint-gui exited at start with code $($gui.ExitCode)" }
+          $gui.Kill()
+          Start-Process -FilePath 'C:\ligint-test\Uninstall.exe' -ArgumentList '/S', '_?=C:\ligint-test' -Wait
+          if (Test-Path 'C:\ligint-test\bin\ligint.exe') { throw "the uninstaller left ligint.exe behind" }
+      - name: Try the portable zip
+        shell: pwsh
+        run: |
+          $zip = (Get-ChildItem build\ligint-*-win64.zip | Select-Object -First 1).FullName
+          Expand-Archive -Path $zip -DestinationPath C:\ligint-zip
+          $exe = (Get-ChildItem C:\ligint-zip -Recurse -Filter ligint.exe | Select-Object -First 1).FullName
+          & $exe --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            build/ligint-*-win64.exe
+            build/ligint-*-win64.zip
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux-packages, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

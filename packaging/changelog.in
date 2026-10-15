@@ -1,0 +1,6 @@
+ligint (@PROJECT_VERSION@) unstable; urgency=low
+
+  * Release @PROJECT_VERSION@. The full list of changes is in CHANGELOG.md
+    (installed in this directory, and in the project repository).
+
+ -- @LIGINT_PACKAGE_MAINTAINER@  @LIGINT_CHANGELOG_DATE@

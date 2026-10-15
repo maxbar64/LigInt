@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=ligint
+GenericName=Ligand-protein interaction analysis
+Comment=Non-covalent ligand-protein interactions from PDB files
+Exec=ligint-gui %f
+Icon=ligint
+Terminal=false
+Categories=Science;Chemistry;Biology;Qt;
+MimeType=chemical/x-pdb;
+Keywords=PDB;ligand;protein;docking;interactions;fingerprint;

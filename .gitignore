@@ -1,0 +1,18 @@
+# build
+build/
+build-*/
+cmake-build-*/
+out/
+.cache/
+compile_commands.json
+CMakeUserPresets.json
+# python
+__pycache__/
+*.pyc
+# risultati generati
+benchmark_out/
+ligint_gui_*.png
+# editor
+.vscode/
+.idea/
+*.swp

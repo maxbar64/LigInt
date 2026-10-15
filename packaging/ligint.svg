@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>ligint</title>
+  <rect width="256" height="256" rx="48" fill="#1c7ed6"/>
+  <g fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="92.0,72.0 140.5,100.0 140.5,156.0 92.0,184.0 43.5,156.0 43.5,100.0"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="8" stroke-linecap="round"><line x1="92.0" y1="84.3" x2="129.8" y2="106.2"/><line x1="129.8" y1="149.8" x2="92.0" y2="171.7"/><line x1="54.2" y1="149.8" x2="54.2" y2="106.2"/></g>
+  <line x1="156" y1="128" x2="196" y2="128" stroke="#ffd43b" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 16"/>
+  <circle cx="214" cy="128" r="17" fill="#ffd43b"/>
+</svg>
