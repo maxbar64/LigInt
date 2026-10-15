@@ -70,7 +70,7 @@ a { color: #1c7ed6; }
 </tbody>
 </table>
 <h2 id="linux"><a name="linux"></a>Linux</h2>
-<pre><code>sudo apt install ./ligint_0.7.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
+<pre><code>sudo apt install ./ligint_0.8.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
 ligint --version
 ligint-gui                                         # or from the applications menu: &quot;ligint&quot;
 man ligint
@@ -85,7 +85,7 @@ sudo apt remove ligint                             # uninstall
 </ul>
 <h2 id="rocky-linux-almalinux-rhel-9"><a name="rocky-linux-almalinux-rhel-9"></a>Rocky Linux, AlmaLinux, RHEL 9</h2>
 <pre><code>sudo dnf install epel-release                     # Qt 6 comes from EPEL on version 9
-sudo dnf install ./ligint-0.7.0-1.x86_64.rpm      # the dependencies are installed automatically
+sudo dnf install ./ligint-0.8.0-1.x86_64.rpm      # the dependencies are installed automatically
 ligint --version
 sudo dnf remove ligint                            # uninstall
 </code></pre>
@@ -124,11 +124,15 @@ cd build &amp;&amp; cpack                 # Linux: .deb (+ ligint-dev) and .tar.
 <li>One generator only: <code>cpack -G DEB</code>, <code>cpack -G TGZ</code>, <code>cpack -G RPM</code>, <code>cpack -G NSIS</code>, <code>cpack -G ZIP</code>.</li>
 <li>Maintainer of the <code>.deb</code>/<code>.rpm</code>: <code>-DLIGINT_PACKAGE_MAINTAINER="Your Name &lt;you@example.org&gt;"</code> (the default is a placeholder);
   home page in the metadata: <code>-DLIGINT_HOMEPAGE=...</code>.</li>
+<li><strong>Network features</strong> (the <a href="rcsb.html">RCSB download</a> and the <a href="klifs.html">KLIFS service</a>) are built when the development packages of libcurl (RCSB and KLIFS) and
+  json-c (KLIFS) are found: <code>libcurl4-openssl-dev libjson-c-dev</code> on Debian and Ubuntu, <code>libcurl-devel json-c-devel</code> on RHEL and derivatives. The Linux packages built by the CI
+  include them; the Windows installer does not (see <a href="klifs.html">KLIFS kinase pockets</a> for a build with vcpkg). A build without them works, and still opens the
+  structures that are in the download cache. The <code>ligint-dev</code> package then depends on those development packages, because its static library needs them.</li>
 <li>Without Qt only the command line is built and packaged (<code>-DLIGINT_BUILD_GUI=OFF</code>): the <code>.deb</code> then depends only on the C and C++ libraries.</li>
 </ul>
 <h2 id="publishing-a-release"><a name="publishing-a-release"></a>Publishing a release</h2>
 <p>Push a tag that starts with <code>v</code>; the workflow builds, tries and publishes the installers:</p>
-<pre><code>git tag v0.7.0 &amp;&amp; git push origin v0.7.0
+<pre><code>git tag v0.8.0 &amp;&amp; git push origin v0.8.0
 </code></pre>
 <p>The version in the file names comes from <code>project(ligint VERSION ...)</code> in <code>CMakeLists.txt</code>: change it (and <code>LIGINT_VERSION</code>
 in <code>include/ligint/ligint.hpp</code>) before tagging.</p>
@@ -168,6 +172,6 @@ in <code>include/ligint/ligint.hpp</code>) before tagging.</p>
 </tbody>
 </table>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="benchmark.html">Comparison with PLIP</a> &middot; <a href="troubleshooting.html">Troubleshooting</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

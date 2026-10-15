@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
       - name: Build
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DLIGINT_WARNINGS_AS_ERRORS=ON
       - name: Build
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLIGINT_SANITIZE=ON -DLIGINT_BUILD_GUI=OFF
       - name: Build
@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
       - name: Build
@@ -99,6 +99,29 @@ jobs:
           ligint tests/data/1AZM.pdb AZM --csv | head -3
           QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
           desktop-file-validate /usr/share/applications/ligint-gui.desktop
+          # a program built against the installed development package (this catches a CMake package that names build-only targets)
+          mkdir consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.16)
+          project(consumer CXX)
+          set(CMAKE_CXX_STANDARD 17)
+          find_package(ligint REQUIRED)
+          add_executable(consumer main.cpp)
+          target_link_libraries(consumer PRIVATE ligint::core)
+          EOF
+          cat > consumer/main.cpp <<'EOF'
+          #include <iostream>
+          #include <ligint/ligint.hpp>
+          int main(int, char** argv) {
+              ligint::Options opt;
+              opt.ligName = argv[2];
+              auto r = ligint::analyzeFile(argv[1], opt);
+              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
+          }
+          EOF
+          cmake -S consumer -B consumer/build
+          cmake --build consumer/build
+          consumer/build/consumer tests/data/1AZM.pdb AZM
           sudo apt-get remove -y ligint ligint-dev
           hash -r                       # forget the cached path of the removed program
           if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
@@ -180,6 +203,8 @@ jobs:
           dnf config-manager --set-enabled crb
           dnf install -y git gcc-c++ cmake make python3 desktop-file-utils dejavu-sans-fonts
           dnf install -y rpm-build redhat-rpm-config || dnf install -y rpm-build
+          # network features (RCSB download, KLIFS service): the libcurl of RHEL 9 is 7.76, older than 7.85, which the code handles
+          dnf install -y libcurl-devel json-c-devel pkgconf-pkg-config || echo "::warning::libcurl or json-c development packages not found: building without network features"
           if dnf install -y qt6-qtbase-devel qt6-qtsvg-devel mesa-libGL-devel; then
             echo "LIGINT_GUI=ON" >> "$GITHUB_ENV"
           else

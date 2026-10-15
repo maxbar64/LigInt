@@ -8,6 +8,8 @@ src/core/
   internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
   analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
   pdb.cpp, mmcif.cpp        readers of the PDB and PDBx/mmCIF formats: both produce RawAtom (internal.hpp), nothing else differs
+  rcsb.cpp                  RCSB download into a cache (ligint/rcsb.hpp); libcurl is optional (LIGINT_RCSB_ONLINE)
+src/klifs/klifs.cpp         KLIFS mapping -> PocketDefinition (ligint/klifs.hpp); the service client needs libcurl and json-c (LIGINT_KLIFS_ONLINE)
   chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
   templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
   report.cpp                text reports (table and CSV)

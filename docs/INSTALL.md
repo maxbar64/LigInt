@@ -16,7 +16,7 @@ Ready-made installers are built by the CI workflow (`.github/workflows/ci.yml`):
 ## Linux
 
 ```
-sudo apt install ./ligint_0.7.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
+sudo apt install ./ligint_0.8.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
 ligint --version
 ligint-gui                                         # or from the applications menu: "ligint"
 man ligint
@@ -33,7 +33,7 @@ sudo apt remove ligint                             # uninstall
 
 ```
 sudo dnf install epel-release                     # Qt 6 comes from EPEL on version 9
-sudo dnf install ./ligint-0.7.0-1.x86_64.rpm      # the dependencies are installed automatically
+sudo dnf install ./ligint-0.8.0-1.x86_64.rpm      # the dependencies are installed automatically
 ligint --version
 sudo dnf remove ligint                            # uninstall
 ```
@@ -74,6 +74,10 @@ cd build && cpack                 # Linux: .deb (+ ligint-dev) and .tar.gz;  Win
 - One generator only: `cpack -G DEB`, `cpack -G TGZ`, `cpack -G RPM`, `cpack -G NSIS`, `cpack -G ZIP`.
 - Maintainer of the `.deb`/`.rpm`: `-DLIGINT_PACKAGE_MAINTAINER="Your Name <you@example.org>"` (the default is a placeholder);
   home page in the metadata: `-DLIGINT_HOMEPAGE=...`.
+- **Network features** (the [RCSB download](RCSB.md) and the [KLIFS service](KLIFS.md)) are built when the development packages of libcurl (RCSB and KLIFS) and
+  json-c (KLIFS) are found: `libcurl4-openssl-dev libjson-c-dev` on Debian and Ubuntu, `libcurl-devel json-c-devel` on RHEL and derivatives. The Linux packages built by the CI
+  include them; the Windows installer does not (see [KLIFS kinase pockets](KLIFS.md) for a build with vcpkg). A build without them works, and still opens the
+  structures that are in the download cache. The `ligint-dev` package then depends on those development packages, because its static library needs them.
 - Without Qt only the command line is built and packaged (`-DLIGINT_BUILD_GUI=OFF`): the `.deb` then depends only on the C and C++ libraries.
 
 ## Publishing a release
@@ -81,7 +85,7 @@ cd build && cpack                 # Linux: .deb (+ ligint-dev) and .tar.gz;  Win
 Push a tag that starts with `v`; the workflow builds, tries and publishes the installers:
 
 ```
-git tag v0.7.0 && git push origin v0.7.0
+git tag v0.8.0 && git push origin v0.8.0
 ```
 
 The version in the file names comes from `project(ligint VERSION ...)` in `CMakeLists.txt`: change it (and `LIGINT_VERSION`

@@ -5,6 +5,8 @@
 #include <QClipboard>
 #include <QDir>
 #include <QDoubleSpinBox>
+#include <QElapsedTimer>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QAction>
@@ -372,6 +374,71 @@ int main(int argc, char** argv) {
         bool hasMenu = false;
         for (QAction* a : m.findChildren<QAction*>()) if (a->text().contains("User manual")) hasMenu = true;
         CHECK(hasMenu);
+    }
+
+    // RCSB downloads (here from the local cache: no network) and KLIFS pocket definitions (from a local mapping), in the background
+    {
+        const QString dataDir = QFileInfo(argv[1]).absolutePath();
+        const QString cache = dir.filePath("rcsb");
+        QDir().mkpath(cache);
+        CHECK(QFile::copy(dataDir + "/1AZM.pdb", cache + "/1AZM.pdb"));
+        gui::MainWindow m;
+        m.setInteractive(false);
+        CHECK(!m.downloadRcsb("../x", "pdb", cache, true) && m.logText().contains("valid four-character"));     // invalid IDs never reach the library
+        CHECK(!m.downloadRcsb("1AZM", "xyz", cache, true) && !m.downloadRcsb("", "pdb", cache, true));
+        CHECK(m.downloadRcsb("1azm", "pdb", cache, true));                                                       // waits: the structure is open on return
+        CHECK(m.ligandCount() >= 1 && m.logText().contains("RCSB: structure 1AZM saved to"));
+        auto waitFor = [](gui::MainWindow& w, int ms) {
+            QElapsedTimer t;
+            t.start();
+            while (w.taskRunning() && t.elapsed() < ms) QApplication::processEvents(QEventLoop::AllEvents, 20);
+            QApplication::processEvents();
+            return !w.taskRunning();
+        };
+        gui::MainWindow bg;                                                                                      // the same in a background thread
+        bg.setInteractive(false);
+        CHECK(bg.downloadRcsb("1AZM", "pdb", cache));
+        CHECK(waitFor(bg, 10000) && bg.ligandCount() >= 1);
+        gui::MainWindow fail;                                                                                    // a structure that is not in the cache needs the network, which is
+        fail.setInteractive(false);                                                                              // not used here: use a format that is never cached and a proxy that does not exist
+        qputenv("https_proxy", "http://127.0.0.1:9");
+        qputenv("HTTPS_PROXY", "http://127.0.0.1:9");
+        CHECK(fail.downloadRcsb("1AZM", "cif", cache, true));                                                    // the request is accepted, the transfer fails
+        CHECK(fail.logText().contains("RCSB download failed") && fail.ligandCount() == 0 && !QFile::exists(cache + "/1AZM.cif"));
+        CHECK(QDir(cache).entryList(QDir::Files).size() == 1);                                                   // no partial file left
+
+        // KLIFS: a mapping of 8 residues of 1AZM
+        const QString mapping = dir.filePath("klifs_map.tsv");
+        {
+            QFile f(mapping);
+            CHECK(f.open(QIODevice::WriteOnly));
+            f.write("residue.klifs_id\tresidue.id\tresidue.klifs_region\tresidue.aa\n1\t91\tI\tF\n2\t92\tI\tQ\n3\t94\tI\tH\n4\t96\thinge\tH\n"
+                    "5\t119\thinge\tH\n6\t199\thinge\tT\n7\t200\thinge\tH\n8\t201\thinge\tP\n");
+        }
+        gui::MainWindow k;
+        k.setInteractive(false);
+        CHECK(k.openStructure(argv[1]));
+        k.selectLigand(0);
+        k.analyze(true);
+        const QString pocketOut = dir.filePath("klifs_pocket.tsv");
+        CHECK(k.generateKlifsPocket("1AZM", "A", "", mapping, pocketOut, true));
+        CHECK(QFile::exists(pocketOut) && QString::fromStdString(k.fingerprint().pocketName).contains("KLIFS"));
+        CHECK(k.logText().contains("KLIFS: generated 8 mapped residues") && k.fingerprint().entries.size() >= 8);
+        CHECK(k.fingerprint().entries[0].position == "1" && k.fingerprint().entries[0].region == "I");
+        // errors are reported in the log, nothing is written and nothing is loaded
+        const QString bad = dir.filePath("klifs_bad.tsv");
+        {
+            QFile f(bad);
+            CHECK(f.open(QIODevice::WriteOnly));
+            f.write("residue.klifs_id\tresidue.id\tresidue.klifs_region\n1\t5\tI\n1\t6\tI\n");
+        }
+        const QString never = dir.filePath("klifs_never.tsv");
+        CHECK(k.generateKlifsPocket("1AZM", "A", "", bad, never, true) && k.logText().contains("KLIFS generation failed") && !QFile::exists(never));
+        CHECK(!k.generateKlifsPocket("1AZM", "A", "", mapping, QString(), true));                               // no output file
+        CHECK(k.generateKlifsPocket("1AZM", "", "", mapping, never, true) && !QFile::exists(never));            // chain is required
+        const QString bgOut = dir.filePath("klifs_bg.tsv");
+        CHECK(k.generateKlifsPocket("1AZM", "A", "", mapping, bgOut));                                          // in the background
+        CHECK(waitFor(k, 10000) && QFile::exists(bgOut));
     }
 
     // a PDBx/mmCIF file gives the same interactions as the PDB file of the same entry

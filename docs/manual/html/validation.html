@@ -19,7 +19,7 @@ a { color: #1c7ed6; }
 </style>
 </head>
 <body>
-<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="rcsb.html">Downloading from the RCSB</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
 <h1 id="validation-and-limits"><a name="validation-and-limits"></a>Validation and limits</h1>
 <h2 id="how-to-read-the-results"><a name="how-to-read-the-results"></a>How to read the results</h2>
 <p>ligint applies <strong>geometric criteria</strong> to the atomic coordinates of a model and lists the contacts that satisfy them. Keep in mind:</p>
@@ -45,7 +45,7 @@ a { color: #1c7ed6; }
 </ul>
 <h2 id="verification"><a name="verification"></a>Verification</h2>
 <pre><code>ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     87 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     93 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -110,7 +110,7 @@ screenshots), build with ASan+UBSan, installation and use as a CMake package. <s
 run</strong>: the commands are the ones tried here locally on Linux (including <code>-Werror</code>, clang and sanitizers), but the first
 run on GitHub may need adjustments. The GUI was tried in offscreen mode: interactive use with mouse and dialog boxes
 was not tried by hand.</p>
-<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="rcsb.html">Downloading from the RCSB</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

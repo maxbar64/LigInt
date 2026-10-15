@@ -109,8 +109,9 @@ int main(int argc, char** argv) {
         } else pa.push_back(s);
     }
     if(downloadOnly && !useRcsb){cerr<<"--download-only requires --download-pdb\n";return 1;}
-    if(useRcsb && !pa.empty()){cerr<<"Use --download-pdb without a separate structure path\n";return 1;}
-    if(useRcsb){try{string path=downloadRcsbStructure(rcsb);cerr<<"RCSB structure: "<<path<<"\n";if(downloadOnly){cout<<path<<"\n";return 0;}pa.push_back(path);}catch(const exception& e){cerr<<"RCSB: "<<e.what()<<"\n";return 1;}}
+    // with --download-pdb the positional arguments are the ligand: RESNAME [chain [resseq]] (the structure is the downloaded file)
+    if(useRcsb && !pa.empty()){ifstream existing(pa[0]);if(existing){cerr<<"Use --download-pdb without a separate structure path (the arguments after the options are the ligand: RESNAME [chain [resseq]])\n";return 1;}}
+    if(useRcsb){try{string path=downloadRcsbStructure(rcsb);cerr<<"RCSB structure: "<<path<<"\n";if(downloadOnly){cout<<path<<"\n";return 0;}pa.insert(pa.begin(),path);}catch(const exception& e){cerr<<"RCSB: "<<e.what()<<"\n";return 1;}}
     if (pa.empty() && !useKlifs) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
@@ -131,6 +132,8 @@ int main(int argc, char** argv) {
 
     PocketDefinition pocket;
     if(useKlifs && !pocketPath.empty()){cerr<<"Choose either --pocket or --klifs-*\n";return 1;}
+    if(useKlifs && pa.empty() && klifsOutput.empty()){cerr<<"--klifs-* without a structure needs --klifs-output FILE (otherwise the pocket would not be saved anywhere)\n";return 1;}
+    if(useKlifs && !pa.empty() && fpFormat.empty()) cerr<<"Warning: the KLIFS pocket is only used with --fingerprint\n";
     if(useKlifs){try{pocket=generateKlifsPocket(klifs);if(!klifsOutput.empty())saveKlifsPocket(pocket,klifsOutput);cerr<<"KLIFS pocket: "<<pocket.positions.size()<<" mapped positions\n";}catch(const exception& e){cerr<<"KLIFS: "<<e.what()<<"\n";return 1;}}
     if(pa.empty()) return 0; // generate TSV without structure analysis
     const bool havePocket = useKlifs || !pocketPath.empty();

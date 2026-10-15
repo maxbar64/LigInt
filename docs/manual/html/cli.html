@@ -104,6 +104,14 @@ check the output, not only the exit code, in scripts.</p>
 <td>write the <a href="fingerprint.html">interaction fingerprint</a> (<code>csv</code>, <code>json</code> or <code>svg</code>) instead of the interaction table, optionally with a pocket definition</td>
 </tr>
 <tr>
+<td><code>--download-pdb ID</code></td>
+<td>download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. <code>--download-format pdb\|cif</code>, <code>--download-output FILE</code>, <code>--download-cache DIR</code>, <code>--download-refresh</code> and <code>--download-only</code> complete it (<a href="rcsb.html">Downloading from the RCSB</a>)</td>
+</tr>
+<tr>
+<td><code>--klifs-pdb ID</code>, <code>--klifs-chain C</code>, <code>--klifs-mapping FILE</code>, <code>--klifs-output FILE</code>, <code>--klifs-model M</code>, <code>--klifs-id N</code></td>
+<td>build a pocket definition from a KLIFS mapping, to use with <code>--fingerprint</code> or to save (<a href="klifs.html">KLIFS kinase pockets</a>)</td>
+</tr>
+<tr>
 <td><code>--version</code></td>
 <td>print the version</td>
 </tr>
@@ -309,8 +317,6 @@ distance <strong>d(A)</strong> and <strong>Notes</strong>. A chain of several ch
 standard output gives a clean file.</p>
 <h3 id="fingerprints"><a name="fingerprints"></a>Fingerprints</h3>
 <p><code>--fingerprint csv|json|svg</code> replaces the table: see <a href="fingerprint.html">Interaction fingerprints</a>.</p>
-<p>Native RCSB download: <code>--download-pdb</code> ID, <code>--download-format</code> pdb|cif, <code>--download-output</code> FILE, <code>--download-cache</code> DIR, <code>--download-refresh</code> and <code>--download-only</code>. The download requires libcurl at build time; cached structures can be used without network. Example: <code>ligint --download-pdb 3EYG --download-only</code>.</p>
-<p>Native KLIFS pocket generation: <code>--klifs-pdb</code> ID, <code>--klifs-chain</code> chain, <code>--klifs-model</code> alternate model, <code>--klifs-id</code> KLIFS structure ID, <code>--klifs-mapping</code> local CSV/TSV export, and <code>--klifs-output</code> TSV path. See <code>docs/KLIFS.md</code> for important online validation limitations.</p>
 <h2 id="exit-status"><a name="exit-status"></a>Exit status</h2>
 <table border="1" cellspacing="0" cellpadding="5" width="100%">
 <thead>
@@ -326,7 +332,7 @@ standard output gives a clean file.</p>
 </tr>
 <tr>
 <td>1</td>
-<td>error: file that cannot be opened or is compressed, unknown option, missing or non-numeric value, malformed residue number, unknown <code>--format</code> or <code>--fingerprint</code> value, <code>--pocket</code> without <code>--fingerprint</code></td>
+<td>error: file that cannot be opened or is compressed, unknown option, missing or non-numeric value, malformed residue number, unknown <code>--format</code> or <code>--fingerprint</code> value, <code>--pocket</code> without <code>--fingerprint</code>, an invalid PDB ID or a failed download (<code>RCSB: ...</code>), an invalid KLIFS mapping or a missing <code>--klifs-chain</code> (<code>KLIFS: ...</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -337,6 +343,8 @@ ligint 1abc.pdb LIG --plip-like --no-water            the PLIP-like preset, with
 ligint 1abc.pdb LIG --hb-max 3.2 --hyd-max 4.2        stricter hydrogen bonds, looser hydrophobic contacts
 ligint 1abc.pdb LIG --sdf lig.sdf                     exact chemistry from an SDF of the ligand
 ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv &gt; figure.svg
+ligint --download-pdb 3EYG STI --csv                  download from the RCSB and analyze the ligand in one command
+ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output 3eyg-pocket.tsv     a KLIFS pocket definition from a mapping
 </code></pre>
 <p>Analyze many structures that contain the same ligand name, in a POSIX shell:</p>
 <pre><code class="language-text">for f in complexes/*.pdb; do ligint &quot;$f&quot; LIG --csv &gt; &quot;${f%.pdb}.csv&quot;; done
@@ -345,6 +353,6 @@ ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv &gt; fi
 <p>To repeat an analysis made in the <a href="gui.html#reproducing-an-analysis-on-the-command-line">graphical interface</a>, copy the command line that it
 writes in its log.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="gui.html">The graphical interface</a> &middot; <a href="interactions.html">Interactions and assumptions</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

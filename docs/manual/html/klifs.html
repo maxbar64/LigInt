@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KLIFS kinase pockets - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
+<h1 id="klifs-kinase-pockets-experimental"><a name="klifs-kinase-pockets-experimental"></a>KLIFS kinase pockets (experimental)</h1>
+<p>The <a href="fingerprint.html">fingerprint</a> of a kinase ligand is drawn on a <strong>pocket definition</strong>: a text file that says which residues form the pocket,
+in which order and in which regions. <a href="https://klifs.net">KLIFS</a> defines such a pocket for all the kinases, with 85 aligned positions. ligint can write its
+pocket-definition file from a <strong>KLIFS mapping</strong> (the table of the 85 positions with the residues of a structure), without Python.</p>
+<p>The file is a <strong>structural definition</strong> of the aligned binding pocket, not an annotation of ligand-protein contacts: the interactions are always computed by
+ligint from the structure.</p>
+<h2 id="the-workflow"><a name="the-workflow"></a>The workflow</h2>
+<ol>
+<li>Get the KLIFS <strong>mapping</strong> of your structure (one row per position, see below): from a KLIFS export that you have, or from the service.</li>
+<li>Generate the pocket-definition file:</li>
+</ol>
+<p><code>text
+   ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping KLIFS_pocket_export.tsv --klifs-output 3EYG-klifs-pocket.tsv</code></p>
+<ol start="3">
+<li>Draw the fingerprint of the ligand on it, with the <strong>same structure and the same alternate conformation</strong> as KLIFS:</li>
+</ol>
+<p><code>text
+   ligint 3EYG.pdb LIG A 1 --altloc B --fingerprint svg --pocket 3EYG-klifs-pocket.tsv &gt; 3EYG.svg</code></p>
+<p>KLIFS describes one <em>alternate model</em> of a chain (A, B, ...); in the PDB file that is normally an alternate location (altloc) of the atoms: choose it with
+   <code>--altloc</code> (the listing of <code>ligint 3EYG.pdb</code> shows which ones the file has). Both steps can be one command: <code>ligint 3EYG.pdb LIG A 1 --altloc B
+   --fingerprint svg --klifs-pdb 3EYG --klifs-chain A --klifs-mapping KLIFS_pocket_export.tsv</code>.</p>
+<h2 id="the-mapping-file"><a name="the-mapping-file"></a>The mapping file</h2>
+<p>A CSV or TSV file (the separator is recognized; quoted values, a byte order mark and Windows line ends are accepted; lines starting with <code>#</code> are
+ignored) with the columns:</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>residue.klifs_id</code></td>
+<td>the KLIFS position, 1 to 85 (also accepted: <code>klifs_id</code>, <code>klifs_position</code>, <code>position</code>)</td>
+</tr>
+<tr>
+<td><code>residue.id</code></td>
+<td>the residue number of the structure, with its insertion code if any (<code>221A</code>); also <code>residue_id</code>, <code>pdb_residue</code>, <code>resi</code></td>
+</tr>
+<tr>
+<td><code>residue.klifs_region</code></td>
+<td>the KLIFS region (<code>hinge</code>, <code>aC</code>, ...); also <code>klifs_region</code>, <code>region</code></td>
+</tr>
+<tr>
+<td><code>residue.aa</code></td>
+<td>optional: the residue, in one letter or three (also <code>residue.amino_acid</code>, <code>residue_name</code>, <code>resname</code>)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>residue.id</code> must be the <strong>author numbering</strong> of the structure and chain that you analyze (the numbers of the PDB file), never an index along the
+  sequence. A mmCIF file is read with the author numbers too (<a href="formats.html">Input formats</a>).</li>
+<li>A residue marked <code>_</code> (or empty, <code>null</code>, <code>None</code>) is <strong>missing in the crystal</strong>: the position is left out of the pocket, never filled with an invented number.
+  The figure then has fewer than 85 cells.</li>
+<li>A position outside 1 to 85, a position that appears twice, a residue number that is not an integer with an optional letter, or a missing region is an
+  <strong>error</strong> and no file is written.</li>
+<li>Columns may come in any order and extra columns are ignored.</li>
+</ul>
+<p>The generated file has the <a href="fingerprint.html#pocket-definition-file">pocket definition format</a>: <code>@name</code>, one <code>@color</code> for each region (the colors of the
+KLIFS regions) and one line per position with the chain, the residue, the position as label, the region and the residue name.</p>
+<h2 id="command-line"><a name="command-line"></a>Command line</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--klifs-pdb ID</code></td>
+<td>the PDB ID (four letters or digits); only used for the name of the pocket when a mapping file is given</td>
+</tr>
+<tr>
+<td><code>--klifs-chain C</code></td>
+<td>the chain of the structure (<strong>required</strong>)</td>
+</tr>
+<tr>
+<td><code>--klifs-mapping FILE</code></td>
+<td>the mapping file; without it the service is asked (see below)</td>
+</tr>
+<tr>
+<td><code>--klifs-output FILE</code></td>
+<td>where to write the pocket-definition file</td>
+</tr>
+<tr>
+<td><code>--klifs-model M</code></td>
+<td>the KLIFS alternate model, to choose among several (service only)</td>
+</tr>
+<tr>
+<td><code>--klifs-id N</code></td>
+<td>the KLIFS structure ID, to choose exactly (service only)</td>
+</tr>
+</tbody>
+</table>
+<p>Rules: with a structure file the generated pocket is used by <code>--fingerprint</code> (without it a warning says that the pocket is not used); with no structure
+file <code>--klifs-output</code> is required; <code>--pocket</code> and <code>--klifs-*</code> cannot be given together. The messages begin with <code>KLIFS:</code> and the exit code of an error is 1.</p>
+<h2 id="graphical-interface"><a name="graphical-interface"></a>Graphical interface</h2>
+<p>In the <strong>Pocket definition (fingerprint)</strong> group, <strong>Generate from KLIFS...</strong> asks for the PDB ID (suggested from the file name), the chain and the source of the
+mapping: <strong>Local KLIFS mapping CSV/TSV</strong> (a file chooser follows) or, <strong>only in a build that has network support</strong>, <strong>Online (KLIFS service)</strong> (then the KLIFS
+model). It asks where to save the file and works in the <strong>background</strong>; when it finishes the pocket is loaded and the <strong>Log</strong> says how many positions were
+mapped. A structure must be open first.</p>
+<h2 id="the-klifs-service-not-verified"><a name="the-klifs-service-not-verified"></a>The KLIFS service (not verified)</h2>
+<p>Without a mapping file ligint asks the KLIFS web service, for the structures of the PDB entry and then for the pocket of the one that matches the chain
+(and the model, if given; several matches are an error that lists the candidates). <strong>This path has not been verified against the live service</strong>: the
+test environment cannot reach it, and the address that the code uses (<code>https://klifs.net/api_v2/...</code>) is not one that I could confirm in the public
+documentation, where the examples use <code>https://klifs.net/api/</code>. The structure of the response is not confirmed either. If the request or the
+reading of the answer fails, the program says so and writes nothing; use a mapping file. The <a href="https://github.com/maxbar64/LigInt/blob/main/tools/README-KLIFS.md">Python helper</a>
+<code>tools/klifs_to_pocket.py</code> uses the OpenCADD client instead and is the better choice for the online step until the native one is verified.</p>
+<p>Requests use HTTPS only, at most 3 redirects, a 10 s connection and a 25 s total timeout, and the answer is limited to 8 MB.</p>
+<h2 id="verified"><a name="verified"></a>Verified</h2>
+<p>By the automated tests, which use local files only: the positions and the regions; missing residues; insertion codes; the residue names from the one-letter
+code (all twenty); the same pocket from TSV, CSV, Windows line ends, byte order mark and permuted columns; the errors above (the file is not written);
+corrupted files; the round trip through the pocket-definition format and the fingerprint (the positions, the regions and a hydrogen bond in the right cell);
+the rules of the command line; the background task of the interface.</p>
+<h2 id="building-with-network-support-on-windows-vcpkg"><a name="building-with-network-support-on-windows-vcpkg"></a>Building with network support on Windows (vcpkg)</h2>
+<p>The service needs libcurl and json-c. From an x64 Native Tools command prompt, with vcpkg installed and its directory in <code>VCPKG_ROOT</code>:</p>
+<pre><code class="language-powershell">&amp; &quot;$env:VCPKG_ROOT\vcpkg.exe&quot; install curl:x64-windows json-c:x64-windows
+cmake -S . -B build-klifs -G Ninja `
+  -DCMAKE_TOOLCHAIN_FILE=&quot;$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake&quot; `
+  -DVCPKG_TARGET_TRIPLET=x64-windows `
+  -DCMAKE_PREFIX_PATH=&quot;C:/Qt/6.9.3/msvc2022_64&quot; `
+  -DLIGINT_KLIFS_REQUIRE_ONLINE=ON
+cmake --build build-klifs --config Release
+</code></pre>
+<p>Use a new build directory so that CMake finds the vcpkg toolchain at the first configuration. <code>LIGINT_KLIFS_REQUIRE_ONLINE=ON</code> makes a missing libcurl or
+json-c an error instead of building without the service. With a dynamic triplet the DLLs must be available at run time. A successful build says nothing about
+the compatibility with the live service.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
+<p class="foot">ligint 0.8.0 manual</p>
+</body>
+</html>

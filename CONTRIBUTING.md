@@ -28,6 +28,12 @@ Before changing the library it is also worth checking the sanitizers:
 - Changes that alter the results must be measured with `tests/benchmark.py` on structures that were **not** used to
   decide the change. A comparison with PLIP measures the agreement with PLIP, not correctness.
 
+## Network features
+
+The RCSB download and the KLIFS service are optional (libcurl, json-c). The tests of group `net` never use the network: transfers that must fail are sent to a
+proxy that does not exist (`https_proxy`), the others use the cache or a local mapping file. Keep it so: a test that reaches a real server is not reproducible. Build once
+with and once without the libraries, and keep the exported CMake package free of build-only targets (the CI builds a program against the installed package).
+
 ## The manual
 
 The manual is built from Markdown (see `docs/ARCHITECTURE.md`, section *The manual*). After editing `docs/manual/*.md` or one of the documents that

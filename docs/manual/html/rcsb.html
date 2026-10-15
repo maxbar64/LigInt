@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Downloading from the RCSB - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="klifs.html">KLIFS kinase pockets</a> &middot; <a href="validation.html">Validation and limits</a> &raquo;</p>
+<h1 id="downloading-structures-from-the-rcsb"><a name="downloading-structures-from-the-rcsb"></a>Downloading structures from the RCSB</h1>
+<p>ligint can download a structure from the <a href="https://www.rcsb.org">RCSB Protein Data Bank</a> and analyze it in the same step, in the graphical interface
+and on the command line. The download needs <strong>libcurl</strong> at build time; a build without it can still use the structures that are already in the
+cache (see <a href="install.html">Installation</a>). The file is the ordinary PDB or PDBx/mmCIF file of the entry, with all its ligands, ions and waters.</p>
+<h2 id="graphical-interface"><a name="graphical-interface"></a>Graphical interface</h2>
+<p><strong>File &gt; Download from RCSB...</strong> (or the button of the same name in the <strong>Structure</strong> group) asks for the four-character PDB ID and the format (PDB or
+mmCIF). The transfer runs in a <strong>background thread</strong>: the window stays responsive and a busy cursor shows that it is working. When it ends the
+structure is opened; choose a ligand and press <strong>Analyze</strong>. The file is kept in a folder of your user data (the <strong>Log</strong> tab shows its path), so opening the
+same entry again does not download it again. If the transfer fails, the message is shown and written in the <strong>Log</strong>, and nothing is opened.</p>
+<h2 id="command-line"><a name="command-line"></a>Command line</h2>
+<pre><code class="language-text">ligint --download-pdb 3EYG                       download (or find in the cache) and list the ligands
+ligint --download-pdb 3EYG STI --csv             download and analyze the ligand STI, in one command
+ligint --download-pdb 3EYG STI A 201 --altloc B  chain, residue number and the other options work as usual
+ligint --download-pdb 3EYG --download-only       only download; prints the path of the file
+ligint --download-pdb 3EYG --download-format cif --download-cache my_cache
+ligint --download-pdb 3EYG --download-output 3eyg.pdb --download-refresh
+</code></pre>
+<p>With <code>--download-pdb</code> the arguments after the options are the <strong>ligand</strong> (<code>RESNAME [chain [resseq]]</code>), because the structure is the downloaded
+file; giving also the path of an existing structure file is an error.</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--download-pdb ID</code></td>
+<td>the four-character PDB ID (letters or digits; lower case is accepted)</td>
+</tr>
+<tr>
+<td><code>--download-format pdb\|cif</code></td>
+<td>the file format (default <code>pdb</code>)</td>
+</tr>
+<tr>
+<td><code>--download-output FILE</code></td>
+<td>where to save the file (default <code>ID.pdb</code> or <code>ID.cif</code> in the cache folder)</td>
+</tr>
+<tr>
+<td><code>--download-cache DIR</code></td>
+<td>the cache folder (default: the current folder)</td>
+</tr>
+<tr>
+<td><code>--download-refresh</code></td>
+<td>download again even if a valid file is already there</td>
+</tr>
+<tr>
+<td><code>--download-only</code></td>
+<td>stop after the download and print the path of the file</td>
+</tr>
+</tbody>
+</table>
+<p>The path of the file is written to the standard error (<code>RCSB structure: ...</code>); with <code>--download-only</code> it is also written to the standard output.</p>
+<h2 id="how-it-works"><a name="how-it-works"></a>How it works</h2>
+<ul>
+<li>The <strong>ID is checked</strong> before anything else: exactly four letters or digits, so no path or address can be built from it.</li>
+<li>The file is requested over <strong>HTTPS only</strong>, with at most 3 redirects (HTTPS only too), a 10 s connection timeout and a 90 s total timeout; the
+  certificates are verified by libcurl.</li>
+<li>The data go to a <strong>temporary file</strong>, which is checked (a PDB file must contain a header or atom records, an mmCIF file a <code>data_</code> block) and only then
+  replaces the destination. If the transfer fails or the data are not a structure, the temporary file is removed and a file that was already in the
+  cache is <strong>left untouched</strong>.</li>
+<li>A file already in the cache is used if it is valid (not empty, at least 100 bytes, with the expected content); a damaged entry is never trusted.</li>
+<li>Compressed files are not downloaded: the RCSB service returns plain text for these URLs.</li>
+</ul>
+<h2 id="build"><a name="build"></a>Build</h2>
+<p>The download is built when libcurl is found (CMake looks for it with pkg-config or <code>find_package(CURL)</code>); <code>-DLIGINT_RCSB_REQUIRE_ONLINE=ON</code> makes a
+missing libcurl an error instead of a warning. Both libcurl 7.85 and later and older versions (for example 7.76, the one of RHEL 9) are supported. JSON-C
+is not needed for the downloads (it is for the <a href="klifs.html">KLIFS service</a>). In a build without libcurl every <code>--download-*</code> request that is not
+already in the cache fails with <code>RCSB HTTPS unavailable</code>.</p>
+<h2 id="verified-and-not-verified"><a name="verified-and-not-verified"></a>Verified and not verified</h2>
+<p>Checked by the automated tests, without any network traffic: the ID validation, the cache, the choice of the output file, the arguments of the
+command, the error paths (a transfer sent to a proxy that does not exist leaves the cache and the folder unchanged), the background task of the
+interface. <strong>Not checked: a real transfer from the RCSB servers</strong>, which the test environment cannot reach; try <code>ligint --download-pdb 1AZM --download-only</code>
+and tell if it fails.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="klifs.html">KLIFS kinase pockets</a> &middot; <a href="validation.html">Validation and limits</a> &raquo;</p>
+<p class="foot">ligint 0.8.0 manual</p>
+</body>
+</html>

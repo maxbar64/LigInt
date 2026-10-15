@@ -8,6 +8,8 @@
 
 #include "ligint/fingerprint.hpp"
 #include "ligint/klifs.hpp"
+#include "ligint/rcsb.hpp"
+#include <filesystem>
 #include "ligint/ligint.hpp"
 
 static int failures = 0;
@@ -530,6 +532,38 @@ static void testFingerprintClasses() {
     CHECK(std::string(ligint::fpClassName(ligint::FpHBondDonor)) == "hbond_donor" && ligint::oneLetterCode("TRP") == 'W' && ligint::oneLetterCode("XYZ") == '?');
 }
 
+static void testRcsbCacheAndValidation() {
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::temp_directory_path() / "ligint_rcsb_unit";
+    fs::remove_all(dir);
+    fs::create_directories(dir);
+    {
+        std::ofstream f(dir / "1ABC.pdb");
+        f << "HEADER    TEST ENTRY\n" << std::string(150, ' ') << "\nATOM      1  N   ALA A   1       0.000   0.000   0.000\n";
+    }
+    ligint::RcsbDownloadOptions o;
+    o.pdbId = "1abc";                                              // lower case is accepted and the cached file is found
+    o.cacheDir = dir.string();
+    CHECK(fs::path(ligint::downloadRcsbStructure(o)).filename() == "1ABC.pdb");
+    // identifiers that are not four letters or digits never get to the file system or to the network
+    for (const char* bad : {"", "1AB", "1ABCD", "../x", "1A/C", "1A C", "1AB\xC3\xA9", "1AB\n"}) {
+        ligint::RcsbDownloadOptions b = o;
+        b.pdbId = bad;
+        bool thrown = false;
+        try { ligint::downloadRcsbStructure(b); } catch (const std::runtime_error&) { thrown = true; }
+        CHECK(thrown);
+    }
+    ligint::RcsbDownloadOptions f = o;
+    f.format = "xyz";
+    bool thrown = false;
+    try { ligint::downloadRcsbStructure(f); } catch (const std::runtime_error&) { thrown = true; }
+    CHECK(thrown);
+    CHECK(std::distance(fs::directory_iterator(dir), fs::directory_iterator()) == 1);     // nothing was created
+    fs::remove_all(dir);
+    (void)ligint::rcsbOnlineAvailable();
+    (void)ligint::klifsOnlineAvailable();
+}
+
 static void testKlifsNative() {
     const std::string filename="ligint_klifs_unit_mapping.tsv";
     {std::ofstream f(filename);f<<"residue.klifs_id\tresidue.id\tresidue.klifs_region\tresidue.aa\n"
@@ -664,6 +698,7 @@ int main() {
     testAlternateConformationSelection();
     testFingerprintClasses();
     testKlifsNative();
+    testRcsbCacheAndValidation();
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();

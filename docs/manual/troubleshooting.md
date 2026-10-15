@@ -58,6 +58,27 @@ Fluorine is not considered a halogen-bond donor in ligint (PLIP counts it). Chlo
 `Warning: N atoms with invalid coordinates ignored`: some atoms have missing or absurd coordinates (for example `?` in an mmCIF file or
 a value beyond 100,000 A) and were skipped.
 
+## RCSB downloads and KLIFS pockets
+
+**`RCSB: RCSB requires a four-character alphanumeric PDB ID`.** The ID is four letters or digits (`3EYG`); extended identifiers are not supported by the download.
+
+**`RCSB HTTPS unavailable: rebuild with libcurl`.** This build of ligint has no network support: it can only open structures that are already in the cache or
+that you downloaded yourself. Packages and builds with libcurl have it ([Downloading from the RCSB](rcsb.md#build)).
+
+**`RCSB download failed ... (HTTP 0, Couldn't resolve host name)`.** No network connection or a proxy problem: libcurl uses the usual proxy variables
+(`https_proxy`). A file that was already in the cache is not touched.
+
+**`Use --download-pdb without a separate structure path`.** With `--download-pdb` give only the ligand (`ligint --download-pdb 3EYG STI`); the structure is the downloaded file.
+
+**`KLIFS: Duplicate KLIFS position`, `Invalid KLIFS pocket position`, `Invalid PDB residue`, `KLIFS region missing`.** The mapping file is not valid: see
+[the mapping file](klifs.md#the-mapping-file). No pocket file is written when there is an error.
+
+**`KLIFS: KLIFS request failed` or `Online KLIFS unavailable`.** The service could not be reached, or this build has no network support. Use a mapping file
+(`--klifs-mapping`); the online path of the native client is not verified ([KLIFS kinase pockets](klifs.md#the-klifs-service-not-verified)).
+
+**The pocket is built but the figure has fewer than 85 cells.** The residues that are missing in the crystal (`_` in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
+of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.
+
 ## The graphical interface
 
 **It does not start on Linux, with a message about the Qt platform plugin.** Install the Qt platform plugins (`qt6-qpa-plugins` on Debian and

@@ -33,6 +33,8 @@ check the output, not only the exit code, in scripts.
 | `--altloc X` | use the alternate conformation `X` for the residues that have it; the others keep their first conformation. The program reports for how many residues `X` was used and warns if the file has no conformation `X` |
 | `--format F` | `auto` (default: recognized from the content), `pdb` or `cif` |
 | `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`) instead of the interaction table, optionally with a pocket definition |
+| `--download-pdb ID` | download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. `--download-format pdb\|cif`, `--download-output FILE`, `--download-cache DIR`, `--download-refresh` and `--download-only` complete it ([Downloading from the RCSB](rcsb.md)) |
+| `--klifs-pdb ID`, `--klifs-chain C`, `--klifs-mapping FILE`, `--klifs-output FILE`, `--klifs-model M`, `--klifs-id N` | build a pocket definition from a KLIFS mapping, to use with `--fingerprint` or to save ([KLIFS kinase pockets](klifs.md)) |
 | `--version` | print the version |
 | `--help`, `-h` | print the usage and the default values of the thresholds |
 
@@ -104,7 +106,7 @@ standard output gives a clean file.
 | Code | Meaning |
 |---|---|
 | 0 | the analysis ran (also when no ligand matched: see above), or `--help` / `--version` |
-| 1 | error: file that cannot be opened or is compressed, unknown option, missing or non-numeric value, malformed residue number, unknown `--format` or `--fingerprint` value, `--pocket` without `--fingerprint` |
+| 1 | error: file that cannot be opened or is compressed, unknown option, missing or non-numeric value, malformed residue number, unknown `--format` or `--fingerprint` value, `--pocket` without `--fingerprint`, an invalid PDB ID or a failed download (`RCSB: ...`), an invalid KLIFS mapping or a missing `--klifs-chain` (`KLIFS: ...`) |
 
 ## Examples
 
@@ -115,6 +117,8 @@ ligint 1abc.pdb LIG --plip-like --no-water            the PLIP-like preset, with
 ligint 1abc.pdb LIG --hb-max 3.2 --hyd-max 4.2        stricter hydrogen bonds, looser hydrophobic contacts
 ligint 1abc.pdb LIG --sdf lig.sdf                     exact chemistry from an SDF of the ligand
 ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv > figure.svg
+ligint --download-pdb 3EYG STI --csv                  download from the RCSB and analyze the ligand in one command
+ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output 3eyg-pocket.tsv     a KLIFS pocket definition from a mapping
 ```
 
 Analyze many structures that contain the same ligand name, in a POSIX shell:
@@ -127,7 +131,3 @@ Keep only the hydrogen bonds of a CSV: `ligint 1abc.pdb LIG --csv | awk -F, 'NR 
 
 To repeat an analysis made in the [graphical interface](gui.md#reproducing-an-analysis-on-the-command-line), copy the command line that it
 writes in its log.
-
-### Native KLIFS pocket definitions (experimental)
-
-Use `--klifs-pdb`, `--klifs-chain`, optional `--klifs-model` or `--klifs-id`, and `--klifs-output` to generate a KLIFS-aligned pocket definition. `--klifs-mapping` supplies an offline KLIFS CSV/TSV export. For implementation status and live-service limitations see `docs/KLIFS.md`.

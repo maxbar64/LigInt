@@ -40,6 +40,10 @@ on the command line: <code>ligint-gui 1AZM.cif</code>. PDB (<code>.pdb</code>, <
 recognized from the content (<a href="formats.html">Input formats</a>). Compressed files (<code>.gz</code>) must be decompressed first. If the file cannot be
 opened, a message explains why and the error is also written in the <strong>Log</strong> tab.</p>
 <p>The last folder you used is remembered between sessions.</p>
+<h3 id="downloading-a-structure-from-the-rcsb"><a name="downloading-a-structure-from-the-rcsb"></a>Downloading a structure from the RCSB</h3>
+<p><strong>File &gt; Download from RCSB...</strong> (or the button of the same name in the <strong>Structure</strong> group) asks for the four-character PDB ID and the format (PDB or mmCIF),
+downloads the file <strong>in the background</strong> (the window stays responsive) and opens it. Structures that were already downloaded are not fetched again. If the
+transfer fails, the message is shown and written in the <strong>Log</strong>. See <a href="rcsb.html">Downloading from the RCSB</a>.</p>
 <h2 id="choosing-the-ligand"><a name="choosing-the-ligand"></a>Choosing the ligand</h2>
 <p>The <strong>Ligand</strong> list shows the ligands (<code>HETATM</code> residues) of the file, each with its name, chain, residue number and number of atoms:
 <code>AZM A 262 (13 atoms)</code>. Waters are never listed. Ions and molecules with fewer than 6 atoms are hidden unless you tick
@@ -135,6 +139,9 @@ not. Templates stay loaded when you open another structure. See <a href="interac
 <p>The <strong>Pocket definition (fingerprint)</strong> group loads a text file that maps residues to positions and regions of a binding pocket, used to
 draw the <a href="fingerprint.html">fingerprint</a>. <strong>Load definition...</strong> reads it, <strong>Clear</strong> removes it. Without a definition the fingerprint
 lists the residues in contact, sorted by number.</p>
+<p><strong>Generate from KLIFS...</strong> builds the definition of a kinase pocket from a KLIFS mapping: it asks for the PDB ID, the chain and the source (a mapping file, or the
+KLIFS service in builds that have network support), where to save the file, works in the background and loads the result. A structure must be open first. See
+<a href="klifs.html">KLIFS kinase pockets</a>, which also explains which alternate conformation to choose.</p>
 <h2 id="running-an-analysis"><a name="running-an-analysis"></a>Running an analysis</h2>
 <p>Press <strong>Analyze</strong>. The analysis runs in a separate thread, so the window stays responsive on large structures. When it ends, the view, the
 tables and the <strong>Interaction types</strong> list are filled. Change an option or a threshold and press <strong>Analyze</strong> again: the results are replaced.</p>
@@ -282,6 +289,6 @@ The toolbar has <strong>Back</strong> and <strong>Forward</strong> (<code>Alt+Le
 HTML files of the manual are installed on this computer, <strong>Open in browser</strong>. <code>Ctrl+F</code> searches the current page. Links to web sites open
 in your browser.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="quickstart.html">Quick start</a> &middot; <a href="cli.html">Command-line reference</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

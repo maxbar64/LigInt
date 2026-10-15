@@ -1,4 +1,5 @@
 #include "ligint/rcsb.hpp"
+#include "ligint/ligint.hpp"
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
@@ -61,11 +62,17 @@ std::string downloadRcsbStructure(const RcsbDownloadOptions& o) {
     curl_easy_setopt(curl,CURLOPT_URL,url.c_str());
     curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,1L);
     curl_easy_setopt(curl,CURLOPT_MAXREDIRS,3L);
+#if LIBCURL_VERSION_NUM >= 0x075500                 // CURLOPT_PROTOCOLS_STR exists since libcurl 7.85.0 (Rocky/RHEL 9 have 7.76)
     curl_easy_setopt(curl,CURLOPT_PROTOCOLS_STR,"https");
     curl_easy_setopt(curl,CURLOPT_REDIR_PROTOCOLS_STR,"https");
+#else
+    curl_easy_setopt(curl,CURLOPT_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));
+    curl_easy_setopt(curl,CURLOPT_REDIR_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));
+#endif
+    curl_easy_setopt(curl,CURLOPT_NOSIGNAL,1L);         // required when the call is made from a thread (the GUI does)
     curl_easy_setopt(curl,CURLOPT_CONNECTTIMEOUT,10L);
     curl_easy_setopt(curl,CURLOPT_TIMEOUT,90L);
-    curl_easy_setopt(curl,CURLOPT_USERAGENT,"LigInt/0.7 RCSB-structure-downloader");
+    curl_easy_setopt(curl,CURLOPT_USERAGENT,"LigInt/" LIGINT_VERSION " RCSB-structure-downloader");
     curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,writeBytes);
     curl_easy_setopt(curl,CURLOPT_WRITEDATA,file);
     curl_easy_setopt(curl,CURLOPT_FAILONERROR,1L);

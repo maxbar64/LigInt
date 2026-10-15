@@ -1,6 +1,6 @@
 {
  "title": "ligint manual",
- "version": "0.7.0",
+ "version": "0.8.0",
  "pages": [
   {
    "id": "index",
@@ -65,6 +65,11 @@
      "level": 2,
      "text": "Opening a structure",
      "id": "opening-a-structure"
+    },
+    {
+     "level": 3,
+     "text": "Downloading a structure from the RCSB",
+     "id": "downloading-a-structure-from-the-rcsb"
     },
     {
      "level": 2,
@@ -292,6 +297,80 @@
    ]
   },
   {
+   "id": "klifs",
+   "title": "KLIFS kinase pockets",
+   "file": "klifs.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "The workflow",
+     "id": "the-workflow"
+    },
+    {
+     "level": 2,
+     "text": "The mapping file",
+     "id": "the-mapping-file"
+    },
+    {
+     "level": 2,
+     "text": "Command line",
+     "id": "command-line"
+    },
+    {
+     "level": 2,
+     "text": "Graphical interface",
+     "id": "graphical-interface"
+    },
+    {
+     "level": 2,
+     "text": "The KLIFS service (not verified)",
+     "id": "the-klifs-service-not-verified"
+    },
+    {
+     "level": 2,
+     "text": "Verified",
+     "id": "verified"
+    },
+    {
+     "level": 2,
+     "text": "Building with network support on Windows (vcpkg)",
+     "id": "building-with-network-support-on-windows-vcpkg"
+    }
+   ]
+  },
+  {
+   "id": "rcsb",
+   "title": "Downloading from the RCSB",
+   "file": "rcsb.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Graphical interface",
+     "id": "graphical-interface"
+    },
+    {
+     "level": 2,
+     "text": "Command line",
+     "id": "command-line"
+    },
+    {
+     "level": 2,
+     "text": "How it works",
+     "id": "how-it-works"
+    },
+    {
+     "level": 2,
+     "text": "Build",
+     "id": "build"
+    },
+    {
+     "level": 2,
+     "text": "Verified and not verified",
+     "id": "verified-and-not-verified"
+    }
+   ]
+  },
+  {
    "id": "validation",
    "title": "Validation and limits",
    "file": "validation.html",
@@ -439,6 +518,11 @@
     },
     {
      "level": 2,
+     "text": "RCSB downloads and KLIFS pockets",
+     "id": "rcsb-downloads-and-klifs-pockets"
+    },
+    {
+     "level": 2,
      "text": "The graphical interface",
      "id": "the-graphical-interface"
     },
@@ -496,6 +580,11 @@
    "title": "Changelog",
    "file": "changelog.html",
    "headings": [
+    {
+     "level": 2,
+     "text": "0.8.0",
+     "id": "080"
+    },
     {
      "level": 2,
      "text": "0.7.0",

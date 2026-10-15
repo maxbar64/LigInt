@@ -69,7 +69,12 @@ endif()
 
 if(_klifs_curl_target AND _klifs_json_target)
     target_compile_definitions(ligint_core PRIVATE LIGINT_KLIFS_ONLINE)
-    target_link_libraries(ligint_core PRIVATE ${_klifs_curl_target} ${_klifs_json_target})
+    # ligint_core is a static library: its dependencies reach the programs that link it, also through the installed CMake package.
+    # The imported targets found here (PkgConfig::..., vcpkg) exist only in this build, so the package names the system libraries instead.
+    target_link_libraries(ligint_core PRIVATE $<BUILD_INTERFACE:${_klifs_curl_target}> $<BUILD_INTERFACE:${_klifs_json_target}>
+                                              $<INSTALL_INTERFACE:curl> $<INSTALL_INTERFACE:json-c>)
+    set(LIGINT_NET_CURL ON CACHE INTERNAL "ligint is built with libcurl")
+    set(LIGINT_NET_JSONC ON CACHE INTERNAL "ligint is built with json-c")
     message(STATUS "ligint: native KLIFS HTTPS enabled (curl=${_klifs_curl_target}, json=${_klifs_json_target})")
 else()
     if(LIGINT_KLIFS_REQUIRE_ONLINE)
@@ -82,7 +87,8 @@ endif()
 option(LIGINT_RCSB_REQUIRE_ONLINE "Fail configure if native RCSB HTTPS is unavailable" OFF)
 if(_klifs_curl_target)
     target_compile_definitions(ligint_core PRIVATE LIGINT_RCSB_ONLINE)
-    target_link_libraries(ligint_core PRIVATE ${_klifs_curl_target})
+    target_link_libraries(ligint_core PRIVATE $<BUILD_INTERFACE:${_klifs_curl_target}> $<INSTALL_INTERFACE:curl>)
+    set(LIGINT_NET_CURL ON CACHE INTERNAL "ligint is built with libcurl")
     message(STATUS "ligint: RCSB HTTPS enabled")
 elseif(LIGINT_RCSB_REQUIRE_ONLINE)
     message(FATAL_ERROR "RCSB HTTPS requires libcurl. Install curl via vcpkg and configure with the vcpkg toolchain.")

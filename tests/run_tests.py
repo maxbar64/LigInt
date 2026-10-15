@@ -17,6 +17,7 @@ Groups:
     fp     interaction fingerprints (CSV/JSON/SVG output, pocket definition files)
     cif    PDBx/mmCIF input (same results as the PDB, long chain ids, malformed files)
     manual the HTML manual (up to date, links resolve, agrees with the program)
+    net    KLIFS pocket definitions and RCSB downloads (no real network traffic)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -30,6 +31,7 @@ import json
 import math
 import os
 import random
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -322,10 +324,11 @@ class Res:
         return sorted({r["kind"] for r in self.rows})
 
 
-def run_raw(args, timeout=120):
+def run_raw(args, timeout=120, env=None):
     t0 = time.time()
     try:
-        p = subprocess.run([CFG["bin"]] + args, capture_output=True, timeout=timeout, cwd=CFG["tmp"])
+        p = subprocess.run([CFG["bin"]] + args, capture_output=True, timeout=timeout, cwd=CFG["tmp"],
+                           env=dict(os.environ, **env) if env else None)
     except subprocess.TimeoutExpired:
         raise Fail("timeout after %d s" % timeout)
     out = p.stdout.decode("utf-8", "replace")
@@ -1426,6 +1429,214 @@ def manual_quickstart_example_is_the_real_output():
     for args in ([], ["AZM"]):
         out = run_raw([pdb] + args).out.rstrip()
         check(out and out in page, "the example of the quick start differs from the output of: ligint 1AZM.pdb %s\n%s" % (" ".join(args), out[:300]))
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP net: KLIFS pocket definitions and RCSB downloads. Nothing here may touch the network: the transfers that must
+# fail are sent to a proxy that does not exist (libcurl honors https_proxy); the cases that succeed use the local cache or a local mapping file.
+# ----------------------------------------------------------------------------------------------
+NO_NETWORK = {"https_proxy": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9", "all_proxy": "http://127.0.0.1:9", "ALL_PROXY": "http://127.0.0.1:9"}
+KLIFS_REGIONS = [("I", 3), ("g.l", 6), ("II", 4), ("III", 6), ("aC", 11), ("b.l", 7), ("IV", 4), ("V", 3), ("GK", 1), ("hinge", 3), ("linker", 4),
+                 ("aD", 7), ("aE", 5), ("VI", 3), ("c.l", 8), ("VII", 3), ("VIII", 1), ("xDFG", 4), ("a.l", 2)]
+KLIFS_HEADER = ("residue.klifs_id", "residue.id", "residue.klifs_region", "residue.aa")
+
+
+def klifs_rows(first_residue=200):
+    rows, p = [], 1
+    for region, n in KLIFS_REGIONS:
+        for _ in range(n):
+            rows.append([p, first_residue + p, region, "ACDEFGHIKLMNPQRSTVWY"[p % 20]])
+            p += 1
+    rows[10] = [11, "_", "II", "_"]            # a residue that is missing in the crystal
+    rows[20] = [21, "221A", "aC", "D"]         # an insertion code
+    return rows
+
+
+def klifs_file(rows, sep="\t", header=KLIFS_HEADER, eol="\n", bom=False, suffix=".tsv"):
+    text = eol.join(sep.join(str(x) for x in r) for r in [header] + rows) + eol
+    return tmpfile(("\ufeff" if bom else "") + text, suffix)
+
+
+def klifs_cli(mapping, out, extra=(), chain="A", pdb="3EYG"):
+    return run_raw(["--klifs-pdb", pdb, "--klifs-chain", chain, "--klifs-mapping", mapping, "--klifs-output", out] + list(extra))
+
+
+@test("net")
+def klifs_mapping_variants_give_the_same_pocket():
+    rows = klifs_rows()
+    outs = {}
+    for name, mapping in {"tsv": klifs_file(rows), "csv": klifs_file(rows, sep=",", suffix=".csv"), "crlf": klifs_file(rows, eol="\r\n"),
+                          "bom": klifs_file(rows, bom=True),
+                          "extra columns and order": klifs_file([[r[2], r[1], "x", r[0], r[3]] for r in rows],
+                                                                header=("residue.klifs_region", "residue.id", "other", "residue.klifs_id", "residue.aa"))}.items():
+        out = os.path.join(CFG["tmp"], "pocket_%s.tsv" % name.replace(" ", "_"))
+        r = klifs_cli(mapping, out)
+        check(r.rc == 0 and "84 mapped positions" in r.err, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
+        outs[name] = open(out).read()
+    check(len(set(outs.values())) == 1, "the variants of the same mapping must give the same pocket: " + str({k: len(v) for k, v in outs.items()}))
+    text = outs["tsv"]
+    lines = [l for l in text.splitlines() if l and l[0] not in "#@"]
+    check(len(lines) == 84 and not any(l.split("\t")[1] == "211" for l in lines), "the missing residue (position 11) must be omitted")
+    check("A\t221A\t21\taC\tASP" in lines, "insertion code and residue name: " + str([l for l in lines if "221" in l]))
+    check("A\t210\t10\tII\tMET" in lines, "residue name from the one-letter code")
+    check(text.count("@color ") == len(KLIFS_REGIONS), "one color per region: %d" % text.count("@color "))
+    # every one-letter code gives the right residue name
+    names = dict(zip("ACDEFGHIKLMNPQRSTVWY", "ALA CYS ASP GLU PHE GLY HIS ILE LYS LEU MET ASN PRO GLN ARG SER THR VAL TRP TYR".split()))
+    got = {}
+    for l in lines:
+        f = l.split("\t")
+        got[int(f[2])] = f[4]
+    for p in range(1, 86):
+        if p in (11,):
+            continue
+        check(got[p] == names["ACDEFGHIKLMNPQRSTVWY"[p % 20]] or p == 21, "position %d: %s" % (p, got[p]))
+
+
+@test("net")
+def klifs_pocket_works_with_the_fingerprint():
+    s = fp_system()                                     # ligand + ASN 10 (chain A) that accepts a hydrogen bond
+    mapping = klifs_file([[1, 9, "I", "A"], [2, 10, "hinge", "N"], [3, "_", "hinge", "_"], [4, 11, "hinge", "G"]], suffix=".tsv")
+    out = os.path.join(CFG["tmp"], "pocket_fp.tsv")
+    check(klifs_cli(mapping, out).rc == 0, "generation")
+    pdb = tmpfile(s.text())
+    r = run_raw([pdb, "LIG", "--fingerprint", "csv", "--pocket", out])
+    rows = [l.split(",") for l in r.out.strip().splitlines()[1:]]
+    check(r.rc == 0 and [x[1:6] for x in rows] == [["ALA 9A", "A", "9", "1", "I"], ["ASN 10A", "A", "10", "2", "hinge"], ["GLY 11A", "A", "11", "4", "hinge"]],
+          "positions and regions of the fingerprint: " + r.out + r.err)
+    check(rows[1][10] == "1", "the hydrogen bond of ASN 10 must be in the position 2: " + str(rows[1]))
+    # the pocket can also be generated and used in one command (--klifs-* instead of --pocket)
+    r2 = run_raw([pdb, "LIG", "--fingerprint", "csv", "--klifs-pdb", "3EYG", "--klifs-chain", "A", "--klifs-mapping", mapping])
+    check(r2.rc == 0 and r2.out == r.out and "3 mapped positions" in r2.err, "one-command form: " + r2.err[:200])
+    json.loads(run_raw([pdb, "LIG", "--fingerprint", "json", "--pocket", out]).out)
+
+
+@test("net")
+def klifs_mapping_errors_are_reported_and_nothing_is_written():
+    good = [[1, 9, "I", "A"], [2, 10, "hinge", "N"]]
+    bad = {"duplicate position": good + [[2, 99, "I", "A"]], "position 0": [[0, 5, "I", "A"]], "position 86": [[86, 5, "I", "A"]],
+           "position not a number": [["x", 5, "I", "A"]], "position with a fraction": [["1.5", 5, "I", "A"]],
+           "residue not a number": [[1, "abc", "I", "A"]], "residue with a fraction": [[1, "12.5", "I", "A"]], "residue with two letters": [[1, "12AB", "I", "A"]],
+           "region missing": [[1, 5, "", "A"]], "only missing residues": [[1, "_", "I", "_"], [2, "_", "I", "_"]]}
+    for name, rows in bad.items():
+        out = os.path.join(CFG["tmp"], "never_%s.tsv" % name.replace(" ", "_"))
+        r = klifs_cli(klifs_file(rows), out)
+        check(r.rc == 1 and r.err.startswith("KLIFS: "), "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
+        check(not os.path.exists(out), "%s: no file must be written on error" % name)
+        no_crash(r)
+    texts = {"empty file": "", "header only": "\t".join(KLIFS_HEADER) + "\n", "wrong columns": "a\tb\tc\n1\t2\t3\n",
+             "binary": bytes(random.Random(1).getrandbits(8) for _ in range(3000)).decode("latin-1"), "only comments": "# one\n# two\n"}
+    for name, text in texts.items():
+        out = os.path.join(CFG["tmp"], "never2_%s.tsv" % name.replace(" ", "_"))
+        r = klifs_cli(tmpfile(text, ".tsv"), out)
+        check(r.rc == 1 and r.err.startswith("KLIFS: "), "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
+        no_crash(r)
+    # accepted and unusual: a negative residue number, a quoted CSV value with a comma, a very long region name
+    for name, rows, suffix, sep in (("negative residue", [[1, "-3", "I", "A"]], ".tsv", "\t"), ("long region", [[1, 5, "x" * 50000, "A"]], ".tsv", "\t")):
+        r = klifs_cli(klifs_file(rows, sep=sep, suffix=suffix), os.path.join(CFG["tmp"], "ok_%s.tsv" % name.replace(" ", "_")))
+        check(r.rc == 0, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
+    q = tmpfile('residue.klifs_id,residue.id,residue.klifs_region\n1,"5","a,b"\n', ".csv")
+    check(klifs_cli(q, os.path.join(CFG["tmp"], "ok_quoted.tsv")).rc == 0, "quoted CSV value")
+    # random corruption of a valid mapping never crashes
+    rnd = random.Random(8)
+    base = open(klifs_file(klifs_rows())).read()
+    for i in range(40):
+        t = list(base)
+        for _ in range(6):
+            k = rnd.randrange(len(t))
+            t[k] = rnd.choice("\t,\n\"#_ 0A9-.")
+        r = klifs_cli(tmpfile("".join(t), ".tsv"), os.path.join(CFG["tmp"], "fuzz.tsv"))
+        check(r.rc in (0, 1), "corrupted mapping %d: rc=%d" % (i, r.rc))
+        no_crash(r)
+
+
+@test("net")
+def klifs_command_line_rules():
+    mapping = klifs_file([[1, 9, "I", "A"], [2, 10, "hinge", "N"]])
+    pdb = tmpfile(fp_system().text())
+    pocket = os.path.join(CFG["tmp"], "rules_pocket.tsv")
+    klifs_cli(mapping, pocket)
+    base = ["--klifs-pdb", "3EYG", "--klifs-chain", "A", "--klifs-mapping", mapping]
+    r = run_raw(["--klifs-pdb", "3EYG", "--klifs-mapping", mapping, "--klifs-output", os.path.join(CFG["tmp"], "x.tsv")])
+    check(r.rc == 1 and "chain is required" in r.err, "chain is required: " + r.err)
+    r = run_raw(base)
+    check(r.rc == 1 and "--klifs-output" in r.err, "a pocket generated with no structure and no output would be lost: rc=%d %s" % (r.rc, r.err))
+    r = run_raw([pdb, "LIG", "--pocket", pocket] + base + ["--fingerprint", "csv"])
+    check(r.rc == 1 and "either --pocket or --klifs" in r.err, "--pocket and --klifs-* together: " + r.err)
+    r = run_raw([pdb, "LIG"] + base)
+    check(r.rc == 0 and "only used with --fingerprint" in r.err, "the pocket is useless without --fingerprint: warn: rc=%d %s" % (r.rc, r.err))
+    r = run_raw(base + ["--klifs-output", "/nonexistent/folder/p.tsv"])
+    check(r.rc == 1 and "Cannot write" in r.err, "unwritable output: " + r.err)
+    for bad in ("abc", "0", "-4", "1.5", ""):
+        r = run_raw(["--klifs-id", bad, "--klifs-chain", "A", "--klifs-mapping", mapping, "--klifs-output", os.path.join(CFG["tmp"], "y.tsv")])
+        check(r.rc == 1 and "Invalid KLIFS structure ID" in r.err, "--klifs-id %r: rc=%d %s" % (bad, r.rc, r.err[:100]))
+    for opt in ("--klifs-pdb", "--klifs-chain", "--klifs-model", "--klifs-mapping", "--klifs-output", "--klifs-id"):
+        r = run_raw([opt])
+        check(r.rc == 1 and "requires a value" in r.err, "%s without a value: %s" % (opt, r.err[:100]))
+    # without a mapping the service is needed: it fails cleanly, offline (a proxy that does not exist) or in a build without it
+    r = run_raw(["--klifs-pdb", "3EYG", "--klifs-chain", "A", "--klifs-output", os.path.join(CFG["tmp"], "z.tsv")], env=NO_NETWORK, timeout=90)
+    check(r.rc == 1 and r.err.startswith("KLIFS: ") and ("unavailable" in r.err or "request failed" in r.err), "KLIFS service not reachable: rc=%d %s" % (r.rc, r.err[:200]))
+    r = run_raw(["--klifs-pdb", "3E/G", "--klifs-chain", "A", "--klifs-output", os.path.join(CFG["tmp"], "z.tsv")], env=NO_NETWORK)
+    check(r.rc == 1 and "four-character PDB ID" in r.err, "invalid PDB ID: " + r.err)
+
+
+def rcsb_cache():
+    d = os.path.join(CFG["tmp"], "rcsb_cache_%d" % random.randrange(10**9))
+    os.makedirs(d)
+    shutil.copy(os.path.join(CFG["real_dir"], "1AZM.pdb"), os.path.join(d, "1AZM.pdb")) if os.path.exists(os.path.join(CFG["real_dir"], "1AZM.pdb")) else \
+        open(os.path.join(d, "1AZM.pdb"), "w").write(fp_system().text() + "\n" * 5)
+    return d
+
+
+@test("net")
+def rcsb_cache_ligand_arguments_and_validation():
+    cache = rcsb_cache()
+    base = ["--download-pdb", "1azm", "--download-cache", cache]
+    r = run_raw(base)
+    check(r.rc == 0 and "RCSB structure: " in r.err and "Ligands (HETATM) present:" in r.out, "cached structure, lower-case ID: " + r.out + r.err)
+    path = run_raw(base + ["--download-only"]).out.strip()
+    check(os.path.basename(path) == "1AZM.pdb" and os.path.exists(path), "--download-only prints the path: " + path)
+    names = re.findall(r"(\S+?)\(\d+\)", r.out.splitlines()[0])
+    lig = "LIG" if "LIG" in names else "AZM"
+    # the ligand can be named in the same command (RESNAME [chain [resseq]])
+    direct = run_raw(["--download-pdb", "1AZM", "--download-cache", cache, lig, "--csv"])
+    separate = run_raw([path, lig, "--csv"])
+    check(direct.rc == 0 and direct.out == separate.out and direct.out.count("\n") > 1, "download + ligand in one command: rc=%d %s" % (direct.rc, direct.err[:200]))
+    check(run_raw(["--download-pdb", "1AZM", "--download-cache", cache, lig, "A", "--csv"]).out.count("\n") >= 1, "with a chain")
+    r = run_raw(base + [path])
+    check(r.rc == 1 and "without a separate structure path" in r.err, "a structure path together with --download-pdb: " + r.err)
+    for bad in ("../x", "1AZ", "1AZMM", "1A_M", "1AZ\u00e9", "", "1AZM/../.."):         # (four letters or digits are a valid ID: they would be downloaded)
+        r = run_raw(["--download-pdb", bad, "--download-cache", cache])
+        check(r.rc == 1 and "four-character alphanumeric PDB ID" in r.err, "ID %r: rc=%d %s" % (bad, r.rc, r.err[:100]))
+        check(sorted(os.listdir(cache)) == ["1AZM.pdb"], "%r: nothing may be created: %s" % (bad, os.listdir(cache)))
+    r = run_raw(base + ["--download-format", "xyz"])
+    check(r.rc == 1 and "format must be pdb or cif" in r.err, "format: " + r.err)
+    check(run_raw(["--download-only"]).rc == 1, "--download-only alone")
+    for opt in ("--download-pdb", "--download-format", "--download-output", "--download-cache"):
+        r = run_raw([opt])
+        check(r.rc == 1 and "requires a value" in r.err, "%s without a value" % opt)
+
+
+@test("net")
+def rcsb_failed_transfers_leave_the_cache_untouched():
+    cache = rcsb_cache()
+    cached = os.path.join(cache, "1AZM.pdb")
+    before = open(cached, "rb").read()
+    # a refresh, a format that is not cached, and a corrupt cache entry all need the network: here it is unreachable
+    for args, what in ((["--download-refresh"], "refresh"), (["--download-format", "cif"], "cif not cached")):
+        r = run_raw(["--download-pdb", "1AZM", "--download-cache", cache] + args, env=NO_NETWORK, timeout=90)
+        check(r.rc == 1 and r.err.count("RCSB: ") >= 1 and ("unavailable" in r.err or "failed" in r.err), "%s: rc=%d %s" % (what, r.rc, r.err[:200]))
+        check(open(cached, "rb").read() == before, "%s: the cached file must not change" % what)
+        check(sorted(os.listdir(cache)) == ["1AZM.pdb"], "%s: no partial file may remain: %s" % (what, os.listdir(cache)))
+    for name, content in (("2ABC.pdb", b"short"), ("3ABC.pdb", b""), ("4ABC.pdb", b"x" * 500)):       # too short / empty / not a structure
+        open(os.path.join(cache, name), "wb").write(content)
+        r = run_raw(["--download-pdb", name[:4], "--download-cache", cache], env=NO_NETWORK, timeout=90)
+        check(r.rc == 1 and "RCSB: " in r.err, "invalid cache entry %s must not be trusted: rc=%d %s" % (name, r.rc, r.err[:150]))
+        check(open(os.path.join(cache, name), "rb").read() == content, "%s: an invalid entry is left as it was" % name)
+    # --download-output chooses the file; a valid file there is used as it is
+    out = os.path.join(cache, "chosen.pdb")
+    shutil.copy(cached, out)
+    r = run_raw(["--download-pdb", "1AZM", "--download-output", out, "--download-only"])
+    check(r.rc == 0 and r.out.strip() == out, "--download-output: " + r.out + r.err)
 
 
 # ----------------------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <QFutureWatcher>
+#include <functional>
 #include <QMainWindow>
 #include <QString>
 #include <QStringList>
@@ -36,6 +37,14 @@ struct AnalysisOutcome {
     QString error;
 };
 
+// Result of a task that runs in the background and ends by opening a file: a download or the generation of a pocket definition.
+struct TaskOutcome {
+    bool ok = false;
+    QString error;
+    QString path;          // the file that was downloaded or written
+    int positions = 0;     // pocket positions (KLIFS)
+};
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -46,6 +55,15 @@ public:
     void setInteractive(bool on) { interactive_ = on; }
 
     bool openStructure(const QString& path);      // reads the structure (PDB or mmCIF) and lists the ligands
+    // Downloads a structure from the RCSB (format "pdb" or "cif") into cacheDir (default: the application data folder) and opens it.
+    // A structure that is already in the cache is not downloaded again. Runs in a background thread; wait = true waits for it (tests).
+    // False if the request is refused (invalid ID, another task running); the result of the transfer is reported in the log.
+    bool downloadRcsb(const QString& id, const QString& format, const QString& cacheDir = QString(), bool wait = false);
+    // Builds a pocket definition from a KLIFS mapping file (mappingFile) or, when it is empty, from the KLIFS service; saves it
+    // in `output` and loads it. Same rules for the thread and the return value.
+    bool generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
+                             const QString& output, bool wait = false);
+    bool taskRunning() const;                     // a download or a KLIFS generation is in progress
     int ligandCount() const;
     void selectLigand(int index);
     void analyze(bool wait = false);              // wait = true: waits for the result (tests)
@@ -138,6 +156,11 @@ private:
     HitsModel* model_ = nullptr;
     HitsFilterProxy* proxy_ = nullptr;
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
+    QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
+    QString taskKind_;                            // "rcsb" or "klifs" while a task runs
+    QString taskLabel_;                           // PDB ID of the running task, for the messages
+    void applyTask(const TaskOutcome& o);
+    void startTask(const QString& kind, const QString& label, const QString& message, std::function<TaskOutcome()> job, bool wait);
     QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;
     QPointer<HelpWindow> help_;
     ligint::PocketDefinition pocket_;

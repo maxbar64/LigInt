@@ -25,6 +25,12 @@ opened, a message explains why and the error is also written in the **Log** tab.
 
 The last folder you used is remembered between sessions.
 
+### Downloading a structure from the RCSB
+
+**File > Download from RCSB...** (or the button of the same name in the **Structure** group) asks for the four-character PDB ID and the format (PDB or mmCIF),
+downloads the file **in the background** (the window stays responsive) and opens it. Structures that were already downloaded are not fetched again. If the
+transfer fails, the message is shown and written in the **Log**. See [Downloading from the RCSB](rcsb.md).
+
 ## Choosing the ligand
 
 The **Ligand** list shows the ligands (`HETATM` residues) of the file, each with its name, chain, residue number and number of atoms:
@@ -72,6 +78,10 @@ not. Templates stay loaded when you open another structure. See [Interactions an
 The **Pocket definition (fingerprint)** group loads a text file that maps residues to positions and regions of a binding pocket, used to
 draw the [fingerprint](fingerprint.md). **Load definition...** reads it, **Clear** removes it. Without a definition the fingerprint
 lists the residues in contact, sorted by number.
+
+**Generate from KLIFS...** builds the definition of a kinase pocket from a KLIFS mapping: it asks for the PDB ID, the chain and the source (a mapping file, or the
+KLIFS service in builds that have network support), where to save the file, works in the background and loads the result. A structure must be open first. See
+[KLIFS kinase pockets](klifs.md), which also explains which alternate conformation to choose.
 
 ## Running an analysis
 

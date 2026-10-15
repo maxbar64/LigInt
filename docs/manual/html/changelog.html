@@ -21,6 +21,25 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="080"><a name="080"></a>0.8.0</h2>
+<ul>
+<li><strong>Downloads from the RCSB</strong> (<code>--download-pdb ID</code>, <code>--download-format</code>, <code>--download-output</code>, <code>--download-cache</code>, <code>--download-refresh</code>, <code>--download-only</code>;
+  GUI: <em>File &gt; Download from RCSB...</em>) and <strong>KLIFS kinase pocket definitions</strong> (<code>--klifs-pdb</code>, <code>--klifs-chain</code>, <code>--klifs-mapping</code>, <code>--klifs-output</code>,
+  <code>--klifs-model</code>, <code>--klifs-id</code>; GUI: <em>Generate from KLIFS...</em>), in C++ with libcurl and json-c, both optional at build time. New library headers
+  <code>ligint/rcsb.hpp</code> and <code>ligint/klifs.hpp</code>; <code>tools/klifs_to_pocket.py</code> is a Python alternative for the online step. Manual pages: <em>Downloading from the RCSB</em>,
+  <em>KLIFS kinase pockets</em>.</li>
+<li><strong>Fixed in review:</strong> with network support the installed CMake package could not be used (<code>find_package(ligint)</code> failed on a build-only target; it now names
+  the system libraries, and the <code>ligint-dev</code> and <code>ligint-devel</code> packages depend on their development packages); <code>--download-pdb</code> could not be combined with
+  a ligand name (the arguments after the options are now the ligand); <code>--klifs-*</code> silently lost the pocket when there was no structure and no <code>--klifs-output</code>,
+  and ignored it without <code>--fingerprint</code> (an error and a warning); the interface blocked for up to 90 s during a download or a KLIFS request (they run now
+  in a background thread, like the analysis) and offered the online KLIFS source in builds that cannot use it; libcurl older than 7.85 (RHEL 9) did not
+  compile; the KLIFS requests did not restrict the protocol of redirects.</li>
+<li>Tests: group <code>net</code> (KLIFS mapping variants, errors and corrupted files; the pocket in the fingerprint; the command-line rules; the RCSB cache, the ID
+  validation and the failed transfers, with no real network traffic), the GUI background tasks, a C++ test of the RCSB cache.</li>
+<li>CI: the Linux jobs install libcurl and json-c, so that the network code is built and tested; the Rocky 9 job tries them too (libcurl 7.76).</li>
+<li>Not verified: a real transfer from the RCSB and from the KLIFS service (the test environment cannot reach them); the address <code>https://klifs.net/api_v2</code> used by
+  the native KLIFS client is unconfirmed.</li>
+</ul>
 <h2 id="070"><a name="070"></a>0.7.0</h2>
 <ul>
 <li><strong>User manual in HTML, inside the program.</strong> <em>Help &gt; User manual</em> (<code>F1</code>) opens a window with the manual: table of contents,
@@ -145,6 +164,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

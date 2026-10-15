@@ -83,6 +83,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     model_ = new HitsModel(this);
     proxy_ = new HitsFilterProxy(this);
     proxy_->setSourceModel(model_);
+    taskWatcher_ = new QFutureWatcher<TaskOutcome>(this);
+    connect(taskWatcher_, &QFutureWatcher<TaskOutcome>::finished, this, [this] { applyTask(taskWatcher_->result()); });
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
@@ -92,6 +94,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 MainWindow::~MainWindow() {
     if (watcher_ && watcher_->isRunning()) watcher_->waitForFinished();
+    if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
 }
 
 void MainWindow::buildUi() {
@@ -696,34 +699,121 @@ void MainWindow::clearPocket() {
     updateFingerprint();
 }
 
-void MainWindow::onGenerateKlifsPocket() {
-    if(path_.isEmpty()) {showError(tr("KLIFS"),tr("Open a PDB/mmCIF structure first."));return;}
-    const QString suggestion=QFileInfo(path_).completeBaseName().left(4).toUpper();
-    bool ok=false;
-    QString pdb=QInputDialog::getText(this,tr("KLIFS PDB"),tr("Four-character PDB ID:"),QLineEdit::Normal,suggestion,&ok);
-    if(!ok)return;
-    QString chain=QInputDialog::getText(this,tr("KLIFS chain"),tr("PDB author chain:"),QLineEdit::Normal,"A",&ok);
-    if(!ok)return;
-    QString model=QInputDialog::getText(this,tr("KLIFS alternate model"),tr("KLIFS model (blank = auto if unique):"),QLineEdit::Normal,QString(),&ok);
-    if(!ok)return;
-    const QString output=QFileDialog::getSaveFileName(this,tr("Save KLIFS pocket"),QFileInfo(path_).absolutePath()+"/"+pdb+"-klifs-pocket.tsv",tr("TSV files (*.tsv)"));
-    if(output.isEmpty())return;
-    QString mapping;
-    const QStringList modes={tr("Online (KLIFS service)"),tr("Local KLIFS mapping CSV/TSV")};
-    const QString mode=QInputDialog::getItem(this,tr("KLIFS source"),tr("Mapping source:"),modes,0,false,&ok);
-    if(!ok)return;
-    if(mode==modes[1]){
-        mapping=QFileDialog::getOpenFileName(this,tr("KLIFS mapping export"),QFileInfo(path_).absolutePath(),tr("Mapping (*.tsv *.csv);;All files (*)"));
-        if(mapping.isEmpty())return;
+// ------------------------------------------------------------------------------------------------
+// downloads from the RCSB and pocket definitions from KLIFS (background tasks)
+// ------------------------------------------------------------------------------------------------
+bool MainWindow::taskRunning() const { return taskWatcher_ && taskWatcher_->isRunning(); }
+
+void MainWindow::startTask(const QString& kind, const QString& label, const QString& message, std::function<TaskOutcome()> job, bool wait) {
+    taskKind_ = kind;
+    taskLabel_ = label;
+    statusBar()->showMessage(message);
+    if (wait) {
+        applyTask(job());
+        return;
     }
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    try {
-        ligint::KlifsOptions options;options.mappingFile=mapping.toStdString();options.pdbId=pdb.toStdString();options.chain=chain.toStdString();options.model=model.toStdString();
-        auto pocket=ligint::generateKlifsPocket(options);
-        ligint::saveKlifsPocket(pocket,output.toStdString());
-        QApplication::restoreOverrideCursor();
-        if(loadPocket(output))log(tr("KLIFS: generated %1 mapped residues").arg(pocket.positions.size()));
-    }catch(const std::exception& e){QApplication::restoreOverrideCursor();showError(tr("KLIFS generation failed"),QString::fromUtf8(e.what()));}
+    QApplication::setOverrideCursor(Qt::BusyCursor);
+    taskWatcher_->setFuture(QtConcurrent::run(job));
+}
+
+void MainWindow::applyTask(const TaskOutcome& o) {
+    while (QApplication::overrideCursor()) QApplication::restoreOverrideCursor();
+    statusBar()->clearMessage();
+    if (!o.ok) {
+        showError(taskKind_ == QLatin1String("rcsb") ? tr("RCSB download failed") : tr("KLIFS generation failed"), o.error);
+        return;
+    }
+    if (taskKind_ == QLatin1String("rcsb")) {
+        log(tr("RCSB: structure %1 saved to %2").arg(taskLabel_, o.path));
+        if (openStructure(o.path)) statusBar()->showMessage(tr("Loaded %1 from RCSB; select a ligand to analyze.").arg(taskLabel_), 10000);
+    } else {
+        if (loadPocket(o.path)) log(tr("KLIFS: generated %1 mapped residues").arg(o.positions));
+    }
+}
+
+bool MainWindow::downloadRcsb(const QString& idIn, const QString& format, const QString& cacheDir, bool wait) {
+    const QString id = idIn.trimmed().toUpper();
+    if (id.size() != 4 || !std::all_of(id.begin(), id.end(), [](QChar c) { return c.isLetterOrNumber() && c.unicode() < 128; })) {
+        showError(tr("RCSB"), tr("Enter a valid four-character PDB ID."));
+        return false;
+    }
+    if (format != QLatin1String("pdb") && format != QLatin1String("cif")) {
+        showError(tr("RCSB"), tr("The format must be pdb or cif."));
+        return false;
+    }
+    if (taskRunning()) return false;
+    ligint::RcsbDownloadOptions options;
+    options.pdbId = id.toStdString();
+    options.format = format.toStdString();
+    options.cacheDir = (cacheDir.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/rcsb" : cacheDir).toStdString();
+    startTask(QStringLiteral("rcsb"), id, tr("Downloading %1 from RCSB…").arg(id), [options]() {
+        TaskOutcome o;
+        try {
+            o.path = QString::fromStdString(ligint::downloadRcsbStructure(options));
+            o.ok = true;
+        } catch (const std::exception& e) {
+            o.error = QString::fromUtf8(e.what());
+        }
+        return o;
+    }, wait);
+    return true;
+}
+
+bool MainWindow::generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
+                                     const QString& output, bool wait) {
+    if (output.isEmpty()) {
+        showError(tr("KLIFS"), tr("No file to save the pocket definition in."));
+        return false;
+    }
+    if (taskRunning()) return false;
+    ligint::KlifsOptions options;
+    options.mappingFile = mappingFile.toStdString();
+    options.pdbId = pdb.trimmed().toStdString();
+    options.chain = chain.trimmed().toStdString();
+    options.model = model.trimmed().toStdString();
+    const std::string out = output.toStdString();
+    startTask(QStringLiteral("klifs"), pdb, mappingFile.isEmpty() ? tr("Asking KLIFS for the pocket of %1…").arg(pdb) : tr("Reading the KLIFS mapping…"),
+              [options, out]() {
+                  TaskOutcome o;
+                  try {
+                      const ligint::PocketDefinition pocket = ligint::generateKlifsPocket(options);
+                      ligint::saveKlifsPocket(pocket, out);
+                      o.path = QString::fromStdString(out);
+                      o.positions = static_cast<int>(pocket.positions.size());
+                      o.ok = true;
+                  } catch (const std::exception& e) {
+                      o.error = QString::fromUtf8(e.what());
+                  }
+                  return o;
+              }, wait);
+    return true;
+}
+
+void MainWindow::onGenerateKlifsPocket() {
+    if (path_.isEmpty()) { showError(tr("KLIFS"), tr("Open a PDB/mmCIF structure first.")); return; }
+    const QString suggestion = QFileInfo(path_).completeBaseName().left(4).toUpper();
+    bool ok = false;
+    const QString pdb = QInputDialog::getText(this, tr("KLIFS PDB"), tr("Four-character PDB ID:"), QLineEdit::Normal, suggestion, &ok);
+    if (!ok) return;
+    const QString chain = QInputDialog::getText(this, tr("KLIFS chain"), tr("PDB author chain:"), QLineEdit::Normal, "A", &ok);
+    if (!ok) return;
+    QStringList modes = {tr("Local KLIFS mapping CSV/TSV")};
+    if (ligint::klifsOnlineAvailable()) modes.prepend(tr("Online (KLIFS service)"));      // the online choice only exists if this build can do it
+    const QString mode = modes.size() == 1 ? modes[0] : QInputDialog::getItem(this, tr("KLIFS source"), tr("Mapping source:"), modes, 0, false, &ok);
+    if (!ok) return;
+    const bool online = ligint::klifsOnlineAvailable() && mode == modes.first();
+    QString mapping, model;
+    if (online) {
+        model = QInputDialog::getText(this, tr("KLIFS alternate model"), tr("KLIFS model (blank = auto if unique):"), QLineEdit::Normal, QString(), &ok);
+        if (!ok) return;
+    } else {
+        mapping = QFileDialog::getOpenFileName(this, tr("KLIFS mapping export"), QFileInfo(path_).absolutePath(), tr("Mapping (*.tsv *.csv);;All files (*)"));
+        if (mapping.isEmpty()) return;
+    }
+    const QString output = QFileDialog::getSaveFileName(this, tr("Save KLIFS pocket"), QFileInfo(path_).absolutePath() + "/" + pdb + "-klifs-pocket.tsv",
+                                                        tr("TSV files (*.tsv)"));
+    if (output.isEmpty()) return;
+    generateKlifsPocket(pdb, chain, model, mapping, output);
 }
 
 void MainWindow::onLoadPocket() {
@@ -797,32 +887,15 @@ void MainWindow::onRowChanged() {
 // files and dialogs
 // ------------------------------------------------------------------------------------------------
 void MainWindow::onDownloadRcsb() {
-    bool ok=false;
-    QString id=QInputDialog::getText(this,tr("Download from RCSB"),tr("PDB ID (four characters):"),QLineEdit::Normal,"3EYG",&ok).trimmed().toUpper();
-    if(!ok)return;
-    if(id.size()!=4 || !std::all_of(id.begin(),id.end(),[](QChar c){return c.isLetterOrNumber() && c.unicode()<128;})) {
-        showError(tr("RCSB"),tr("Enter a valid four-character PDB ID."));return;
-    }
-    const QStringList formats={"PDB (.pdb)","mmCIF (.cif)"};
-    QString format=QInputDialog::getItem(this,tr("RCSB format"),tr("Download format:"),formats,0,false,&ok);
-    if(!ok)return;
-    ligint::RcsbDownloadOptions options;
-    options.pdbId=id.toStdString();
-    options.format=(format==formats[0])?"pdb":"cif";
-    QString directory=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+"/rcsb";
-    options.cacheDir=directory.toStdString();
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-    statusBar()->showMessage(tr("Downloading %1 from RCSB…").arg(id));
-    try {
-        const QString downloaded=QString::fromStdString(ligint::downloadRcsbStructure(options));
-        QApplication::restoreOverrideCursor();
-        log(tr("RCSB: structure %1 saved to %2").arg(id,downloaded));
-        if(openStructure(downloaded)) statusBar()->showMessage(tr("Loaded %1 from RCSB; select a ligand to analyze.").arg(id),10000);
-    }catch(const std::exception& e){
-        QApplication::restoreOverrideCursor();
-        statusBar()->clearMessage();
-        showError(tr("RCSB download failed"),QString::fromUtf8(e.what()));
-    }
+    bool ok = false;
+    const QString label = ligint::rcsbOnlineAvailable() ? tr("PDB ID (four characters):")
+                                                         : tr("PDB ID (four characters). This build has no network support: only structures already downloaded can be opened.");
+    const QString id = QInputDialog::getText(this, tr("Download from RCSB"), label, QLineEdit::Normal, "3EYG", &ok);
+    if (!ok) return;
+    const QStringList formats = {"PDB (.pdb)", "mmCIF (.cif)"};
+    const QString format = QInputDialog::getItem(this, tr("RCSB format"), tr("Download format:"), formats, 0, false, &ok);
+    if (!ok) return;
+    downloadRcsb(id, format == formats[0] ? QStringLiteral("pdb") : QStringLiteral("cif"));
 }
 
 void MainWindow::onOpen() {

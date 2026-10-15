@@ -1,4 +1,5 @@
 #include "ligint/klifs.hpp"
+#include "ligint/ligint.hpp"
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -41,7 +42,13 @@ std::vector<std::map<std::string,std::string>> readCsv(const std::string& filena
 }
 #ifdef LIGINT_KLIFS_ONLINE
 size_t receive(char* ptr,size_t sz,size_t nm,void* user){auto& b=*static_cast<std::string*>(user);if(b.size()+sz*nm>8000000)return 0;b.append(ptr,sz*nm);return sz*nm;}
-std::string fetch(const std::string& url){ CURL* c=curl_easy_init();if(!c)throw std::runtime_error("curl initialization failed");std::string result;curl_easy_setopt(c,CURLOPT_URL,url.c_str());curl_easy_setopt(c,CURLOPT_FOLLOWLOCATION,1L);curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT,10L);curl_easy_setopt(c,CURLOPT_TIMEOUT,25L);curl_easy_setopt(c,CURLOPT_USERAGENT,"LigInt/0.7 KLIFS-pocket");curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,receive);curl_easy_setopt(c,CURLOPT_WRITEDATA,&result);auto rc=curl_easy_perform(c);long code=0;curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&code);curl_easy_cleanup(c);if(rc!=CURLE_OK||code!=200)throw std::runtime_error("KLIFS request failed (HTTP "+std::to_string(code)+", curl "+std::to_string(rc)+"): "+url);return result;}
+std::string fetch(const std::string& url){ CURL* c=curl_easy_init();if(!c)throw std::runtime_error("curl initialization failed");std::string result;curl_easy_setopt(c,CURLOPT_URL,url.c_str());curl_easy_setopt(c,CURLOPT_FOLLOWLOCATION,1L);curl_easy_setopt(c,CURLOPT_MAXREDIRS,3L);
+#if LIBCURL_VERSION_NUM >= 0x075500
+    curl_easy_setopt(c,CURLOPT_PROTOCOLS_STR,"https");curl_easy_setopt(c,CURLOPT_REDIR_PROTOCOLS_STR,"https");
+#else
+    curl_easy_setopt(c,CURLOPT_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));curl_easy_setopt(c,CURLOPT_REDIR_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));
+#endif
+    curl_easy_setopt(c,CURLOPT_NOSIGNAL,1L);curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT,10L);curl_easy_setopt(c,CURLOPT_TIMEOUT,25L);curl_easy_setopt(c,CURLOPT_USERAGENT,"LigInt/" LIGINT_VERSION " KLIFS-pocket");curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,receive);curl_easy_setopt(c,CURLOPT_WRITEDATA,&result);auto rc=curl_easy_perform(c);long code=0;curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&code);curl_easy_cleanup(c);if(rc!=CURLE_OK||code!=200)throw std::runtime_error("KLIFS request failed (HTTP "+std::to_string(code)+", curl "+std::to_string(rc)+"): "+url);return result;}
 struct Json {json_object* p;explicit Json(const std::string& s):p(json_tokener_parse(s.c_str())){if(!p)throw std::runtime_error("Invalid KLIFS JSON response");}~Json(){json_object_put(p);} };
 std::string val(json_object* o,const char* k){json_object* v=nullptr;if(!o||!json_object_object_get_ex(o,k,&v)||!v||json_object_get_type(v)==json_type_null)return {};return json_object_get_string(v);}
 std::vector<json_object*> objects(json_object* root){std::vector<json_object*> result;if(!root)return result;if(json_object_get_type(root)==json_type_array){for(size_t i=0;i<json_object_array_length(root);++i)result.push_back(json_object_array_get_idx(root,i));}else if(json_object_get_type(root)==json_type_object)result.push_back(root);return result;}

@@ -67,6 +67,19 @@ bridge, at most two bridges per donor water). See <a href="benchmark.html">Compa
 <h2 id="a-warning-about-invalid-coordinates"><a name="a-warning-about-invalid-coordinates"></a>A warning about invalid coordinates</h2>
 <p><code>Warning: N atoms with invalid coordinates ignored</code>: some atoms have missing or absurd coordinates (for example <code>?</code> in an mmCIF file or
 a value beyond 100,000 A) and were skipped.</p>
+<h2 id="rcsb-downloads-and-klifs-pockets"><a name="rcsb-downloads-and-klifs-pockets"></a>RCSB downloads and KLIFS pockets</h2>
+<p><strong><code>RCSB: RCSB requires a four-character alphanumeric PDB ID</code>.</strong> The ID is four letters or digits (<code>3EYG</code>); extended identifiers are not supported by the download.</p>
+<p><strong><code>RCSB HTTPS unavailable: rebuild with libcurl</code>.</strong> This build of ligint has no network support: it can only open structures that are already in the cache or
+that you downloaded yourself. Packages and builds with libcurl have it (<a href="rcsb.html#build">Downloading from the RCSB</a>).</p>
+<p><strong><code>RCSB download failed ... (HTTP 0, Couldn't resolve host name)</code>.</strong> No network connection or a proxy problem: libcurl uses the usual proxy variables
+(<code>https_proxy</code>). A file that was already in the cache is not touched.</p>
+<p><strong><code>Use --download-pdb without a separate structure path</code>.</strong> With <code>--download-pdb</code> give only the ligand (<code>ligint --download-pdb 3EYG STI</code>); the structure is the downloaded file.</p>
+<p><strong><code>KLIFS: Duplicate KLIFS position</code>, <code>Invalid KLIFS pocket position</code>, <code>Invalid PDB residue</code>, <code>KLIFS region missing</code>.</strong> The mapping file is not valid: see
+<a href="klifs.html#the-mapping-file">the mapping file</a>. No pocket file is written when there is an error.</p>
+<p><strong><code>KLIFS: KLIFS request failed</code> or <code>Online KLIFS unavailable</code>.</strong> The service could not be reached, or this build has no network support. Use a mapping file
+(<code>--klifs-mapping</code>); the online path of the native client is not verified (<a href="klifs.html#the-klifs-service-not-verified">KLIFS kinase pockets</a>).</p>
+<p><strong>The pocket is built but the figure has fewer than 85 cells.</strong> The residues that are missing in the crystal (<code>_</code> in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
+of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.</p>
 <h2 id="the-graphical-interface"><a name="the-graphical-interface"></a>The graphical interface</h2>
 <p><strong>It does not start on Linux, with a message about the Qt platform plugin.</strong> Install the Qt platform plugins (<code>qt6-qpa-plugins</code> on Debian and
 Ubuntu); if the message mentions <code>xcb-cursor</code>, install <code>libxcb-cursor0</code>. To start the program only for tests, without a screen, use
@@ -81,6 +94,6 @@ SVG export still produces the figure.</p>
 the GUI, copy it with <strong>File &gt; Copy command line</strong>), what you expected and what happened, and, if you can share it, the structure file (or its PDB code).
 For the graphical interface add the contents of the <strong>Log</strong> tab.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
-<p class="foot">ligint 0.7.0 manual</p>
+<p class="foot">ligint 0.8.0 manual</p>
 </body>
 </html>

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.0
+
+- **Downloads from the RCSB** (`--download-pdb ID`, `--download-format`, `--download-output`, `--download-cache`, `--download-refresh`, `--download-only`;
+  GUI: *File > Download from RCSB...*) and **KLIFS kinase pocket definitions** (`--klifs-pdb`, `--klifs-chain`, `--klifs-mapping`, `--klifs-output`,
+  `--klifs-model`, `--klifs-id`; GUI: *Generate from KLIFS...*), in C++ with libcurl and json-c, both optional at build time. New library headers
+  `ligint/rcsb.hpp` and `ligint/klifs.hpp`; `tools/klifs_to_pocket.py` is a Python alternative for the online step. Manual pages: *Downloading from the RCSB*,
+  *KLIFS kinase pockets*.
+- **Fixed in review:** with network support the installed CMake package could not be used (`find_package(ligint)` failed on a build-only target; it now names
+  the system libraries, and the `ligint-dev` and `ligint-devel` packages depend on their development packages); `--download-pdb` could not be combined with
+  a ligand name (the arguments after the options are now the ligand); `--klifs-*` silently lost the pocket when there was no structure and no `--klifs-output`,
+  and ignored it without `--fingerprint` (an error and a warning); the interface blocked for up to 90 s during a download or a KLIFS request (they run now
+  in a background thread, like the analysis) and offered the online KLIFS source in builds that cannot use it; libcurl older than 7.85 (RHEL 9) did not
+  compile; the KLIFS requests did not restrict the protocol of redirects.
+- Tests: group `net` (KLIFS mapping variants, errors and corrupted files; the pocket in the fingerprint; the command-line rules; the RCSB cache, the ID
+  validation and the failed transfers, with no real network traffic), the GUI background tasks, a C++ test of the RCSB cache.
+- CI: the Linux jobs install libcurl and json-c, so that the network code is built and tested; the Rocky 9 job tries them too (libcurl 7.76).
+- Not verified: a real transfer from the RCSB and from the KLIFS service (the test environment cannot reach them); the address `https://klifs.net/api_v2` used by
+  the native KLIFS client is unconfirmed.
+
 ## 0.7.0
 
 - **User manual in HTML, inside the program.** *Help > User manual* (`F1`) opens a window with the manual: table of contents,
