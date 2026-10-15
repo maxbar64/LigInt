@@ -1,0 +1,2 @@
+# Python module used by tools/build_manual.py; the HTML in docs/manual/html was generated with this exact version
+markdown==3.10.2
