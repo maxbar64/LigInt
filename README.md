@@ -59,7 +59,7 @@ With CMake ≥ 3.21 you can use the presets: `cmake --preset release && cmake --
 ```
 ligint structure.pdb                       list the ligands (HETATM) present, with the number of copies
 ligint structure.pdb ATP                   analyze all ATP ligands
-ligint structure.pdb ATP A 501             only chain A, residue 501
+ligint structure.pdb ATP A 501             only chain A, residue 501 (501A = with insertion code A, 501- = without a code)
 ligint structure.pdb ATP --csv             CSV output (service information goes to stderr)
 ligint structure.pdb LIG --sdf lig.sdf     chemical annotation from SDF (also --mol2)
 ligint structure.pdb LIG --plip-like       preset for the comparison with PLIP
@@ -87,6 +87,14 @@ residues in contact, ions and waters, with the interactions colored by type, dis
 Selecting a row of the table highlights the interaction in the view. You can filter the types, add SDF/MOL2
 templates, export the interactions to CSV and save the image as PNG. The **Fingerprint** tab shows the figure and the
 table (pocket definition loaded from the control panel; export to SVG, CSV or JSON). The analysis runs in a separate thread.
+
+**Reproducing a GUI analysis outside the GUI.** After each analysis the *Log* tab shows the equivalent `ligint` command, and
+*File > Copy command line* (Ctrl+Shift+C) copies it; *Copy fingerprint command line* gives the same analysis with
+`--fingerprint svg` and the pocket definition currently loaded. The command contains only the settings that differ from the
+defaults, with the PLIP-like preset written out as the explicit options it sets. It is quoted for POSIX shells (bash, zsh);
+for `cmd` or PowerShell the quoting must be adapted. Template and pocket files appear with their absolute paths, so the command
+works as long as the files stay where they are. A ligand with a blank chain ID is selected with the chain `' '`. The tests run
+the generated commands through a shell with the real CLI and compare the result with the one shown by the GUI.
 
 ![3D view on 4IKF (integrase inhibitor, Mg, DNA)](docs/img/gui-4IKF-viewer.png)
 
@@ -163,7 +171,7 @@ uncertain effect.
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     73 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     74 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements

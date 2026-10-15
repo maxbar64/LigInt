@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0
+
+- GUI: the equivalent `ligint` command line of each analysis is written in the Log tab and can be copied
+  (*File > Copy command line*, *Copy fingerprint command line*). Only non-default settings appear; the PLIP-like preset is
+  written as the explicit options it sets; quoting is for POSIX shells.
+- The command line selects a ligand by residue number with an optional insertion code: `501` (any), `501A` (code A),
+  `501-` (no code); a malformed residue number is now an error instead of being read as 0. In the library: `Options::icode`.
+- The ligand header and `LigandResult` now show/carry the insertion code (`=== Ligand LIG 5A chain L ...`); the output is
+  otherwise unchanged (1075 runs compared with 0.3.0).
+- Tests: the GUI smoke test runs the generated commands through `/bin/sh` with the real `ligint` and compares them with the
+  result shown by the window (default settings, preset and options, SDF template, insertion codes, fingerprint SVG, shell quoting).
+
 ## 0.3.0
 
 Interaction fingerprints (one row per protein residue, one column per interaction class):

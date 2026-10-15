@@ -37,8 +37,8 @@ void printText(std::ostream& out, const Result& r) {
     for (auto& s : r.info) out << s << "\n";
     for (auto& lig : r.ligands) {
         for (auto& s : lig.info) out << s << "\n";
-        out << fmt("\n=== Ligand %s %d chain %s: %zu atoms, %zu rings ===\n", lig.resName.c_str(), lig.resi,
-                   lig.chain.c_str(), lig.atoms.size(), lig.nRings);
+        out << fmt("\n=== Ligand %s %d%s chain %s: %zu atoms, %zu rings ===\n", lig.resName.c_str(), lig.resi,
+                   lig.icode == ' ' ? "" : std::string(1, lig.icode).c_str(), lig.chain.c_str(), lig.atoms.size(), lig.nRings);
         out << fmt("%-24s %-3s %-20s %-20s %-6s %s\n", "Type", "Fav", "Ligand atom", "Protein atom", "d(A)", "Notes");
         std::map<std::string, int> cnt;
         for (auto& h : lig.hits) {

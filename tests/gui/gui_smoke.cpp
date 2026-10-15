@@ -1,12 +1,20 @@
 // GUI smoke test: opens a PDB, analyzes, checks tables, filters and rendering ("offscreen" platform).
 #include <QApplication>
+#include <QCheckBox>
+#include <QClipboard>
+#include <QDir>
+#include <QDoubleSpinBox>
 #include <QFile>
+#include <QFileInfo>
+#include <QAction>
+#include <QProcess>
 #include <QImage>
 #include <QSet>
 #include <QTableWidget>
 #include <QTemporaryDir>
 #include <iostream>
 
+#include "CommandLine.h"
 #include "HitsModel.h"
 #include "MainWindow.h"
 #include "ViewerWidget.h"
@@ -19,6 +27,55 @@ static int failures = 0;
             failures++;                                                                \
         }                                                                              \
     } while (0)
+
+
+#ifndef Q_OS_WIN
+// runs a command line through /bin/sh (so that the quoting is really exercised); returns stdout
+static QString runShell(const QString& cmd, bool* ok) {
+    QProcess p;
+    p.start("/bin/sh", {"-c", cmd});
+    const bool done = p.waitForFinished(60000);
+    if (ok) *ok = done && p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0;
+    return QString::fromUtf8(p.readAllStandardOutput());
+}
+
+// the command printed by the GUI, with `ligint` replaced by the real binary and --csv appended
+static QString withBinary(const QString& cmd, const QString& binary, const QString& extra) {
+    return gui::shellQuote(binary) + cmd.mid(QString("ligint").size()) + extra;
+}
+
+static QStringList csvKeys(const QString& csv) {
+    QStringList keys;
+    const QStringList lines = csv.split('\n', Qt::SkipEmptyParts);
+    for (int i = 1; i < lines.size(); i++) {
+        const QStringList f = lines[i].split(',');
+        if (f.size() >= 7) keys << (f[1] + "|" + f[3] + "|" + f[4] + "|" + f[5] + "|" + f[6]);
+    }
+    keys.sort();
+    return keys;
+}
+
+static QStringList hitKeys(const ligint::LigandResult& lig) {
+    QStringList keys;
+    for (const auto& h : lig.hits)
+        keys << (QString::fromStdString(h.type) + "|" + QString::fromStdString(h.ligandAtom) + "|" + QString::fromStdString(h.proteinAtom) + "|" +
+                 QString::number(h.distance, 'f', 2) + "|" + QString::fromStdString(h.note));
+    keys.sort();
+    return keys;
+}
+
+// runs the last command of the window with the real CLI and compares it with what the window shows
+static void checkEquivalence(gui::MainWindow& w, const QString& binary, const char* what, bool allowEmpty = false) {
+    bool ok = false;
+    const QString out = runShell(withBinary(w.lastCommandLine(), binary, " --csv"), &ok);
+    const QStringList a = csvKeys(out), b = hitKeys(w.result().ligands.front());
+    if (!ok || (a.isEmpty() && !allowEmpty) || a != b) {
+        std::cerr << "command line not equivalent (" << what << "): " << w.lastCommandLine().toStdString() << "\n  cli " << a.size()
+                  << " rows, gui " << b.size() << " rows, ok=" << ok << "\n";
+        failures++;
+    }
+}
+#endif
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
@@ -89,6 +146,127 @@ int main(int argc, char** argv) {
     CHECK(!w.exportFingerprint(dir.filePath("fp.txt")));          // unknown format
     w.clearPocket();
     CHECK(w.fingerprint().entries.size() == contacts);
+
+
+#ifndef Q_OS_WIN
+    // ---- command line equivalent to the GUI settings (needs the real CLI binary as 2nd argument)
+    if (argc > 2) {
+        const QString binary = argv[2];
+        const QString dataDir = QFileInfo(argv[1]).absolutePath();
+        const QString absPdb = QFileInfo(argv[1]).absoluteFilePath();
+        auto box = [&](const char* name) { return w.findChild<QCheckBox*>(name); };
+        auto spin = [&](const char* name) { return w.findChild<QDoubleSpinBox*>(name); };
+        CHECK(box("opt_water") && box("opt_plip") && spin("thr_hbMax"));
+        auto resetUi = [&] {
+            box("opt_plip")->setChecked(false);
+            box("opt_water")->setChecked(true);
+            box("opt_merge")->setChecked(true);
+            box("opt_backbone")->setChecked(false);
+            box("opt_metalDonors")->setChecked(false);
+            spin("thr_hbMax")->setValue(3.5); spin("thr_hbLong")->setValue(0); spin("thr_saltMax")->setValue(4.0);
+            spin("thr_saltCentroid")->setValue(0); spin("thr_hydMax")->setValue(4.0); spin("thr_piAngle")->setValue(30);
+        };
+        CHECK(w.openStructure(argv[1]));
+        w.selectLigand(0);
+        resetUi();
+        CHECK(w.lastCommandLine().isEmpty());                                   // nothing before an analysis
+        const QString base = "ligint " + gui::shellQuote(absPdb) + " AZM A 262";
+        CHECK(w.commandLine() == base);                                         // defaults: no options at all
+        w.analyze(true);
+        CHECK(w.lastCommandLine() == base);
+        CHECK(w.logText().contains("Command line: " + base));
+        checkEquivalence(w, binary, "defaults");
+
+        resetUi();                                                              // preset + no water
+        box("opt_plip")->setChecked(true);
+        box("opt_water")->setChecked(false);
+        w.analyze(true);
+        const QString c2 = w.lastCommandLine();
+        CHECK(c2.contains("--no-water") && c2.contains("--hb-long 4.1") && c2.contains("--salt-centroid 5.5") && c2.contains("--hal-max 4"));
+        CHECK(!c2.contains("--plip-like"));                                     // explicit options: valid even if the preset changes
+        checkEquivalence(w, binary, "plip-like, no water");
+
+        resetUi();                                                              // many settings
+        box("opt_backbone")->setChecked(true);
+        box("opt_merge")->setChecked(false);
+        box("opt_metalDonors")->setChecked(true);
+        spin("thr_hbMax")->setValue(3.8); spin("thr_hydMax")->setValue(4.5); spin("thr_piAngle")->setValue(40); spin("thr_saltMax")->setValue(4.5);
+        w.analyze(true);
+        const QString c3 = w.lastCommandLine();
+        for (const char* opt : {"--no-merge", "--backbone-hyd", "--metal-donors", "--hb-max 3.8", "--hyd-max 4.5", "--pi-angle 40", "--salt-max 4.5"})
+            CHECK(c3.contains(opt));
+        checkEquivalence(w, binary, "many settings");
+
+        resetUi();                                                              // back to the defaults
+        CHECK(w.commandLine() == base);
+
+        // the copy action puts the last command in the clipboard
+        for (QAction* a : w.findChildren<QAction*>())
+            if (a->text().contains("command line") && !a->text().contains("ingerprint")) { CHECK(a->isEnabled()); a->trigger(); }
+        CHECK(QApplication::clipboard()->text() == w.lastCommandLine());
+
+        // fingerprint command: same figure as the window, with the pocket definition currently loaded
+        CHECK(w.fingerprintCommandLine("csv").contains("--fingerprint csv") && !w.fingerprintCommandLine("csv").contains("--pocket"));
+        CHECK(w.loadPocket(pocketPath));
+        const QString fpCmd = w.fingerprintCommandLine("svg");
+        CHECK(fpCmd.contains("--fingerprint svg --pocket"));
+        bool ok = false;
+        const QString svg = runShell(withBinary(fpCmd, binary, ""), &ok);
+        CHECK(ok && svg.toStdString() == ligint::fingerprintSvg(w.fingerprint()));
+        w.clearPocket();
+
+        // a template adds its path to the command; the CLI result matches the window
+        CHECK(w.openStructure(dataDir + "/1efy.pdb"));
+        w.selectLigand(0);
+        resetUi();
+        CHECK(w.addTemplate(dataDir + "/1efy.sdf"));
+        w.analyze(true);
+        const QString c4 = w.lastCommandLine();
+        CHECK(c4.contains("--sdf") && c4.contains("1efy.sdf") && c4.contains(" BZC "));
+        CHECK(w.logText().contains("template"));
+        checkEquivalence(w, binary, "SDF template");
+        CHECK(w.openStructure(argv[1]));                                        // templates stay for the next structure
+        CHECK(w.commandLine().contains("--sdf"));
+
+        // two residues that differ only in the insertion code: the code appears in the command and selects exactly that one
+        {
+            const QString tricky = dir.filePath("insertion.pdb");
+            QFile f(tricky);
+            CHECK(f.open(QIODevice::WriteOnly));
+            auto line = [](int serial, const char* name, const char* res, char chain, int resi, char icode, double x, double y, double z, const char* el) {
+                return QString::asprintf("HETATM%5d %-4s %3s %c%4d%c   %8.3f%8.3f%8.3f  1.00 20.00          %2s\n", serial, name, res, chain, resi, icode, x, y, z, el).toUtf8();
+            };
+            f.write(line(1, " C1 ", "LIG", 'A', 5, ' ', 0, 0, 0, "C"));
+            f.write(line(2, " O1 ", "LIG", 'A', 5, ' ', 1.43, 0, 0, "O"));
+            f.write(line(3, " C1 ", "LIG", 'A', 5, 'A', 20, 0, 0, "C"));
+            f.write(line(4, " O1 ", "LIG", 'A', 5, 'A', 21.43, 0, 0, "O"));
+            f.write("ATOM      5  OD1 ASN A  10      23.700   2.420   0.000  1.00 20.00           O\nEND\n");
+            f.close();
+            gui::MainWindow w2;
+            w2.setInteractive(false);
+            CHECK(w2.openStructure(tricky) && w2.ligandCount() == 2);
+            for (int i = 0; i < w2.ligandCount(); i++) {
+                w2.selectLigand(i);
+                w2.analyze(true);
+                const QString c = w2.lastCommandLine();
+                CHECK(c.endsWith(" 5A") || c.endsWith(" 5-"));
+                checkEquivalence(w2, binary, "insertion code", true);        // the residue without a code has no contacts
+                if (c.endsWith(" 5A")) CHECK(!w2.result().ligands.front().hits.empty());
+                CHECK(w2.result().ligands.size() == 1);
+            }
+        }
+
+        // shell quoting: every argument comes back unchanged through a real shell
+        const QStringList tricky = {"plain", "a b", "it's", "$HOME", "`id`", "*", "é", "a\"b", "x;y", "-5", " ", "back\\slash"};
+        QString cmd = "printf '%s\\n'";
+        for (const QString& t : tricky) cmd += " " + gui::shellQuote(t);
+        bool q = false;
+        const QStringList back = runShell(cmd, &q).split('\n');
+        CHECK(q);
+        for (int i = 0; i < tricky.size(); i++) CHECK(i < back.size() && back[i] == tricky[i]);
+        CHECK(gui::shellQuote("") == "''" && gui::shellQuote("plain-1.2/x") == "plain-1.2/x" && gui::shellQuote("a b") == "'a b'");
+    }
+#endif
 
     if (failures) { std::cerr << failures << " checks failed\n"; return 1; }
     std::cout << "ligint_gui_smoke: ok (" << w.hitsModel()->rowCount() << " interactions, image saved)\n";

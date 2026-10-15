@@ -1,7 +1,9 @@
 #include "MainWindow.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QDragEnterEvent>
@@ -32,10 +34,12 @@
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <map>
 #include <sstream>
 
+#include "CommandLine.h"
 #include "HitsModel.h"
 #include "Style.h"
 #include "SvgView.h"
@@ -97,6 +101,13 @@ void MainWindow::buildUi() {
     exportAct_ = makeAction(file, tr("Export interactions (&CSV)…"), &MainWindow::onExportCsv);
     imageAct_ = makeAction(file, tr("&Save image…"), &MainWindow::onSaveImage);
     fpAct_ = makeAction(file, tr("Export &fingerprint…"), &MainWindow::onExportFingerprint);
+    file->addSeparator();
+    cmdAct_ = makeAction(file, tr("Copy &command line"), &MainWindow::onCopyCommand, QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
+    fpCmdAct_ = makeAction(file, tr("Copy fingerprint command line"), &MainWindow::onCopyFingerprintCommand);
+    cmdAct_->setToolTip(tr("The ligint command that reproduces the last analysis outside the GUI"));
+    cmdAct_->setEnabled(false);
+    fpCmdAct_->setEnabled(false);
+    file->addSeparator();
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(false);
     fpAct_->setEnabled(false);
@@ -271,6 +282,19 @@ void MainWindow::buildUi() {
     leftScroll->setMaximumWidth(380);
     setCentralWidget(split);
 
+    // object names: used by the tests to drive the controls
+    water_->setObjectName("opt_water");
+    merge_->setObjectName("opt_merge");
+    plipLike_->setObjectName("opt_plip");
+    backbone_->setObjectName("opt_backbone");
+    metalDonors_->setObjectName("opt_metalDonors");
+    hbMax_->setObjectName("thr_hbMax");
+    hbLong_->setObjectName("thr_hbLong");
+    saltMax_->setObjectName("thr_saltMax");
+    saltCentroid_->setObjectName("thr_saltCentroid");
+    hydMax_->setObjectName("thr_hydMax");
+    piAngle_->setObjectName("thr_piAngle");
+
     // ---- view toolbar
     auto* tb = addToolBar(tr("View"));
     tb->setMovable(false);
@@ -321,6 +345,9 @@ bool MainWindow::openStructure(const QString& path) {
     fp_ = ligint::Fingerprint();
     fpTable_->setRowCount(0);
     fpAct_->setEnabled(false);
+    lastArgs_.clear();
+    cmdAct_->setEnabled(false);
+    fpCmdAct_->setEnabled(false);
     fileLabel_->setText(QFileInfo(path).fileName());
     setWindowTitle(tr("ligint — %1").arg(QFileInfo(path).fileName()));
     for (const auto& w : listing.warnings) log(QString::fromStdString(w));
@@ -365,6 +392,7 @@ bool MainWindow::addTemplate(const QString& path) {
         return false;
     }
     templates_.insert(templates_.end(), t.begin(), t.end());
+    templatePaths_ << QFileInfo(path).absoluteFilePath();
     templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecules)").arg(t.size());
     templateLabel_->setText(templateNames_.join("\n"));
     log(tr("Template loaded: %1").arg(path));
@@ -396,6 +424,7 @@ ligint::Options MainWindow::buildOptions() const {
         opt.ligName = l.res;
         opt.chain = l.chain;
         opt.resi = l.resi;
+        opt.icode = l.icode;
     }
     opt.useWater = water_->isChecked();
     opt.mergeLinked = merge_->isChecked();
@@ -420,6 +449,7 @@ void MainWindow::analyze(bool wait) {
     if (path_.isEmpty() || ligandCombo_->currentIndex() < 0) return;
     if (watcher_->isRunning()) return;
     const ligint::Options opt = buildOptions();
+    pendingArgs_ = currentArgs();
     const QString path = path_;
     runButton_->setEnabled(false);
     statusBar()->showMessage(tr("Analysis in progress…"));
@@ -450,7 +480,9 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
         return;
     }
     const ligint::LigandResult& lig = result_.ligands.front();
+    lastArgs_ = pendingArgs_;
     for (const auto& s : lig.info) log(QString::fromStdString(s));
+    log(tr("Command line: ") + lastCommandLine());
     if (!lig.metalSphere.empty()) log(tr("Coordination sphere of the metals:\n") + QString::fromStdString(lig.metalSphere));
     model_->setHits(lig.hits);
     viewer_->setLigand(lig);
@@ -458,6 +490,8 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     fillResidueTable();
     updateFingerprint();
     fpAct_->setEnabled(true);
+    cmdAct_->setEnabled(true);
+    fpCmdAct_->setEnabled(true);
     table_->resizeColumnsToContents();
     table_->sortByColumn(HitsModel::Type, Qt::AscendingOrder);
     exportAct_->setEnabled(true);
@@ -513,6 +547,70 @@ void MainWindow::fillResidueTable() {
 }
 
 // ------------------------------------------------------------------------------------------------
+// command line equivalent to the GUI settings
+// ------------------------------------------------------------------------------------------------
+QStringList MainWindow::currentArgs() const {
+    QStringList a;
+    a << QFileInfo(path_).absoluteFilePath();
+    const int idx = ligandCombo_->currentIndex();
+    if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
+        const auto& l = shownLigands_[idx];
+        a << QString::fromStdString(l.res) << QString::fromStdString(l.chain);
+        // the insertion code is written only when it is needed to tell this residue from another one with the same number
+        bool ambiguous = false;
+        for (const auto& o : allLigands_)
+            if (o.res == l.res && o.chain == l.chain && o.resi == l.resi && o.icode != l.icode) ambiguous = true;
+        QString number = QString::number(l.resi);
+        if (ambiguous) number += l.icode == ' ' ? QStringLiteral("-") : QString(QChar(l.icode));
+        a << number;
+    }
+    // only the settings that differ from the program defaults
+    const ligint::Params d;
+    auto thr = [&](const char* name, double value, double def) {
+        if (std::fabs(value - def) > 1e-9) a << QStringLiteral("--%1").arg(name) << QString::number(value, 'g', 6);
+    };
+    if (!water_->isChecked()) a << "--no-water";
+    if (!merge_->isChecked()) a << "--no-merge";
+    if (backbone_->isChecked()) a << "--backbone-hyd";
+    if (metalDonors_->isChecked()) a << "--metal-donors";
+    thr("hb-max", hbMax_->value(), d.hbMax);
+    thr("hb-long", hbLong_->value(), d.hbLong);
+    thr("salt-max", saltMax_->value(), d.saltMax);
+    thr("salt-centroid", saltCentroid_->value(), d.saltCentroid);
+    thr("hyd-max", hydMax_->value(), d.hydMax);
+    thr("pi-angle", piAngle_->value(), d.piAngle);
+    if (plipLike_->isChecked()) thr("hal-max", 4.0, d.halMax);     // the preset also lowers the halogen distance
+    for (const QString& t : templatePaths_) a << (t.endsWith(".mol2", Qt::CaseInsensitive) ? "--mol2" : "--sdf") << t;
+    return a;
+}
+
+QString MainWindow::commandLine() const { return joinCommand("ligint", currentArgs()); }
+
+QString MainWindow::lastCommandLine() const { return lastArgs_.isEmpty() ? QString() : joinCommand("ligint", lastArgs_); }
+
+QString MainWindow::fingerprintCommandLine(const QString& format) const {
+    if (lastArgs_.isEmpty()) return QString();
+    QStringList a = lastArgs_;
+    a << "--fingerprint" << format;
+    if (havePocket_ && !pocketPath_.isEmpty()) a << "--pocket" << pocketPath_;
+    return joinCommand("ligint", a);
+}
+
+void MainWindow::onCopyCommand() {
+    const QString c = lastCommandLine();
+    if (c.isEmpty()) return;
+    QApplication::clipboard()->setText(c);
+    statusBar()->showMessage(tr("Command line copied"), 4000);
+}
+
+void MainWindow::onCopyFingerprintCommand() {
+    const QString c = fingerprintCommandLine();
+    if (c.isEmpty()) return;
+    QApplication::clipboard()->setText(c);
+    statusBar()->showMessage(tr("Fingerprint command line copied"), 4000);
+}
+
+// ------------------------------------------------------------------------------------------------
 // fingerprint and pocket definition
 // ------------------------------------------------------------------------------------------------
 bool MainWindow::loadPocket(const QString& path) {
@@ -528,6 +626,7 @@ bool MainWindow::loadPocket(const QString& path) {
         return false;
     }
     pocket_ = def;
+    pocketPath_ = QFileInfo(path).absoluteFilePath();
     havePocket_ = true;
     const QString name = def.name.empty() ? QFileInfo(path).fileName() : QString::fromStdString(def.name);
     pocketLabel_->setText(tr("%1 (%2 positions)").arg(name).arg(def.positions.size()));
@@ -538,6 +637,7 @@ bool MainWindow::loadPocket(const QString& path) {
 
 void MainWindow::clearPocket() {
     pocket_ = ligint::PocketDefinition();
+    pocketPath_.clear();
     havePocket_ = false;
     pocketLabel_->setText(tr("none: residues in contact, sorted by number"));
     updateFingerprint();

@@ -2,6 +2,7 @@
 set(CMAKE_AUTOMOC ON)
 
 add_library(ligint_gui_lib STATIC
+    CommandLine.cpp CommandLine.h
     HitsModel.cpp HitsModel.h
     MainWindow.cpp MainWindow.h
     Style.cpp Style.h

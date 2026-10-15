@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.3.0"
+#define LIGINT_VERSION "0.4.0"
 #endif
 
 namespace ligint {
@@ -91,6 +91,7 @@ struct Options {
     std::string ligName;            // HETATM residue name (e.g. "ATP"); empty = only list the ligands
     std::string chain;              // optional: ligand chain
     int resi = INT_MIN;             // optional: residue number (INT_MIN = any)
+    char icode = 0;                 // optional: insertion code (0 = any, ' ' = none, otherwise that code)
     bool useWater = true;           // consider waters (water bridges)
     bool metalDonors = false;       // O/N coordinated to a metal remain possible donors
     bool backboneHyd = false;       // apolar contacts with backbone CA/C
@@ -130,6 +131,7 @@ struct LigandResult {
     std::string id;                 // ligand label, e.g. "BZC 201A"
     std::string resName, chain;     // first residue
     int resi = 0;
+    char icode = ' ';               // insertion code of the first residue (' ' = none)
     std::vector<std::string> residues;      // residues merged into the composite ligand (if more than one)
     std::string annotation;                 // how the chemistry was obtained (template, PDB hydrogens, heuristics)
     std::vector<std::string> info;          // informational lines (composite, annotation, B-factor)

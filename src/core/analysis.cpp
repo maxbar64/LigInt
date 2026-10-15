@@ -76,6 +76,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     const string& ligName = opt.ligName;
     const string& wantChain = opt.chain;
     const int wantResi = opt.resi;
+    const char wantIcode = opt.icode;
 
     vector<Atom> prot, waters;
     vector<pair<Atom,bool>> hatoms;  // PDB hydrogens (bool = belongs to a target ligand)
@@ -129,7 +130,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         }
         bool isLig = rec == "HETATM" && a.res == ligName &&
                      (wantChain.empty() || a.chain == wantChain) &&
-                     (wantResi == INT_MIN || a.resi == wantResi);
+                     (wantResi == INT_MIN || a.resi == wantResi) &&
+                     (wantIcode == 0 || a.icode == wantIcode);
         if (isH) { hatoms.push_back({a, isLig}); continue; }
         if (rec == "HETATM") { hetNames[a.res].insert({a.chain, a.resi, a.icode}); hetRes[{a.chain, a.resi, a.icode}].push_back(a); }
         if (isLig) ligs[{a.chain, a.resi, a.icode}].push_back(a);
@@ -620,6 +622,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         lres.resName = L[0].res;
         lres.chain = L[0].chain;
         lres.resi = L[0].resi;
+        lres.icode = L[0].icode;
         lres.annotation = annot;
         lres.nRings = lRings.size();
         if (wk.comp.size() > 1)

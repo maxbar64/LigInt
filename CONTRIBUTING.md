@@ -18,7 +18,8 @@ Before changing the library it is also worth checking the sanitizers:
   parsing, `tests/unit/test_core.cpp` for the API). The synthetic tests use fragments with known geometry: see the
   molecule builders in `run_tests.py`.
 - New thresholds go into `ligint::Params`, into `Params::set` (same name as the command-line option), into the
-  `--help` text and into the README.
+  `--help` text and into the README. If the GUI exposes the setting, add it to `MainWindow::currentArgs` (the command line
+  shown in the Log): the GUI smoke test fails when the generated command is not equivalent to the window.
 - A new fingerprint class needs an entry in `FpClass`, `fpClassName`/`fpClassTitle`, a glyph in `src/core/svg.cpp`, the color in
   `gui/Style.cpp` (`fpClassColor`) and the documentation in `docs/FINGERPRINT.md`.
 - The interaction types are the constants in `ligint::type` (also used by the GUI in `gui/Style.cpp` and by the

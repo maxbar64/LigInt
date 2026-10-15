@@ -171,6 +171,26 @@ static void testLinkedResiduesAreMerged() {
     CHECK(r.ligands.size() == 1 && r.ligands[0].residues.empty() && r.ligands[0].atoms.size() == 2);
 }
 
+static void testInsertionCodeSelection() {
+    // two residues with the same name, chain and number, differing only in the insertion code
+    std::ostringstream s;
+    s << atomLine("HETATM", 1, "C1", "LIG", 'L', 5, 0, 0, 0, "C") << "\n";
+    std::string a = atomLine("HETATM", 2, "C1", "LIG", 'L', 5, 30, 0, 0, "C");
+    a[26] = 'A';
+    s << a << "\n";
+    ligint::Options opt;
+    opt.ligName = "LIG"; opt.chain = "L"; opt.resi = 5;
+    CHECK(run(s.str(), opt).ligands.size() == 2);          // any insertion code
+    opt.icode = 'A';
+    ligint::Result r = run(s.str(), opt);
+    CHECK(r.ligands.size() == 1 && r.ligands[0].id == "LIG 5AL");
+    opt.icode = ' ';
+    r = run(s.str(), opt);
+    CHECK(r.ligands.size() == 1 && r.ligands[0].id == "LIG 5L");
+    opt.icode = 'B';
+    CHECK(run(s.str(), opt).ligands.empty());
+}
+
 static void testMalformedInputDoesNotCrash() {
     ligint::Options opt;
     opt.ligName = "LIG";
@@ -330,6 +350,7 @@ int main() {
     testTemplateSdf();
     testLinkedResiduesAreMerged();
     testMalformedInputDoesNotCrash();
+    testInsertionCodeSelection();
     testFingerprintClasses();
     testPocketDefinition();
     testFingerprintWithPocket();

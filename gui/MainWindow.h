@@ -60,6 +60,13 @@ public:
     QTableWidget* fingerprintTable() const { return fpTable_; }
     QString logText() const;
 
+    // The `ligint` command line equivalent to the GUI settings (POSIX shell quoting; program name `ligint`).
+    // commandLine(): the current settings; lastCommandLine(): the settings of the last analysis;
+    // fingerprintCommandLine(): the last analysis with --fingerprint and the pocket definition currently loaded.
+    QString commandLine() const;
+    QString lastCommandLine() const;
+    QString fingerprintCommandLine(const QString& format = QStringLiteral("svg")) const;
+
 signals:
     void analysisFinished(bool ok);
 
@@ -75,6 +82,8 @@ private slots:
     void onAddTemplate();
     void onLoadPocket();
     void onExportFingerprint();
+    void onCopyCommand();
+    void onCopyFingerprintCommand();
     void onPresetToggled(bool on);
     void onTypeFilterChanged();
     void onRowChanged();
@@ -88,6 +97,7 @@ private:
     void fillResidueTable();
     void fillTypeList();
     void updateFingerprint();
+    QStringList currentArgs() const;
     void log(const QString& line);
     void showError(const QString& title, const QString& text);
 
@@ -121,6 +131,10 @@ private:
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
     QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;
     ligint::PocketDefinition pocket_;
+    QString pocketPath_;
+    QStringList templatePaths_;
+    QStringList pendingArgs_, lastArgs_;
+    QAction *cmdAct_ = nullptr, *fpCmdAct_ = nullptr;
     bool havePocket_ = false;
     ligint::Fingerprint fp_;
     QTableWidget* fpTable_ = nullptr;

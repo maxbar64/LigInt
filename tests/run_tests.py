@@ -29,6 +29,7 @@ import random
 import subprocess
 import sys
 import tempfile
+import re
 import time
 import xml.etree.ElementTree as ET
 
@@ -862,6 +863,25 @@ def linked_hetero_residues_form_one_ligand():
     check(not r.has("Hydrogen bond", la="MOL 2L:O1"), "--no-merge must keep the residues separate")
     r = go(build(3.2))
     check("Composite" not in r.err and not any("MOL 2L" in x["la"] for x in r.rows), "unlinked residues merged by mistake")
+
+
+@test("pdb")
+def ligand_selection_with_insertion_code():
+    """Residue number with an optional insertion code: 5 (any), 5A (code A), 5- (no code)."""
+    s = Sys()
+    s.atom("HETATM", "C1", "LIG", "L", 5, (0, 0, 0), "C")
+    s.atom("HETATM", "C1", "LIG", "L", 5, (30, 0, 0), "C", icode="A")
+    s.atom("HETATM", "C1", "LIG", "L", 6, (60, 0, 0), "C")
+    def headers(spec):
+        p = run_raw([tmpfile(s.text()), "LIG", "L", spec])
+        check(p.rc == 0, "%s: rc=%d %s" % (spec, p.rc, p.err[:150]))
+        return re.findall(r"=== Ligand (\S+ \d+\S?) chain", p.out)
+    check(sorted(headers("5")) == ["LIG 5", "LIG 5A"], "any code: both residues, got %s" % headers("5"))
+    check(headers("5A") == ["LIG 5A"] and headers("5-") == ["LIG 5"], "5A and 5- must select one residue each")
+    check(headers("5B") == [], "5B: no such residue")
+    for bad in ("5AB", "x", "A5", "", "5-A", "1234567"):
+        r = run_raw([tmpfile(s.text()), "LIG", "L", bad])
+        check(r.rc == 1 and "Invalid residue number" in r.err, "%r must be rejected: rc=%d %s" % (bad, r.rc, r.err[:100]))
 
 
 @test("pdb")

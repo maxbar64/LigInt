@@ -2,6 +2,7 @@
 #include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
 
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -13,7 +14,7 @@ using namespace std;
 using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
-    cerr << "Usage: " << prog << " file.pdb [RESNAME [chain [resseq]]] [options]\n"
+    cerr << "Usage: " << prog << " file.pdb [RESNAME [chain [resseq[A|-]]]] [options]\n"
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --version  --help\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE   (instead of the interaction table)\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
@@ -74,7 +75,19 @@ int main(int argc, char** argv) {
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     opt.chain = pa.size() > 2 ? pa[2] : "";
-    opt.resi = pa.size() > 3 ? atoi(pa[3].c_str()) : INT_MIN;
+    if (pa.size() > 3) {
+        // residue number with an optional insertion code: "501" (any code), "501A" (code A), "501-" (no code)
+        const string& rs = pa[3];
+        size_t k = 0;
+        if (k < rs.size() && (rs[k] == '-' || rs[k] == '+')) k++;
+        const size_t d0 = k;
+        while (k < rs.size() && isdigit(static_cast<unsigned char>(rs[k]))) k++;
+        const string suffix = rs.substr(k);
+        const bool okSuffix = suffix.empty() || suffix == "-" || (suffix.size() == 1 && isalpha(static_cast<unsigned char>(suffix[0])));
+        if (k == d0 || k - d0 > 6 || !okSuffix) { cerr << "Invalid residue number: " << rs << " (expected e.g. 501, 501A or 501-)\n"; return 1; }
+        opt.resi = atoi(rs.substr(0, k).c_str());
+        opt.icode = suffix.empty() ? 0 : (suffix == "-" ? ' ' : suffix[0]);
+    }
 
     PocketDefinition pocket;
     const bool havePocket = !pocketPath.empty();
