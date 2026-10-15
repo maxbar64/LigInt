@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:        # also from the Actions page ("Run workflow")
 
 jobs:
   linux-gui:
@@ -158,10 +159,131 @@ jobs:
             build/ligint-*-win64.exe
             build/ligint-*-win64.zip
 
+  # RPM for Rocky Linux / AlmaLinux / RHEL 9. It is built inside a Rocky 9 container (the binaries then link
+  # against the glibc and libstdc++ of that release) and installed in a clean AlmaLinux 9 container, the way a
+  # user would do it. Qt 6 comes from EPEL: if it is not available the job builds the command line only.
+  rpm-rocky9:
+    name: RPM (built in Rocky Linux 9)
+    runs-on: ubuntu-24.04
+    container:
+      image: rockylinux:9
+    steps:
+      - name: Dependencies
+        run: |
+          dnf install -y dnf-plugins-core epel-release
+          dnf config-manager --set-enabled crb
+          dnf install -y git gcc-c++ cmake make python3 desktop-file-utils dejavu-sans-fonts
+          dnf install -y rpm-build redhat-rpm-config || dnf install -y rpm-build
+          if dnf install -y qt6-qtbase-devel qt6-qtsvg-devel mesa-libGL-devel; then
+            echo "LIGINT_GUI=ON" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Qt 6 development packages not found in the Rocky 9 and EPEL repositories: building the command line only"
+            echo "LIGINT_GUI=OFF" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DLIGINT_BUILD_GUI="$LIGINT_GUI"
+      - name: Build
+        run: cmake --build build -j"$(nproc)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - name: Package
+        run: cd build && cpack -G RPM
+      - name: Contents and dependencies of the packages
+        run: |
+          cd build
+          for f in ligint-*.rpm; do
+            echo "=== $f"
+            rpm -qpi "$f" | head -12
+            rpm -qpl "$f" | grep -v "/doc/ligint/img\|/doc/ligint/examples"
+            echo "--- requires"
+            rpm -qpR "$f"
+          done
+      - name: Install, run, remove
+        run: |
+          dnf install -y ./build/ligint-[0-9]*.rpm
+          ligint --version
+          ligint tests/data/1AZM.pdb AZM --csv | head -3
+          if [ -x /usr/bin/ligint-gui ]; then
+            QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
+            desktop-file-validate /usr/share/applications/ligint-gui.desktop
+          fi
+          rpm -V ligint
+          dnf remove -y ligint
+          ! command -v ligint
+      - name: Summary
+        run: |
+          {
+            echo "### RPM built on Rocky Linux 9"
+            echo "- GUI included: $LIGINT_GUI"
+            echo "- GCC: $(gcc --version | head -1)"
+            echo "- CMake: $(cmake --version | head -1)"
+            ls -1 build/ligint-*.rpm | sed 's/^/- /'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm-rocky9
+          path: build/ligint-*.rpm
+
+  rpm-alma9:
+    name: RPM installed on AlmaLinux 9
+    needs: rpm-rocky9
+    runs-on: ubuntu-24.04
+    container:
+      image: almalinux:9
+    steps:
+      - name: Prepare
+        run: dnf install -y git epel-release desktop-file-utils dejavu-sans-fonts
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rpm-rocky9
+          path: rpms
+      - name: Install the program (its dependencies come from the repositories)
+        run: |
+          dnf install -y ./rpms/ligint-[0-9]*.rpm
+          ligint --version
+          ligint tests/data/1AZM.pdb AZM --csv | head -3
+          if [ -x /usr/bin/ligint-gui ]; then
+            QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
+            desktop-file-validate /usr/share/applications/ligint-gui.desktop
+          fi
+      - name: Install the development package and build a program with it
+        run: |
+          dnf install -y gcc-c++ cmake make ./rpms/ligint-devel-*.rpm
+          mkdir consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.16)
+          project(consumer CXX)
+          set(CMAKE_CXX_STANDARD 17)
+          find_package(ligint REQUIRED)
+          add_executable(consumer main.cpp)
+          target_link_libraries(consumer PRIVATE ligint::core)
+          EOF
+          cat > consumer/main.cpp <<'EOF'
+          #include <iostream>
+          #include <ligint/ligint.hpp>
+          int main(int, char** argv) {
+              ligint::Options opt;
+              opt.ligName = argv[2];
+              auto r = ligint::analyzeFile(argv[1], opt);
+              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
+          }
+          EOF
+          cmake -S consumer -B consumer/build
+          cmake --build consumer/build
+          consumer/build/consumer tests/data/1AZM.pdb AZM
+      - name: Remove
+        run: |
+          dnf remove -y ligint ligint-devel
+          ! command -v ligint
+
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-packages, windows]
+    needs: [linux-packages, windows, rpm-alma9]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

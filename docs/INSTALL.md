@@ -8,6 +8,8 @@ Ready-made installers are built by the CI workflow (`.github/workflows/ci.yml`):
 | Linux (Debian, Ubuntu) | `ligint_<version>_amd64.deb` | programs, manual pages, menu entry and icon |
 | Linux (Debian, Ubuntu) | `ligint-dev_<version>_amd64.deb` | headers, static library and CMake package, for programs that use the library |
 | Linux | `ligint-<version>-linux-x86_64.tar.gz` | portable archive, no installation needed |
+| Rocky Linux, AlmaLinux, RHEL 9 | `ligint-<version>-1.x86_64.rpm` | programs, manual pages, menu entry and icon |
+| Rocky Linux, AlmaLinux, RHEL 9 | `ligint-devel-<version>-1.x86_64.rpm` | headers, static library and CMake package |
 | Windows 10/11 (64 bit) | `ligint-<version>-win64.exe` | installer (wizard, Start menu, uninstaller) |
 | Windows 10/11 (64 bit) | `ligint-<version>-win64.zip` | portable archive, no installation needed |
 
@@ -26,7 +28,23 @@ sudo apt remove ligint                             # uninstall
 - `ligint-gui` is associated with PDB files (MIME type `chemical/x-pdb`): *Open with* shows it.
 - The portable archive is extracted anywhere (`bin/ligint`, `bin/ligint-gui`); the Qt 6 libraries must be installed
   (`libqt6widgets6`, `libqt6svg6`, `qt6-qpa-plugins` on Debian/Ubuntu).
-- RPM packages (Fedora, openSUSE) can be built with `cpack -G RPM`; they were built and inspected but not installed on an RPM-based system.
+
+## Rocky Linux, AlmaLinux, RHEL 9
+
+```
+sudo dnf install epel-release                     # Qt 6 comes from EPEL on version 9
+sudo dnf install ./ligint-0.5.1-1.x86_64.rpm      # the dependencies are installed automatically
+ligint --version
+sudo dnf remove ligint                            # uninstall
+```
+
+- The RPM is built by the CI in a Rocky Linux 9 container and installed on a clean AlmaLinux 9 container, so it follows the
+  glibc and Qt of that release. It is **not** meant for version 8 or 10, and the `.deb` and the portable `.tar.gz` (built on
+  Ubuntu 24.04) will not run on version 9 (they need a newer glibc).
+- If Qt 6 is not available for the release, the CI builds the command line only: the RPM then has no `ligint-gui`
+  (the workflow run shows a warning and says so in its summary).
+- RHEL needs an active subscription and the CodeReady Builder repository (`crb`) to build from source.
+- Other RPM-based systems (Fedora, openSUSE): build the RPM yourself with `cpack -G RPM` after building from source.
 
 ## Windows
 
@@ -75,7 +93,7 @@ in `include/ligint/ligint.hpp`) before tagging.
 |---|---|
 | `.deb` (ligint, ligint-dev) | installed, run (CLI and GUI), a program built against `ligint-dev`, removed; `lintian` reports no errors or warnings |
 | `.tar.gz` (Linux) | extracted in another folder and run |
-| `.rpm` | built and its contents and dependencies inspected; not installed |
+| `.rpm` (Rocky/Alma/RHEL 9) | the layout (`lib64`, no system directories) was inspected here; **built in a Rocky 9 container and installed on AlmaLinux 9 by the CI, which has not run yet**; RHEL itself and versions 8 and 10 not tried |
 | Windows installer (NSIS) | the installer script is generated and compiled (checked on Linux with a Linux payload); **not run on Windows**: CI builds and tries it there (silent install, run, uninstall) |
 | Windows `.zip`, Qt bundling (`windeployqt`), MSVC build | **not tried by the authors**: only the CI run will tell |
 | macOS | no installer (the library and the command line build; see the CI) |

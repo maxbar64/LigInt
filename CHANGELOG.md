@@ -10,9 +10,10 @@ Installers and packages (no change to the programs):
   association (Linux), the Qt libraries (Windows), the Start menu entry and an optional `PATH` update (Windows).
 - Application icon, window icon and Windows version information.
 - CI: `linux-packages` and `windows` jobs build, try (install, run, uninstall) and keep the installers as artifacts;
-  a `v*` tag publishes them in a GitHub release.
+  `rpm-rocky9` builds the RPM in a Rocky Linux 9 container and `rpm-alma9` installs it (and the development package) in a clean
+  AlmaLinux 9 container; a `v*` tag publishes everything in a GitHub release. The workflow can also be started by hand.
 - Install rules split in two components (`Runtime`, `Development`); `docs/INSTALL.md`.
-- The Windows installer and the MSVC build have not been run by the authors: the first CI run will show whether they need adjustments.
+- The Windows installer, the MSVC build and the RPM jobs have not been run by the authors: the first CI run will show whether they need adjustments.
 
 ## 0.5.0
 

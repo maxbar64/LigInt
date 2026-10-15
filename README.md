@@ -16,10 +16,11 @@ contains:
 ## Installation
 
 Installers are attached to each [release](https://github.com/maxbar64/LigInt/releases): a `.deb` package and a portable
-archive for Linux, an installer (`.exe`) and a portable `.zip` for Windows.
+archive for Linux, an `.rpm` for Rocky Linux / AlmaLinux / RHEL 9, an installer (`.exe`) and a portable `.zip` for Windows.
 
 ```
 sudo apt install ./ligint_<version>_amd64.deb      # Debian, Ubuntu (Qt 6 dependencies are installed automatically)
+sudo dnf install ./ligint-<version>-1.x86_64.rpm   # Rocky Linux, AlmaLinux, RHEL 9 (Qt 6 from EPEL)
 ```
 
 On Windows run `ligint-<version>-win64.exe` (it can add ligint to the `PATH`). Details, the files, how to build the
