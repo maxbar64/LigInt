@@ -7,6 +7,7 @@
 #include <string>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/klifs.hpp"
 #include "ligint/ligint.hpp"
 
 static int failures = 0;
@@ -529,6 +530,29 @@ static void testFingerprintClasses() {
     CHECK(std::string(ligint::fpClassName(ligint::FpHBondDonor)) == "hbond_donor" && ligint::oneLetterCode("TRP") == 'W' && ligint::oneLetterCode("XYZ") == '?');
 }
 
+static void testKlifsNative() {
+    const std::string filename="ligint_klifs_unit_mapping.tsv";
+    {std::ofstream f(filename);f<<"residue.klifs_id\tresidue.id\tresidue.klifs_region\tresidue.aa\n"
+       <<"1\t879\tI\tR\n47\t957\thinge\tE\n48\t_\thinge\tF\n81\t1021\tDFG\tD\n";}
+    ligint::KlifsOptions o;o.pdbId="3EYG";o.chain="A";o.mappingFile=filename;
+    const auto p=ligint::generateKlifsPocket(o);
+    CHECK(p.positions.size()==3);
+    CHECK(p.positions[1].resi==957);
+    CHECK(p.positions[1].label=="47");
+    CHECK(p.positions[1].region=="hinge");
+    CHECK(p.positions[1].resName=="GLU");
+    const std::string out="ligint_klifs_unit_pocket.tsv";
+    ligint::saveKlifsPocket(p,out);
+    ligint::PocketDefinition read;std::vector<std::string> warnings;
+    CHECK(ligint::loadPocketDefinition(out,read,warnings));
+    CHECK(read.positions.size()==3);
+    CHECK(read.positions[1].region=="hinge");
+    {std::ofstream f(filename);f<<"residue.klifs_id\tresidue.id\tresidue.klifs_region\n1\t900\tI\n1\t901\tI\n";}
+    bool rejected=false;try{(void)ligint::generateKlifsPocket(o);}catch(const std::exception&){rejected=true;}
+    CHECK(rejected);
+    std::remove(filename.c_str());std::remove(out.c_str());
+}
+
 static void testPocketDefinition() {
     std::istringstream in(
         "# comment\n"
@@ -639,6 +663,7 @@ int main() {
     testMmcifMalformed();
     testAlternateConformationSelection();
     testFingerprintClasses();
+    testKlifsNative();
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();

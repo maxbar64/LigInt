@@ -86,6 +86,7 @@ private slots:
     void onAbout();
     void onAddTemplate();
     void onLoadPocket();
+    void onGenerateKlifsPocket();
     void onExportFingerprint();
     void onHelp();
     void onCopyCommand();

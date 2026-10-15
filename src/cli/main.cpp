@@ -1,6 +1,7 @@
 // ligint - command-line interface.
 #include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
+#include "ligint/klifs.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -16,7 +17,7 @@ using namespace ligint;
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
-         << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE   (instead of the interaction table)\n"
+         << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-output FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
          << " --salt-max " << p.saltMax << " --rep-max " << p.repMax << "\n  --hal-max " << p.halMax
@@ -33,7 +34,7 @@ int main(int argc, char** argv) {
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
-    string fpFormat, pocketPath;
+    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false;
     for (int i = 1; i < argc; i++) {
         string s = argv[i];
         if (s == "--help" || s == "-h") { usage(argv[0], P); return 0; }
@@ -57,6 +58,16 @@ int main(int argc, char** argv) {
             const string v = argv[++i];
             if (v.size() != 1 || v[0] == ' ') { cerr << "--altloc expects a single character, e.g. A or B\n"; return 1; }
             opt.altloc = v[0];
+        }
+        else if (s == "--klifs-pdb" || s == "--klifs-chain" || s == "--klifs-model" || s == "--klifs-mapping" || s == "--klifs-output" || s == "--klifs-id") {
+            if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
+            string v=argv[++i];useKlifs=true;
+            if(s=="--klifs-pdb")klifs.pdbId=v;
+            else if(s=="--klifs-chain")klifs.chain=v;
+            else if(s=="--klifs-model")klifs.model=v;
+            else if(s=="--klifs-mapping")klifs.mappingFile=v;
+            else if(s=="--klifs-output")klifsOutput=v;
+            else {try{size_t n=0;klifs.structureId=stoi(v,&n);if(n!=v.size()||klifs.structureId<=0)throw invalid_argument("id");}catch(...){cerr<<"Invalid KLIFS structure ID\n";return 1;}}
         }
         else if (s == "--fingerprint" || s == "--pocket") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
@@ -85,7 +96,7 @@ int main(int argc, char** argv) {
             i++;
         } else pa.push_back(s);
     }
-    if (pa.empty()) { usage(argv[0], P); return 1; }
+    if (pa.empty() && !useKlifs) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     opt.chain = pa.size() > 2 ? pa[2] : "";
@@ -104,13 +115,16 @@ int main(int argc, char** argv) {
     }
 
     PocketDefinition pocket;
-    const bool havePocket = !pocketPath.empty();
-    if (havePocket) {
+    if(useKlifs && !pocketPath.empty()){cerr<<"Choose either --pocket or --klifs-*\n";return 1;}
+    if(useKlifs){try{pocket=generateKlifsPocket(klifs);if(!klifsOutput.empty())saveKlifsPocket(pocket,klifsOutput);cerr<<"KLIFS pocket: "<<pocket.positions.size()<<" mapped positions\n";}catch(const exception& e){cerr<<"KLIFS: "<<e.what()<<"\n";return 1;}}
+    if(pa.empty()) return 0; // generate TSV without structure analysis
+    const bool havePocket = useKlifs || !pocketPath.empty();
+    if (!pocketPath.empty()) {
         vector<string> pw;
         if (!loadPocketDefinition(pocketPath, pocket, pw)) { cerr << "Cannot open " << pocketPath << "\n"; return 1; }
         for (auto& w : pw) cerr << "Warning: " << w << "\n";
     }
-    if (havePocket && fpFormat.empty()) { cerr << "--pocket requires --fingerprint\n"; return 1; }
+    if (havePocket && fpFormat.empty() && !useKlifs) { cerr << "--pocket requires --fingerprint\n"; return 1; }
 
     try {
         Result r = analyzeFile(pa[0], opt);

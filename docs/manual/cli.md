@@ -127,3 +127,7 @@ Keep only the hydrogen bonds of a CSV: `ligint 1abc.pdb LIG --csv | awk -F, 'NR 
 
 To repeat an analysis made in the [graphical interface](gui.md#reproducing-an-analysis-on-the-command-line), copy the command line that it
 writes in its log.
+
+### Native KLIFS pocket definitions (experimental)
+
+Use `--klifs-pdb`, `--klifs-chain`, optional `--klifs-model` or `--klifs-id`, and `--klifs-output` to generate a KLIFS-aligned pocket definition. `--klifs-mapping` supplies an offline KLIFS CSV/TSV export. For implementation status and live-service limitations see `docs/KLIFS.md`.

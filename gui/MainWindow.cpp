@@ -1,4 +1,7 @@
 #include "MainWindow.h"
+#include "ligint/klifs.hpp"
+#include <QInputDialog>
+#include <QLineEdit>
 
 #include <QAction>
 #include <QApplication>
@@ -213,11 +216,14 @@ void MainWindow::buildUi() {
     auto* pkRow = new QHBoxLayout;
     auto* pkLoad = new QPushButton(tr("Load definition…"));
     auto* pkClear = new QPushButton(tr("Clear"));
+    auto* pkKlifs = new QPushButton(tr("Generate from KLIFS…"));
+    connect(pkKlifs, &QPushButton::clicked, this, &MainWindow::onGenerateKlifsPocket);
     connect(pkLoad, &QPushButton::clicked, this, &MainWindow::onLoadPocket);
     connect(pkClear, &QPushButton::clicked, this, [this] { clearPocket(); });
     pkRow->addWidget(pkLoad);
     pkRow->addWidget(pkClear);
     pkv->addLayout(pkRow);
+    pkv->addWidget(pkKlifs);
     pkv->addWidget(pocketLabel_);
     lv->addWidget(gPocket);
 
@@ -682,6 +688,36 @@ void MainWindow::clearPocket() {
     havePocket_ = false;
     pocketLabel_->setText(tr("none: residues in contact, sorted by number"));
     updateFingerprint();
+}
+
+void MainWindow::onGenerateKlifsPocket() {
+    if(path_.isEmpty()) {showError(tr("KLIFS"),tr("Open a PDB/mmCIF structure first."));return;}
+    const QString suggestion=QFileInfo(path_).completeBaseName().left(4).toUpper();
+    bool ok=false;
+    QString pdb=QInputDialog::getText(this,tr("KLIFS PDB"),tr("Four-character PDB ID:"),QLineEdit::Normal,suggestion,&ok);
+    if(!ok)return;
+    QString chain=QInputDialog::getText(this,tr("KLIFS chain"),tr("PDB author chain:"),QLineEdit::Normal,"A",&ok);
+    if(!ok)return;
+    QString model=QInputDialog::getText(this,tr("KLIFS alternate model"),tr("KLIFS model (blank = auto if unique):"),QLineEdit::Normal,QString(),&ok);
+    if(!ok)return;
+    const QString output=QFileDialog::getSaveFileName(this,tr("Save KLIFS pocket"),QFileInfo(path_).absolutePath()+"/"+pdb+"-klifs-pocket.tsv",tr("TSV files (*.tsv)"));
+    if(output.isEmpty())return;
+    QString mapping;
+    const QStringList modes={tr("Online (KLIFS service)"),tr("Local KLIFS mapping CSV/TSV")};
+    const QString mode=QInputDialog::getItem(this,tr("KLIFS source"),tr("Mapping source:"),modes,0,false,&ok);
+    if(!ok)return;
+    if(mode==modes[1]){
+        mapping=QFileDialog::getOpenFileName(this,tr("KLIFS mapping export"),QFileInfo(path_).absolutePath(),tr("Mapping (*.tsv *.csv);;All files (*)"));
+        if(mapping.isEmpty())return;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    try {
+        ligint::KlifsOptions options;options.mappingFile=mapping.toStdString();options.pdbId=pdb.toStdString();options.chain=chain.toStdString();options.model=model.toStdString();
+        auto pocket=ligint::generateKlifsPocket(options);
+        ligint::saveKlifsPocket(pocket,output.toStdString());
+        QApplication::restoreOverrideCursor();
+        if(loadPocket(output))log(tr("KLIFS: generated %1 mapped residues").arg(pocket.positions.size()));
+    }catch(const std::exception& e){QApplication::restoreOverrideCursor();showError(tr("KLIFS generation failed"),QString::fromUtf8(e.what()));}
 }
 
 void MainWindow::onLoadPocket() {
