@@ -347,7 +347,7 @@ def tmpfile(content, suffix=".pdb", binary=False):
         with open(path, "wb") as f:
             f.write(content)
     else:
-        with open(path, "w", newline="") as f:
+        with open(path, "w", newline="", encoding="utf-8") as f:      # explicit: the default is the code page of the machine (cp1252 on Windows)
             f.write(content)
     return path
 
@@ -1472,7 +1472,7 @@ def klifs_mapping_variants_give_the_same_pocket():
         out = os.path.join(CFG["tmp"], "pocket_%s.tsv" % name.replace(" ", "_"))
         r = klifs_cli(mapping, out)
         check(r.rc == 0 and "84 mapped positions" in r.err, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
-        outs[name] = open(out).read()
+        outs[name] = open(out, encoding="utf-8").read()
     check(len(set(outs.values())) == 1, "the variants of the same mapping must give the same pocket: " + str({k: len(v) for k, v in outs.items()}))
     text = outs["tsv"]
     lines = [l for l in text.splitlines() if l and l[0] not in "#@"]
@@ -1538,7 +1538,7 @@ def klifs_mapping_errors_are_reported_and_nothing_is_written():
     check(klifs_cli(q, os.path.join(CFG["tmp"], "ok_quoted.tsv")).rc == 0, "quoted CSV value")
     # random corruption of a valid mapping never crashes
     rnd = random.Random(8)
-    base = open(klifs_file(klifs_rows())).read()
+    base = open(klifs_file(klifs_rows()), encoding="utf-8").read()
     for i in range(40):
         t = list(base)
         for _ in range(6):
@@ -1674,7 +1674,7 @@ def klifs_pocket_mol2_errors_and_corruption():
     check("A\t9A\t1\tI\tALA" in open(os.path.join(CFG["tmp"], "mol2_odd.tsv"), encoding="utf-8").read(), "insertion code kept")
     # a random corruption never crashes
     rnd = random.Random(21)
-    base = open(good).read()
+    base = open(good, encoding="utf-8").read()
     for i in range(60):
         t = list(base)
         for _ in range(8):
