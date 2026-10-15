@@ -95,7 +95,8 @@ jobs:
           QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
           desktop-file-validate /usr/share/applications/ligint-gui.desktop
           sudo apt-get remove -y ligint ligint-dev
-          ! command -v ligint
+          hash -r                       # forget the cached path of the removed program
+          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
       - uses: actions/upload-artifact@v4
         with:
           name: linux-packages
@@ -212,7 +213,8 @@ jobs:
           fi
           rpm -V ligint
           dnf remove -y ligint
-          ! command -v ligint
+          hash -r                       # forget the cached path of the removed program
+          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
       - name: Summary
         run: |
           {
@@ -278,7 +280,8 @@ jobs:
       - name: Remove
         run: |
           dnf remove -y ligint ligint-devel
-          ! command -v ligint
+          hash -r                       # forget the cached path of the removed program
+          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
 
   release:
     name: Publish release
