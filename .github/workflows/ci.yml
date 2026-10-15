@@ -75,6 +75,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
+      - name: Generate and validate HTML manual for packages
+        run: |
+          pip install -r tools/requirements-manual.txt
+          python3 tools/build_manual.py
+          python3 tools/build_manual.py --check
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
       - name: Build
@@ -86,11 +91,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Generate and validate HTML manual for packages
-        run: |
-          pip install -r tools/requirements-manual.txt
-          python3 tools/build_manual.py
-          python3 tools/build_manual.py --check
       - name: Package
         run: cd build && cpack -G "DEB;TGZ"
       - name: Check the packages (lintian)
