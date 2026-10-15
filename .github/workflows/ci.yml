@@ -195,6 +195,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
         env:
           QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
       - name: Package
         run: cd build && cpack -G RPM
       - name: Contents and dependencies of the packages
