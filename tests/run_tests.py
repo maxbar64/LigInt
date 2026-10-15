@@ -1424,7 +1424,7 @@ def manual_quickstart_example_is_the_real_output():
         raise Skip("missing 1AZM.pdb or the manual")
     page = html.unescape(open(os.path.join(MANUAL_DIR, "quickstart.html"), encoding="utf-8").read())
     for args in ([], ["AZM"]):
-        out = run_raw([pdb] + args).out.rstrip()
+        out = run_raw([pdb] + args).out.replace("\r\n", "\n").rstrip()
         check(out and out in page, "the example of the quick start differs from the output of: ligint 1AZM.pdb %s\n%s" % (" ".join(args), out[:300]))
 
 
