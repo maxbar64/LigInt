@@ -1289,7 +1289,7 @@ def cif_robustness():
         "null coordinates": re.sub(r"(\d+\.\d{3}) (\d+\.\d{3}) (\d+\.\d{3}) 1\.00", r"? ? ? 1.00", valid, count=1),
     }
     for name, text in cases.items():
-        r = run_raw([tmpfile(text, ".cif"), "LIG", "--csv"])
+        r = run_raw([tmpfile(text.encode("latin-1"), ".cif", binary=True) if name == "binary" else tmpfile(text, ".cif"), "LIG", "--csv"])
         check(r.rc == 0, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
         no_crash(r)
     # random mutations of a valid file
