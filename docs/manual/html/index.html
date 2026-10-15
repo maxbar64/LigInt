@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; <a href="quickstart.html">Quick start</a> &raquo;</p>
+<h1 id="ligint-manual"><a name="ligint-manual"></a>ligint manual</h1>
+<p><strong>ligint</strong> finds the non-covalent interactions between a small-molecule <strong>ligand</strong> and the <strong>protein</strong> around it in a structure file
+(PDB or PDBx/mmCIF): hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, halogen bonds, metal coordination and
+water bridges, plus steric clashes and electrostatic repulsions. It can also summarize them as an <strong>interaction fingerprint</strong>: a table
+with one row per protein residue and one column per interaction class, drawn as a figure.</p>
+<p>It comes as a <strong>command-line program</strong> (<code>ligint</code>) and a <strong>graphical interface</strong> (<code>ligint-gui</code>) that share the same analysis engine.
+The graphical interface shows the ligand and its surroundings in 3D, lists the interactions in tables, and writes, for every
+analysis, the command line that reproduces it outside the program.</p>
+<h2 id="contents"><a name="contents"></a>Contents</h2>
+<ul>
+<li><a href="quickstart.html">Quick start</a>: your first analysis, in the graphical interface and on the command line.</li>
+<li><a href="gui.html">The graphical interface</a>: every control, view and export.</li>
+<li><a href="cli.html">Command-line reference</a>: arguments, options, thresholds, output formats, exit codes, examples.</li>
+<li><a href="interactions.html">Interactions and assumptions</a>: what is recognized, with which criteria, and the chemical assumptions behind them.</li>
+<li><a href="formats.html">Input formats</a>: PDB and PDBx/mmCIF, alternate conformations, chains of several characters.</li>
+<li><a href="fingerprint.html">Interaction fingerprints</a>: classes, pocket definition files, CSV, JSON and SVG output.</li>
+<li><a href="validation.html">Validation and limits</a>: how the results were checked, and what to keep in mind when reading them.</li>
+<li><a href="benchmark.html">Comparison with PLIP</a>: the measurement of the agreement with another tool.</li>
+<li><a href="install.html">Installation</a>: packages and installers for Linux and Windows.</li>
+<li><a href="troubleshooting.html">Troubleshooting</a>: common problems and their causes.</li>
+<li><a href="developers.html">For developers</a>: architecture, tests, how to add an interaction type.</li>
+<li><a href="changelog.html">Changelog</a> and <a href="about.html">About</a>.</li>
+</ul>
+<h2 id="where-to-start"><a name="where-to-start"></a>Where to start</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>If you want to...</th>
+<th>Go to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>analyze a structure by clicking</td>
+<td><a href="quickstart.html">Quick start</a>, then <a href="gui.html">The graphical interface</a></td>
+</tr>
+<tr>
+<td>script many analyses</td>
+<td><a href="cli.html">Command-line reference</a></td>
+</tr>
+<tr>
+<td>know exactly what counts as an interaction</td>
+<td><a href="interactions.html">Interactions and assumptions</a></td>
+</tr>
+<tr>
+<td>make a pocket-position figure for a series of ligands</td>
+<td><a href="fingerprint.html">Interaction fingerprints</a></td>
+</tr>
+<tr>
+<td>understand why a result differs from another program</td>
+<td><a href="validation.html">Validation and limits</a></td>
+</tr>
+<tr>
+<td>use a file that does not open</td>
+<td><a href="formats.html">Input formats</a> and <a href="troubleshooting.html">Troubleshooting</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="conventions"><a name="conventions"></a>Conventions</h2>
+<p>Commands are shown for a POSIX shell (bash, zsh); on Windows use the same options in a terminal where <code>ligint.exe</code> is in the <code>PATH</code>.
+Distances are in angstroms (A), angles in degrees. A <em>ligand</em> is a <code>HETATM</code> residue of the file; <em>protein</em> is everything else that
+is not water. Menu items and buttons of the graphical interface are written in <strong>bold</strong>.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; <a href="quickstart.html">Quick start</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

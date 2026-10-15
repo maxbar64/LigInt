@@ -1,0 +1,20 @@
+{
+  "title": "ligint manual",
+  "repo_url": "https://github.com/maxbar64/LigInt",
+  "pages": [
+    {"id": "index",           "title": "Welcome",                        "src": "docs/manual/index.md"},
+    {"id": "quickstart",      "title": "Quick start",                    "src": "docs/manual/quickstart.md"},
+    {"id": "gui",             "title": "The graphical interface",        "src": "docs/manual/gui.md"},
+    {"id": "cli",             "title": "Command-line reference",         "src": "docs/manual/cli.md"},
+    {"id": "interactions",    "title": "Interactions and assumptions",   "src": "docs/manual/interactions.md"},
+    {"id": "formats",         "title": "Input formats",                  "src": "docs/INPUT_FORMATS.md"},
+    {"id": "fingerprint",     "title": "Interaction fingerprints",       "src": "docs/FINGERPRINT.md"},
+    {"id": "validation",      "title": "Validation and limits",          "src": "docs/manual/validation.md"},
+    {"id": "benchmark",       "title": "Comparison with PLIP",           "src": "docs/BENCHMARK.md"},
+    {"id": "install",         "title": "Installation",                   "src": "docs/INSTALL.md"},
+    {"id": "troubleshooting", "title": "Troubleshooting",                "src": "docs/manual/troubleshooting.md"},
+    {"id": "developers",      "title": "For developers",                 "src": "docs/ARCHITECTURE.md"},
+    {"id": "changelog",       "title": "Changelog",                      "src": "CHANGELOG.md"},
+    {"id": "about",           "title": "About",                          "src": "docs/manual/about.md"}
+  ]
+}

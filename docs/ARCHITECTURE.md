@@ -14,7 +14,7 @@ src/core/
   fingerprint.cpp           pocket definition, per-residue classification, CSV/JSON fingerprint output (ligint/fingerprint.hpp)
   svg.cpp                   SVG figure of a fingerprint
 src/cli/main.cpp            command line: arguments -> Options -> analyzeFile -> printText/printCsv
-gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HitsModel/HitsFilterProxy, Style
+gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
 ```
 
 The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
@@ -34,6 +34,17 @@ results) is in `Result`. The GUI and the CLI are two clients of the same API.
    water bridges.
 5. **Result:** sorted interactions, with coordinates (for the graphics), ligand atoms and bonds, atoms of the residues in
    contact and the coordination sphere of the metals.
+
+## The manual
+
+The user manual is Markdown: the files of `docs/manual/` and some of the other documents (`docs/FINGERPRINT.md`, `docs/INPUT_FORMATS.md`,
+`docs/INSTALL.md`, `docs/BENCHMARK.md`, `docs/ARCHITECTURE.md`, `CHANGELOG.md`), listed in `docs/manual/manifest.json`. A page can include a section of
+another file with `<!-- include: README.md "Section title" -->`, so that a number (a threshold, a table) has a single source.
+`python3 tools/build_manual.py` converts everything to HTML in `docs/manual/html/` (pages, images, `toc.json`, `manual.qrc`); that
+folder is **committed**, so building ligint needs no Python. `HelpWindow` (`gui/HelpWindow.cpp`) shows the pages from the Qt resources
+of `manual.qrc` in a `QTextBrowser` (contents tree from `toc.json`, full-text search over the plain text of the pages); the files are also installed in
+`share/doc/ligint/manual/`. The markup is kept simple because the Qt text browser understands only a subset of HTML and CSS: tables get `border`
+attributes, headings get `<a name>` anchors, images get a `width`. The CI and the tests check that the HTML is up to date and that its links resolve.
 
 ## Fingerprints
 

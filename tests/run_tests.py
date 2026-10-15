@@ -16,6 +16,7 @@ Groups:
     pdb    PDB parsing (altlocs, insertion codes, models, ligand selection, CSV)
     fp     interaction fingerprints (CSV/JSON/SVG output, pocket definition files)
     cif    PDBx/mmCIF input (same results as the PDB, long chain ids, malformed files)
+    manual the HTML manual (up to date, links resolve, agrees with the program)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -24,6 +25,7 @@ Exit code: 0 if all the tests pass, 1 otherwise.
 """
 import argparse
 import glob
+import html
 import json
 import math
 import os
@@ -34,6 +36,7 @@ import tempfile
 import re
 import time
 import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -1318,6 +1321,111 @@ def cif_large_file_runs_in_reasonable_time():
     t0 = time.time()
     r = run_raw([tmpfile(text, ".cif"), "LIG", "--csv"], timeout=limit * 3)
     check(r.rc == 0 and time.time() - t0 < limit, "200000 atoms in mmCIF: %.1f s (limit %d s)" % (time.time() - t0, limit))
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP manual: the HTML manual (docs/manual/html), built from Markdown by tools/build_manual.py
+# ----------------------------------------------------------------------------------------------
+MANUAL_DIR = os.path.normpath(os.path.join(HERE, "..", "docs", "manual", "html"))
+
+
+class _PageInfo(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.ids, self.hrefs, self.imgs, self.tags = set(), [], [], set()
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        self.tags.add(tag)
+        if "id" in a: self.ids.add(a["id"])
+        if tag == "a" and "name" in a: self.ids.add(a["name"])
+        if tag == "a" and "href" in a: self.hrefs.append(a["href"])
+        if tag == "img" and "src" in a: self.imgs.append(a["src"])
+
+
+def manual_pages():
+    if not os.path.isdir(MANUAL_DIR):
+        raise Skip("no manual in " + MANUAL_DIR)
+    info = {}
+    for p in sorted(glob.glob(os.path.join(MANUAL_DIR, "*.html"))):
+        parser = _PageInfo()
+        parser.feed(open(p, encoding="utf-8").read())
+        info[os.path.basename(p)] = parser
+    return info
+
+
+@test("manual")
+def manual_html_is_up_to_date_with_its_sources():
+    script = os.path.normpath(os.path.join(HERE, "..", "tools", "build_manual.py"))
+    if not os.path.exists(script) or not os.path.isdir(MANUAL_DIR):
+        raise Skip("no manual sources")
+    r = subprocess.run([sys.executable, script, "--check"], capture_output=True, text=True)
+    if r.returncode == 2 or "needs the Python module" in r.stderr:
+        raise Skip(r.stderr.strip()[:200])
+    check(r.returncode == 0, "the HTML manual is out of date: run python3 tools/build_manual.py\\n" + r.stderr[:300])
+
+
+@test("manual")
+def manual_links_anchors_and_images_resolve():
+    pages = manual_pages()
+    check(len(pages) >= 12, "expected at least 12 pages, found %d" % len(pages))
+    for name, p in pages.items():
+        check("h1" in p.tags and "title" in p.tags, "%s: no title or h1" % name)
+        for href in p.hrefs:
+            if re.match(r"^(https?:|mailto:)", href):
+                continue
+            file, _, frag = href.partition("#")
+            target = pages.get(file) if file else p
+            check(target is not None, "%s: link to a page that does not exist: %s" % (name, href))
+            check(not frag or frag in target.ids, "%s: link to an anchor that does not exist: %s" % (name, href))
+        for src in p.imgs:
+            check(os.path.exists(os.path.join(MANUAL_DIR, src)), "%s: missing image %s" % (name, src))
+    toc = json.load(open(os.path.join(MANUAL_DIR, "toc.json"), encoding="utf-8"))
+    check([e["file"] for e in toc["pages"]] == sorted([e["file"] for e in toc["pages"]], key=lambda f: [x["file"] for x in toc["pages"]].index(f)) and
+          {e["file"] for e in toc["pages"]} == set(pages), "toc.json and the pages on disk differ")
+    for e in toc["pages"]:
+        for h in e["headings"]:
+            check(h["id"] in pages[e["file"]].ids, "toc.json: %s has no anchor %s" % (e["file"], h["id"]))
+    qrc = set(re.findall(r'alias="([^"]+)"', open(os.path.join(MANUAL_DIR, "manual.qrc"), encoding="utf-8").read()))
+    on_disk = {os.path.relpath(os.path.join(d, f), MANUAL_DIR).replace(os.sep, "/") for d, _, fs in os.walk(MANUAL_DIR) for f in fs} - {"manual.qrc"}
+    check(qrc == on_disk, "manual.qrc and the files differ: %s" % sorted(qrc ^ on_disk))
+
+
+@test("manual")
+def manual_command_line_reference_matches_the_program():
+    html_text = open(os.path.join(MANUAL_DIR, "cli.html"), encoding="utf-8").read() if os.path.isdir(MANUAL_DIR) else raise_skip("no manual")
+    h = run_raw(["--help"])
+    text = h.out + h.err
+    check("Thresholds (defaults):" in text, "--help has no thresholds section: " + text[:200])
+    thr = re.findall(r"--([a-z0-9-]+) (-?[0-9.]+)", text.split("Thresholds (defaults):")[1])
+    check(len(thr) >= 20, "too few thresholds in --help: %d" % len(thr))
+    rows = dict(re.findall(r"<td><code>--([a-z0-9-]+)</code></td>\s*<td>([^<]*)</td>", html_text))
+    for name, default in thr:
+        check(name in rows, "cli.html does not document --%s" % name)
+        cell = rows[name].split()[0]
+        check(float(cell) == float(default), "cli.html says --%s defaults to %s, the program says %s" % (name, rows[name], default))
+    options = set(re.findall(r"--([a-z0-9-]+)", text.split("Thresholds (defaults):")[0]))
+    check({"csv", "sdf", "mol2", "altloc", "format", "fingerprint", "pocket", "plip-like"} <= options, "unexpected --help options: %s" % sorted(options))
+    for o in options:
+        check("--" + o in html_text, "cli.html does not mention --%s" % o)
+    documented = {n for n in re.findall(r"<td><code>--([a-z0-9-]+)", html_text)}
+    known = options | {n for n, _ in thr} | {"help", "version"}
+    check(documented <= known | {"hb-long"}, "cli.html documents options that the program does not have: %s" % sorted(documented - known))
+
+
+def raise_skip(why):
+    raise Skip(why)
+
+
+@test("manual")
+def manual_quickstart_example_is_the_real_output():
+    pdb = os.path.join(CFG["real_dir"], "1AZM.pdb")
+    if not os.path.exists(pdb) or not os.path.isdir(MANUAL_DIR):
+        raise Skip("missing 1AZM.pdb or the manual")
+    page = html.unescape(open(os.path.join(MANUAL_DIR, "quickstart.html"), encoding="utf-8").read())
+    for args in ([], ["AZM"]):
+        out = run_raw([pdb] + args).out.rstrip()
+        check(out and out in page, "the example of the quick start differs from the output of: ligint 1AZM.pdb %s\n%s" % (" ".join(args), out[:300]))
 
 
 # ----------------------------------------------------------------------------------------------

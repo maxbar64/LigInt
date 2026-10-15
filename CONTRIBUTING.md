@@ -28,6 +28,13 @@ Before changing the library it is also worth checking the sanitizers:
 - Changes that alter the results must be measured with `tests/benchmark.py` on structures that were **not** used to
   decide the change. A comparison with PLIP measures the agreement with PLIP, not correctness.
 
+## The manual
+
+The manual is built from Markdown (see `docs/ARCHITECTURE.md`, section *The manual*). After editing `docs/manual/*.md` or one of the documents that
+it includes, run `pip install -r tools/requirements-manual.txt` once and `python3 tools/build_manual.py`, and commit the changes in `docs/manual/html/`: the
+CI fails when they are out of date. A new page goes into `docs/manual/manifest.json`. Interface labels, option names and threshold defaults quoted in the
+manual are checked against the program by the tests; keep them in sync.
+
 ## Installers and releases
 
 The packages are described in `cmake/Packaging.cmake` and `cmake/CPackOptions.cmake` (CPack) and tried by the `linux-packages`

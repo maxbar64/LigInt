@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Validation and limits - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
+<h1 id="validation-and-limits"><a name="validation-and-limits"></a>Validation and limits</h1>
+<h2 id="how-to-read-the-results"><a name="how-to-read-the-results"></a>How to read the results</h2>
+<p>ligint applies <strong>geometric criteria</strong> to the atomic coordinates of a model and lists the contacts that satisfy them. Keep in mind:</p>
+<ul>
+<li>A listed interaction means that the geometry of the model fits the criterion, not that the interaction contributes to binding, and
+  not that it exists in solution. A missing interaction can be a real absence, a limit of the model (low resolution, a poorly defined
+  ligand: look at the B-factor note) or a consequence of an assumption about the chemistry.</li>
+<li>Hydrogens are normally absent from crystal structures, so donor and acceptor roles and charges are <strong>inferred</strong>. When a ligand is
+  chemically unusual, or when the protonation state matters, provide an SDF or MOL2 file (<a href="interactions.html#sdf-and-mol2">templates</a>).</li>
+<li>Water bridges depend on the waters that the structure contains, and many of them are not well defined.</li>
+<li>Unfavorable contacts (clashes, repulsions) are reported to help you judge a pose or a model; they are not errors of the program.</li>
+<li>The thresholds are conventions. Changing them changes the results; the <strong>PLIP-like</strong> preset is one such change, chosen to get closer to
+  another widely used program.</li>
+</ul>
+<h2 id="how-the-results-were-checked"><a name="how-the-results-were-checked"></a>How the results were checked</h2>
+<p>ligint has been checked in several ways, none of which is a validation against experiment:</p>
+<ul>
+<li><strong>Automatic tests</strong> on synthetic fragments with known geometry and known expected outcome, on real complexes whose interactions were
+  checked by hand, and on malformed input.</li>
+<li><strong>Comparison with PLIP</strong> on 150 complexes, reported in detail in <a href="benchmark.html">Comparison with PLIP</a>. The agreement is moderate
+  and the disagreements are mostly conventions of the two programs, not errors of one of them.</li>
+<li><strong>Equivalence tests</strong> between the formats: the same structure read from PDB and from mmCIF gives the same results.</li>
+</ul>
+<h2 id="verification"><a name="verification"></a>Verification</h2>
+<pre><code>ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     87 Python tests (chemical rules, SDF/MOL2,
+                                                     parsing, malformed input, real complexes in tests/data)
+python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
+python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
+</code></pre>
+<p><strong>Agreement with PLIP</strong> (one copy per ligand and PDB; sensitivity = PLIP interactions found; precision =
+ligint interactions also present in PLIP; 95% intervals by bootstrap over the structures):</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Group</th>
+<th style="text-align: right;">Sites</th>
+<th>Sensitivity</th>
+<th>Precision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A, B (used for the corrections)</td>
+<td style="text-align: right;">84</td>
+<td>81% [77–84]</td>
+<td>75% [71–78]</td>
+</tr>
+<tr>
+<td>C (blind, examined afterwards)</td>
+<td style="text-align: right;">83</td>
+<td>77% [73–80]</td>
+<td>70% [66–73]</td>
+</tr>
+<tr>
+<td>D (blind), default</td>
+<td style="text-align: right;">47 structures</td>
+<td>75% [70–80]</td>
+<td>70% [66–74]</td>
+</tr>
+<tr>
+<td>D, <code>--plip-like</code></td>
+<td style="text-align: right;">47 structures</td>
+<td>79% [74–84]</td>
+<td>70% [65–74]</td>
+</tr>
+</tbody>
+</table>
+<p>Details, method and limits in <a href="benchmark.html"><code>docs/BENCHMARK.md</code></a>; reports and CSV of the disagreements in <code>docs/benchmark/</code>.
+<strong>PLIP is not the truth:</strong> many disagreements are conventions (see below), and the comparison does not replace a
+validation with experimental data.</p>
+<h2 id="known-limits-and-differences-from-plip"><a name="known-limits-and-differences-from-plip"></a>Known limits and differences from PLIP</h2>
+<ul>
+<li>PLIP counts <strong>fluorine</strong> halogen bonds too; ligint does not.</li>
+<li>PLIP treats <strong>histidine as positively charged</strong> (about a third of the missing salt bridges); ligint does not.</li>
+<li>PLIP counts hydrophobic contacts of carbons of polar residues and of heme; ligint limits them to hydrophobic residues.</li>
+<li><strong>Water bridges:</strong> PLIP applies its own filters (a donor already in an H-bond cannot form a bridge, at most two
+  bridges per donor water); ligint does not and reports many more bridges (precision ≈ 40%).</li>
+<li>PLIP does not analyze nucleic acids as partners; ligint does (not validated against a reference).</li>
+<li>Not covered: SDF V3000, NMR structures with several models, pH values other than physiological, covalent bonds with the
+  protein (only flagged as "possible covalent bond"), real SDF/MOL2 files from docking (only the 1EFY SDF and a synthetic
+  MOL2 were tried).</li>
+</ul>
+<h2 id="test-status"><a name="test-status"></a>Test status</h2>
+<p>Verified: Linux, GCC 13 and Clang 18 with <code>-Wall -Wextra -Werror</code>, Qt 6.4 with the offscreen platform (smoke test and
+screenshots), build with ASan+UBSan, installation and use as a CMake package. <strong>Not verified:</strong> macOS and Windows, Qt 5
+(the code avoids Qt6-only APIs, but it was not compiled). The workflows in <code>.github/workflows/</code> <strong>have never been
+run</strong>: the commands are the ones tried here locally on Linux (including <code>-Werror</code>, clang and sanitizers), but the first
+run on GitHub may need adjustments. The GUI was tried in offscreen mode: interactive use with mouse and dialog boxes
+was not tried by hand.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

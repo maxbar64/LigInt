@@ -1,0 +1,569 @@
+{
+ "title": "ligint manual",
+ "version": "0.7.0",
+ "pages": [
+  {
+   "id": "index",
+   "title": "Welcome",
+   "file": "index.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Contents",
+     "id": "contents"
+    },
+    {
+     "level": 2,
+     "text": "Where to start",
+     "id": "where-to-start"
+    },
+    {
+     "level": 2,
+     "text": "Conventions",
+     "id": "conventions"
+    }
+   ]
+  },
+  {
+   "id": "quickstart",
+   "title": "Quick start",
+   "file": "quickstart.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "In the graphical interface",
+     "id": "in-the-graphical-interface"
+    },
+    {
+     "level": 2,
+     "text": "On the command line",
+     "id": "on-the-command-line"
+    },
+    {
+     "level": 2,
+     "text": "Where to get structures",
+     "id": "where-to-get-structures"
+    },
+    {
+     "level": 2,
+     "text": "Things to know before trusting a result",
+     "id": "things-to-know-before-trusting-a-result"
+    }
+   ]
+  },
+  {
+   "id": "gui",
+   "title": "The graphical interface",
+   "file": "gui.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "The window",
+     "id": "the-window"
+    },
+    {
+     "level": 2,
+     "text": "Opening a structure",
+     "id": "opening-a-structure"
+    },
+    {
+     "level": 2,
+     "text": "Choosing the ligand",
+     "id": "choosing-the-ligand"
+    },
+    {
+     "level": 2,
+     "text": "Options",
+     "id": "options"
+    },
+    {
+     "level": 2,
+     "text": "Thresholds",
+     "id": "thresholds"
+    },
+    {
+     "level": 2,
+     "text": "Chemical templates",
+     "id": "chemical-templates"
+    },
+    {
+     "level": 2,
+     "text": "Pocket definition",
+     "id": "pocket-definition"
+    },
+    {
+     "level": 2,
+     "text": "Running an analysis",
+     "id": "running-an-analysis"
+    },
+    {
+     "level": 2,
+     "text": "The 3D view",
+     "id": "the-3d-view"
+    },
+    {
+     "level": 2,
+     "text": "The interactions table",
+     "id": "the-interactions-table"
+    },
+    {
+     "level": 2,
+     "text": "Interaction types",
+     "id": "interaction-types"
+    },
+    {
+     "level": 2,
+     "text": "The residues table",
+     "id": "the-residues-table"
+    },
+    {
+     "level": 2,
+     "text": "The fingerprint tab",
+     "id": "the-fingerprint-tab"
+    },
+    {
+     "level": 2,
+     "text": "The log",
+     "id": "the-log"
+    },
+    {
+     "level": 2,
+     "text": "Exporting results",
+     "id": "exporting-results"
+    },
+    {
+     "level": 2,
+     "text": "Reproducing an analysis on the command line",
+     "id": "reproducing-an-analysis-on-the-command-line"
+    },
+    {
+     "level": 2,
+     "text": "Keyboard shortcuts",
+     "id": "keyboard-shortcuts"
+    },
+    {
+     "level": 2,
+     "text": "The manual window",
+     "id": "the-manual-window"
+    }
+   ]
+  },
+  {
+   "id": "cli",
+   "title": "Command-line reference",
+   "file": "cli.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Arguments",
+     "id": "arguments"
+    },
+    {
+     "level": 2,
+     "text": "Options",
+     "id": "options"
+    },
+    {
+     "level": 2,
+     "text": "Thresholds",
+     "id": "thresholds"
+    },
+    {
+     "level": 2,
+     "text": "Output",
+     "id": "output"
+    },
+    {
+     "level": 3,
+     "text": "Text (default)",
+     "id": "text-default"
+    },
+    {
+     "level": 3,
+     "text": "CSV (--csv)",
+     "id": "csv-csv"
+    },
+    {
+     "level": 3,
+     "text": "Fingerprints",
+     "id": "fingerprints"
+    },
+    {
+     "level": 2,
+     "text": "Exit status",
+     "id": "exit-status"
+    },
+    {
+     "level": 2,
+     "text": "Examples",
+     "id": "examples"
+    }
+   ]
+  },
+  {
+   "id": "interactions",
+   "title": "Interactions and assumptions",
+   "file": "interactions.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "What it recognizes (default thresholds)",
+     "id": "what-it-recognizes-default-thresholds"
+    },
+    {
+     "level": 3,
+     "text": "Chemical assumptions",
+     "id": "chemical-assumptions"
+    },
+    {
+     "level": 3,
+     "text": "SDF and MOL2",
+     "id": "sdf-and-mol2"
+    },
+    {
+     "level": 3,
+     "text": "Presets and options for the comparison with PLIP",
+     "id": "presets-and-options-for-the-comparison-with-plip"
+    },
+    {
+     "level": 2,
+     "text": "Interaction type names",
+     "id": "interaction-type-names"
+    }
+   ]
+  },
+  {
+   "id": "formats",
+   "title": "Input formats",
+   "file": "formats.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "What is read from an mmCIF file",
+     "id": "what-is-read-from-an-mmcif-file"
+    },
+    {
+     "level": 2,
+     "text": "Residue labels with long chain names",
+     "id": "residue-labels-with-long-chain-names"
+    },
+    {
+     "level": 2,
+     "text": "Limits",
+     "id": "limits"
+    }
+   ]
+  },
+  {
+   "id": "fingerprint",
+   "title": "Interaction fingerprints",
+   "file": "fingerprint.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Classes",
+     "id": "classes"
+    },
+    {
+     "level": 2,
+     "text": "Command line",
+     "id": "command-line"
+    },
+    {
+     "level": 2,
+     "text": "Pocket definition file",
+     "id": "pocket-definition-file"
+    },
+    {
+     "level": 2,
+     "text": "GUI",
+     "id": "gui"
+    },
+    {
+     "level": 2,
+     "text": "Library",
+     "id": "library"
+    },
+    {
+     "level": 2,
+     "text": "Not covered yet",
+     "id": "not-covered-yet"
+    }
+   ]
+  },
+  {
+   "id": "validation",
+   "title": "Validation and limits",
+   "file": "validation.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "How to read the results",
+     "id": "how-to-read-the-results"
+    },
+    {
+     "level": 2,
+     "text": "How the results were checked",
+     "id": "how-the-results-were-checked"
+    },
+    {
+     "level": 2,
+     "text": "Verification",
+     "id": "verification"
+    },
+    {
+     "level": 2,
+     "text": "Known limits and differences from PLIP",
+     "id": "known-limits-and-differences-from-plip"
+    },
+    {
+     "level": 2,
+     "text": "Test status",
+     "id": "test-status"
+    }
+   ]
+  },
+  {
+   "id": "benchmark",
+   "title": "Comparison with PLIP",
+   "file": "benchmark.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Method",
+     "id": "method"
+    },
+    {
+     "level": 2,
+     "text": "Groups and use during development",
+     "id": "groups-and-use-during-development"
+    },
+    {
+     "level": 2,
+     "text": "Results (default thresholds, one copy per ligand)",
+     "id": "results-default-thresholds-one-copy-per-ligand"
+    },
+    {
+     "level": 2,
+     "text": "Why ligint and PLIP diverge",
+     "id": "why-ligint-and-plip-diverge"
+    },
+    {
+     "level": 2,
+     "text": "Repeating the measurement",
+     "id": "repeating-the-measurement"
+    },
+    {
+     "level": 2,
+     "text": "Limits",
+     "id": "limits"
+    }
+   ]
+  },
+  {
+   "id": "install",
+   "title": "Installation",
+   "file": "install.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Linux",
+     "id": "linux"
+    },
+    {
+     "level": 2,
+     "text": "Rocky Linux, AlmaLinux, RHEL 9",
+     "id": "rocky-linux-almalinux-rhel-9"
+    },
+    {
+     "level": 2,
+     "text": "Windows",
+     "id": "windows"
+    },
+    {
+     "level": 2,
+     "text": "Building the installers yourself",
+     "id": "building-the-installers-yourself"
+    },
+    {
+     "level": 2,
+     "text": "Publishing a release",
+     "id": "publishing-a-release"
+    },
+    {
+     "level": 2,
+     "text": "What has been verified",
+     "id": "what-has-been-verified"
+    }
+   ]
+  },
+  {
+   "id": "troubleshooting",
+   "title": "Troubleshooting",
+   "file": "troubleshooting.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "The file does not open",
+     "id": "the-file-does-not-open"
+    },
+    {
+     "level": 2,
+     "text": "No ligand 'X' found",
+     "id": "no-ligand-x-found"
+    },
+    {
+     "level": 2,
+     "text": "No interactions, or fewer than expected",
+     "id": "no-interactions-or-fewer-than-expected"
+    },
+    {
+     "level": 2,
+     "text": "An expected hydrogen bond or salt bridge is missing",
+     "id": "an-expected-hydrogen-bond-or-salt-bridge-is-missing"
+    },
+    {
+     "level": 2,
+     "text": "Many more water bridges than another program reports",
+     "id": "many-more-water-bridges-than-another-program-reports"
+    },
+    {
+     "level": 2,
+     "text": "Halogen bonds with fluorine are missing",
+     "id": "halogen-bonds-with-fluorine-are-missing"
+    },
+    {
+     "level": 2,
+     "text": "A warning about invalid coordinates",
+     "id": "a-warning-about-invalid-coordinates"
+    },
+    {
+     "level": 2,
+     "text": "The graphical interface",
+     "id": "the-graphical-interface"
+    },
+    {
+     "level": 2,
+     "text": "Reporting a problem",
+     "id": "reporting-a-problem"
+    }
+   ]
+  },
+  {
+   "id": "developers",
+   "title": "For developers",
+   "file": "developers.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "Layers",
+     "id": "layers"
+    },
+    {
+     "level": 2,
+     "text": "Flow of analyzeStream",
+     "id": "flow-of-analyzestream"
+    },
+    {
+     "level": 2,
+     "text": "The manual",
+     "id": "the-manual"
+    },
+    {
+     "level": 2,
+     "text": "Fingerprints",
+     "id": "fingerprints"
+    },
+    {
+     "level": 2,
+     "text": "Adding an interaction type",
+     "id": "adding-an-interaction-type"
+    },
+    {
+     "level": 2,
+     "text": "GUI",
+     "id": "gui"
+    },
+    {
+     "level": 2,
+     "text": "Tests",
+     "id": "tests"
+    }
+   ]
+  },
+  {
+   "id": "changelog",
+   "title": "Changelog",
+   "file": "changelog.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "0.7.0",
+     "id": "070"
+    },
+    {
+     "level": 2,
+     "text": "0.6.0",
+     "id": "060"
+    },
+    {
+     "level": 2,
+     "text": "0.5.1",
+     "id": "051"
+    },
+    {
+     "level": 2,
+     "text": "0.5.0",
+     "id": "050"
+    },
+    {
+     "level": 2,
+     "text": "0.4.0",
+     "id": "040"
+    },
+    {
+     "level": 2,
+     "text": "0.3.0",
+     "id": "030"
+    },
+    {
+     "level": 2,
+     "text": "0.2.0",
+     "id": "020"
+    },
+    {
+     "level": 2,
+     "text": "0.1.0",
+     "id": "010"
+    }
+   ]
+  },
+  {
+   "id": "about",
+   "title": "About",
+   "file": "about.html",
+   "headings": [
+    {
+     "level": 2,
+     "text": "License",
+     "id": "license"
+    },
+    {
+     "level": 2,
+     "text": "Project",
+     "id": "project"
+    },
+    {
+     "level": 2,
+     "text": "Acknowledgments and related tools",
+     "id": "acknowledgments-and-related-tools"
+    },
+    {
+     "level": 2,
+     "text": "The manual",
+     "id": "the-manual"
+    }
+   ]
+  }
+ ]
+}

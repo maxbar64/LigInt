@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quick start - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="index.html">Welcome</a> &middot; <a href="gui.html">The graphical interface</a> &raquo;</p>
+<h1 id="quick-start"><a name="quick-start"></a>Quick start</h1>
+<p>This page takes you from a structure file to a table of interactions in a few minutes. The example is the structure
+<strong>1AZM</strong> (human carbonic anhydrase II with the inhibitor acetazolamide, ligand name <code>AZM</code>, and a zinc ion), which you can
+download from the <a href="https://www.rcsb.org/structure/1AZM">RCSB Protein Data Bank</a> as <code>1AZM.pdb</code> or <code>1AZM.cif</code>.</p>
+<h2 id="in-the-graphical-interface"><a name="in-the-graphical-interface"></a>In the graphical interface</h2>
+<ol>
+<li>Start <strong>ligint</strong> from the applications menu (Linux), the Start menu (Windows) or with <code>ligint-gui</code> in a terminal.</li>
+<li>Click <strong>Open structure...</strong> (or press <code>Ctrl+O</code>, or drag the file onto the window) and choose <code>1AZM.pdb</code>.</li>
+<li>The <strong>Ligand</strong> list now shows <code>AZM A 262 (13 atoms)</code>. Ions and very small molecules (fewer than 6 atoms) are hidden unless you
+   tick <strong>Also show ions and small molecules</strong>.</li>
+<li>Press <strong>Analyze</strong>. The ligand and the residues that touch it appear in the 3D view; the <strong>Interactions</strong> tab lists each
+   interaction with its atoms and distance.</li>
+<li>Drag in the view to rotate, use the wheel to zoom, click a row of the table to highlight that interaction.</li>
+<li><strong>File &gt; Export interactions (CSV)...</strong> saves the table, <strong>File &gt; Save image...</strong> saves the view as a PNG, and
+   <strong>File &gt; Copy command line</strong> copies the <code>ligint</code> command that reproduces the analysis.</li>
+</ol>
+<p><img width="760" alt="The graphical interface on 1HSG" src="img/gui-1HSG-window.png" /></p>
+<p>The full description of the window is in <a href="gui.html">The graphical interface</a>.</p>
+<h2 id="on-the-command-line"><a name="on-the-command-line"></a>On the command line</h2>
+<p>Without a ligand name, <code>ligint</code> lists the ligands of the file:</p>
+<pre><code class="language-text">$ ligint 1AZM.pdb
+Ligands (HETATM) present: AZM(1) ZN(1)
+</code></pre>
+<p>Give the name of a ligand to analyze it:</p>
+<pre><code class="language-text">$ ligint 1AZM.pdb AZM
+Ligand annotation AZM 262A: geometric heuristics
+Mean B-factor: ligand 8.6, rest of the structure 15.4
+
+=== Ligand AZM 262 chain A: 13 atoms, 1 rings ===
+Type                     Fav Ligand atom          Protein atom         d(A)   Notes
+Hydrogen bond            +   AZM 262A:N1          THR 199A:OG1         3.00   
+Hydrogen bond            +   AZM 262A:O2          THR 199A:N           3.08   
+Hydrophobic contact      +   AZM 262A:C4          PHE 91A:CZ           3.78   
+Hydrophobic contact      +   AZM 262A:C4          PHE 91A:CE2          3.82   
+Metal coordination       +   AZM 262A:N1          ZN 261A:ZN           2.01   
+Water bridge             +   AZM 262A:N4          GLN 92A:OE1          2.99   via HOH 360A:O; d(H2O-prot) 3.32
+
+Summary by type:
+  Hydrogen bond                2
+  Hydrophobic contact          2
+  Metal coordination           1
+  Water bridge                 1
+
+Summary by protein residue:
+  PHE 91A       2  Hydrophobic contact
+  THR 199A      2  Hydrogen bond
+  GLN 92A       1  Water bridge
+  ZN 261A       1  Metal coordination
+
+Coordination sphere of the metals in contact with the ligand:
+  ZN 261A:ZN 4 atoms: AZM 262A:N1 (2.01) HIS 119A:ND1 (2.02) HIS 94A:NE2 (2.04) HIS 96A:NE2 (2.17)
+</code></pre>
+<p>How to read it:</p>
+<ul>
+<li>Each row of the table is one interaction: its <strong>type</strong>, whether it is favorable (<code>+</code>) or not (<code>-</code>, clashes and repulsions),
+  the <strong>ligand atom</strong>, the <strong>protein atom</strong> and the <strong>distance</strong> in angstroms, and <strong>notes</strong> (angles, the water that mediates a bridge...).</li>
+<li>The <strong>summaries</strong> count the interactions by type and by protein residue.</li>
+<li>The last block lists the <strong>coordination sphere</strong> of the metals that the ligand touches. Here the ligand nitrogen and three
+  histidines hold the zinc.</li>
+</ul>
+<p>Useful variations:</p>
+<pre><code class="language-text">ligint 1AZM.pdb AZM --csv &gt; interactions.csv          the same table as CSV, for a spreadsheet or a script
+ligint 1AZM.pdb AZM A 262                             only chain A, residue 262 (when the ligand appears several times)
+ligint 1AZM.pdb AZM --no-water                        ignore water molecules (no water bridges)
+ligint 1AZM.pdb AZM --fingerprint svg &gt; figure.svg    the interaction fingerprint as a figure
+ligint 1AZM.cif AZM                                   the same analysis from the mmCIF file
+</code></pre>
+<p>All the options are in the <a href="cli.html">Command-line reference</a>.</p>
+<h2 id="where-to-get-structures"><a name="where-to-get-structures"></a>Where to get structures</h2>
+<p>Search by name or code at <a href="https://www.rcsb.org">rcsb.org</a> and download the <strong>PDB</strong> or <strong>PDBx/mmCIF</strong> file. Files from the archive
+are often compressed (<code>.gz</code>): decompress them first (<code>gunzip 1abc.cif.gz</code>). New entries of the Protein Data Bank will only be
+distributed as PDBx/mmCIF: see <a href="formats.html">Input formats</a>.</p>
+<h2 id="things-to-know-before-trusting-a-result"><a name="things-to-know-before-trusting-a-result"></a>Things to know before trusting a result</h2>
+<ul>
+<li>Crystal structures do not contain hydrogens, so the donor and acceptor roles and the charges of the ligand are <strong>inferred from the
+  geometry</strong> (for example, carboxylates are treated as anionic and aliphatic amines as cationic). An SDF or MOL2 file of the ligand
+  can supply the exact chemistry: see <a href="interactions.html">Interactions and assumptions</a>.</li>
+<li>The results are <strong>geometric criteria applied to a model</strong>, not a measurement of binding. <a href="validation.html">Validation and limits</a>
+  explains how they compare with another tool and where they are weak.</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="index.html">Welcome</a> &middot; <a href="gui.html">The graphical interface</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

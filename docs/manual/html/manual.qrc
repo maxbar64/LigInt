@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/manual">
+        <file alias="about.html">about.html</file>
+        <file alias="benchmark.html">benchmark.html</file>
+        <file alias="changelog.html">changelog.html</file>
+        <file alias="cli.html">cli.html</file>
+        <file alias="developers.html">developers.html</file>
+        <file alias="fingerprint.html">fingerprint.html</file>
+        <file alias="formats.html">formats.html</file>
+        <file alias="gui.html">gui.html</file>
+        <file alias="img/fingerprint-1HSG.png">img/fingerprint-1HSG.png</file>
+        <file alias="img/fingerprint-1IEP.png">img/fingerprint-1IEP.png</file>
+        <file alias="img/gui-1HSG-fingerprint.png">img/gui-1HSG-fingerprint.png</file>
+        <file alias="img/gui-1HSG-window.png">img/gui-1HSG-window.png</file>
+        <file alias="img/gui-4IKF-viewer.png">img/gui-4IKF-viewer.png</file>
+        <file alias="index.html">index.html</file>
+        <file alias="install.html">install.html</file>
+        <file alias="interactions.html">interactions.html</file>
+        <file alias="quickstart.html">quickstart.html</file>
+        <file alias="toc.json">toc.json</file>
+        <file alias="troubleshooting.html">troubleshooting.html</file>
+        <file alias="validation.html">validation.html</file>
+    </qresource>
+</RCC>

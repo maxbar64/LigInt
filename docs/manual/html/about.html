@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>About - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="changelog.html">Changelog</a></p>
+<h1 id="about"><a name="about"></a>About</h1>
+<p><strong>ligint</strong> finds non-covalent ligand-protein interactions in PDB and PDBx/mmCIF files, as a command-line program, a graphical interface and
+a C++ library. The version of this manual is shown at the bottom of every page and printed by <code>ligint --version</code>.</p>
+<h2 id="license"><a name="license"></a>License</h2>
+<p>ligint is distributed under the MIT license: see <a href="https://github.com/maxbar64/LigInt/blob/main/LICENSE">LICENSE</a>. The structures in the test data come from the Protein Data Bank,
+whose data are in the public domain (CC0).</p>
+<h2 id="project"><a name="project"></a>Project</h2>
+<p>The source code, the issue tracker and the releases are at <a href="https://github.com/maxbar64/LigInt">github.com/maxbar64/LigInt</a>.
+Contributions are welcome: see <a href="https://github.com/maxbar64/LigInt/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> and the page <a href="developers.html">For developers</a>.</p>
+<h2 id="acknowledgments-and-related-tools"><a name="acknowledgments-and-related-tools"></a>Acknowledgments and related tools</h2>
+<ul>
+<li><a href="https://github.com/pharmai/plip">PLIP</a>, the Protein-Ligand Interaction Profiler, was used as the reference for the comparison reported in
+  <a href="benchmark.html">Comparison with PLIP</a>. ligint is an independent implementation, not a port of PLIP.</li>
+<li><a href="https://klifs.net">KLIFS</a> inspired the pocket-position fingerprints; ligint does not include KLIFS data.</li>
+<li>The graphical interface is built with <a href="https://www.qt.io">Qt</a>. <a href="https://gemmi.readthedocs.io">gemmi</a> was used to generate mmCIF files for
+  the tests.</li>
+<li>The Protein Data Bank (<a href="https://www.rcsb.org">rcsb.org</a>, <a href="https://www.wwpdb.org">wwpdb.org</a>) provides the structures.</li>
+</ul>
+<h2 id="the-manual"><a name="the-manual"></a>The manual</h2>
+<p>The pages of this manual are written in Markdown (<code>docs/manual/</code> and the other files of <code>docs/</code>) and converted to HTML with
+<code>tools/build_manual.py</code>. The HTML is embedded in the program (Help menu) and installed with it in the documentation folder
+(<code>/usr/share/doc/ligint/manual/</code> on Linux), where you can open <code>index.html</code> with any web browser.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="changelog.html">Changelog</a></p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

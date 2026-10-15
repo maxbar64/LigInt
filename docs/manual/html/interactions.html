@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Interactions and assumptions - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="cli.html">Command-line reference</a> &middot; <a href="formats.html">Input formats</a> &raquo;</p>
+<h1 id="interactions-and-assumptions"><a name="interactions-and-assumptions"></a>Interactions and assumptions</h1>
+<p>This page says what ligint recognizes and with which criteria. The criteria are geometric: they are applied to the coordinates of the
+model, together with a few chemical assumptions that the next sections list. Every threshold can be changed (see the
+<a href="cli.html#thresholds">command-line reference</a>).</p>
+<h2 id="what-it-recognizes-default-thresholds"><a name="what-it-recognizes-default-thresholds"></a>What it recognizes (default thresholds)</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Type</th>
+<th>Criterion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hydrogen bond</td>
+<td>D···A 2.2–3.5 Å, compatible donor and acceptor; with known H: D–H···A ≥ 120° and H···A ≤ 2.7 Å, otherwise antecedent angle ≥ 90° (amines with three substituents: N–H axis within 50°)</td>
+</tr>
+<tr>
+<td>Salt bridge</td>
+<td>opposite charges, atoms ≤ 4.0 Å; with an H-bond on the same pair a single row "also hydrogen bond"</td>
+</tr>
+<tr>
+<td>Electrostatic repulsion</td>
+<td>like charges ≤ 4.5 Å</td>
+</tr>
+<tr>
+<td>Hydrophobic contact</td>
+<td>apolar C–C at 3.3–4.0 Å (carbons not bonded to N/O/P)</td>
+</tr>
+<tr>
+<td>pi-stacking</td>
+<td>centroids ≤ 5.5 Å; parallel (normals ≤ 30°, planes 3.0–4.5 Å apart, offset ≤ 3.5 Å) or T-shaped (≥ 60°, offset ≤ 2.0 Å)</td>
+</tr>
+<tr>
+<td>Cation-pi</td>
+<td>cation–centroid ≤ 6.0 Å, within 30° of the ring axis</td>
+</tr>
+<tr>
+<td>Halogen bond</td>
+<td>Cl/Br/I···N/O/S ≤ 3.5 Å, C–X···A angle ≥ 140° (fluorine is not considered)</td>
+</tr>
+<tr>
+<td>Metal coordination</td>
+<td>O/N with a lone pair or S within the per-element limit (Mg 2.5; Zn 2.6; Ca 2.8; ...)</td>
+</tr>
+<tr>
+<td>Water bridge</td>
+<td>water 2.2–3.5 Å from both ligand and protein, ligand–O–protein angle 75–140°, without direct contact</td>
+</tr>
+<tr>
+<td>Steric clash</td>
+<td>distance &lt; sum of the van der Waals radii − 0.5 Å</td>
+</tr>
+<tr>
+<td>Possible covalent bond</td>
+<td>distance &lt; 2.0 Å</td>
+</tr>
+</tbody>
+</table>
+<h3 id="chemical-assumptions"><a name="chemical-assumptions"></a>Chemical assumptions</h3>
+<p>Crystallographic PDB files have no hydrogens, so the ligand chemistry is inferred from the geometry:</p>
+<ul>
+<li><strong>Physiological pH:</strong> carboxylates, phosphates and sulfonates (two terminal O on the same atom) are anionic;
+  aliphatic amines with only sp3 substituents, and amidines and guanidines not in a ring, are cationic.</li>
+<li><strong>Amides:</strong> an N bonded to a carbonyl C is not an acceptor. A ring N with a lone pair is an acceptor.</li>
+<li><strong>Metals:</strong> O/N coordinated to a metal are considered deprotonated (not donors) unless <code>--metal-donors</code>;
+  His and other N bound to a metal make no H-bonds.</li>
+<li><strong>Histidine:</strong> donor and acceptor, never charged.</li>
+<li><strong>Protein:</strong> DNA/RNA are partners (phosphates, bases, stacking); if the PDB contains the protein hydrogens they are used.</li>
+<li><strong>PDB and PDBx/mmCIF</strong> files are read; the format is recognized from the content (see <a href="formats.html"><code>docs/INPUT_FORMATS.md</code></a>:
+  columns used, chains of several characters, limits; gzip-compressed files must be decompressed first).</li>
+<li><strong>Only the first model is read.</strong> For residues with alternate locations (altloc) the first conformation encountered is kept,
+  or the one given with <code>--altloc X</code> (GUI: <em>Alternate conformation</em>): a residue that does not have it keeps its first one. The
+  program reports for how many residues the requested conformation was used and warns if the file does not have it. The
+  choice applies to the whole structure, ligand and waters included; occupancies are not considered.</li>
+<li><strong>Multi-residue ligands</strong> (disaccharides, glycans, dipeptides) covalently linked are a single ligand
+  (as in PLIP); <code>--no-merge</code> keeps them separate.</li>
+</ul>
+<h3 id="sdf-and-mol2"><a name="sdf-and-mol2"></a>SDF and MOL2</h3>
+<p><code>--sdf</code> / <code>--mol2</code> provide bond orders, explicit hydrogens and formal charges. The PDB ligand is matched to the
+template <strong>by coordinates</strong> (tolerance 0.6 Å, same number of heavy atoms): the file must have the same coordinates as
+the PDB. With hydrogens in the template, donors/acceptors and D–H···A angles are real; without H, or if the matching
+fails, the geometric heuristics are used (the program says so). SDF V3000 is not supported.</p>
+<h3 id="presets-and-options-for-the-comparison-with-plip"><a name="presets-and-options-for-the-comparison-with-plip"></a>Presets and options for the comparison with PLIP</h3>
+<ul>
+<li><code>--hb-long 4.1</code>: H-bonds with D···A up to 4.1 Å only if the H (real or ideal) can point to the acceptor.</li>
+<li><code>--salt-centroid 5.5</code>: salt bridges between the centroids of the charged groups (one contact per group).</li>
+<li><code>--plip-like</code> = <code>--hb-long 4.1 --salt-centroid 5.5 --hal-max 4.0</code>; explicit options take precedence.</li>
+</ul>
+<p>They are off by default: <code>--hb-long</code> was confirmed on data not used for the tuning, <code>--salt-centroid</code> has a small and
+uncertain effect.</p>
+<h2 id="interaction-type-names"><a name="interaction-type-names"></a>Interaction type names</h2>
+<p>The <code>type</code> column of the CSV, the <strong>Type</strong> column of the tables and the library constants use these names:
+<code>Hydrogen bond</code>, <code>Salt bridge</code>, <code>Electrostatic repulsion</code>, <code>Hydrophobic contact</code>, <code>Apolar contact (backbone)</code>, <code>pi-stacking (parallel)</code>,
+<code>pi-stacking (T-shaped)</code>, <code>Cation-pi</code>, <code>Halogen bond</code>, <code>Metal coordination</code>, <code>Water bridge</code>, <code>Steric clash</code> and <code>Possible covalent bond</code>.
+Steric clashes and electrostatic repulsions are <strong>unfavorable</strong> contacts, listed with <code>-</code> in the favorable column. A possible covalent bond
+(distance below 2.0 A) is only a <strong>flag</strong> that the contact is too close to be a non-covalent one (it is listed with <code>+</code>). None of the three
+enters the <a href="fingerprint.html">fingerprint</a>.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="cli.html">Command-line reference</a> &middot; <a href="formats.html">Input formats</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

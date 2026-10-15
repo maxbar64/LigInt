@@ -8,7 +8,12 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QAction>
+#include <QListWidget>
 #include <QProcess>
+#include <QRegularExpression>
+#include <QTabWidget>
+#include <QTextBrowser>
+#include <QTreeWidget>
 #include <QImage>
 #include <QSet>
 #include <QTableWidget>
@@ -16,6 +21,7 @@
 #include <iostream>
 
 #include "CommandLine.h"
+#include "HelpWindow.h"
 #include "HitsModel.h"
 #include "MainWindow.h"
 #include "ViewerWidget.h"
@@ -300,6 +306,73 @@ int main(int argc, char** argv) {
         CHECK(gui::shellQuote("") == "''" && gui::shellQuote("plain-1.2/x") == "plain-1.2/x" && gui::shellQuote("a b") == "'a b'");
     }
 #endif
+
+    // the manual: embedded pages, navigation, search, links and context help
+    {
+        gui::HelpWindow h;
+        CHECK(h.pageCount() >= 12 && h.contents()->topLevelItemCount() == h.pageCount());
+        CHECK(h.currentPage() == "index.html");
+        CHECK(h.showPage("gui.html#the-log") && h.currentPage() == "gui.html" && h.browser()->source().fragment() == "the-log");
+        CHECK(!h.showPage("no-such-page.html"));
+        // every internal link and every image of the embedded copy of every page
+        const QRegularExpression hrefRe("href=\"([^\"]+)\""), imgRe("<img [^>]*src=\"([^\"]+)\"");
+        int links = 0, images = 0;
+        for (const QString& file : h.pageFiles()) {
+            QFile f(":/manual/" + file);
+            CHECK(f.open(QIODevice::ReadOnly));
+            const QString html = QString::fromUtf8(f.readAll());
+            for (auto it = hrefRe.globalMatch(html); it.hasNext();) {
+                const QString href = it.next().captured(1);
+                if (href.startsWith("http") || href.startsWith("mailto:")) continue;
+                CHECK(gui::HelpWindow::topicExists(href.startsWith('#') ? file + href : href));
+                links++;
+            }
+            for (auto im = imgRe.globalMatch(html); im.hasNext();) { CHECK(QFile::exists(":/manual/" + im.next().captured(1))); images++; }
+        }
+        CHECK(links > 50 && images >= 4);
+        // history and links
+        h.showPage("index.html");
+        h.showPage("cli.html");
+        h.browser()->backward();
+        CHECK(h.currentPage() == "index.html");
+        h.browser()->forward();
+        CHECK(h.currentPage() == "cli.html");
+        emit h.browser()->anchorClicked(QUrl("gui.html#exporting-results"));          // a click on a link of the page
+        CHECK(h.currentPage() == "gui.html" && h.browser()->source().fragment() == "exporting-results");
+        emit h.browser()->anchorClicked(QUrl("troubleshooting.html"));
+        CHECK(h.currentPage() == "troubleshooting.html");
+        CHECK(h.browser()->find("gzip"));                                              // find in the page
+        // search: all the words must be in the page; option names and rare words can be found
+        const QStringList r = h.search("fingerprint pocket definition");
+        CHECK(!r.isEmpty() && h.results()->count() == r.size() && r.contains("fingerprint.html"));
+        CHECK(h.search("zzzqqqxxx").isEmpty() && h.search("fingerprint zzzqqqxxx").isEmpty() && h.search("   ").isEmpty());
+        CHECK(h.search("hb-long").contains("cli.html"));
+        // context help: every tab has a target that exists, also an unknown tab
+        for (const char* tab : {"Interactions", "Residues", "Fingerprint", "Log", "Unknown"})
+            CHECK(gui::HelpWindow::topicExists(gui::HelpWindow::topicForTab(tab)));
+        CHECK(!gui::HelpWindow::topicExists("gui.html#there-is-no-such-section"));
+        // F1 in the main window opens the manual at the page of the current tab
+        gui::MainWindow m;
+        m.setInteractive(false);
+        CHECK(m.helpWindow() == nullptr);
+        QAction* f1 = nullptr;
+        for (QAction* a : m.findChildren<QAction*>())
+            if (a->shortcut() == QKeySequence(QKeySequence::HelpContents)) f1 = a;
+        CHECK(f1 != nullptr);
+        QTabWidget* tabs = m.findChild<QTabWidget*>();
+        CHECK(tabs != nullptr);
+        for (int i = 0; tabs && i < tabs->count(); i++) {
+            tabs->setCurrentIndex(i);
+            if (f1) f1->trigger();
+            CHECK(m.helpWindow() != nullptr && m.helpWindow()->currentPage() == "gui.html");
+            CHECK(m.helpWindow()->browser()->source().fragment() == gui::HelpWindow::topicForTab(tabs->tabText(i)).section('#', 1));
+        }
+        m.showManual("cli.html");
+        CHECK(m.helpWindow()->currentPage() == "cli.html");
+        bool hasMenu = false;
+        for (QAction* a : m.findChildren<QAction*>()) if (a->text().contains("User manual")) hasMenu = true;
+        CHECK(hasMenu);
+    }
 
     // a PDBx/mmCIF file gives the same interactions as the PDB file of the same entry
     {

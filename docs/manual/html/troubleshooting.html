@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Troubleshooting - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
+<h1 id="troubleshooting"><a name="troubleshooting"></a>Troubleshooting</h1>
+<h2 id="the-file-does-not-open"><a name="the-file-does-not-open"></a>The file does not open</h2>
+<p><strong><code>Cannot open FILE</code>.</strong> The path is wrong or the file cannot be read. Put the path in quotes if it contains spaces.</p>
+<p><strong><code>FILE is compressed (gzip): decompress it first, e.g. with gunzip</code>.</strong> Files from the PDB archive are often <code>.pdb.gz</code> or <code>.cif.gz</code>.
+Decompress them (<code>gunzip 1abc.cif.gz</code>) and use the result.</p>
+<p><strong>The listing is empty, or a warning says that no atoms were read.</strong> The file is not a structure ligint understands, or its format was
+recognized wrongly. A PDBx/mmCIF file must contain an <code>_atom_site</code> category. You can force the format with <code>--format pdb</code> or <code>--format cif</code>.
+See <a href="formats.html">Input formats</a>.</p>
+<h2 id="no-ligand-x-found"><a name="no-ligand-x-found"></a><code>No ligand 'X' found</code></h2>
+<ul>
+<li>The name is the <strong>residue name</strong> of a <code>HETATM</code> record, in capital letters (<code>ATP</code>, not <code>atp</code>). Run <code>ligint file</code> without a name to list
+  the ligands that the file really has.</li>
+<li>A <strong>peptide</strong> or a nucleic acid that binds the protein is part of the polymer (<code>ATOM</code> records) and is not a ligand for ligint.</li>
+<li>With a chain or a residue number the copy must exist: <code>ligint 1abc.pdb ATP B 501</code>. A residue number followed by <code>A</code> selects an
+  insertion code, not a chain.</li>
+<li>The program exits with code 0 in this case: check the output in scripts.</li>
+</ul>
+<h2 id="no-interactions-or-fewer-than-expected"><a name="no-interactions-or-fewer-than-expected"></a>No interactions, or fewer than expected</h2>
+<ul>
+<li>Look at the <strong>Mean B-factor</strong> line: a ligand with a B-factor much higher than the rest of the structure is poorly defined and its
+  contacts are unreliable.</li>
+<li>If you chose a copy of the ligand that sits at the edge of the crystal, it may have few neighbors. Try another copy.</li>
+<li>Water bridges need <code>--no-water</code> to be absent, and appear only when the structure contains waters.</li>
+<li>Contacts beyond the thresholds are not listed: see the <a href="cli.html#thresholds">thresholds</a>. <code>--plip-like</code> or <code>--hb-long 4.1</code> accept longer
+  hydrogen bonds when the geometry allows them.</li>
+<li>With several conformations of a residue, only one is used: check <strong>Alternate conformation</strong> (GUI) or <code>--altloc</code>.</li>
+</ul>
+<h2 id="an-expected-hydrogen-bond-or-salt-bridge-is-missing"><a name="an-expected-hydrogen-bond-or-salt-bridge-is-missing"></a>An expected hydrogen bond or salt bridge is missing</h2>
+<p>The roles of the ligand atoms are inferred from the geometry, and some rules are deliberate:</p>
+<ul>
+<li>An amide nitrogen is <strong>not an acceptor</strong>; a nitrogen with a lone pair in an aromatic ring is.</li>
+<li>An O or N bound to a <strong>metal</strong> is considered deprotonated and does not donate a hydrogen bond (<code>--metal-donors</code> changes it). A histidine
+  bound to a zinc cannot make hydrogen bonds with the ligand.</li>
+<li><strong>Histidine is never charged</strong>, so it makes no salt bridge.</li>
+<li>Aliphatic amines are assumed <strong>protonated</strong> and carboxylates <strong>deprotonated</strong>; amidines and guanidines not in a ring are cationic.</li>
+</ul>
+<p>If the assumption is wrong for your ligand, give the exact chemistry with an SDF or MOL2 file (<code>--sdf</code>, <code>--mol2</code>, or <strong>Add template...</strong>).
+If the template is <strong>not applied</strong>, the <strong>Log</strong> and the standard error say so: the file must have the same atoms at the same coordinates
+as the structure, so use a file prepared from that complex.</p>
+<h2 id="many-more-water-bridges-than-another-program-reports"><a name="many-more-water-bridges-than-another-program-reports"></a>Many more water bridges than another program reports</h2>
+<p>ligint does not apply the extra filters that PLIP applies to water bridges (a donor already in a direct hydrogen bond cannot form a
+bridge, at most two bridges per donor water). See <a href="benchmark.html">Comparison with PLIP</a>.</p>
+<h2 id="halogen-bonds-with-fluorine-are-missing"><a name="halogen-bonds-with-fluorine-are-missing"></a>Halogen bonds with fluorine are missing</h2>
+<p>Fluorine is not considered a halogen-bond donor in ligint (PLIP counts it). Chlorine, bromine and iodine are.</p>
+<h2 id="a-warning-about-invalid-coordinates"><a name="a-warning-about-invalid-coordinates"></a>A warning about invalid coordinates</h2>
+<p><code>Warning: N atoms with invalid coordinates ignored</code>: some atoms have missing or absurd coordinates (for example <code>?</code> in an mmCIF file or
+a value beyond 100,000 A) and were skipped.</p>
+<h2 id="the-graphical-interface"><a name="the-graphical-interface"></a>The graphical interface</h2>
+<p><strong>It does not start on Linux, with a message about the Qt platform plugin.</strong> Install the Qt platform plugins (<code>qt6-qpa-plugins</code> on Debian and
+Ubuntu); if the message mentions <code>xcb-cursor</code>, install <code>libxcb-cursor0</code>. To start the program only for tests, without a screen, use
+<code>QT_QPA_PLATFORM=offscreen</code>.</p>
+<p><strong>The fingerprint tab shows only a table.</strong> This build of the program was made without the Qt Svg module. Everything else works, and the
+SVG export still produces the figure.</p>
+<p><strong>Windows shows "Windows protected your PC".</strong> The installer is not code-signed. Choose <strong>More info</strong>, then <strong>Run anyway</strong>.</p>
+<p><strong>Where are the settings?</strong> The program remembers only the last folder you used, in the Qt settings of your system
+(<code>~/.config/ligint/ligint-gui.conf</code> on Linux, the registry key <code>HKEY_CURRENT_USER\Software\ligint</code> on Windows).</p>
+<h2 id="reporting-a-problem"><a name="reporting-a-problem"></a>Reporting a problem</h2>
+<p>Open an issue in the <a href="https://github.com/maxbar64/LigInt/issues">project repository</a> with: the output of <code>ligint --version</code>, the exact command (in
+the GUI, copy it with <strong>File &gt; Copy command line</strong>), what you expected and what happened, and, if you can share it, the structure file (or its PDB code).
+For the graphical interface add the contents of the <strong>Log</strong> tab.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

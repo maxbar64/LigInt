@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Command-line reference - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="gui.html">The graphical interface</a> &middot; <a href="interactions.html">Interactions and assumptions</a> &raquo;</p>
+<h1 id="command-line-reference"><a name="command-line-reference"></a>Command-line reference</h1>
+<pre><code class="language-text">ligint structure [RESNAME [chain [resseq[A|-]]]] [options]
+</code></pre>
+<p><code>structure</code> is a PDB or PDBx/mmCIF file (<code>.pdb</code>, <code>.ent</code>, <code>.cif</code>, <code>.mmcif</code>; the format is recognized from the content). Compressed
+files (<code>.gz</code>) are refused: decompress them first.</p>
+<h2 id="arguments"><a name="arguments"></a>Arguments</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure</code></td>
+<td>the file to read. Alone, it <strong>lists the ligands</strong> (<code>HETATM</code> residues) with their number of copies, and the alternate conformations of the file if it has any.</td>
+</tr>
+<tr>
+<td><code>RESNAME</code></td>
+<td>the name of the ligand to analyze (up to 5 characters in mmCIF), for example <code>ATP</code>. Every copy of the ligand in the file is analyzed.</td>
+</tr>
+<tr>
+<td><code>chain</code></td>
+<td>restricts the analysis to the copy in this chain (a chain of several characters is allowed in mmCIF).</td>
+</tr>
+<tr>
+<td><code>resseq</code></td>
+<td>restricts it to this residue number. A trailing letter selects an insertion code (<code>501A</code>); a trailing <code>-</code> selects the residue without insertion code (<code>501-</code>); the bare number matches any code.</td>
+</tr>
+</tbody>
+</table>
+<p>If the ligand is not found, <code>ligint</code> prints the list of the ligands present and <code>No ligand 'X' found.</code>, and <strong>still exits with code 0</strong>:
+check the output, not only the exit code, in scripts.</p>
+<h2 id="options"><a name="options"></a>Options</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--csv</code></td>
+<td>write the interactions as CSV on standard output; the service information (annotation, B-factor, warnings) goes to standard error</td>
+</tr>
+<tr>
+<td><code>--sdf FILE</code>, <code>--mol2 FILE</code></td>
+<td>chemical annotation of the ligand (bond orders, explicit hydrogens, formal charges); the ligand is matched to the molecule by coordinates (<a href="interactions.html#sdf-and-mol2">details</a>)</td>
+</tr>
+<tr>
+<td><code>--no-water</code></td>
+<td>ignore the water molecules (no water bridges)</td>
+</tr>
+<tr>
+<td><code>--no-merge</code></td>
+<td>do not merge covalently linked <code>HETATM</code> residues (glycans, dipeptides) into one ligand</td>
+</tr>
+<tr>
+<td><code>--plip-like</code></td>
+<td>preset for the comparison with PLIP: <code>--hb-long 4.1 --salt-centroid 5.5 --hal-max 4.0</code>; explicit options take precedence</td>
+</tr>
+<tr>
+<td><code>--metal-donors</code></td>
+<td>let O and N coordinated to a metal remain possible hydrogen-bond donors</td>
+</tr>
+<tr>
+<td><code>--backbone-hyd</code></td>
+<td>also count apolar contacts with the protein backbone</td>
+</tr>
+<tr>
+<td><code>--altloc X</code></td>
+<td>use the alternate conformation <code>X</code> for the residues that have it; the others keep their first conformation. The program reports for how many residues <code>X</code> was used and warns if the file has no conformation <code>X</code></td>
+</tr>
+<tr>
+<td><code>--format F</code></td>
+<td><code>auto</code> (default: recognized from the content), <code>pdb</code> or <code>cif</code></td>
+</tr>
+<tr>
+<td><code>--fingerprint FORMAT</code>, <code>--pocket FILE</code></td>
+<td>write the <a href="fingerprint.html">interaction fingerprint</a> (<code>csv</code>, <code>json</code> or <code>svg</code>) instead of the interaction table, optionally with a pocket definition</td>
+</tr>
+<tr>
+<td><code>--version</code></td>
+<td>print the version</td>
+</tr>
+<tr>
+<td><code>--help</code>, <code>-h</code></td>
+<td>print the usage and the default values of the thresholds</td>
+</tr>
+</tbody>
+</table>
+<p>An unknown option, an option without its value, a non-numeric threshold, a missing file or a malformed residue number ends the program with
+an error message and exit code <strong>1</strong>.</p>
+<h2 id="thresholds"><a name="thresholds"></a>Thresholds</h2>
+<p>Every criterion has a threshold with a default value that can be changed with <code>--name value</code>. <code>ligint --help</code> prints the defaults of your version.
+Thresholds above 6 A, which the grid search cannot reach, are limited to 6 A with a warning. The meaning of each criterion is explained in
+<a href="interactions.html">Interactions and assumptions</a>.</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Meaning</th>
+<th>In the GUI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--hb-min</code></td>
+<td>2.2</td>
+<td>smallest donor-acceptor distance of a hydrogen bond (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hb-max</code></td>
+<td>3.5</td>
+<td>largest donor-acceptor distance (A)</td>
+<td><strong>H-bond, D...A max</strong></td>
+</tr>
+<tr>
+<td><code>--hb-ha</code></td>
+<td>2.7</td>
+<td>largest H...acceptor distance (A); applies when the hydrogens are known</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hb-angle</code></td>
+<td>120</td>
+<td>smallest D-H...A angle (degrees); applies when the hydrogens are known</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hb-ante</code></td>
+<td>90</td>
+<td>without known hydrogens: smallest angle (degrees) between a neighbor of the donor or acceptor, that atom and the partner</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hb-long</code></td>
+<td>0 (off)</td>
+<td>also accept donor-acceptor distances up to this value (A) when the geometry lets a hydrogen point at the acceptor</td>
+<td><strong>Long H-bond, up to</strong></td>
+</tr>
+<tr>
+<td><code>--hb-long-tol</code></td>
+<td>40</td>
+<td>angular tolerance (degrees) of the geometry test of long hydrogen bonds</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hyd-min</code></td>
+<td>3.3</td>
+<td>smallest carbon-carbon distance of a hydrophobic contact (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hyd-max</code></td>
+<td>4</td>
+<td>largest carbon-carbon distance of a hydrophobic contact (A)</td>
+<td><strong>Hydrophobic max</strong></td>
+</tr>
+<tr>
+<td><code>--salt-max</code></td>
+<td>4</td>
+<td>largest distance between oppositely charged atoms of a salt bridge (A)</td>
+<td><strong>Salt bridge (atoms)</strong></td>
+</tr>
+<tr>
+<td><code>--salt-centroid</code></td>
+<td>0 (off)</td>
+<td>judge salt bridges between the centers of the charged groups, up to this distance (A)</td>
+<td><strong>Salt bridge (centroids)</strong></td>
+</tr>
+<tr>
+<td><code>--rep-max</code></td>
+<td>4.5</td>
+<td>largest distance of an electrostatic repulsion between like charges (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hal-max</code></td>
+<td>3.5</td>
+<td>largest distance of a halogen bond (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--hal-angle</code></td>
+<td>140</td>
+<td>smallest C-X...acceptor angle of a halogen bond (degrees)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--metal-max</code></td>
+<td>3.5</td>
+<td>upper limit of a metal-coordination distance (A); the limit of each element (Mg 2.5, Zn 2.6, Ca 2.8...) applies within it</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--pi-max</code></td>
+<td>5.5</td>
+<td>largest distance between the centers of two aromatic rings (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--pi-offset</code></td>
+<td>3.5</td>
+<td>largest lateral offset of the rings in parallel stacking (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--pi-angle</code></td>
+<td>30</td>
+<td>largest angle between the normals of the rings in parallel stacking (degrees)</td>
+<td><strong>pi-stacking, max angle</strong></td>
+</tr>
+<tr>
+<td><code>--cp-max</code></td>
+<td>6</td>
+<td>largest distance between a cation and the center of a ring for cation-pi (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--clash</code></td>
+<td>0.5</td>
+<td>a steric clash is a distance shorter than the sum of the van der Waals radii minus this value (A)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--wb-min</code></td>
+<td>75</td>
+<td>smallest ligand-O(water)-protein angle of a water bridge (degrees)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--wb-max</code></td>
+<td>140</td>
+<td>largest ligand-O(water)-protein angle of a water bridge (degrees)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="output"><a name="output"></a>Output</h2>
+<h3 id="text-default"><a name="text-default"></a>Text (default)</h3>
+<p>For each ligand the program prints the annotation and B-factor information, a table, two summaries and, when the ligand touches
+metals, their coordination sphere (see the example in the <a href="quickstart.html">Quick start</a>). The columns of the table are the <strong>type</strong> of the
+interaction, <strong>Fav</strong> (<code>+</code> favorable, <code>-</code> clash or repulsion), the <strong>ligand atom</strong>, the <strong>protein atom</strong> (as <code>RES numberCHAIN:ATOM</code>), the
+distance <strong>d(A)</strong> and <strong>Notes</strong>. A chain of several characters (mmCIF) is written in brackets: <code>ASP 189 [AA]:OD1</code>.</p>
+<h3 id="csv-csv"><a name="csv-csv"></a>CSV (<code>--csv</code>)</h3>
+<p>One header line and one row per interaction, with these columns:</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ligand</code></td>
+<td>the ligand copy, for example <code>AZM 262A</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>the interaction type (the list is in <a href="interactions.html">Interactions and assumptions</a>)</td>
+</tr>
+<tr>
+<td><code>favorable</code></td>
+<td><code>1</code> or <code>0</code></td>
+</tr>
+<tr>
+<td><code>ligand_atom</code>, <code>protein_atom</code></td>
+<td>the atoms, as in the text output</td>
+</tr>
+<tr>
+<td><code>distance</code></td>
+<td>in angstroms</td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>the notes of the text output</td>
+</tr>
+</tbody>
+</table>
+<p>Rows are sorted by type, ligand atom and distance. The information lines and the warnings go to standard error, so redirecting
+standard output gives a clean file.</p>
+<h3 id="fingerprints"><a name="fingerprints"></a>Fingerprints</h3>
+<p><code>--fingerprint csv|json|svg</code> replaces the table: see <a href="fingerprint.html">Interaction fingerprints</a>.</p>
+<h2 id="exit-status"><a name="exit-status"></a>Exit status</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>the analysis ran (also when no ligand matched: see above), or <code>--help</code> / <code>--version</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>error: file that cannot be opened or is compressed, unknown option, missing or non-numeric value, malformed residue number, unknown <code>--format</code> or <code>--fingerprint</code> value, <code>--pocket</code> without <code>--fingerprint</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="examples"><a name="examples"></a>Examples</h2>
+<pre><code class="language-text">ligint 1abc.pdb                                       list the ligands
+ligint 1abc.pdb ATP A 501 --csv &gt; atp.csv             one copy of ATP, as CSV
+ligint 1abc.pdb LIG --plip-like --no-water            the PLIP-like preset, without water bridges
+ligint 1abc.pdb LIG --hb-max 3.2 --hyd-max 4.2        stricter hydrogen bonds, looser hydrophobic contacts
+ligint 1abc.pdb LIG --sdf lig.sdf                     exact chemistry from an SDF of the ligand
+ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv &gt; figure.svg
+</code></pre>
+<p>Analyze many structures that contain the same ligand name, in a POSIX shell:</p>
+<pre><code class="language-text">for f in complexes/*.pdb; do ligint &quot;$f&quot; LIG --csv &gt; &quot;${f%.pdb}.csv&quot;; done
+</code></pre>
+<p>Keep only the hydrogen bonds of a CSV: <code>ligint 1abc.pdb LIG --csv | awk -F, 'NR == 1 || $2 == "Hydrogen bond"'</code>.</p>
+<p>To repeat an analysis made in the <a href="gui.html#reproducing-an-analysis-on-the-command-line">graphical interface</a>, copy the command line that it
+writes in its log.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="gui.html">The graphical interface</a> &middot; <a href="interactions.html">Interactions and assumptions</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

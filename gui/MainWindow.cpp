@@ -7,6 +7,7 @@
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QDragEnterEvent>
+#include <QDesktopServices>
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -40,6 +41,7 @@
 #include <sstream>
 
 #include "CommandLine.h"
+#include "HelpWindow.h"
 #include "HitsModel.h"
 #include "Style.h"
 #include "SvgView.h"
@@ -114,6 +116,19 @@ void MainWindow::buildUi() {
     file->addSeparator();
     makeAction(file, tr("&Quit"), &QWidget::close, QKeySequence::Quit);
     auto* help = menuBar()->addMenu(tr("&Help"));
+    makeAction(help, tr("&User manual"), &MainWindow::onHelp, QKeySequence::HelpContents);
+    {
+        QAction* cli = help->addAction(tr("&Command-line reference"));
+        connect(cli, &QAction::triggered, this, [this] { showManual(QStringLiteral("cli.html")); });
+        QAction* web = help->addAction(tr("Manual in &web browser"));
+        web->setToolTip(tr("Open the HTML files of the manual installed with the program in your web browser"));
+        web->setEnabled(!HelpWindow::installedManualDir().isEmpty());
+        connect(web, &QAction::triggered, this, [] {
+            const QString dir = HelpWindow::installedManualDir();
+            if (!dir.isEmpty()) QDesktopServices::openUrl(QUrl::fromLocalFile(dir + QStringLiteral("/index.html")));
+        });
+        help->addSeparator();
+    }
     makeAction(help, tr("&About ligint…"), &MainWindow::onAbout);
 
     // ---- control panel (left)
@@ -767,6 +782,21 @@ void MainWindow::onSaveImage() {
     if (!viewer_->renderImage(QSize(1600, 1200)).save(f)) showError(tr("Saving failed"), f);
     else statusBar()->showMessage(tr("Saved %1").arg(f), 5000);
 }
+
+void MainWindow::showManual(const QString& target) {
+    if (!help_) help_ = new HelpWindow(this);
+    help_->setWindowFlag(Qt::Window, true);
+    QString page = target;
+    if (page.isEmpty()) page = HelpWindow::topicForTab(tabs_->tabText(tabs_->currentIndex()));
+    help_->showPage(page);
+    help_->show();
+    help_->raise();
+    help_->activateWindow();
+}
+
+void MainWindow::onHelp() { showManual(); }
+
+HelpWindow* MainWindow::helpWindow() const { return help_.data(); }
 
 void MainWindow::onAbout() {
     QMessageBox::about(this, tr("About ligint"),

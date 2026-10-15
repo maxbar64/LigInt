@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The graphical interface - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="quickstart.html">Quick start</a> &middot; <a href="cli.html">Command-line reference</a> &raquo;</p>
+<h1 id="the-graphical-interface"><a name="the-graphical-interface"></a>The graphical interface</h1>
+<p><code>ligint-gui</code> shows the ligand and the residues around it in 3D, lists the interactions in tables, filters them by type and draws the
+interaction fingerprint. It runs the same analysis as the command-line program; every analysis comes with the command line that
+reproduces it (<a href="#reproducing-an-analysis-on-the-command-line">see below</a>).</p>
+<h2 id="the-window"><a name="the-window"></a>The window</h2>
+<p><img width="760" alt="The window" src="img/gui-1HSG-window.png" /></p>
+<ul>
+<li>The <strong>control panel</strong> on the left has the groups <strong>Structure</strong>, <strong>Options</strong>, <strong>Thresholds</strong>, <strong>Chemical templates</strong> and
+  <strong>Pocket definition (fingerprint)</strong>, the <strong>Analyze</strong> button and the list of <strong>Interaction types</strong>. It scrolls when the window is too small.</li>
+<li>The <strong>3D view</strong> is at the top right, with a toolbar (<strong>Labels</strong>, <strong>Residues</strong>, <strong>Distances</strong>, <strong>Legend</strong>, <strong>Reset view</strong>).</li>
+<li>The tabs below the view show the results: <strong>Interactions</strong>, <strong>Residues</strong>, <strong>Fingerprint</strong> and <strong>Log</strong>.</li>
+<li>The status bar shows short messages (what was opened, how many interactions were found, what was exported).</li>
+</ul>
+<p>Press <code>F1</code> at any moment to open this manual at the page of the tab you are looking at.</p>
+<h2 id="opening-a-structure"><a name="opening-a-structure"></a>Opening a structure</h2>
+<p>Click <strong>Open structure...</strong> in the control panel or <strong>File &gt; Open structure...</strong> (<code>Ctrl+O</code>), or <strong>drag a file onto the window</strong>, or give it
+on the command line: <code>ligint-gui 1AZM.cif</code>. PDB (<code>.pdb</code>, <code>.ent</code>) and PDBx/mmCIF (<code>.cif</code>, <code>.mmcif</code>) files are read; the format is
+recognized from the content (<a href="formats.html">Input formats</a>). Compressed files (<code>.gz</code>) must be decompressed first. If the file cannot be
+opened, a message explains why and the error is also written in the <strong>Log</strong> tab.</p>
+<p>The last folder you used is remembered between sessions.</p>
+<h2 id="choosing-the-ligand"><a name="choosing-the-ligand"></a>Choosing the ligand</h2>
+<p>The <strong>Ligand</strong> list shows the ligands (<code>HETATM</code> residues) of the file, each with its name, chain, residue number and number of atoms:
+<code>AZM A 262 (13 atoms)</code>. Waters are never listed. Ions and molecules with fewer than 6 atoms are hidden unless you tick
+<strong>Also show ions and small molecules</strong>. If the same ligand appears in several copies, each copy is a separate entry.</p>
+<p>Covalently linked <code>HETATM</code> residues (sugar chains, dipeptides) are treated as <strong>one ligand</strong> unless you untick <strong>Merge linked residues</strong>.</p>
+<h2 id="options"><a name="options"></a>Options</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Control</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Consider waters (water bridges)</strong></td>
+<td>Looks for water molecules that connect the ligand and the protein. Untick it to ignore all waters.</td>
+</tr>
+<tr>
+<td><strong>Merge linked residues (glycans, dipeptides)</strong></td>
+<td>Treats covalently linked ligand residues as a single ligand.</td>
+</tr>
+<tr>
+<td><strong>"PLIP-like" preset</strong></td>
+<td>Uses the criteria that make the results closer to those of PLIP: hydrogen bonds up to 4.1 A when the geometry allows it, salt bridges between the centers of the charged groups at 5.5 A, halogen bonds up to 4.0 A. It sets the matching threshold boxes.</td>
+</tr>
+<tr>
+<td><strong>Apolar contacts with the backbone</strong></td>
+<td>Also counts hydrophobic contacts with the protein backbone (C-alpha and carbonyl carbon); by default only side chains count.</td>
+</tr>
+<tr>
+<td><strong>O/N coordinated to metals may donate H</strong></td>
+<td>By default an O or N bound to a metal is considered deprotonated and cannot donate a hydrogen bond; this lets it donate.</td>
+</tr>
+<tr>
+<td><strong>Alternate conformation</strong></td>
+<td>Chooses the conformation of the residues that have alternate locations (altloc). <strong>first (default)</strong> keeps the first one of each residue. The list is filled with the conformations found in the file and is disabled when the file has none. A residue without the chosen conformation keeps its first one; the <strong>Log</strong> says for how many residues the choice was used.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="thresholds"><a name="thresholds"></a>Thresholds</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Control</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>H-bond, D...A max</strong></td>
+<td>3.5 A</td>
+<td>Largest donor-acceptor distance of a hydrogen bond.</td>
+</tr>
+<tr>
+<td><strong>Long H-bond, up to</strong></td>
+<td>off</td>
+<td>If set, also accepts longer donor-acceptor distances up to this value, but only when the geometry allows a hydrogen to point at the acceptor.</td>
+</tr>
+<tr>
+<td><strong>Salt bridge (atoms)</strong></td>
+<td>4.0 A</td>
+<td>Largest distance between oppositely charged atoms.</td>
+</tr>
+<tr>
+<td><strong>Salt bridge (centroids)</strong></td>
+<td>off</td>
+<td>If set, salt bridges are judged between the centers of the charged groups, with this largest distance.</td>
+</tr>
+<tr>
+<td><strong>Hydrophobic max</strong></td>
+<td>4.0 A</td>
+<td>Largest distance of a hydrophobic carbon-carbon contact.</td>
+</tr>
+<tr>
+<td><strong>pi-stacking, max angle</strong></td>
+<td>30 degrees</td>
+<td>Largest angle between the normals of two aromatic rings for parallel stacking.</td>
+</tr>
+</tbody>
+</table>
+<p>All the other thresholds have fixed defaults in the window; they can be changed with options on the
+<a href="cli.html#thresholds">command line</a>, and the window shows the command that corresponds to your settings. The meaning of each criterion is in
+<a href="interactions.html">Interactions and assumptions</a>.</p>
+<h2 id="chemical-templates"><a name="chemical-templates"></a>Chemical templates</h2>
+<p>By default the donors, acceptors and charges of the ligand are inferred from its geometry. <strong>Add template...</strong> loads an <strong>SDF</strong> or <strong>MOL2</strong>
+file of the ligand with its bond orders, explicit hydrogens and formal charges, which makes the chemistry exact. The ligand of the structure is
+matched to the molecule <strong>by coordinates</strong>, so the file must have the same coordinates as the structure (for example, a ligand file
+prepared from the same complex). The label below the button shows what was loaded; the <strong>Log</strong> says whether the template was applied or why
+not. Templates stay loaded when you open another structure. See <a href="interactions.html#sdf-and-mol2">Interactions and assumptions</a>.</p>
+<h2 id="pocket-definition"><a name="pocket-definition"></a>Pocket definition</h2>
+<p>The <strong>Pocket definition (fingerprint)</strong> group loads a text file that maps residues to positions and regions of a binding pocket, used to
+draw the <a href="fingerprint.html">fingerprint</a>. <strong>Load definition...</strong> reads it, <strong>Clear</strong> removes it. Without a definition the fingerprint
+lists the residues in contact, sorted by number.</p>
+<h2 id="running-an-analysis"><a name="running-an-analysis"></a>Running an analysis</h2>
+<p>Press <strong>Analyze</strong>. The analysis runs in a separate thread, so the window stays responsive on large structures. When it ends, the view, the
+tables and the <strong>Interaction types</strong> list are filled. Change an option or a threshold and press <strong>Analyze</strong> again: the results are replaced.</p>
+<h2 id="the-3d-view"><a name="the-3d-view"></a>The 3D view</h2>
+<p><img width="760" alt="The 3D view" src="img/gui-4IKF-viewer.png" /></p>
+<p>The ligand is drawn with thick bonds, the residues in contact with thinner ones, ions as larger spheres and waters as light blue spheres.
+Colors follow the element; the carbons of the ligand are pink. Interactions are dashed lines colored by type, with their distance.</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drag with the left button</td>
+<td>rotate</td>
+</tr>
+<tr>
+<td>Drag with the right or the middle button</td>
+<td>move</td>
+</tr>
+<tr>
+<td>Mouse wheel</td>
+<td>zoom</td>
+</tr>
+<tr>
+<td>Double click</td>
+<td>reset the view</td>
+</tr>
+</tbody>
+</table>
+<p>The toolbar toggles <strong>Labels</strong> (residue names), <strong>Residues</strong> (the residues around the ligand), <strong>Distances</strong> (the numbers on the
+interaction lines) and <strong>Legend</strong> (the key of the interaction types), and <strong>Reset view</strong> restores the initial orientation, which shows the
+ligand with its widest extent. <strong>File &gt; Save image...</strong> writes the current view as a PNG.</p>
+<h2 id="the-interactions-table"><a name="the-interactions-table"></a>The interactions table</h2>
+<p>The <strong>Interactions</strong> tab lists one row per interaction:</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Type</strong></td>
+<td>the kind of interaction, in the color used in the view</td>
+</tr>
+<tr>
+<td><strong>Fav</strong></td>
+<td><code>+</code> favorable, <code>-</code> unfavorable (steric clashes and electrostatic repulsions)</td>
+</tr>
+<tr>
+<td><strong>Ligand atom</strong>, <strong>Protein atom</strong></td>
+<td>the atoms, as <code>RES numberCHAIN:ATOM</code>, for example <code>THR 199A:OG1</code></td>
+</tr>
+<tr>
+<td><strong>d (A)</strong></td>
+<td>the distance in angstroms (the distance between centers for rings and groups)</td>
+</tr>
+<tr>
+<td><strong>Notes</strong></td>
+<td>angles, the water of a bridge, "also hydrogen bond"...</td>
+</tr>
+</tbody>
+</table>
+<p>Click a header to sort. <strong>Selecting a row highlights that interaction in the 3D view.</strong></p>
+<h2 id="interaction-types"><a name="interaction-types"></a>Interaction types</h2>
+<p>The <strong>Interaction types</strong> list in the control panel shows only the types found in this analysis, each with its count. Untick a type to hide
+its rows in the table and its lines in the view; the data and the exports are not affected.</p>
+<h2 id="the-residues-table"><a name="the-residues-table"></a>The residues table</h2>
+<p>The <strong>Residues</strong> tab lists the protein residues that interact with the ligand: the residue, the <strong>number of contacts</strong> and the <strong>types</strong>
+of interaction it makes. It is a quick way to see which residues matter most.</p>
+<h2 id="the-fingerprint-tab"><a name="the-fingerprint-tab"></a>The fingerprint tab</h2>
+<p><img width="760" alt="The fingerprint tab" src="img/gui-1HSG-fingerprint.png" /></p>
+<p>The <strong>Fingerprint</strong> tab shows the <a href="fingerprint.html">interaction fingerprint</a> of the ligand: a figure with one cell per residue (grouped by
+region when a pocket definition is loaded) and, below, the table of counts per class. The figure needs the Qt Svg module; without it the tab
+shows the table only. <strong>File &gt; Export fingerprint...</strong> saves it as SVG, CSV or JSON, according to the extension you type.</p>
+<h2 id="the-log"><a name="the-log"></a>The log</h2>
+<p>The <strong>Log</strong> tab records what happened: the file that was opened, how the ligand chemistry was obtained (template or geometry), the mean
+B-factor of the ligand with a warning if it is poorly defined, warnings about the input, the coordination sphere of the metals, and the
+<strong>command line</strong> of the analysis.</p>
+<h2 id="exporting-results"><a name="exporting-results"></a>Exporting results</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Menu item</th>
+<th>Writes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>File &gt; Export interactions (CSV)...</strong></td>
+<td>all the interactions of the analysis (also those hidden by the type list) as CSV, the same table that <code>ligint --csv</code> writes</td>
+</tr>
+<tr>
+<td><strong>File &gt; Save image...</strong></td>
+<td>the 3D view as a PNG image</td>
+</tr>
+<tr>
+<td><strong>File &gt; Export fingerprint...</strong></td>
+<td>the fingerprint as SVG (figure), CSV or JSON, by extension</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reproducing-an-analysis-on-the-command-line"><a name="reproducing-an-analysis-on-the-command-line"></a>Reproducing an analysis on the command line</h2>
+<p>After every analysis the <strong>Log</strong> shows the equivalent <code>ligint</code> command, and <strong>File &gt; Copy command line</strong> (<code>Ctrl+Shift+C</code>) puts it in the
+clipboard; <strong>File &gt; Copy fingerprint command line</strong> gives the same analysis with <code>--fingerprint svg</code> and the pocket definition currently
+loaded. The command contains only the settings that differ from the defaults, with the PLIP-like preset written out as the explicit
+options it sets. It is quoted for POSIX shells (bash, zsh); on Windows the quoting may need adjusting. Template and pocket files appear with
+their absolute paths. This makes an analysis made by hand easy to repeat in a script or to cite in a paper.</p>
+<h2 id="keyboard-shortcuts"><a name="keyboard-shortcuts"></a>Keyboard shortcuts</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Keys</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl+O</code></td>
+<td>open a structure</td>
+</tr>
+<tr>
+<td><code>Ctrl+Shift+C</code></td>
+<td>copy the command line</td>
+</tr>
+<tr>
+<td><code>F1</code></td>
+<td>open this manual (at the page of the current tab)</td>
+</tr>
+<tr>
+<td><code>Ctrl+Q</code></td>
+<td>quit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-manual-window"><a name="the-manual-window"></a>The manual window</h2>
+<p><strong>Help &gt; User manual</strong> (<code>F1</code>) opens this manual in its own window. The <strong>Contents</strong> tab lists the chapters and their sections, and the
+<strong>Search</strong> tab looks for words in all the pages (a page matches when it contains every word) and lists the results with a context snippet.
+The toolbar has <strong>Back</strong> and <strong>Forward</strong> (<code>Alt+Left</code>, <code>Alt+Right</code>), <strong>Home</strong>, <strong>Zoom in</strong> and <strong>Zoom out</strong> (<code>Ctrl++</code>, <code>Ctrl+-</code>) and, when the
+HTML files of the manual are installed on this computer, <strong>Open in browser</strong>. <code>Ctrl+F</code> searches the current page. Links to web sites open
+in your browser.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="quickstart.html">Quick start</a> &middot; <a href="cli.html">Command-line reference</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

@@ -16,7 +16,7 @@ Ready-made installers are built by the CI workflow (`.github/workflows/ci.yml`):
 ## Linux
 
 ```
-sudo apt install ./ligint_0.6.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
+sudo apt install ./ligint_0.7.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
 ligint --version
 ligint-gui                                         # or from the applications menu: "ligint"
 man ligint
@@ -33,7 +33,7 @@ sudo apt remove ligint                             # uninstall
 
 ```
 sudo dnf install epel-release                     # Qt 6 comes from EPEL on version 9
-sudo dnf install ./ligint-0.6.0-1.x86_64.rpm      # the dependencies are installed automatically
+sudo dnf install ./ligint-0.7.0-1.x86_64.rpm      # the dependencies are installed automatically
 ligint --version
 sudo dnf remove ligint                            # uninstall
 ```
@@ -81,7 +81,7 @@ cd build && cpack                 # Linux: .deb (+ ligint-dev) and .tar.gz;  Win
 Push a tag that starts with `v`; the workflow builds, tries and publishes the installers:
 
 ```
-git tag v0.6.0 && git push origin v0.6.0
+git tag v0.7.0 && git push origin v0.7.0
 ```
 
 The version in the file names comes from `project(ligint VERSION ...)` in `CMakeLists.txt`: change it (and `LIGINT_VERSION`

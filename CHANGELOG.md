@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.0
+
+- **User manual in HTML, inside the program.** *Help > User manual* (`F1`) opens a window with the manual: table of contents,
+  full-text search over all the pages, back/forward history, zoom, find in the page, links between pages. `F1` opens the page of the tab
+  you are looking at (Interactions, Residues, Fingerprint, Log); *Help > Command-line reference* goes straight to the options. The pages are
+  embedded in the executable (no files to install, works offline) and are also installed as plain HTML in `share/doc/ligint/manual/`
+  (*Manual in web browser*, or open `index.html`).
+- Fourteen pages: welcome, quick start (with a real output), the graphical interface, the command-line reference (every option and
+  threshold), interactions and assumptions, input formats, fingerprints, validation and limits, comparison with PLIP, installation,
+  troubleshooting, developers, changelog, about. Numbers that appear in several documents come from a single source (the manual includes
+  sections of the README).
+- The manual is generated from Markdown by `tools/build_manual.py` (the HTML is committed, so building ligint still needs no Python).
+  The CI checks that the HTML is up to date.
+- Tests: the committed HTML is up to date with its sources; every link, anchor and image of the pages resolves; the thresholds,
+  defaults and options in the command-line reference are the ones of `ligint --help`; the example output of the quick start is the real output of the
+  program; the GUI test opens the manual, navigates, searches and checks that every context-help target (`F1`) exists.
+- Man pages and README point to the manual.
+
 ## 0.6.0
 
 - **PDBx/mmCIF input.** `ligint structure.cif LIG` gives the same results as the PDB file of the same entry: the format is recognized

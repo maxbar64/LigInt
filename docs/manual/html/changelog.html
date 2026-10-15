@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Changelog - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
+<h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="070"><a name="070"></a>0.7.0</h2>
+<ul>
+<li><strong>User manual in HTML, inside the program.</strong> <em>Help &gt; User manual</em> (<code>F1</code>) opens a window with the manual: table of contents,
+  full-text search over all the pages, back/forward history, zoom, find in the page, links between pages. <code>F1</code> opens the page of the tab
+  you are looking at (Interactions, Residues, Fingerprint, Log); <em>Help &gt; Command-line reference</em> goes straight to the options. The pages are
+  embedded in the executable (no files to install, works offline) and are also installed as plain HTML in <code>share/doc/ligint/manual/</code>
+  (<em>Manual in web browser</em>, or open <code>index.html</code>).</li>
+<li>Fourteen pages: welcome, quick start (with a real output), the graphical interface, the command-line reference (every option and
+  threshold), interactions and assumptions, input formats, fingerprints, validation and limits, comparison with PLIP, installation,
+  troubleshooting, developers, changelog, about. Numbers that appear in several documents come from a single source (the manual includes
+  sections of the README).</li>
+<li>The manual is generated from Markdown by <code>tools/build_manual.py</code> (the HTML is committed, so building ligint still needs no Python).
+  The CI checks that the HTML is up to date.</li>
+<li>Tests: the committed HTML is up to date with its sources; every link, anchor and image of the pages resolves; the thresholds,
+  defaults and options in the command-line reference are the ones of <code>ligint --help</code>; the example output of the quick start is the real output of the
+  program; the GUI test opens the manual, navigates, searches and checks that every context-help target (<code>F1</code>) exists.</li>
+<li>Man pages and README point to the manual.</li>
+</ul>
+<h2 id="060"><a name="060"></a>0.6.0</h2>
+<ul>
+<li><strong>PDBx/mmCIF input.</strong> <code>ligint structure.cif LIG</code> gives the same results as the PDB file of the same entry: the format is recognized
+  from the content (<code>--format pdb|cif|auto</code>, library: <code>Options::format</code>, <code>Result::format</code>). The <code>_atom_site</code> category is read as a stream
+  (first model, author chain and numbering, <code>label_*</code> as fallback), so very large structures are fine. mmCIF allows what the PDB
+  format cannot: residue names of five characters (new ligands) and chains of several characters.</li>
+<li>Residue labels with a chain of several characters are written <code>ASP 189 [AA]</code> (the labels of one-character chains do not change);
+  the fingerprint uses the same rule, also for the positions of a pocket definition without contacts.</li>
+<li>gzip-compressed files are refused with a clear message instead of being read as garbage.</li>
+<li>The readers are separated from the analysis (<code>pdb.cpp</code>, <code>mmcif.cpp</code> produce the same internal atom record): the output for PDB files
+  is unchanged (1314 runs on 119 structures, also with <code>--altloc</code>, compared with 0.5.1).</li>
+<li>GUI: opens <code>.cif</code> and <code>.mmcif</code> files (dialog, window texts).</li>
+<li>Tests: 119 real structures converted to mmCIF with gemmi give the same results as the PDB files (1314 runs, 0 differences);
+  C++ and Python tests for quoting, text fields, comments, null values, long names and chains, models, alternate conformations,
+  malformed and randomly corrupted files, speed on 200,000 atoms; <code>tests/data/1AZM.cif</code> (gemmi conversion) in the GUI test.</li>
+<li><code>docs/INPUT_FORMATS.md</code>: columns used, labels, limits. The reader has not been tried on files downloaded from the PDB archive.</li>
+</ul>
+<h2 id="051"><a name="051"></a>0.5.1</h2>
+<p>Installers and packages (no change to the programs):</p>
+<ul>
+<li>CPack configuration: <code>ligint</code> and <code>ligint-dev</code> <code>.deb</code> packages and a portable <code>.tar.gz</code> for Linux (<code>.rpm</code> with
+  <code>cpack -G RPM</code>), an NSIS installer and a portable <code>.zip</code> for Windows. The installers include the programs, the
+  documentation, the manual pages (<code>man ligint</code>, <code>man ligint-gui</code>), the menu entry with icon and the PDB file
+  association (Linux), the Qt libraries (Windows), the Start menu entry and an optional <code>PATH</code> update (Windows).</li>
+<li>Application icon, window icon and Windows version information.</li>
+<li>CI: <code>linux-packages</code> and <code>windows</code> jobs build, try (install, run, uninstall) and keep the installers as artifacts;
+  <code>rpm-rocky9</code> builds the RPM in a Rocky Linux 9 container and <code>rpm-alma9</code> installs it (and the development package) in a clean
+  AlmaLinux 9 container; a <code>v*</code> tag publishes everything in a GitHub release. The workflow can also be started by hand.</li>
+<li>Install rules split in two components (<code>Runtime</code>, <code>Development</code>); <code>docs/INSTALL.md</code>.</li>
+<li>The Windows installer, the MSVC build and the RPM jobs have not been run by the authors: the first CI run will show whether they need adjustments.</li>
+</ul>
+<h2 id="050"><a name="050"></a>0.5.0</h2>
+<ul>
+<li><code>--altloc X</code> (library: <code>Options::altloc</code>) chooses the alternate conformation: for every residue with alternate locations the
+  conformation X is used if the residue has it, otherwise its first one (as before). The program reports for how many
+  residues X was used and warns if X does not exist in the first model. Occupancies are not considered.</li>
+<li>The listing of the ligands now also shows the alternate conformations present in the file
+  (<code>Alternate conformations present: A, B</code>; <code>Result::altlocs</code>); it appears only for files that have them, so the listing of
+  those files changes (27 of the 119 structures used in the tests), while the rest of the output is unchanged
+  (1075 runs compared with 0.4.0).</li>
+<li>GUI: <em>Alternate conformation</em> selector in the Options group (filled from the file), included in the copied command line.</li>
+<li>Tests: C++ unit tests, 2 new Python tests (also on a ligand with alternate conformations, ENDMDL, invalid arguments, speed on
+  200,000 atoms) and the GUI smoke test (combo, command line and equivalence with the CLI for the chosen conformation).</li>
+</ul>
+<h2 id="040"><a name="040"></a>0.4.0</h2>
+<ul>
+<li>GUI: the equivalent <code>ligint</code> command line of each analysis is written in the Log tab and can be copied
+  (<em>File &gt; Copy command line</em>, <em>Copy fingerprint command line</em>). Only non-default settings appear; the PLIP-like preset is
+  written as the explicit options it sets; quoting is for POSIX shells.</li>
+<li>The command line selects a ligand by residue number with an optional insertion code: <code>501</code> (any), <code>501A</code> (code A),
+  <code>501-</code> (no code); a malformed residue number is now an error instead of being read as 0. In the library: <code>Options::icode</code>.</li>
+<li>The ligand header and <code>LigandResult</code> now show/carry the insertion code (<code>=== Ligand LIG 5A chain L ...</code>); the output is
+  otherwise unchanged (1075 runs compared with 0.3.0).</li>
+<li>Tests: the GUI smoke test runs the generated commands through <code>/bin/sh</code> with the real <code>ligint</code> and compares them with the
+  result shown by the window (default settings, preset and options, SDF template, insertion codes, fingerprint SVG, shell quoting).</li>
+</ul>
+<h2 id="030"><a name="030"></a>0.3.0</h2>
+<p>Interaction fingerprints (one row per protein residue, one column per interaction class):</p>
+<ul>
+<li>new library API in <code>ligint/fingerprint.hpp</code>: <code>makeFingerprint</code>, <code>PocketDefinition</code> (plain-text file mapping residues
+  to a position label and a region), CSV and JSON writers, and <code>fingerprintSvg</code> (figure with the residues grouped by
+  region and one glyph per class, legend and tooltips; no Qt needed);</li>
+<li>the interaction records now say which side donates the hydrogen and the charge of the residue
+  (<code>HitRecord::hbResidueRole</code>, <code>HitRecord::residueCharge</code>), which the fingerprint classes need;</li>
+<li>command line: <code>--fingerprint csv|json|svg</code> and <code>--pocket FILE</code>;</li>
+<li>GUI: <strong>Fingerprint</strong> tab (figure and table), pocket definition loading, export to SVG/CSV/JSON; the figure needs the
+  optional Qt Svg module, otherwise the GUI shows the table only; the control panel scrolls on small windows;</li>
+<li>documentation in <code>docs/FINGERPRINT.md</code> with an illustrative pocket definition (<code>docs/examples/</code>);</li>
+<li>6 new Python tests, new C++ unit tests and GUI smoke test checks for fingerprints and pocket files.</li>
+</ul>
+<p>The existing output of <code>ligint</code> is unchanged.</p>
+<h2 id="020"><a name="020"></a>0.2.0</h2>
+<p>All text in the code is now in English: comments, messages, GUI labels, documentation. <strong>This changes the program
+output and is not compatible with 0.1.0:</strong></p>
+<ul>
+<li>interaction types are now English (<code>Hydrogen bond</code>, <code>Salt bridge</code>, <code>Hydrophobic contact</code>, <code>pi-stacking (parallel)</code>,
+  <code>pi-stacking (T-shaped)</code>, <code>Cation-pi</code>, <code>Halogen bond</code>, <code>Metal coordination</code>, <code>Water bridge</code>, <code>Steric clash</code>, ...) and
+  are available as constants in <code>ligint::type</code>;</li>
+<li>the CSV header is <code>ligand,type,favorable,ligand_atom,protein_atom,distance,notes</code>;</li>
+<li>table headings, summaries, warnings and error messages are English; ring labels use <code>ring</code> instead of <code>anello</code>;</li>
+<li>rows are sorted by type name, so their order differs from 0.1.0 (the content is identical: 28,861 CSV rows over 956
+  runs were compared, after mapping the texts, with no differences);</li>
+<li>the benchmark scripts write English reports and CSV columns (<code>group</code>, <code>site</code>, <code>type</code>, ...).</li>
+</ul>
+<p>Fixed:</p>
+<ul>
+<li>the coordination sphere of a metal no longer omits the protein nitrogens bound to it (His in zinc sites, introduced by
+  the 0.1.0 fix that made them non-acceptors), with a regression test;</li>
+<li>the code now compiles with Clang (a lambda captured a structured binding, which is a C++20 extension);</li>
+<li>the CMake package exports the library as <code>ligint::core</code>.</li>
+</ul>
+<h2 id="010"><a name="010"></a>0.1.0</h2>
+<p>First version organized as a CMake project.</p>
+<ul>
+<li><code>ligint_core</code> library with a public API (<code>analyzeFile</code>, <code>analyzeStream</code>, <code>printText</code>, <code>printCsv</code>, <code>loadSdf</code>, <code>loadMol2</code>);
+  the result includes the coordinates of the interactions, the ligand atoms and the atoms of the residues in contact
+  for the graphics.</li>
+<li>Command-line program <code>ligint</code>: output identical to that of the single-file version (verified on 1075 runs of 119
+  complexes in several modes), plus <code>--version</code>.</li>
+<li>Qt GUI <code>ligint-gui</code> with 3D view, tables, filters by type, CSV and image export, SDF/MOL2 templates.</li>
+<li>Interactions: hydrogen bonds (also long ones with a possible geometry), salt bridges (also by centroids),
+  hydrophobic, pi-stacking, cation-pi, halogens, metals, water bridges, clashes; multi-residue ligands merged;
+  DNA/RNA as partners.</li>
+<li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

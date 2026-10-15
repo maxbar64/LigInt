@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
+#include <QPointer>
 #include "ligint/ligint.hpp"
 
 class QCheckBox;
@@ -24,6 +25,7 @@ class QScrollArea;
 
 namespace gui {
 
+class HelpWindow;
 class HitsFilterProxy;
 class HitsModel;
 class SvgView;
@@ -56,6 +58,9 @@ public:
     ViewerWidget* viewer() const { return viewer_; }
     HitsModel* hitsModel() const { return model_; }
     HitsFilterProxy* hitsProxy() const { return proxy_; }
+    // The manual (Help menu, F1): `target` is a page of the manual, e.g. "gui.html#the-log"; empty = the page of the current tab.
+    void showManual(const QString& target = QString());
+    HelpWindow* helpWindow() const;
     const ligint::Fingerprint& fingerprint() const { return fp_; }
     QTableWidget* fingerprintTable() const { return fpTable_; }
     QString logText() const;
@@ -82,6 +87,7 @@ private slots:
     void onAddTemplate();
     void onLoadPocket();
     void onExportFingerprint();
+    void onHelp();
     void onCopyCommand();
     void onCopyFingerprintCommand();
     void onPresetToggled(bool on);
@@ -131,6 +137,7 @@ private:
     HitsFilterProxy* proxy_ = nullptr;
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
     QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;
+    QPointer<HelpWindow> help_;
     ligint::PocketDefinition pocket_;
     QString pocketPath_;
     QStringList templatePaths_;

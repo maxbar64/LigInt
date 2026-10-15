@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Input formats - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="interactions.html">Interactions and assumptions</a> &middot; <a href="fingerprint.html">Interaction fingerprints</a> &raquo;</p>
+<h1 id="input-formats"><a name="input-formats"></a>Input formats</h1>
+<p>ligint reads the structure from a <strong>PDB</strong> file or from a <strong>PDBx/mmCIF</strong> file. The format is recognized from the content
+(an mmCIF file starts with <code>data_</code> or with a comment; a PDB file with a record name), not from the extension; <code>--format pdb</code>
+or <code>--format cif</code> forces it. In the library: <code>Options::format</code> (<code>StructureFormat::Auto</code>, <code>Pdb</code>, <code>Mmcif</code>).</p>
+<pre><code>ligint 1abc.pdb LIG
+ligint 1abc.cif LIG                 the same analysis, the same output
+ligint structure.dat LIG --format cif
+</code></pre>
+<p>Why mmCIF: the legacy PDB format cannot represent the entries that the wwPDB is going to release (extended 12-character IDs,
+five-character component ids for new ligands, more than 62 chains or 99,999 atoms). The wwPDB plans to stop generating PDB
+files for new entries around July 2027, so mmCIF is the format to use for them. Results are the same for the same structure:
+the analysis does not know which format was read.</p>
+<h2 id="what-is-read-from-an-mmcif-file"><a name="what-is-read-from-an-mmcif-file"></a>What is read from an mmCIF file</h2>
+<p>Only the atoms: the <code>_atom_site</code> category of the <strong>first data block that has one</strong>, and of the <strong>first model</strong>
+(<code>pdbx_PDB_model_num</code>). The rest of the file is skipped without being interpreted.</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Item of <code>_atom_site</code></th>
+<th>Used for</th>
+<th>If it is missing or null (<code>?</code>, <code>.</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Cartn_x</code>, <code>Cartn_y</code>, <code>Cartn_z</code></td>
+<td>coordinates</td>
+<td>required (no atoms are read without them)</td>
+</tr>
+<tr>
+<td><code>auth_atom_id</code>, else <code>label_atom_id</code></td>
+<td>atom name</td>
+<td>one of the two is required</td>
+</tr>
+<tr>
+<td><code>auth_comp_id</code>, else <code>label_comp_id</code></td>
+<td>residue name (up to 5 characters)</td>
+<td>one of the two is required</td>
+</tr>
+<tr>
+<td><code>auth_asym_id</code>, else <code>label_asym_id</code></td>
+<td>chain (can have several characters)</td>
+<td>one of the two is required</td>
+</tr>
+<tr>
+<td><code>auth_seq_id</code>, else <code>label_seq_id</code></td>
+<td>residue number</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>pdbx_PDB_ins_code</code></td>
+<td>insertion code</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>label_alt_id</code></td>
+<td>alternate conformation (<code>--altloc</code>)</td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>type_symbol</code></td>
+<td>element</td>
+<td>first letter of the atom name</td>
+</tr>
+<tr>
+<td><code>group_PDB</code></td>
+<td><code>HETATM</code> marks the ligands and the other non-polymer residues</td>
+<td>all atoms are considered <code>ATOM</code></td>
+</tr>
+<tr>
+<td><code>B_iso_or_equiv</code></td>
+<td>B-factor of the ligand (warning when it is much higher than the rest of the structure)</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>pdbx_PDB_model_num</code></td>
+<td>first model only</td>
+<td>single model</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>author</strong> identifiers (<code>auth_*</code>) are used first because they are the ones of the PDB file, of the literature and of
+databases such as KLIFS; the <code>label_*</code> ones are the fallback. Tags are case-insensitive, in any order. The file is read as a
+stream: structures with millions of atoms are not held in memory as text.</p>
+<p>Not read: bonds and bond orders (<code>_chem_comp_bond</code> is a dictionary, not part of the coordinate file), formal charges
+(<code>pdbx_formal_charge</code>), occupancies, anisotropic factors, <code>_struct_conn</code>. As with PDB files, the chemistry of the ligand is
+inferred from the geometry unless an SDF or MOL2 template is given.</p>
+<h2 id="residue-labels-with-long-chain-names"><a name="residue-labels-with-long-chain-names"></a>Residue labels with long chain names</h2>
+<p>A chain of one character keeps the usual label, <code>ASP 189A</code> (name, number, insertion code if any, chain). A chain of several
+characters, which exists only in mmCIF, is written in brackets so that the label stays unambiguous: <code>ASP 189 [AA]</code>,
+<code>ASP 189B [AA]</code> (with insertion code B). The same rule is used in the interaction tables, in the CSV, in the fingerprints and in
+the ligand ids (<code>LIG 1 [LL]</code>). The chain given on the command line (<code>ligint x.cif LIG LL 1</code>) and the chain of a pocket definition
+file (<code>LL  1  p1  reg</code>) are the plain chain names.</p>
+<h2 id="limits"><a name="limits"></a>Limits</h2>
+<ul>
+<li><strong>Compressed files are refused.</strong> Files from the PDB archive are often <code>.cif.gz</code> or <code>.pdb.gz</code>: ligint stops with a message
+  (<code>... is compressed (gzip): decompress it first, e.g. with gunzip</code>) instead of reading garbage. There is no zlib dependency.</li>
+<li><strong>mmCIF files without <code>_atom_site</code></strong> (for example a dictionary or a structure-factor file) give a warning and no atoms.</li>
+<li><strong>BinaryCIF</strong>, mmTF and other formats are not supported.</li>
+<li><strong>What the reader was checked on.</strong> (1) 119 real structures converted from PDB to mmCIF with gemmi: 1314 runs, results identical to the PDB
+  ones. (2) Seven model files written by the wwPDB, taken from its
+  <a href="https://github.com/wwPDB/extended-wwPDB-identifier-examples">extended-identifier examples</a> (280 KB to 1.3 MB; five-character ligand ids, glycans,
+  alternate conformations, a <code>data_pdb_...</code> block name): read, and the results are identical to those obtained from a PDB
+  conversion made by gemmi (44 comparisons; the ligand names were shortened to three characters for the PDB side). (3) Synthetic and
+  randomly corrupted files, and a 103 MB file with two million atoms (the reading takes about 3 s). It has <strong>not</strong> been tried on the large
+  entries of the PDB archive (ribosomes, virus capsids) or on files with unusual <code>_atom_site</code> columns: if one does not read correctly, send it.</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="interactions.html">Interactions and assumptions</a> &middot; <a href="fingerprint.html">Interaction fingerprints</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

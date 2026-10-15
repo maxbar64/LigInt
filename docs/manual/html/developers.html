@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>For developers - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="troubleshooting.html">Troubleshooting</a> &middot; <a href="changelog.html">Changelog</a> &raquo;</p>
+<h1 id="architecture"><a name="architecture"></a>Architecture</h1>
+<h2 id="layers"><a name="layers"></a>Layers</h2>
+<pre><code>include/ligint/ligint.hpp   public API: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv, ligint::type
+src/core/
+  internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
+  analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
+  pdb.cpp, mmcif.cpp        readers of the PDB and PDBx/mmCIF formats: both produce RawAtom (internal.hpp), nothing else differs
+  chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
+  templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
+  report.cpp                text reports (table and CSV)
+  fingerprint.cpp           pocket definition, per-residue classification, CSV/JSON fingerprint output (ligint/fingerprint.hpp)
+  svg.cpp                   SVG figure of a fingerprint
+src/cli/main.cpp            command line: arguments -&gt; Options -&gt; analyzeFile -&gt; printText/printCsv
+gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
+</code></pre>
+<p>The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
+results) is in <code>Result</code>. The GUI and the CLI are two clients of the same API.</p>
+<h2 id="flow-of-analyzestream"><a name="flow-of-analyzestream"></a>Flow of <code>analyzeStream</code></h2>
+<ol>
+<li><strong>Reading</strong> (PDB or mmCIF, recognized from the content; first model): heavy atoms, alternative conformation (the first encountered per residue), invalid
+   coordinates discarded, waters kept apart, PDB hydrogens assigned to the nearby heavy atom (if there are at least 10 for the protein).
+   If no ligand is requested (or it does not exist) the result is only the listing (<code>listingOnly</code>).</li>
+<li><strong>Protein roles:</strong> donor/acceptor/charge/hydrophobic per residue and atom; refined with explicit hydrogens;
+   N/O coordinated to a metal make no H-bonds.</li>
+<li><strong>Composite ligands:</strong> covalently linked HETATM residues (not metals) are merged into a single ligand.</li>
+<li><strong>For each ligand:</strong> connectivity from a template (SDF/MOL2, by coordinates) or geometric; ligand roles
+   (<code>ligandRole</code>); coordination to metals; atom-atom search on a spatial grid (H-bonds, salt bridges,
+   hydrophobic, halogens, metals, clashes); salt bridges by centroids (optional); rings (π-stacking, cation-π);
+   water bridges.</li>
+<li><strong>Result:</strong> sorted interactions, with coordinates (for the graphics), ligand atoms and bonds, atoms of the residues in
+   contact and the coordination sphere of the metals.</li>
+</ol>
+<h2 id="the-manual"><a name="the-manual"></a>The manual</h2>
+<p>The user manual is Markdown: the files of <code>docs/manual/</code> and some of the other documents (<code>docs/FINGERPRINT.md</code>, <code>docs/INPUT_FORMATS.md</code>,
+<code>docs/INSTALL.md</code>, <code>docs/BENCHMARK.md</code>, <code>docs/ARCHITECTURE.md</code>, <code>CHANGELOG.md</code>), listed in <code>docs/manual/manifest.json</code>. A page can include a section of
+another file with <code>&lt;!-- include: README.md "Section title" --&gt;</code>, so that a number (a threshold, a table) has a single source.
+<code>python3 tools/build_manual.py</code> converts everything to HTML in <code>docs/manual/html/</code> (pages, images, <code>toc.json</code>, <code>manual.qrc</code>); that
+folder is <strong>committed</strong>, so building ligint needs no Python. <code>HelpWindow</code> (<code>gui/HelpWindow.cpp</code>) shows the pages from the Qt resources
+of <code>manual.qrc</code> in a <code>QTextBrowser</code> (contents tree from <code>toc.json</code>, full-text search over the plain text of the pages); the files are also installed in
+<code>share/doc/ligint/manual/</code>. The markup is kept simple because the Qt text browser understands only a subset of HTML and CSS: tables get <code>border</code>
+attributes, headings get <code>&lt;a name&gt;</code> anchors, images get a <code>width</code>. The CI and the tests check that the HTML is up to date and that its links resolve.</p>
+<h2 id="fingerprints"><a name="fingerprints"></a>Fingerprints</h2>
+<p><code>makeFingerprint</code> works only on a <code>LigandResult</code>: it classifies each favorable <code>HitRecord</code> (type, <code>hbResidueRole</code>,
+<code>residueCharge</code>) into the <code>FpClass</code> columns and groups the counts by residue; a <code>PocketDefinition</code> fixes which residues
+are listed and in which order. The SVG and the GUI table are views of the same <code>Fingerprint</code>. See <code>docs/FINGERPRINT.md</code>.</p>
+<h2 id="adding-an-interaction-type"><a name="adding-an-interaction-type"></a>Adding an interaction type</h2>
+<ol>
+<li>Add a constant in <code>ligint::type</code> (<code>ligint.hpp</code>) and compute the interaction in <code>analysis.cpp</code> (inside the atom-atom
+   loop or afterwards, as for rings and water bridges) with the coordinates <code>p1</code>/<code>p2</code> (and <code>pw</code> for water).</li>
+<li>Give it a style in <code>gui/Style.cpp</code>, decide its fingerprint class in <code>classesOf</code> (<code>src/core/fingerprint.cpp</code>) and, if it must be
+   compared with PLIP, map it in <code>tests/compare_plip.py</code>.</li>
+<li>Write the synthetic test in <code>tests/run_tests.py</code> and document the threshold (<code>Params</code>, <code>Params::set</code>, <code>--help</code>, README).</li>
+</ol>
+<h2 id="gui"><a name="gui"></a>GUI</h2>
+<p><code>MainWindow</code> owns a <code>HitsModel</code> (table) with a <code>HitsFilterProxy</code> (filter by type, numeric sorting), a <code>ViewerWidget</code> and
+the tables of residues and log. The analysis runs with <code>QtConcurrent::run</code> and <code>QFutureWatcher</code>; <code>analyze(true)</code> runs it
+synchronously (used by the tests). <code>ViewerWidget</code> renders in software with <code>QPainter</code> (orthographic projection, depth
+sorting, initial orientation along the principal axes) and can draw on a <code>QImage</code> (<code>renderImage</code>), used to save the
+images and in the tests.</p>
+<h2 id="tests"><a name="tests"></a>Tests</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Level</th>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API</td>
+<td><code>tests/unit/test_core.cpp</code></td>
+<td>thresholds, reports, templates, composite ligands, malformed input</td>
+</tr>
+<tr>
+<td>Chemistry and parsing</td>
+<td><code>tests/run_tests.py</code></td>
+<td>synthetic fragments with known outcome, SDF/MOL2, altlocs, models, anomalous input, 9 real complexes in <code>tests/data/</code></td>
+</tr>
+<tr>
+<td>GUI</td>
+<td><code>tests/gui/gui_smoke.cpp</code></td>
+<td>opening, analysis, filters, rendering and saving (offscreen platform)</td>
+</tr>
+<tr>
+<td>Agreement with PLIP</td>
+<td><code>tests/compare_plip.py</code>, <code>tests/benchmark.py</code></td>
+<td>measurement against an external tool (not in CTest)</td>
+</tr>
+</tbody>
+</table>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="troubleshooting.html">Troubleshooting</a> &middot; <a href="changelog.html">Changelog</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

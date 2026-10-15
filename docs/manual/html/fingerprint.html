@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Interaction fingerprints - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="validation.html">Validation and limits</a> &raquo;</p>
+<h1 id="interaction-fingerprints"><a name="interaction-fingerprints"></a>Interaction fingerprints</h1>
+<p>A fingerprint summarizes the interactions of one ligand as a table with <strong>one row per protein residue and one column
+per interaction class</strong>. It can be exported to CSV and JSON, drawn as an SVG figure (residues grouped by pocket region,
+one glyph per class) and shown in the GUI. It is the kind of table/figure used to compare how different ligands use the
+same binding pocket.</p>
+<p><img width="760" alt="Fingerprint of imatinib in 1IEP, without a pocket definition" src="img/fingerprint-1IEP.png" /></p>
+<h2 id="classes"><a name="classes"></a>Classes</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+<th>Derived from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hydrophobic</code></td>
+<td>hydrophobic contact</td>
+<td><em>Hydrophobic contact</em> (and <em>Apolar contact (backbone)</em>)</td>
+</tr>
+<tr>
+<td><code>face_to_face</code></td>
+<td>aromatic face-to-face</td>
+<td><em>pi-stacking (parallel)</em></td>
+</tr>
+<tr>
+<td><code>edge_to_face</code></td>
+<td>aromatic edge-to-face</td>
+<td><em>pi-stacking (T-shaped)</em></td>
+</tr>
+<tr>
+<td><code>hbond_donor</code></td>
+<td>the <strong>protein residue donates</strong> the hydrogen</td>
+<td><em>Hydrogen bond</em>, protein atom is the donor</td>
+</tr>
+<tr>
+<td><code>hbond_acceptor</code></td>
+<td>the <strong>protein residue accepts</strong> the hydrogen</td>
+<td><em>Hydrogen bond</em>, protein atom is the acceptor</td>
+</tr>
+<tr>
+<td><code>ionic_positive</code></td>
+<td>salt bridge with a positively charged residue</td>
+<td><em>Salt bridge</em>, charge of the protein atom</td>
+</tr>
+<tr>
+<td><code>ionic_negative</code></td>
+<td>salt bridge with a negatively charged residue</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>cation_pi</code></td>
+<td>cation-pi</td>
+<td><em>Cation-pi</em></td>
+</tr>
+<tr>
+<td><code>halogen</code></td>
+<td>halogen bond</td>
+<td><em>Halogen bond</em></td>
+</tr>
+<tr>
+<td><code>metal</code></td>
+<td>metal coordination</td>
+<td><em>Metal coordination</em></td>
+</tr>
+<tr>
+<td><code>water_bridge</code></td>
+<td>water-mediated contact</td>
+<td><em>Water bridge</em></td>
+</tr>
+</tbody>
+</table>
+<p>The first seven classes are the ones of the usual kinase-ligand fingerprint figures; the others are extras. Each cell of
+the table is a <strong>count of contacts</strong> (the JSON also gives the shortest distance per class). A salt bridge that is also an
+H-bond counts in the ionic class and in the donor/acceptor class. Clashes, repulsions and possible covalent bonds are
+not part of the fingerprint.</p>
+<p><strong>Caveats.</strong> The donor/acceptor role and the charge of each residue come from the same geometric heuristics as the
+interactions (histidine is never charged, amines and carboxylates follow the assumptions in the README). The classes are
+<em>not</em> guaranteed to coincide with the definitions of other tools: measure before treating them as equivalent.</p>
+<h2 id="command-line"><a name="command-line"></a>Command line</h2>
+<pre><code>ligint structure.pdb LIG --fingerprint csv                       one row per residue in contact
+ligint structure.pdb LIG --fingerprint json
+ligint structure.pdb LIG --fingerprint svg &gt; figure.svg
+ligint structure.pdb LIG --fingerprint svg --pocket pocket.tsv   with a pocket definition
+</code></pre>
+<ul>
+<li><code>--fingerprint</code> replaces the interaction table (the service information goes to stderr, as with <code>--csv</code>).</li>
+<li>CSV and JSON contain every ligand found (a <code>ligand</code> column / one object per ligand). The SVG draws only the first
+  ligand and warns on stderr if there are more: select one with the chain and residue number.</li>
+<li><code>--pocket</code> needs <code>--fingerprint</code>. Unknown formats, missing files and <code>--pocket</code> alone end with an error (code 1);
+  malformed lines of the pocket file are skipped with a warning.</li>
+</ul>
+<p>CSV columns: <code>ligand,residue,chain,resi,position,region</code> followed by one count column per class
+(<code>hydrophobic,face_to_face,edge_to_face,hbond_donor,hbond_acceptor,ionic_positive,ionic_negative,cation_pi,halogen,metal,water_bridge</code>).</p>
+<h2 id="pocket-definition-file"><a name="pocket-definition-file"></a>Pocket definition file</h2>
+<p>The pocket definition is <strong>data, not code</strong>: a text file that says which residues form the pocket, in which order and
+how they are grouped. Without it the fingerprint lists only the residues in contact, sorted by chain and number. With it,
+every position is listed (also those without interactions, as in the usual figures) in the order of the file, and the
+contact residues that are not in the definition are appended and flagged (<code>in_pocket</code> = false).</p>
+<pre><code># comment
+@name HIV-1 protease pocket (example)
+@color catalytic #e5857f
+A   25  A25 catalytic   ASP
+A   50  A50 flap    ILE
+</code></pre>
+<ul>
+<li>One position per line: <strong>chain, residue number, position label, region [, residue name]</strong>. Fields are separated by
+  tabs or commas (then they may contain spaces) or, if neither is present, by whitespace.</li>
+<li>The residue number accepts an insertion code (<code>134A</code>). The chain <code>*</code> (or <code>-</code>, <code>_</code>) matches any chain.</li>
+<li>The region groups consecutive positions in the figure (a colored bar); the order of the file is the drawing order.</li>
+<li>The residue name is optional: it labels the positions that have no contact, and a mismatch with the structure is
+  reported as a warning.</li>
+<li><code>@name</code> sets the title and <code>@color REGION #rrggbb</code> sets the color of a region; other <code>@</code> directives are ignored with a warning.</li>
+<li>A numbering is specific to a structure: a different structure of the same protein needs its own file (or an
+  alignment-based mapping, which is not part of the tool yet).</li>
+</ul>
+<p>An illustrative file is in <a href="https://github.com/maxbar64/LigInt/blob/main/docs/examples/hiv-protease-pocket.tsv"><code>examples/hiv-protease-pocket.tsv</code></a> (the regions and
+labels are an example of the format, <strong>not</strong> a reference mapping). It produces:</p>
+<p><img width="760" alt="Fingerprint of indinavir in 1HSG with the example definition" src="img/fingerprint-1HSG.png" /></p>
+<h2 id="gui"><a name="gui"></a>GUI</h2>
+<p>The <strong>Fingerprint</strong> tab shows the figure and the table. <em>Load definition...</em> in the control panel loads a pocket file
+(<em>Clear</em> removes it); the tab updates immediately. <strong>File &gt; Export fingerprint...</strong> saves SVG, CSV or JSON (chosen by the
+extension). The figure needs the Qt Svg module; without it the GUI shows the table only.</p>
+<p><img width="760" alt="GUI, Fingerprint tab" src="img/gui-1HSG-fingerprint.png" /></p>
+<h2 id="library"><a name="library"></a>Library</h2>
+<pre><code class="language-cpp">#include &lt;ligint/fingerprint.hpp&gt;
+
+ligint::Result r = ligint::analyzeFile(&quot;1HSG.pdb&quot;, opt);
+ligint::PocketDefinition pocket;
+std::vector&lt;std::string&gt; warnings;
+ligint::loadPocketDefinition(&quot;pocket.tsv&quot;, pocket, warnings);          // optional
+ligint::Fingerprint fp = ligint::makeFingerprint(r.ligands[0], &amp;pocket);
+for (const auto&amp; e : fp.entries)
+    std::cout &lt;&lt; e.residue &lt;&lt; &quot; &quot; &lt;&lt; e.position &lt;&lt; &quot; &quot; &lt;&lt; e.counts[ligint::FpHBondDonor] &lt;&lt; &quot;\n&quot;;
+std::string svg = ligint::fingerprintSvg(fp);
+</code></pre>
+<p><code>writeFingerprintCsv</code> and <code>writeFingerprintJson</code> take a vector of fingerprints (one per ligand). The library does not
+depend on Qt.</p>
+<h2 id="not-covered-yet"><a name="not-covered-yet"></a>Not covered yet</h2>
+<ul>
+<li>Mapping residues to pocket positions: the position of each residue in a reference pocket (as defined for kinases, for
+  example) is not computed; it must come from the definition file.</li>
+<li>Comparison of the fingerprint with those of other tools, and fingerprints of several structures in one matrix.</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="validation.html">Validation and limits</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>

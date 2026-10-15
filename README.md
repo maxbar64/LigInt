@@ -27,6 +27,14 @@ On Windows run `ligint-<version>-win64.exe` (it can add ligint to the `PATH`). D
 installers yourself and what has been verified are in [`docs/INSTALL.md`](docs/INSTALL.md). To build from source see
 [Building](#building) below.
 
+## Manual
+
+The **user manual** is in HTML: it opens from the **Help** menu of the graphical interface (`F1` shows the page of the tab you are
+looking at), with a table of contents, full-text search and navigation, and the same pages are installed as files in the documentation
+folder (`/usr/share/doc/ligint/manual/index.html` on Linux) to read in any web browser. Its sources are Markdown files
+(`docs/manual/` and the other files of `docs/`), converted by `tools/build_manual.py`; see
+[`docs/manual/index.md`](docs/manual/index.md).
+
 ## Interaction fingerprints
 
 A fingerprint is a table with one row per protein residue and one column per interaction class (hydrophobic,
@@ -192,7 +200,7 @@ uncertain effect.
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     83 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     87 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -246,7 +254,7 @@ docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (reports),
 cmake/                      CMake package configuration and packaging (CPack) files
 ```
 
-Other documents: [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md), [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
+Other documents: [`docs/manual/index.md`](docs/manual/index.md) (the manual), [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md), [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

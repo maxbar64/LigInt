@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Installation - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="benchmark.html">Comparison with PLIP</a> &middot; <a href="troubleshooting.html">Troubleshooting</a> &raquo;</p>
+<h1 id="installation"><a name="installation"></a>Installation</h1>
+<p>Ready-made installers are built by the CI workflow (<code>.github/workflows/ci.yml</code>): they are attached to each
+<a href="https://github.com/maxbar64/LigInt/releases">GitHub release</a> and kept as artifacts of every workflow run.</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>System</th>
+<th>File</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux (Debian, Ubuntu)</td>
+<td><code>ligint_&lt;version&gt;_amd64.deb</code></td>
+<td>programs, manual pages, menu entry and icon</td>
+</tr>
+<tr>
+<td>Linux (Debian, Ubuntu)</td>
+<td><code>ligint-dev_&lt;version&gt;_amd64.deb</code></td>
+<td>headers, static library and CMake package, for programs that use the library</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td><code>ligint-&lt;version&gt;-linux-x86_64.tar.gz</code></td>
+<td>portable archive, no installation needed</td>
+</tr>
+<tr>
+<td>Rocky Linux, AlmaLinux, RHEL 9</td>
+<td><code>ligint-&lt;version&gt;-1.x86_64.rpm</code></td>
+<td>programs, manual pages, menu entry and icon</td>
+</tr>
+<tr>
+<td>Rocky Linux, AlmaLinux, RHEL 9</td>
+<td><code>ligint-devel-&lt;version&gt;-1.x86_64.rpm</code></td>
+<td>headers, static library and CMake package</td>
+</tr>
+<tr>
+<td>Windows 10/11 (64 bit)</td>
+<td><code>ligint-&lt;version&gt;-win64.exe</code></td>
+<td>installer (wizard, Start menu, uninstaller)</td>
+</tr>
+<tr>
+<td>Windows 10/11 (64 bit)</td>
+<td><code>ligint-&lt;version&gt;-win64.zip</code></td>
+<td>portable archive, no installation needed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="linux"><a name="linux"></a>Linux</h2>
+<pre><code>sudo apt install ./ligint_0.7.0_amd64.deb          # the dependencies (Qt 6 libraries) are installed automatically
+ligint --version
+ligint-gui                                         # or from the applications menu: &quot;ligint&quot;
+man ligint
+sudo apt remove ligint                             # uninstall
+</code></pre>
+<ul>
+<li>The <code>.deb</code> files are built on Ubuntu 24.04 (Qt 6.4) and depend on the Qt 6 packages of that release. On a distribution
+  with different Qt packages build from source (see the README) or use <code>cpack</code> as shown below.</li>
+<li><code>ligint-gui</code> is associated with PDB files (MIME type <code>chemical/x-pdb</code>): <em>Open with</em> shows it.</li>
+<li>The portable archive is extracted anywhere (<code>bin/ligint</code>, <code>bin/ligint-gui</code>); the Qt 6 libraries must be installed
+  (<code>libqt6widgets6</code>, <code>libqt6svg6</code>, <code>qt6-qpa-plugins</code> on Debian/Ubuntu).</li>
+</ul>
+<h2 id="rocky-linux-almalinux-rhel-9"><a name="rocky-linux-almalinux-rhel-9"></a>Rocky Linux, AlmaLinux, RHEL 9</h2>
+<pre><code>sudo dnf install epel-release                     # Qt 6 comes from EPEL on version 9
+sudo dnf install ./ligint-0.7.0-1.x86_64.rpm      # the dependencies are installed automatically
+ligint --version
+sudo dnf remove ligint                            # uninstall
+</code></pre>
+<ul>
+<li>The RPM is built by the CI in a Rocky Linux 9 container and installed on a clean AlmaLinux 9 container, so it follows the
+  glibc and Qt of that release. It is <strong>not</strong> meant for version 8 or 10, and the <code>.deb</code> and the portable <code>.tar.gz</code> (built on
+  Ubuntu 24.04) will not run on version 9 (they need a newer glibc).</li>
+<li>If Qt 6 is not available for the release, the CI builds the command line only: the RPM then has no <code>ligint-gui</code>
+  (the workflow run shows a warning and says so in its summary).</li>
+<li>RHEL needs an active subscription and the CodeReady Builder repository (<code>crb</code>) to build from source.</li>
+<li>Other RPM-based systems (Fedora, openSUSE): build the RPM yourself with <code>cpack -G RPM</code> after building from source.</li>
+</ul>
+<h2 id="windows"><a name="windows"></a>Windows</h2>
+<ol>
+<li>Run <code>ligint-&lt;version&gt;-win64.exe</code> and follow the wizard: install folder, whether to add ligint to the <code>PATH</code>
+   (so that <code>ligint</code> works in a terminal) and the Start menu entry.</li>
+<li>Start <strong>ligint</strong> from the Start menu, or <code>ligint file.pdb</code> in a terminal.</li>
+<li>To uninstall use <em>Settings &gt; Apps</em>, or the <em>Uninstall</em> entry in the Start menu.</li>
+</ol>
+<ul>
+<li><strong>Silent installation:</strong> <code>ligint-&lt;version&gt;-win64.exe /S</code> (optionally <code>/D=C:\Tools\ligint</code>, last on the command line).</li>
+<li>The installer is <strong>not code-signed</strong>: Windows SmartScreen may show "Windows protected your PC" the first time
+  (<em>More info</em> &gt; <em>Run anyway</em>). Signing needs a certificate, which this project does not have.</li>
+<li>The portable <code>.zip</code> can be extracted anywhere; run <code>bin\ligint-gui.exe</code> or <code>bin\ligint.exe</code>.</li>
+<li>The installer includes the Qt libraries and the Visual C++ runtime that the GUI needs.</li>
+</ul>
+<h2 id="building-the-installers-yourself"><a name="building-the-installers-yourself"></a>Building the installers yourself</h2>
+<p>The installers are produced by CPack from the same sources:</p>
+<pre><code>cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cd build &amp;&amp; cpack                 # Linux: .deb (+ ligint-dev) and .tar.gz;  Windows: NSIS installer and .zip
+</code></pre>
+<ul>
+<li>Windows: use a "Developer Command Prompt" (MSVC), point CMake to Qt 6 with <code>-DCMAKE_PREFIX_PATH=C:\Qt\6.7.0\msvc2019_64</code>
+  and install <a href="https://nsis.sourceforge.io">NSIS</a> for the installer (the <code>.zip</code> does not need it). Qt 6.3 or later is required to bundle the Qt libraries.</li>
+<li>One generator only: <code>cpack -G DEB</code>, <code>cpack -G TGZ</code>, <code>cpack -G RPM</code>, <code>cpack -G NSIS</code>, <code>cpack -G ZIP</code>.</li>
+<li>Maintainer of the <code>.deb</code>/<code>.rpm</code>: <code>-DLIGINT_PACKAGE_MAINTAINER="Your Name &lt;you@example.org&gt;"</code> (the default is a placeholder);
+  home page in the metadata: <code>-DLIGINT_HOMEPAGE=...</code>.</li>
+<li>Without Qt only the command line is built and packaged (<code>-DLIGINT_BUILD_GUI=OFF</code>): the <code>.deb</code> then depends only on the C and C++ libraries.</li>
+</ul>
+<h2 id="publishing-a-release"><a name="publishing-a-release"></a>Publishing a release</h2>
+<p>Push a tag that starts with <code>v</code>; the workflow builds, tries and publishes the installers:</p>
+<pre><code>git tag v0.7.0 &amp;&amp; git push origin v0.7.0
+</code></pre>
+<p>The version in the file names comes from <code>project(ligint VERSION ...)</code> in <code>CMakeLists.txt</code>: change it (and <code>LIGINT_VERSION</code>
+in <code>include/ligint/ligint.hpp</code>) before tagging.</p>
+<h2 id="what-has-been-verified"><a name="what-has-been-verified"></a>What has been verified</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th></th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.deb</code> (ligint, ligint-dev)</td>
+<td>installed, run (CLI and GUI), a program built against <code>ligint-dev</code>, removed; <code>lintian</code> reports no errors or warnings</td>
+</tr>
+<tr>
+<td><code>.tar.gz</code> (Linux)</td>
+<td>extracted in another folder and run</td>
+</tr>
+<tr>
+<td><code>.rpm</code> (Rocky/Alma/RHEL 9)</td>
+<td>the layout (<code>lib64</code>, no system directories) was inspected here; <strong>built in a Rocky 9 container and installed on AlmaLinux 9 by the CI, which has not run yet</strong>; RHEL itself and versions 8 and 10 not tried</td>
+</tr>
+<tr>
+<td>Windows installer (NSIS)</td>
+<td>the installer script is generated and compiled (checked on Linux with a Linux payload); <strong>not run on Windows</strong>: CI builds and tries it there (silent install, run, uninstall)</td>
+</tr>
+<tr>
+<td>Windows <code>.zip</code>, Qt bundling (<code>windeployqt</code>), MSVC build</td>
+<td><strong>not tried by the authors</strong>: only the CI run will tell</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td>no installer (the library and the command line build; see the CI)</td>
+</tr>
+</tbody>
+</table>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="benchmark.html">Comparison with PLIP</a> &middot; <a href="troubleshooting.html">Troubleshooting</a> &raquo;</p>
+<p class="foot">ligint 0.7.0 manual</p>
+</body>
+</html>
