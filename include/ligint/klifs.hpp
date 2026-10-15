@@ -8,12 +8,16 @@ struct KlifsOptions {
     std::string pdbId, chain, model;
     int structureId = 0;
     std::string cacheDirectory;
-    std::string mappingFile; // offline KLIFS pocket CSV/TSV
+    std::string mappingFile; // offline KLIFS pocket: a CSV/TSV mapping, or the pocket.mol2 file that KLIFS provides for a structure
+    // The 85-character sequence of the KLIFS pocket ('_' for a residue that is missing in the crystal): the field `pocket` of the service or of
+    // the KLIFS overview. It is needed to place the residues of a pocket.mol2 that has fewer than 85 of them (a pocket with all of them needs nothing).
+    std::string pocketSequence;
 };
 // A KLIFS structure that matches a request. The same PDB entry and chain can have several structures, one for each alternate model.
 struct KlifsCandidate {
     int id = 0;
     std::string chain, model;      // model is empty when the answer of the service does not say it
+    std::string pocket;            // the 85-character pocket sequence of this structure, if the answer has it
 };
 // Several KLIFS structures match: the candidates tell which ones, so that the caller can ask which to use (KlifsOptions::structureId).
 class KlifsAmbiguousError : public std::runtime_error {

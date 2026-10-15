@@ -79,6 +79,13 @@ ignored) with the columns:</p>
   <strong>error</strong> and no file is written.</li>
 <li>Columns may come in any order and extra columns are ignored.</li>
 </ul>
+<h3 id="a-klifs-pocketmol2"><a name="a-klifs-pocketmol2"></a>A KLIFS <code>pocket.mol2</code></h3>
+<p><code>--klifs-mapping</code> also accepts the <code>pocket.mol2</code> file that KLIFS provides for each structure (it is recognized by its content). Its residues are, in order, the
+positions 1 to 85 <strong>that the structure has</strong>; the regions are those of the KLIFS alignment, which ligint knows. A pocket with all 85 residues needs nothing more.
+When some are missing in the crystal the file has fewer than 85 and does not say which, so the <strong>pocket sequence</strong> is needed: 85 characters, the one-letter code of each
+position and <code>_</code> where the residue is missing (the field <code>pocket</code> of the KLIFS service and of the KLIFS overview table). Give it with <code>--klifs-sequence</code>. ligint
+checks it against the file: the number of residues must agree, and every standard residue must be the one that the sequence has in that position, so a sequence that is
+shifted or belongs to another structure is refused instead of producing a wrong pocket. The residue numbers are those of the file (the author numbering of the structure).</p>
 <p>The generated file has the <a href="fingerprint.html#pocket-definition-file">pocket definition format</a>: <code>@name</code>, one <code>@color</code> for each region (the colors of the
 KLIFS regions) and one line per position with the chain, the residue, the position as label, the region and the residue name.</p>
 <h2 id="command-line"><a name="command-line"></a>Command line</h2>
@@ -100,7 +107,11 @@ KLIFS regions) and one line per position with the chain, the residue, the positi
 </tr>
 <tr>
 <td><code>--klifs-mapping FILE</code></td>
-<td>the mapping file; without it the service is asked (see below)</td>
+<td>the mapping file or the <code>pocket.mol2</code> of KLIFS; without it the service is asked (see below)</td>
+</tr>
+<tr>
+<td><code>--klifs-sequence S</code></td>
+<td>the 85-character pocket sequence (<code>_</code> for a missing residue), for a <code>pocket.mol2</code> with fewer than 85 residues</td>
 </tr>
 <tr>
 <td><code>--klifs-output FILE</code></td>
@@ -124,6 +135,13 @@ mapping: <strong>Local KLIFS mapping CSV/TSV</strong> (a file chooser follows) o
 model). It asks where to save the file and works in the <strong>background</strong>; when it finishes the pocket is loaded and the <strong>Log</strong> says how many positions were
 mapped. A structure must be open first.</p>
 <h2 id="the-klifs-service-partly-verified"><a name="the-klifs-service-partly-verified"></a>The KLIFS service (partly verified)</h2>
+<p><strong>Verified by two real runs.</strong> The list of the structures of a PDB entry works (two structures of one chain, IDs 1445 and 1453, were found and read), and the request for
+the pocket answers with a <strong>MOL2 file</strong> (<code>@&lt;TRIPOS&gt;MOLECULE</code>, the name <code>HUMAN/JAK1_3eyg_altB_chainA</code>, 85 substructures), not with a table: ligint reads it as described above.
+The reading was checked on four real KLIFS pocket files (BMX, BRAF and the two chains of ABL1) with the sequences of the KLIFS overview: the number of missing residues
+agrees with what KLIFS says in all of them, and in ABL1 the hinge falls on Glu316-Phe317-Met318 with Thr315 as gatekeeper, as it should.</p>
+<p><strong>Not yet confirmed</strong>: that the answer about the structures names the pocket sequence <code>pocket</code> (ligint also tries <code>structure.pocket</code>) and the alternate model <code>alt</code> (and the other
+names listed below), and a complete run to the end on a structure that has missing residues. If the sequence is not found the message lists the fields that the answer has;
+with <code>--klifs-sequence</code> the command line can go on anyway.</p>
 <p>Without a mapping file ligint asks the KLIFS web service, first for the structures of the PDB entry and then for the pocket of the one that matches the chain.</p>
 <p><strong>What a real run showed.</strong> The first request works against the live service: a user run on a real entry got the list of its structures and read the structure
 ID and the chain from it (two structures of chain A, IDs 1445 and 1453). <strong>Not confirmed</strong>: the field that names the <em>alternate model</em> (ligint looks for <code>alt</code>,
@@ -140,7 +158,8 @@ response that is not JSON. Please report them: they are what is needed to fix th
 <code>tools/klifs_to_pocket.py</code> uses the OpenCADD client instead and is the better choice for the online step until the native one is verified.</p>
 <p>Requests use HTTPS only, at most 3 redirects, a 10 s connection and a 25 s total timeout, and the answer is limited to 8 MB.</p>
 <h2 id="verified"><a name="verified"></a>Verified</h2>
-<p>By the automated tests, which use local files only: the positions and the regions; missing residues; insertion codes; the residue names from the one-letter
+<p>By the automated tests, which use local files only: the reading of a <code>pocket.mol2</code> (all 85 residues, with a sequence, insertion codes, negative numbers, modified residues,
+Windows line ends, every kind of error, random corruption, and the regions and colors, with their Greek letters, through the fingerprint and the SVG figure); the positions and the regions; missing residues; insertion codes; the residue names from the one-letter
 code (all twenty); the same pocket from TSV, CSV, Windows line ends, byte order mark and permuted columns; the errors above (the file is not written);
 corrupted files; the round trip through the pocket-definition format and the fingerprint (the positions, the regions and a hydrogen bond in the right cell);
 the rules of the command line; the background task of the interface.</p>
@@ -158,6 +177,6 @@ cmake --build build-klifs --config Release
 json-c an error instead of building without the service. With a dynamic triplet the DLLs must be available at run time. A successful build says nothing about
 the compatibility with the live service.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
-<p class="foot">ligint 0.8.1 manual</p>
+<p class="foot">ligint 0.8.2 manual</p>
 </body>
 </html>

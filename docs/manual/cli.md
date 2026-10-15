@@ -34,7 +34,7 @@ check the output, not only the exit code, in scripts.
 | `--format F` | `auto` (default: recognized from the content), `pdb` or `cif` |
 | `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`) instead of the interaction table, optionally with a pocket definition |
 | `--download-pdb ID` | download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. `--download-format pdb\|cif`, `--download-output FILE`, `--download-cache DIR`, `--download-refresh` and `--download-only` (stop after the download and print the path; it requires `--download-pdb`) complete it ([Downloading from the RCSB](rcsb.md)) |
-| `--klifs-pdb ID`, `--klifs-chain C`, `--klifs-mapping FILE`, `--klifs-output FILE`, `--klifs-model M`, `--klifs-id N` | build a pocket definition from a KLIFS mapping, to use with `--fingerprint` or to save ([KLIFS kinase pockets](klifs.md)) |
+| `--klifs-pdb ID`, `--klifs-chain C`, `--klifs-mapping FILE`, `--klifs-sequence S`, `--klifs-output FILE`, `--klifs-model M`, `--klifs-id N` | build a pocket definition from a KLIFS mapping, to use with `--fingerprint` or to save ([KLIFS kinase pockets](klifs.md)) |
 | `--version` | print the version |
 | `--help`, `-h` | print the usage and the default values of the thresholds |
 

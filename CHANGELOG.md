@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.2
+
+- **KLIFS: the pocket is a MOL2 file.** The second real run showed that the request for the pocket answers with a `pocket.mol2` (the residues of the pocket, not a table), which the
+  program could not read. It now reads it: the residues are the positions 1 to 85 that the structure has, the regions are those of the KLIFS alignment, and the 85-character pocket
+  sequence (`_` for a missing residue; the field `pocket` of the service, or `--klifs-sequence`) places them when some are missing. The sequence is checked against the file
+  (number of residues, and every standard residue against its letter), so a wrong one is refused. `--klifs-mapping` accepts a `pocket.mol2` too (offline, GUI included).
+  Checked on four real KLIFS pocket files (BMX, BRAF, ABL1 chains A and B): the missing residues agree with KLIFS, and the ABL1 hinge falls on Glu316-Phe317-Met318.
+- The colors of the regions did not apply to the names that KLIFS uses: `αC`, `αD`, `αE`, `αF` (Greek letters) and `xDFG`.
+- Errors of the online path say what the answer contained when the sequence is missing; the structure list is now requested also when `--klifs-id` is given, to get the sequence.
+- Tests: the reading of the MOL2 in C++ and from the command line (all the error cases, corruption, the Greek region names through the SVG figure).
+- Still not confirmed against the live service: the name of the sequence field in the answer about the structures and the alternate-model field; a complete online run on a structure with missing residues.
+
 ## 0.8.1
 
 - **KLIFS service, first real run.** It reached the service and found two structures for the same chain (IDs 1445 and 1453), but the alternate model was read as empty,

@@ -532,6 +532,104 @@ static void testFingerprintClasses() {
     CHECK(std::string(ligint::fpClassName(ligint::FpHBondDonor)) == "hbond_donor" && ligint::oneLetterCode("TRP") == 'W' && ligint::oneLetterCode("XYZ") == '?');
 }
 
+// a pocket.mol2 as KLIFS writes it (header, atoms, substructures, MOE comment); residue i is called names[i] and numbered numbers[i]
+static std::string pocketMol2(const std::vector<std::pair<std::string, std::string>>& residues, const char* eol = "\n") {
+    std::string t;
+    auto line = [&](const std::string& s) { t += s + eol; };
+    line("@<TRIPOS>MOLECULE");
+    line("HUMAN/TEST_1abc_altB_chainA");
+    line(std::to_string(residues.size() * 2) + " 0 " + std::to_string(residues.size()) + " 0 0 ");
+    line("BIOPOLYMER");
+    line("USER_CHARGES");
+    line("");
+    line("");
+    line("@<TRIPOS>ATOM");
+    for (size_t i = 0; i < residues.size(); ++i)
+        line("   " + std::to_string(2 * i + 1) + " N        6.2495    17.2789    53.5862 N.3    " + std::to_string(i + 1) + " " + residues[i].first + residues[i].second + "  -0.6701 BACKBONE");
+    line("@<TRIPOS>BOND");
+    line("@<TRIPOS>SUBSTRUCTURE");
+    for (size_t i = 0; i < residues.size(); ++i)
+        line("  " + std::to_string(i + 1) + " " + residues[i].first + residues[i].second + "    " + std::to_string(2 * i + 1) + " RESIDUE 4 A " + residues[i].first + " 1");
+    line("# MOE 2012.10 (io_trps.svl 2012.10)");
+    return t;
+}
+
+static void testKlifsPocketMol2() {
+    namespace fs = std::filesystem;
+    const std::string aa3[] = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
+    const std::string letters = "ACDEFGHIKLMNPQRSTVWY";
+    auto generate = [&](const std::string& mol2, const std::string& sequence, std::string* error = nullptr) {
+        const std::string file = "ligint_unit_pocket.mol2";
+        { std::ofstream f(file, std::ios::binary); f << mol2; }
+        ligint::KlifsOptions o;
+        o.pdbId = "1ABC";
+        o.chain = "A";
+        o.mappingFile = file;
+        o.pocketSequence = sequence;
+        ligint::PocketDefinition p;
+        try { p = ligint::generateKlifsPocket(o); } catch (const std::exception& e) { if (error) *error = e.what(); }
+        std::remove(file.c_str());
+        return p;
+    };
+    // all 85 positions: no sequence needed; the positions and their regions are those of KLIFS
+    std::vector<std::pair<std::string, std::string>> all;
+    std::string seq85;
+    for (int p = 1; p <= 85; ++p) {
+        all.push_back({aa3[p % 20], std::to_string(100 + p)});
+        seq85 += letters[p % 20];
+    }
+    auto p = generate(pocketMol2(all), "");
+    CHECK(p.positions.size() == 85);
+    CHECK(p.positions[0].label == "1" && p.positions[0].region == "I" && p.positions[0].resi == 101 && p.positions[0].resName == aa3[1]);
+    CHECK(p.positions[2].region == "I" && p.positions[3].region == "g.l" && p.positions[19].region == "\xCE\xB1" "C" && p.positions[44].region == "GK");
+    CHECK(p.positions[45].region == "hinge" && p.positions[79].region == "xDFG" && p.positions[84].region == "a.l" && p.positions[84].resi == 185);
+    CHECK(generate(pocketMol2(all, "\r\n"), seq85).positions.size() == 85);                      // Windows line ends, and the sequence agrees
+    // 81 residues and a sequence with four missing positions: the residues go to the positions that the sequence has
+    std::string seq = seq85;
+    for (int missing : {6, 7, 8, 9}) seq[missing - 1] = '_';
+    std::vector<std::pair<std::string, std::string>> rest;
+    for (int q = 1; q <= 85; ++q) if (seq[q - 1] != '_') rest.push_back({aa3[q % 20], std::to_string(100 + q)});
+    p = generate(pocketMol2(rest), seq);
+    CHECK(p.positions.size() == 81 && p.positions[4].label == "5" && p.positions[5].label == "10" && p.positions[5].resi == 110 && p.positions[5].region == "II");
+    {
+        std::string e;
+        generate(pocketMol2(rest), "", &e);                                                       // fewer than 85 and no sequence: not placeable
+        CHECK(e.find("81 residues") != std::string::npos && e.find("pocket sequence") != std::string::npos);
+        generate(pocketMol2(rest), seq85, &e);                                                    // the sequence has 85 residues, the file 81
+        CHECK(e.find("has 85 residues but the pocket MOL2 has 81") != std::string::npos);
+        std::string wrong = seq;
+        wrong[10] = wrong[10] == 'A' ? 'C' : 'A';                                                 // a standard residue that disagrees
+        generate(pocketMol2(rest), wrong, &e);
+        CHECK(e.find("Position 11") != std::string::npos);
+        generate(pocketMol2(rest), seq.substr(1), &e);
+        CHECK(e.find("must have 85 characters") != std::string::npos);
+        generate(pocketMol2(all), std::string(84, 'A') + "1", &e);
+        CHECK(e.find("Invalid character") != std::string::npos);
+        generate("@<TRIPOS>MOLECULE\nx\n1 0 0 0 0\n@<TRIPOS>ATOM\n", "", &e);                      // no substructures
+        CHECK(e.find("no residues") != std::string::npos);
+        generate("@<TRIPOS>MOLECULE\n@<TRIPOS>SUBSTRUCTURE\n 1 ALA1 1 RESIDUE\n", "", &e);
+        CHECK(e.find("Invalid substructure line") != std::string::npos);
+        generate("@<TRIPOS>MOLECULE\n@<TRIPOS>SUBSTRUCTURE\n 1 ALAxyz 1 RESIDUE 4 A ALA 1\n", "", &e);
+        CHECK(e.find("Invalid residue") != std::string::npos);
+        auto many = all;
+        many.push_back({"ALA", "999"});
+        generate(pocketMol2(many), "", &e);
+        CHECK(e.find("at most 85") != std::string::npos);
+    }
+    // an insertion code, a negative residue number and a modified residue (its letter in the sequence need not match)
+    auto special = rest;
+    special[0] = {"CYS", "421A"};                                                              // position 1 is a C in the sequence
+    special[1] = {"ASP", "-3"};
+    special[2] = {"MSE", "7"};
+    p = generate(pocketMol2(special), seq);
+    CHECK(p.positions.size() == 81 && p.positions[0].resi == 421 && p.positions[0].icode == 'A' && p.positions[1].resi == -3 && p.positions[2].resName == "MSE");
+    // a file that is not a MOL2 still goes through the CSV/TSV reader
+    std::string e;
+    generate("a\tb\n1\t2\n", "", &e);
+    CHECK(e.find("no position") != std::string::npos);
+    CHECK(fs::exists("ligint_unit_pocket.mol2") == false);
+}
+
 static void testKlifsStructureSelection() {
     ligint::KlifsOptions o;
     o.pdbId = "3EYG";
@@ -763,6 +861,7 @@ int main() {
     testKlifsNative();
     testRcsbCacheAndValidation();
     testKlifsStructureSelection();
+    testKlifsPocketMol2();
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();

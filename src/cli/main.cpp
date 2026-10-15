@@ -19,7 +19,7 @@ static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
-         << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-output FILE]\n"
+         << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
          << " --salt-max " << p.saltMax << " --rep-max " << p.repMax << "\n  --hal-max " << p.halMax
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
             if (v.size() != 1 || v[0] == ' ') { cerr << "--altloc expects a single character, e.g. A or B\n"; return 1; }
             opt.altloc = v[0];
         }
-        else if (s == "--klifs-pdb" || s == "--klifs-chain" || s == "--klifs-model" || s == "--klifs-mapping" || s == "--klifs-output" || s == "--klifs-id") {
+        else if (s == "--klifs-pdb" || s == "--klifs-chain" || s == "--klifs-model" || s == "--klifs-mapping" || s == "--klifs-output" || s == "--klifs-id" || s == "--klifs-sequence") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             string v=argv[++i];useKlifs=true;
             if(s=="--klifs-pdb")klifs.pdbId=v;
@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
             else if(s=="--klifs-model")klifs.model=v;
             else if(s=="--klifs-mapping")klifs.mappingFile=v;
             else if(s=="--klifs-output")klifsOutput=v;
+            else if(s=="--klifs-sequence")klifs.pocketSequence=v;
             else {try{size_t n=0;klifs.structureId=stoi(v,&n);if(n!=v.size()||klifs.structureId<=0)throw invalid_argument("id");}catch(...){cerr<<"Invalid KLIFS structure ID\n";return 1;}}
         }
         else if(s=="--download-refresh") {rcsb.refresh=true;}

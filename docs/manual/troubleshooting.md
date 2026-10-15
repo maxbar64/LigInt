@@ -80,6 +80,12 @@ answer under a name that ligint knows, only `--klifs-id` can choose, and the mes
 **`KLIFS: Invalid KLIFS JSON response (it starts with: ...)`, `No pocket residue rows ...`, `... its fields are: ...`.** The answer of the service is not what ligint
 expects; the message shows the beginning of the answer or the names of its fields. Use a mapping file and report the message.
 
+**`KLIFS: The KLIFS pocket has N residues, so some of the 85 positions are missing`.** A pocket with missing residues needs the 85-character pocket sequence to place the
+others (`--klifs-sequence`, `_` marks a missing residue). The KLIFS service gives it in the answer about the structures; if it is not found the message lists the fields of that answer.
+
+**`KLIFS: Position P: the pocket sequence has X but the residue in the MOL2 is ...`, `... has N residues but the pocket MOL2 has M`.** The sequence does not belong to that
+`pocket.mol2` (another structure, another chain or alternate model): use the one of the same structure.
+
 **`KLIFS: KLIFS request failed` or `Online KLIFS unavailable`.** The service could not be reached, or this build has no network support. Use a mapping file
 (`--klifs-mapping`); the online path of the native client is not verified ([KLIFS kinase pockets](klifs.md#the-klifs-service-partly-verified)).
 

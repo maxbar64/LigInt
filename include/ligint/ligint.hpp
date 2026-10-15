@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.8.1"
+#define LIGINT_VERSION "0.8.2"
 #endif
 
 namespace ligint {

@@ -21,6 +21,18 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="082"><a name="082"></a>0.8.2</h2>
+<ul>
+<li><strong>KLIFS: the pocket is a MOL2 file.</strong> The second real run showed that the request for the pocket answers with a <code>pocket.mol2</code> (the residues of the pocket, not a table), which the
+  program could not read. It now reads it: the residues are the positions 1 to 85 that the structure has, the regions are those of the KLIFS alignment, and the 85-character pocket
+  sequence (<code>_</code> for a missing residue; the field <code>pocket</code> of the service, or <code>--klifs-sequence</code>) places them when some are missing. The sequence is checked against the file
+  (number of residues, and every standard residue against its letter), so a wrong one is refused. <code>--klifs-mapping</code> accepts a <code>pocket.mol2</code> too (offline, GUI included).
+  Checked on four real KLIFS pocket files (BMX, BRAF, ABL1 chains A and B): the missing residues agree with KLIFS, and the ABL1 hinge falls on Glu316-Phe317-Met318.</li>
+<li>The colors of the regions did not apply to the names that KLIFS uses: <code>αC</code>, <code>αD</code>, <code>αE</code>, <code>αF</code> (Greek letters) and <code>xDFG</code>.</li>
+<li>Errors of the online path say what the answer contained when the sequence is missing; the structure list is now requested also when <code>--klifs-id</code> is given, to get the sequence.</li>
+<li>Tests: the reading of the MOL2 in C++ and from the command line (all the error cases, corruption, the Greek region names through the SVG figure).</li>
+<li>Still not confirmed against the live service: the name of the sequence field in the answer about the structures and the alternate-model field; a complete online run on a structure with missing residues.</li>
+</ul>
 <h2 id="081"><a name="081"></a>0.8.1</h2>
 <ul>
 <li><strong>KLIFS service, first real run.</strong> It reached the service and found two structures for the same chain (IDs 1445 and 1453), but the alternate model was read as empty,
@@ -174,6 +186,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.8.1 manual</p>
+<p class="foot">ligint 0.8.2 manual</p>
 </body>
 </html>

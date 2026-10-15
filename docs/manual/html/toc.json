@@ -1,6 +1,6 @@
 {
  "title": "ligint manual",
- "version": "0.8.1",
+ "version": "0.8.2",
  "pages": [
   {
    "id": "index",
@@ -312,6 +312,11 @@
      "id": "the-mapping-file"
     },
     {
+     "level": 3,
+     "text": "A KLIFS pocket.mol2",
+     "id": "a-klifs-pocketmol2"
+    },
+    {
      "level": 2,
      "text": "Command line",
      "id": "command-line"
@@ -580,6 +585,11 @@
    "title": "Changelog",
    "file": "changelog.html",
    "headings": [
+    {
+     "level": 2,
+     "text": "0.8.2",
+     "id": "082"
+    },
     {
      "level": 2,
      "text": "0.8.1",

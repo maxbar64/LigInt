@@ -1579,6 +1579,111 @@ def klifs_command_line_rules():
     check(r.rc == 1 and "four-character PDB ID" in r.err, "invalid PDB ID: " + r.err)
 
 
+def mol2_pocket(residues, eol="\n"):
+    """A pocket.mol2 as KLIFS writes it: residues = [(resname, number)]."""
+    out = ["@<TRIPOS>MOLECULE", "HUMAN/TEST_1abc_altB_chainA", "%d 0 %d 0 0 " % (2 * len(residues), len(residues)), "BIOPOLYMER", "USER_CHARGES", "", "", "@<TRIPOS>ATOM"]
+    for i, (n, num) in enumerate(residues):
+        out.append("   %d N        6.2495    17.2789    53.5862 N.3    %d %s%s  -0.6701 BACKBONE" % (2 * i + 1, i + 1, n, num))
+    out += ["@<TRIPOS>BOND", "@<TRIPOS>SUBSTRUCTURE"]
+    for i, (n, num) in enumerate(residues):
+        out.append("  %d %s%s    %d RESIDUE 4 A %s 1" % (i + 1, n, num, 2 * i + 1, n))
+    out.append("# MOE 2012.10 (io_trps.svl 2012.10)")
+    return eol.join(out) + eol
+
+
+def pocket_sequence(placed):
+    """The 85-character pocket sequence: placed = {position: letter}."""
+    return "".join(placed.get(p, "_") for p in range(1, 86))
+
+
+@test("net")
+def klifs_pocket_mol2_gives_the_fingerprint_of_the_kinase_pocket():
+    s = fp_system()                                                      # ligand + ALA 9, ASN 10 (accepts a hydrogen bond), GLY 11 of chain A
+    mol2 = tmpfile(mol2_pocket([("ALA", 9), ("ASN", 10), ("GLY", 11)]), ".mol2")
+    seq = pocket_sequence({1: "A", 20: "N", 46: "G"})                    # ASN 10 sits in the alpha C helix, GLY 11 in the hinge
+    out = os.path.join(CFG["tmp"], "mol2_pocket.tsv")
+    r = klifs_cli(mol2, out, extra=["--klifs-sequence", seq])
+    check(r.rc == 0 and "3 mapped positions" in r.err, "rc=%d %s" % (r.rc, r.err[:200]))
+    lines = [l.split("\t") for l in open(out, encoding="utf-8").read().splitlines() if l and l[0] not in "#@"]
+    check([(l[1], l[2], l[3], l[4]) for l in lines] == [("9", "1", "I", "ALA"), ("10", "20", "\u03b1C", "ASN"), ("11", "46", "hinge", "GLY")], str(lines))
+    check("@color \u03b1C #" in open(out, encoding="utf-8").read(), "the alpha C region must have its own color")
+    pdb = tmpfile(s.text())
+    fp = run_raw([pdb, "LIG", "--fingerprint", "csv", "--pocket", out])
+    rows = [l.split(",") for l in fp.out.strip().splitlines()[1:]]
+    check(fp.rc == 0 and [(x[1], x[4], x[5]) for x in rows] == [("ALA 9A", "1", "I"), ("ASN 10A", "20", "\u03b1C"), ("GLY 11A", "46", "hinge")], fp.out + fp.err)
+    check(rows[1][10] == "1", "the hydrogen bond of ASN 10 is in the position 20: " + str(rows[1]))
+    svg = run_raw([pdb, "LIG", "--fingerprint", "svg", "--pocket", out])
+    import xml.etree.ElementTree as ET
+    ET.fromstring(svg.out.encode("utf-8"))                               # well-formed
+    check("\u03b1C" in svg.out, "the Greek letter must reach the figure")
+    js = json.loads(run_raw([pdb, "LIG", "--fingerprint", "json", "--pocket", out]).out)
+    check(js, "json")
+    # the one-command form and the Windows line ends give the same
+    mol2_crlf = tmpfile(mol2_pocket([("ALA", 9), ("ASN", 10), ("GLY", 11)], "\r\n"), ".mol2")
+    r2 = run_raw([pdb, "LIG", "--fingerprint", "csv", "--klifs-pdb", "1ABC", "--klifs-chain", "A", "--klifs-mapping", mol2_crlf, "--klifs-sequence", seq])
+    check(r2.rc == 0 and r2.out == fp.out, "one command, CRLF: rc=%d %s" % (r2.rc, r2.err[:200]))
+
+
+@test("net")
+def klifs_pocket_mol2_without_sequence_needs_all_85_residues():
+    out = os.path.join(CFG["tmp"], "mol2_all.tsv")
+    all85 = [("ALA", 100 + p) for p in range(1, 86)]
+    r = klifs_cli(tmpfile(mol2_pocket(all85), ".mol2"), out)
+    check(r.rc == 0 and "85 mapped positions" in r.err, "85 residues, no sequence: " + r.err)
+    lines = [l.split("\t") for l in open(out, encoding="utf-8").read().splitlines() if l and l[0] not in "#@"]
+    check([l[3] for l in lines[:4]] == ["I", "I", "I", "g.l"] and lines[44][3] == "GK" and lines[79][3] == "xDFG" and lines[84][3] == "a.l", "regions of the 85 positions")
+    regions = [l[3] for l in lines]
+    expected = {"I": 3, "g.l": 6, "II": 4, "III": 6, "\u03b1C": 11, "b.l": 7, "IV": 4, "V": 3, "GK": 1, "hinge": 3, "linker": 4, "\u03b1D": 7, "\u03b1E": 5,
+                "VI": 3, "c.l": 8, "VII": 3, "VIII": 1, "xDFG": 4, "a.l": 2}
+    check({k: regions.count(k) for k in expected} == expected and len(set(regions)) == 19, "the 19 KLIFS regions with their sizes")
+    r = klifs_cli(tmpfile(mol2_pocket(all85[:81]), ".mol2"), os.path.join(CFG["tmp"], "never_mol2.tsv"))
+    check(r.rc == 1 and "81 residues" in r.err and "--klifs-sequence" in r.err, "81 residues need the sequence: " + r.err)
+    check(not os.path.exists(os.path.join(CFG["tmp"], "never_mol2.tsv")), "nothing written")
+
+
+@test("net")
+def klifs_pocket_mol2_errors_and_corruption():
+    res = [("ALA", 9), ("ASN", 10), ("GLY", 11)]
+    good = tmpfile(mol2_pocket(res), ".mol2")
+    seq = pocket_sequence({1: "A", 20: "N", 46: "G"})
+    def run(mol2, sequence, name):
+        out = os.path.join(CFG["tmp"], "never_%s.tsv" % name)
+        if os.path.exists(out):
+            os.remove(out)                                   # a file left by an earlier run that succeeded does not count
+        r = klifs_cli(mol2, out, extra=["--klifs-sequence", sequence] if sequence is not None else [])
+        check(not os.path.exists(out) or r.rc == 0, "%s: no file on error" % name)
+        no_crash(r)
+        return r
+    for name, mol2, sequence, text in (
+            ("seq too short", good, seq[1:], "must have 85 characters"), ("seq too long", good, seq + "A", "must have 85 characters"),
+            ("seq invalid char", good, seq[:-1] + "1", "Invalid character"), ("seq residues differ in number", good, pocket_sequence({1: "A", 20: "N"}), "has 2 residues but the pocket MOL2 has 3"),
+            ("residue differs from its letter", good, pocket_sequence({1: "A", 20: "W", 46: "G"}), "Position 20"),
+            ("no sequence, 3 residues", good, None, "pocket sequence"),
+            ("no substructures", tmpfile("@<TRIPOS>MOLECULE\nx\n1 0 0 0 0\n@<TRIPOS>ATOM\n", ".mol2"), "", "no residues"),
+            ("short substructure line", tmpfile("@<TRIPOS>MOLECULE\n@<TRIPOS>SUBSTRUCTURE\n 1 ALA1 1 RESIDUE\n", ".mol2"), "", "Invalid substructure line"),
+            ("bad residue number", tmpfile("@<TRIPOS>MOLECULE\n@<TRIPOS>SUBSTRUCTURE\n 1 ALAxyz 1 RESIDUE 4 A ALA 1\n", ".mol2"), "", "Invalid residue"),
+            ("86 residues", tmpfile(mol2_pocket([("ALA", i) for i in range(86)]), ".mol2"), "", "at most 85")):
+        r = run(mol2, sequence, name.replace(" ", "_"))
+        check(r.rc == 1 and r.err.startswith("KLIFS: ") and text in r.err, "%s: rc=%d %s" % (name, r.rc, r.err[:200]))
+    r = run_raw(["--klifs-sequence"])
+    check(r.rc == 1 and "requires a value" in r.err, "--klifs-sequence without a value")
+    # modified residues, insertion codes and negative numbers are accepted
+    odd = tmpfile(mol2_pocket([("ALA", "9A"), ("ASN", -3), ("MSE", 11)]), ".mol2")
+    r = klifs_cli(odd, os.path.join(CFG["tmp"], "mol2_odd.tsv"), extra=["--klifs-sequence", pocket_sequence({1: "A", 20: "N", 46: "M"})])
+    check(r.rc == 0, "odd residues: " + r.err[:200])
+    check("A\t9A\t1\tI\tALA" in open(os.path.join(CFG["tmp"], "mol2_odd.tsv"), encoding="utf-8").read(), "insertion code kept")
+    # a random corruption never crashes
+    rnd = random.Random(21)
+    base = open(good).read()
+    for i in range(60):
+        t = list(base)
+        for _ in range(8):
+            k = rnd.randrange(len(t))
+            t[k] = rnd.choice("@<>\n\t _#0A9-.\x00\u00e9")
+        r = run(tmpfile("".join(t), ".mol2"), seq, "fuzz")
+        check(r.rc in (0, 1), "corrupted MOL2 %d: rc=%d" % (i, r.rc))
+
+
 def rcsb_cache():
     d = os.path.join(CFG["tmp"], "rcsb_cache_%d" % random.randrange(10**9))
     os.makedirs(d)

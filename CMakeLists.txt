@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ligint
-    VERSION 0.8.1
+    VERSION 0.8.2
     DESCRIPTION "Non-covalent ligand-protein interactions from PDB files"
     LANGUAGES CXX)
 

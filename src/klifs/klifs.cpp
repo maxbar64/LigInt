@@ -21,7 +21,76 @@ std::string clean(std::string s) {for(auto& c:s) if(c==' '||c=='\t')c='_'; retur
 std::vector<std::string> csvSplit(const std::string& line, char sep) {std::vector<std::string> v;std::string part;bool quoted=false;for(size_t i=0;i<line.size();++i){char c=line[i];if(c=='"'){if(quoted&&i+1<line.size()&&line[i+1]=='"'){part+='"';++i;}else quoted=!quoted;}else if(c==sep&&!quoted){v.push_back(trim(part));part.clear();}else part+=c;}v.push_back(trim(part));return v;}
 std::string field(const std::map<std::string,std::string>& row, std::initializer_list<const char*> keys) { for(auto k:keys){auto i=row.find(k);if(i!=row.end() && !i->second.empty() && i->second!="_"&&i->second!="null"&&i->second!="None")return i->second;}return {}; }
 std::string aa3(std::string aa) {aa=upper(aa);static const char* a[]={"ALA","CYS","ASP","GLU","PHE","GLY","HIS","ILE","LYS","LEU","MET","ASN","PRO","GLN","ARG","SER","THR","VAL","TRP","TYR"};std::string order="ACDEFGHIKLMNPQRSTVWY";if(aa.size()==1){auto n=order.find(aa[0]);return n==std::string::npos?"":a[n];}return aa.size()==3?aa:"";}
-std::string color(const std::string& s) {static const std::map<std::string,std::string> colors={{"I","#e7dc71"},{"g.l","#8acb7b"},{"II","#f4cf65"},{"III","#e6ab63"},{"aC","#e47875"},{"b.l","#7bc96f"},{"IV","#eee679"},{"V","#f0e877"},{"GK","#efcb64"},{"hinge","#cc83d8"},{"linker","#80dbe1"},{"aD","#df7f82"},{"aE","#d77a75"},{"aF","#da7778"},{"VI","#f4e97d"},{"VII","#f3e579"},{"VIII","#f3e579"},{"c.l","#edb164"},{"DFG","#8ea5ec"},{"a.l","#8ea5ec"}};auto i=colors.find(s);return i==colors.end()?"#bdc6d0":i->second;}
+std::string color(const std::string& s) {static const std::map<std::string,std::string> colors={{"I","#e7dc71"},{"g.l","#8acb7b"},{"II","#f4cf65"},{"III","#e6ab63"},{"aC","#e47875"},{"αC","#e47875"},{"b.l","#7bc96f"},{"IV","#eee679"},{"V","#f0e877"},{"GK","#efcb64"},{"hinge","#cc83d8"},{"linker","#80dbe1"},{"aD","#df7f82"},{"αD","#df7f82"},{"aE","#d77a75"},{"αE","#d77a75"},{"aF","#da7778"},{"αF","#da7778"},{"VI","#f4e97d"},{"VII","#f3e579"},{"VIII","#f3e579"},{"c.l","#edb164"},{"DFG","#8ea5ec"},{"xDFG","#8ea5ec"},{"a.l","#8ea5ec"}};auto i=colors.find(s);return i==colors.end()?"#bdc6d0":i->second;}
+// The 85 positions of the KLIFS pocket and their regions (the KLIFS alignment, as the OpenCADD client defines it)
+const char* regionOf(int position){
+    static const struct {int last;const char* name;} regions[]={{3,"I"},{9,"g.l"},{13,"II"},{19,"III"},{30,"αC"},{37,"b.l"},{41,"IV"},{44,"V"},{45,"GK"},
+        {48,"hinge"},{52,"linker"},{59,"αD"},{64,"αE"},{67,"VI"},{75,"c.l"},{78,"VII"},{79,"VIII"},{83,"xDFG"},{85,"a.l"}};
+    for(const auto& r:regions)if(position<=r.last)return r.name;
+    return "";
+}
+char oneLetter(const std::string& res3){
+    static const std::map<std::string,char> m={{"ALA",'A'},{"CYS",'C'},{"ASP",'D'},{"GLU",'E'},{"PHE",'F'},{"GLY",'G'},{"HIS",'H'},{"ILE",'I'},{"LYS",'K'},{"LEU",'L'},
+        {"MET",'M'},{"ASN",'N'},{"PRO",'P'},{"GLN",'Q'},{"ARG",'R'},{"SER",'S'},{"THR",'T'},{"VAL",'V'},{"TRP",'W'},{"TYR",'Y'}};
+    auto i=m.find(res3);return i==m.end()?'\0':i->second;
+}
+bool isPocketMol2(const std::string& text){
+    size_t i=0;if(text.size()>=3&&(unsigned char)text[0]==0xef)i=3;
+    while(i<text.size()&&std::isspace(static_cast<unsigned char>(text[i])))++i;
+    return text.compare(i,10,"@<TRIPOS>M")==0;
+}
+// The pocket.mol2 of a KLIFS structure: its residues are, in order, the positions 1..85 that the structure has. The sequence says which positions are
+// missing; without it the file must have all 85 residues.
+std::vector<std::map<std::string,std::string>> pocketFromMol2(const std::string& text,const std::string& sequenceIn){
+    std::string sequence;
+    for(char c:sequenceIn)if(!std::isspace(static_cast<unsigned char>(c)))sequence+=c;
+    if(!sequence.empty()){
+        if(sequence.size()!=85)throw std::runtime_error("The KLIFS pocket sequence must have 85 characters, it has "+std::to_string(sequence.size()));
+        for(char& c:sequence){if(c=='-')c='_';if(!(std::isalpha(static_cast<unsigned char>(c))||c=='_'))throw std::runtime_error(std::string("Invalid character in the KLIFS pocket sequence: '")+c+"'");}
+    }
+    struct Res{std::string name,number;};
+    std::vector<Res> residues;
+    std::istringstream in(text);std::string line;bool inSub=false;
+    while(std::getline(in,line)){
+        if(!line.empty()&&line.back()=='\r')line.pop_back();
+        if(line.compare(0,9,"@<TRIPOS>")==0){inSub=line.compare(0,21,"@<TRIPOS>SUBSTRUCTURE")==0;continue;}
+        if(!inSub||trim(line).empty()||trim(line)[0]=='#')continue;
+        std::istringstream ls(line);std::vector<std::string> t;std::string w;while(ls>>w)t.push_back(w);
+        if(t.size()<7)throw std::runtime_error("Invalid substructure line in the KLIFS pocket MOL2: '"+trim(line).substr(0,80)+"'");
+        Res r;r.name=upper(t[6]);
+        std::string label=t[1],number;
+        if(upper(label).compare(0,r.name.size(),r.name)==0)number=label.substr(r.name.size());
+        else{size_t k=label.find_first_of("0123456789-");number=k==std::string::npos?"":label.substr(k);}
+        size_t k=0;if(k<number.size()&&number[k]=='-')++k;size_t d0=k;while(k<number.size()&&std::isdigit(static_cast<unsigned char>(number[k])))++k;
+        if(k==d0||k-d0>6||(k<number.size()&&!(k+1==number.size()&&std::isalpha(static_cast<unsigned char>(number[k])))))
+            throw std::runtime_error("Invalid residue in the KLIFS pocket MOL2: '"+label+"'");
+        r.number=number;residues.push_back(r);
+    }
+    if(residues.empty())throw std::runtime_error("The KLIFS pocket MOL2 has no residues (no SUBSTRUCTURE section)");
+    if(residues.size()>85)throw std::runtime_error("The KLIFS pocket MOL2 has "+std::to_string(residues.size())+" residues: a KLIFS pocket has at most 85");
+    std::vector<int> positions;
+    if(sequence.empty()){
+        if(residues.size()!=85)throw std::runtime_error("The KLIFS pocket has "+std::to_string(residues.size())+" residues, so some of the 85 positions are missing and the file does not say which: "
+            "give the 85-character pocket sequence ('_' marks a missing residue; --klifs-sequence, or the field `pocket` of the KLIFS service)");
+        for(int p=1;p<=85;++p)positions.push_back(p);
+    }else{
+        for(int p=1;p<=85;++p)if(sequence[p-1]!='_')positions.push_back(p);
+        if(positions.size()!=residues.size())throw std::runtime_error("The KLIFS pocket sequence has "+std::to_string(positions.size())+" residues but the pocket MOL2 has "+std::to_string(residues.size()));
+        for(size_t i=0;i<positions.size();++i){
+            const char expected=oneLetter(residues[i].name);
+            if(expected&&std::toupper(static_cast<unsigned char>(sequence[positions[i]-1]))!=expected)
+                throw std::runtime_error("Position "+std::to_string(positions[i])+": the pocket sequence has "+std::string(1,sequence[positions[i]-1])+" but the residue in the MOL2 is "+residues[i].name+residues[i].number);
+        }
+    }
+    std::vector<std::map<std::string,std::string>> rows;
+    for(size_t i=0;i<residues.size();++i)
+        rows.push_back({{"residue.klifs_id",std::to_string(positions[i])},{"residue.id",residues[i].number},{"residue.klifs_region",regionOf(positions[i])},{"residue.aa",residues[i].name}});
+    return rows;
+}
+std::string slurp(const std::string& filename){
+    std::ifstream in(filename,std::ios::binary);if(!in)throw std::runtime_error("Cannot open KLIFS mapping: "+filename);
+    std::ostringstream ss;ss<<in.rdbuf();return ss.str();
+}
 PocketDefinition convert(const std::vector<std::map<std::string,std::string>>& rows,const KlifsOptions& o) {
  PocketDefinition pocket; pocket.name="Kinase pocket (KLIFS, "+upper(o.pdbId)+" chain "+o.chain+")";
  std::map<int,PocketPosition> ordered;std::set<std::string> colors;
@@ -81,6 +150,7 @@ int choose(const std::string& body,const KlifsOptions& o){
         KlifsCandidate c;
         c.chain=firstVal(r,{"chain","structure.chain"});
         c.model=firstVal(r,{"alt","alternate_model","structure.alternate_model","alt_model","model","structure.alt"});
+        c.pocket=firstVal(r,{"pocket","structure.pocket"});
         const std::string sid=firstVal(r,{"structure_ID","structure.klifs_id","structure_id","klifs_id","structure_IDs"});
         try{size_t used=0;c.id=std::stoi(sid,&used);if(used!=sid.size()||c.id<=0)c.id=0;}catch(...){c.id=0;}
         if(!c.id)throw std::runtime_error("KLIFS response has no numeric structure ID (its fields are: "+fields+")");
@@ -103,10 +173,44 @@ int choose(const std::string& body,const KlifsOptions& o){
     else s<<". The alternate model is not in the answer under a name that ligint knows, so --klifs-model cannot choose (the fields of the answer are: "<<fields<<")";
     throw KlifsAmbiguousError(s.str(),matching);
 }
+// the pocket sequence of the structure `id` in the answer about the PDB entry, or "" (an answer that cannot be read is not an error here)
+std::string pocketOf(const std::string& body,int id){
+    json_object* root=json_tokener_parse(body.c_str());if(!root)return {};
+    std::string found;
+    for(auto* r:objects(root)){
+        if(json_object_get_type(r)!=json_type_object)continue;
+        const std::string sid=firstVal(r,{"structure_ID","structure.klifs_id","structure_id","klifs_id"});
+        if(sid==std::to_string(id)){found=firstVal(r,{"pocket","structure.pocket"});break;}
+    }
+    json_object_put(root);return found;
+}
+// the names of the fields of the structure `id` in the answer about the PDB entry (of the first structure if `id` is not there), for the messages
+std::string fieldsOfStructure(const std::string& body,int id){
+    json_object* root=json_tokener_parse(body.c_str());if(!root)return {};
+    std::string names,first;
+    for(auto* r:objects(root)){
+        if(json_object_get_type(r)!=json_type_object)continue;
+        if(first.empty())first=fieldsOf(r);
+        if(firstVal(r,{"structure_ID","structure.klifs_id","structure_id","klifs_id"})==std::to_string(id)){names=fieldsOf(r);break;}
+    }
+    json_object_put(root);return names.empty()?first:names;
+}
+bool validPdbId(const std::string& id){return id.size()==4&&std::all_of(id.begin(),id.end(),[](unsigned char c){return std::isalnum(c)!=0;});}
 std::vector<std::map<std::string,std::string>> online(const KlifsOptions& o){
-    int id=o.structureId;
-    if(!id)id=choose(fetch("https://klifs.net/api_v2/structures_pdb_list?pdb-codes="+upper(o.pdbId)),o);
+    // the list of the structures of the PDB entry gives the structure ID and the pocket sequence
+    std::string list;
+    if(validPdbId(o.pdbId))list=fetch("https://klifs.net/api_v2/structures_pdb_list?pdb-codes="+upper(o.pdbId));
+    const int id=o.structureId>0?o.structureId:choose(list,o);
+    std::string sequence=o.pocketSequence;
+    if(sequence.empty()&&!list.empty())sequence=pocketOf(list,id);
     const std::string body=fetch("https://klifs.net/api_v2/structure_get_pocket?structure_ID="+std::to_string(id));
+    if(isPocketMol2(body)){                                                    // what the service returns: the pocket as a MOL2 file
+        try{return pocketFromMol2(body,sequence);}
+        catch(const std::runtime_error& e){
+            if(sequence.empty()&&!list.empty())throw std::runtime_error(std::string(e.what())+" The answer of the service about the structures has these fields: "+fieldsOfStructure(list,id));
+            throw;
+        }
+    }
     Json data(body);
     std::vector<std::map<std::string,std::string>> rows;
     for(auto* item:objects(data.p)){std::map<std::string,std::string> r;
@@ -133,7 +237,9 @@ return true;
 return false;
 #endif
 }
-PocketDefinition generateKlifsPocket(const KlifsOptions& o){if(o.chain.empty())throw std::runtime_error("KLIFS chain is required");if(o.mappingFile.empty()&&o.structureId<=0&&(o.pdbId.size()!=4||!std::all_of(o.pdbId.begin(),o.pdbId.end(),[](unsigned char c){return std::isalnum(c)!=0;})))throw std::runtime_error("KLIFS requires a four-character PDB ID");if(!o.mappingFile.empty())return convert(readCsv(o.mappingFile),o);
+PocketDefinition generateKlifsPocket(const KlifsOptions& o){if(o.chain.empty())throw std::runtime_error("KLIFS chain is required");if(o.mappingFile.empty()&&o.structureId<=0&&(o.pdbId.size()!=4||!std::all_of(o.pdbId.begin(),o.pdbId.end(),[](unsigned char c){return std::isalnum(c)!=0;})))throw std::runtime_error("KLIFS requires a four-character PDB ID");if(!o.mappingFile.empty()){const std::string text=slurp(o.mappingFile);
+    if(isPocketMol2(text))return convert(pocketFromMol2(text,o.pocketSequence),o);
+    return convert(readCsv(o.mappingFile),o);}
 #ifdef LIGINT_KLIFS_ONLINE
 return convert(online(o),o);
 #else

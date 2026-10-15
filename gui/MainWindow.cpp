@@ -828,7 +828,7 @@ void MainWindow::onGenerateKlifsPocket() {
         model = QInputDialog::getText(this, tr("KLIFS alternate model"), tr("KLIFS model (blank = auto if unique):"), QLineEdit::Normal, QString(), &ok);
         if (!ok) return;
     } else {
-        mapping = QFileDialog::getOpenFileName(this, tr("KLIFS mapping export"), QFileInfo(path_).absolutePath(), tr("Mapping (*.tsv *.csv);;All files (*)"));
+        mapping = QFileDialog::getOpenFileName(this, tr("KLIFS mapping export"), QFileInfo(path_).absolutePath(), tr("KLIFS mapping or pocket (*.tsv *.csv *.mol2);;All files (*)"));
         if (mapping.isEmpty()) return;
     }
     const QString output = QFileDialog::getSaveFileName(this, tr("Save KLIFS pocket"), QFileInfo(path_).absolutePath() + "/" + pdb + "-klifs-pocket.tsv",

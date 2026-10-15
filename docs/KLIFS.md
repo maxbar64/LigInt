@@ -46,6 +46,15 @@ ignored) with the columns:
   **error** and no file is written.
 - Columns may come in any order and extra columns are ignored.
 
+### A KLIFS `pocket.mol2`
+
+`--klifs-mapping` also accepts the `pocket.mol2` file that KLIFS provides for each structure (it is recognized by its content). Its residues are, in order, the
+positions 1 to 85 **that the structure has**; the regions are those of the KLIFS alignment, which ligint knows. A pocket with all 85 residues needs nothing more.
+When some are missing in the crystal the file has fewer than 85 and does not say which, so the **pocket sequence** is needed: 85 characters, the one-letter code of each
+position and `_` where the residue is missing (the field `pocket` of the KLIFS service and of the KLIFS overview table). Give it with `--klifs-sequence`. ligint
+checks it against the file: the number of residues must agree, and every standard residue must be the one that the sequence has in that position, so a sequence that is
+shifted or belongs to another structure is refused instead of producing a wrong pocket. The residue numbers are those of the file (the author numbering of the structure).
+
 The generated file has the [pocket definition format](FINGERPRINT.md#pocket-definition-file): `@name`, one `@color` for each region (the colors of the
 KLIFS regions) and one line per position with the chain, the residue, the position as label, the region and the residue name.
 
@@ -55,7 +64,8 @@ KLIFS regions) and one line per position with the chain, the residue, the positi
 |---|---|
 | `--klifs-pdb ID` | the PDB ID (four letters or digits); only used for the name of the pocket when a mapping file is given |
 | `--klifs-chain C` | the chain of the structure (**required**) |
-| `--klifs-mapping FILE` | the mapping file; without it the service is asked (see below) |
+| `--klifs-mapping FILE` | the mapping file or the `pocket.mol2` of KLIFS; without it the service is asked (see below) |
+| `--klifs-sequence S` | the 85-character pocket sequence (`_` for a missing residue), for a `pocket.mol2` with fewer than 85 residues |
 | `--klifs-output FILE` | where to write the pocket-definition file |
 | `--klifs-model M` | the KLIFS alternate model, to choose among several (service only) |
 | `--klifs-id N` | the KLIFS structure ID, to choose exactly (service only) |
@@ -71,6 +81,15 @@ model). It asks where to save the file and works in the **background**; when it 
 mapped. A structure must be open first.
 
 ## The KLIFS service (partly verified)
+
+**Verified by two real runs.** The list of the structures of a PDB entry works (two structures of one chain, IDs 1445 and 1453, were found and read), and the request for
+the pocket answers with a **MOL2 file** (`@<TRIPOS>MOLECULE`, the name `HUMAN/JAK1_3eyg_altB_chainA`, 85 substructures), not with a table: ligint reads it as described above.
+The reading was checked on four real KLIFS pocket files (BMX, BRAF and the two chains of ABL1) with the sequences of the KLIFS overview: the number of missing residues
+agrees with what KLIFS says in all of them, and in ABL1 the hinge falls on Glu316-Phe317-Met318 with Thr315 as gatekeeper, as it should.
+
+**Not yet confirmed**: that the answer about the structures names the pocket sequence `pocket` (ligint also tries `structure.pocket`) and the alternate model `alt` (and the other
+names listed below), and a complete run to the end on a structure that has missing residues. If the sequence is not found the message lists the fields that the answer has;
+with `--klifs-sequence` the command line can go on anyway.
 
 Without a mapping file ligint asks the KLIFS web service, first for the structures of the PDB entry and then for the pocket of the one that matches the chain.
 
@@ -95,7 +114,8 @@ Requests use HTTPS only, at most 3 redirects, a 10 s connection and a 25 s total
 
 ## Verified
 
-By the automated tests, which use local files only: the positions and the regions; missing residues; insertion codes; the residue names from the one-letter
+By the automated tests, which use local files only: the reading of a `pocket.mol2` (all 85 residues, with a sequence, insertion codes, negative numbers, modified residues,
+Windows line ends, every kind of error, random corruption, and the regions and colors, with their Greek letters, through the fingerprint and the SVG figure); the positions and the regions; missing residues; insertion codes; the residue names from the one-letter
 code (all twenty); the same pocket from TSV, CSV, Windows line ends, byte order mark and permuted columns; the errors above (the file is not written);
 corrupted files; the round trip through the pocket-definition format and the fingerprint (the positions, the regions and a hydrogen bond in the right cell);
 the rules of the command line; the background task of the interface.
