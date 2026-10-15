@@ -76,8 +76,13 @@ that you downloaded yourself. Packages and builds with libcurl have it (<a href=
 <p><strong><code>Use --download-pdb without a separate structure path</code>.</strong> With <code>--download-pdb</code> give only the ligand (<code>ligint --download-pdb 3EYG STI</code>); the structure is the downloaded file.</p>
 <p><strong><code>KLIFS: Duplicate KLIFS position</code>, <code>Invalid KLIFS pocket position</code>, <code>Invalid PDB residue</code>, <code>KLIFS region missing</code>.</strong> The mapping file is not valid: see
 <a href="klifs.html#the-mapping-file">the mapping file</a>. No pocket file is written when there is an error.</p>
+<p><strong><code>KLIFS matching structures: 2 (must be exactly 1)</code>.</strong> The chain has one KLIFS structure for each alternate model. Choose one: <code>--klifs-model B</code>, or
+<code>--klifs-id N</code> with one of the IDs in the message (the graphical interface shows a window to choose). If the message says that the alternate model is not in the
+answer under a name that ligint knows, only <code>--klifs-id</code> can choose, and the message lists the fields that the answer has: please report them.</p>
+<p><strong><code>KLIFS: Invalid KLIFS JSON response (it starts with: ...)</code>, <code>No pocket residue rows ...</code>, <code>... its fields are: ...</code>.</strong> The answer of the service is not what ligint
+expects; the message shows the beginning of the answer or the names of its fields. Use a mapping file and report the message.</p>
 <p><strong><code>KLIFS: KLIFS request failed</code> or <code>Online KLIFS unavailable</code>.</strong> The service could not be reached, or this build has no network support. Use a mapping file
-(<code>--klifs-mapping</code>); the online path of the native client is not verified (<a href="klifs.html#the-klifs-service-not-verified">KLIFS kinase pockets</a>).</p>
+(<code>--klifs-mapping</code>); the online path of the native client is not verified (<a href="klifs.html#the-klifs-service-partly-verified">KLIFS kinase pockets</a>).</p>
 <p><strong>The pocket is built but the figure has fewer than 85 cells.</strong> The residues that are missing in the crystal (<code>_</code> in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.</p>
 <h2 id="the-graphical-interface"><a name="the-graphical-interface"></a>The graphical interface</h2>
@@ -94,6 +99,6 @@ SVG export still produces the figure.</p>
 the GUI, copy it with <strong>File &gt; Copy command line</strong>), what you expected and what happened, and, if you can share it, the structure file (or its PDB code).
 For the graphical interface add the contents of the <strong>Log</strong> tab.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
-<p class="foot">ligint 0.8.0 manual</p>
+<p class="foot">ligint 0.8.1 manual</p>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
  "title": "ligint manual",
- "version": "0.8.0",
+ "version": "0.8.1",
  "pages": [
   {
    "id": "index",
@@ -323,8 +323,8 @@
     },
     {
      "level": 2,
-     "text": "The KLIFS service (not verified)",
-     "id": "the-klifs-service-not-verified"
+     "text": "The KLIFS service (partly verified)",
+     "id": "the-klifs-service-partly-verified"
     },
     {
      "level": 2,
@@ -580,6 +580,11 @@
    "title": "Changelog",
    "file": "changelog.html",
    "headings": [
+    {
+     "level": 2,
+     "text": "0.8.1",
+     "id": "081"
+    },
     {
      "level": 2,
      "text": "0.8.0",

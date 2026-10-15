@@ -21,6 +21,16 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="081"><a name="081"></a>0.8.1</h2>
+<ul>
+<li><strong>KLIFS service, first real run.</strong> It reached the service and found two structures for the same chain (IDs 1445 and 1453), but the alternate model was read as empty,
+  so the program could not choose and stopped. Now: the alternate model is read from <code>alt</code>, <code>alternate_model</code>, <code>structure.alternate_model</code>, <code>alt_model</code> or <code>model</code>;
+  the error says to choose with <code>--klifs-id N</code> (or <code>--klifs-model M</code> when the answer names the model), and when the model is not in the answer it lists the fields that
+  the answer has; a response that is not JSON, an empty one, or a pocket row without a position are reported with the beginning of the answer or the names of the fields.</li>
+<li><strong>GUI:</strong> when several KLIFS structures match, a window lists the candidates (ID, chain, model) and the request is repeated with the one that you pick.
+  Library: <code>KlifsAmbiguousError</code> (with the candidates) and <code>selectKlifsStructure</code>, tested with answers in the format of the service.</li>
+<li>Still not confirmed: the name of the alternate-model field and the answer of the pocket request (<code>structure_get_pocket</code>).</li>
+</ul>
 <h2 id="080"><a name="080"></a>0.8.0</h2>
 <ul>
 <li><strong>Downloads from the RCSB</strong> (<code>--download-pdb ID</code>, <code>--download-format</code>, <code>--download-output</code>, <code>--download-cache</code>, <code>--download-refresh</code>, <code>--download-only</code>;
@@ -164,6 +174,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.8.0 manual</p>
+<p class="foot">ligint 0.8.1 manual</p>
 </body>
 </html>

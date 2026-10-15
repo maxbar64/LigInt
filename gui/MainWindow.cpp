@@ -720,6 +720,18 @@ void MainWindow::applyTask(const TaskOutcome& o) {
     while (QApplication::overrideCursor()) QApplication::restoreOverrideCursor();
     statusBar()->clearMessage();
     if (!o.ok) {
+        if (taskKind_ == QLatin1String("klifs") && !o.candidateIds.isEmpty() && interactive_) {
+            log(tr("KLIFS: ") + o.error);
+            bool ok = false;
+            const QString pick = QInputDialog::getItem(this, tr("KLIFS structure"),
+                                                       tr("Several KLIFS structures match this chain; choose the one to use:"), o.candidateLabels, 0, false, &ok);
+            const int index = o.candidateLabels.indexOf(pick);
+            if (ok && index >= 0) {
+                const KlifsRequest r = lastKlifs_;
+                generateKlifsPocket(r.pdb, r.chain, r.model, r.mapping, r.output, false, o.candidateIds[index]);
+            }
+            return;
+        }
         showError(taskKind_ == QLatin1String("rcsb") ? tr("RCSB download failed") : tr("KLIFS generation failed"), o.error);
         return;
     }
@@ -760,7 +772,7 @@ bool MainWindow::downloadRcsb(const QString& idIn, const QString& format, const 
 }
 
 bool MainWindow::generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
-                                     const QString& output, bool wait) {
+                                     const QString& output, bool wait, int structureId) {
     if (output.isEmpty()) {
         showError(tr("KLIFS"), tr("No file to save the pocket definition in."));
         return false;
@@ -771,6 +783,8 @@ bool MainWindow::generateKlifsPocket(const QString& pdb, const QString& chain, c
     options.pdbId = pdb.trimmed().toStdString();
     options.chain = chain.trimmed().toStdString();
     options.model = model.trimmed().toStdString();
+    options.structureId = structureId > 0 ? structureId : 0;
+    lastKlifs_ = {pdb, chain, model, mappingFile, output};
     const std::string out = output.toStdString();
     startTask(QStringLiteral("klifs"), pdb, mappingFile.isEmpty() ? tr("Asking KLIFS for the pocket of %1…").arg(pdb) : tr("Reading the KLIFS mapping…"),
               [options, out]() {
@@ -781,6 +795,13 @@ bool MainWindow::generateKlifsPocket(const QString& pdb, const QString& chain, c
                       o.path = QString::fromStdString(out);
                       o.positions = static_cast<int>(pocket.positions.size());
                       o.ok = true;
+                  } catch (const ligint::KlifsAmbiguousError& e) {                       // several structures match: let the user choose
+                      o.error = QString::fromUtf8(e.what());
+                      for (const auto& c : e.candidates) {
+                          o.candidateIds << c.id;
+                          o.candidateLabels << QStringLiteral("ID %1 (chain %2, model %3)").arg(c.id).arg(QString::fromStdString(c.chain),
+                              c.model.empty() ? QObject::tr("unknown") : QString::fromStdString(c.model));
+                      }
                   } catch (const std::exception& e) {
                       o.error = QString::fromUtf8(e.what());
                   }

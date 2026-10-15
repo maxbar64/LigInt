@@ -43,6 +43,12 @@ struct TaskOutcome {
     QString error;
     QString path;          // the file that was downloaded or written
     int positions = 0;     // pocket positions (KLIFS)
+    QStringList candidateLabels;   // KLIFS: several structures match; the user can choose one
+    QList<int> candidateIds;
+};
+
+struct KlifsRequest {      // the last KLIFS generation asked, to repeat it with a structure that the user chooses
+    QString pdb, chain, model, mapping, output;
 };
 
 class MainWindow : public QMainWindow {
@@ -61,8 +67,9 @@ public:
     bool downloadRcsb(const QString& id, const QString& format, const QString& cacheDir = QString(), bool wait = false);
     // Builds a pocket definition from a KLIFS mapping file (mappingFile) or, when it is empty, from the KLIFS service; saves it
     // in `output` and loads it. Same rules for the thread and the return value.
+    // structureId > 0 names the KLIFS structure to use (several can match the same PDB entry and chain: one for each alternate model).
     bool generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
-                             const QString& output, bool wait = false);
+                             const QString& output, bool wait = false, int structureId = 0);
     bool taskRunning() const;                     // a download or a KLIFS generation is in progress
     int ligandCount() const;
     void selectLigand(int index);
@@ -159,6 +166,7 @@ private:
     QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
     QString taskKind_;                            // "rcsb" or "klifs" while a task runs
     QString taskLabel_;                           // PDB ID of the running task, for the messages
+    KlifsRequest lastKlifs_;
     void applyTask(const TaskOutcome& o);
     void startTask(const QString& kind, const QString& label, const QString& message, std::function<TaskOutcome()> job, bool wait);
     QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;

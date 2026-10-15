@@ -73,8 +73,15 @@ that you downloaded yourself. Packages and builds with libcurl have it ([Downloa
 **`KLIFS: Duplicate KLIFS position`, `Invalid KLIFS pocket position`, `Invalid PDB residue`, `KLIFS region missing`.** The mapping file is not valid: see
 [the mapping file](klifs.md#the-mapping-file). No pocket file is written when there is an error.
 
+**`KLIFS matching structures: 2 (must be exactly 1)`.** The chain has one KLIFS structure for each alternate model. Choose one: `--klifs-model B`, or
+`--klifs-id N` with one of the IDs in the message (the graphical interface shows a window to choose). If the message says that the alternate model is not in the
+answer under a name that ligint knows, only `--klifs-id` can choose, and the message lists the fields that the answer has: please report them.
+
+**`KLIFS: Invalid KLIFS JSON response (it starts with: ...)`, `No pocket residue rows ...`, `... its fields are: ...`.** The answer of the service is not what ligint
+expects; the message shows the beginning of the answer or the names of its fields. Use a mapping file and report the message.
+
 **`KLIFS: KLIFS request failed` or `Online KLIFS unavailable`.** The service could not be reached, or this build has no network support. Use a mapping file
-(`--klifs-mapping`); the online path of the native client is not verified ([KLIFS kinase pockets](klifs.md#the-klifs-service-not-verified)).
+(`--klifs-mapping`); the online path of the native client is not verified ([KLIFS kinase pockets](klifs.md#the-klifs-service-partly-verified)).
 
 **The pocket is built but the figure has fewer than 85 cells.** The residues that are missing in the crystal (`_` in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.

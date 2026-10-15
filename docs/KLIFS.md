@@ -70,13 +70,25 @@ mapping: **Local KLIFS mapping CSV/TSV** (a file chooser follows) or, **only in 
 model). It asks where to save the file and works in the **background**; when it finishes the pocket is loaded and the **Log** says how many positions were
 mapped. A structure must be open first.
 
-## The KLIFS service (not verified)
+## The KLIFS service (partly verified)
 
-Without a mapping file ligint asks the KLIFS web service, for the structures of the PDB entry and then for the pocket of the one that matches the chain
-(and the model, if given; several matches are an error that lists the candidates). **This path has not been verified against the live service**: the
-test environment cannot reach it, and the address that the code uses (`https://klifs.net/api_v2/...`) is not one that I could confirm in the public
-documentation, where the examples use `https://klifs.net/api/`. The structure of the response is not confirmed either. If the request or the
-reading of the answer fails, the program says so and writes nothing; use a mapping file. The [Python helper](https://github.com/maxbar64/LigInt/blob/main/tools/README-KLIFS.md)
+Without a mapping file ligint asks the KLIFS web service, first for the structures of the PDB entry and then for the pocket of the one that matches the chain.
+
+**What a real run showed.** The first request works against the live service: a user run on a real entry got the list of its structures and read the structure
+ID and the chain from it (two structures of chain A, IDs 1445 and 1453). **Not confirmed**: the field that names the *alternate model* (ligint looks for `alt`,
+`alternate_model`, `structure.alternate_model`, `alt_model` and `model`), and the second request, the one that returns the pocket (`structure_get_pocket`), including
+the form of its answer. The address that the code uses (`https://klifs.net/api_v2/...`) is not one that I could find in the public documentation, where the examples
+use `https://klifs.net/api/`; it answered, but treat the rest as unverified.
+
+**Several structures for the same chain.** A chain can have one KLIFS structure for each alternate model. If the request does not say which, ligint stops and lists the
+candidates with their IDs (`KLIFS matching structures: 2 (must be exactly 1). Candidates: [ID=1445 chain=A model=B] ...`):
+choose with `--klifs-model M`, or with `--klifs-id N` when the answer does not name the model. In the graphical interface a window lists the candidates and lets you
+pick one. KLIFS shows the alternate model of each ID on the page of the structure.
+
+**When something does not match what ligint expects**, the message tells what the answer contained: the names of its fields, or the first characters of a
+response that is not JSON. Please report them: they are what is needed to fix the reading.
+
+If the request or the reading of the answer fails, the program says so and writes nothing; use a mapping file. The [Python helper](https://github.com/maxbar64/LigInt/blob/main/tools/README-KLIFS.md)
 `tools/klifs_to_pocket.py` uses the OpenCADD client instead and is the better choice for the online step until the native one is verified.
 
 Requests use HTTPS only, at most 3 redirects, a 10 s connection and a 25 s total timeout, and the answer is limited to 8 MB.

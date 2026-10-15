@@ -532,6 +532,69 @@ static void testFingerprintClasses() {
     CHECK(std::string(ligint::fpClassName(ligint::FpHBondDonor)) == "hbond_donor" && ligint::oneLetterCode("TRP") == 'W' && ligint::oneLetterCode("XYZ") == '?');
 }
 
+static void testKlifsStructureSelection() {
+    ligint::KlifsOptions o;
+    o.pdbId = "3EYG";
+    o.chain = "A";
+    // an explicit structure ID needs no answer at all
+    o.structureId = 7;
+    CHECK(ligint::selectKlifsStructure("this is not json", o) == 7);
+    o.structureId = 0;
+    if (!ligint::klifsOnlineAvailable()) {                                   // a build without network support cannot read the answer
+        bool thrown = false;
+        try { ligint::selectKlifsStructure("[]", o); } catch (const std::runtime_error&) { thrown = true; }
+        CHECK(thrown);
+        return;
+    }
+    auto message = [&](const std::string& json, const ligint::KlifsOptions& opt) {
+        try { ligint::selectKlifsStructure(json, opt); } catch (const std::exception& e) { return std::string(e.what()); }
+        return std::string("(no exception)");
+    };
+    // the chain chooses
+    CHECK(ligint::selectKlifsStructure(R"([{"structure_ID":1445,"chain":"A","alt":"A"},{"structure_ID":1446,"chain":"B","alt":"A"}])", o) == 1445);
+    CHECK(ligint::selectKlifsStructure(R"({"structure_ID":9,"chain":"a"})", o) == 9);                          // one object instead of a list, chain in lower case
+    CHECK(ligint::selectKlifsStructure(R"([{"structure_ID":"1445","chain":"A"}])", o) == 1445);                // the ID as a string
+    // two alternate models of the same chain: ambiguous, unless the model is given; the model can be named in several ways
+    const std::string twoModels = R"([{"structure_ID":1445,"chain":"A","alt":"A"},{"structure_ID":1453,"chain":"A","alt":"B"}])";
+    try {
+        ligint::selectKlifsStructure(twoModels, o);
+        CHECK(false);
+    } catch (const ligint::KlifsAmbiguousError& e) {
+        CHECK(e.candidates.size() == 2 && e.candidates[0].id == 1445 && e.candidates[1].id == 1453 && e.candidates[1].model == "B");
+        const std::string m = e.what();
+        CHECK(m.find("--klifs-id") != std::string::npos && m.find("--klifs-model") != std::string::npos && m.find("model=B") != std::string::npos);
+    }
+    o.model = "b";
+    CHECK(ligint::selectKlifsStructure(twoModels, o) == 1453);
+    CHECK(ligint::selectKlifsStructure(R"([{"structure_ID":1,"chain":"A","alternate_model":"A"},{"structure_ID":2,"chain":"A","alternate_model":"B"}])", o) == 2);
+    CHECK(ligint::selectKlifsStructure(R"([{"structure_ID":1,"chain":"A","structure.alternate_model":"A"},{"structure_ID":2,"chain":"A","structure.alternate_model":"B"}])", o) == 2);
+    o.model = "C";
+    CHECK(message(twoModels, o).find("no structure") != std::string::npos);                                   // that model does not exist
+    o.model.clear();
+    // the situation of a first real run: two structures of chain A and no field that names the model: the message must say what the answer contains
+    const std::string unknownModel = R"([{"structure_ID":1445,"kinase":"X","pdb":"3eyg","chain":"A","rmsd1":1.2},{"structure_ID":1453,"kinase":"X","pdb":"3eyg","chain":"A","rmsd1":1.3}])";
+    try {
+        ligint::selectKlifsStructure(unknownModel, o);
+        CHECK(false);
+    } catch (const ligint::KlifsAmbiguousError& e) {
+        const std::string m = e.what();
+        CHECK(e.candidates.size() == 2 && e.candidates[0].model.empty());
+        CHECK(m.find("--klifs-id") != std::string::npos && m.find("or with --klifs-model") == std::string::npos && m.find("--klifs-model cannot choose") != std::string::npos);
+        CHECK(m.find("fields of the answer are") != std::string::npos && m.find("rmsd1") != std::string::npos && m.find("structure_ID") != std::string::npos);
+    }
+    // no match, empty answers and answers that are not understood
+    o.chain = "Z";
+    CHECK(message(twoModels, o).find("no structure for chain Z") != std::string::npos && message(twoModels, o).find("ID=1453") != std::string::npos);
+    CHECK(message("[]", o).find("(none)") != std::string::npos);
+    o.chain = "A";
+    CHECK(message("<html>not json</html>", o).find("starts with: '<html>not json</html>'") != std::string::npos);
+    CHECK(message(R"([{"chain":"A"}])", o).find("no numeric structure ID") != std::string::npos);
+    CHECK(message(R"([{"structure_ID":"abc","chain":"A"}])", o).find("no numeric structure ID") != std::string::npos);
+    CHECK(message(R"([{"structure_ID":-4,"chain":"A"}])", o).find("no numeric structure ID") != std::string::npos);
+    CHECK(message(R"([1, "x", null])", o).find("no structure") != std::string::npos);                          // elements that are not objects are skipped
+    CHECK(message(std::string(5000, '{'), o).find("...") != std::string::npos);                               // a long answer is cut in the message
+}
+
 static void testRcsbCacheAndValidation() {
     namespace fs = std::filesystem;
     const fs::path dir = fs::temp_directory_path() / "ligint_rcsb_unit";
@@ -699,6 +762,7 @@ int main() {
     testFingerprintClasses();
     testKlifsNative();
     testRcsbCacheAndValidation();
+    testKlifsStructureSelection();
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();

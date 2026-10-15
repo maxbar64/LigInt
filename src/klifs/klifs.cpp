@@ -25,7 +25,7 @@ std::string color(const std::string& s) {static const std::map<std::string,std::
 PocketDefinition convert(const std::vector<std::map<std::string,std::string>>& rows,const KlifsOptions& o) {
  PocketDefinition pocket; pocket.name="Kinase pocket (KLIFS, "+upper(o.pdbId)+" chain "+o.chain+")";
  std::map<int,PocketPosition> ordered;std::set<std::string> colors;
- for(auto& r:rows){auto p=field(r,{"residue.klifs_id","klifs_id","klifs_position","position"});if(p.empty())throw std::runtime_error("KLIFS pocket row has no position");int n=0;try{size_t used=0;n=std::stoi(p,&used);if(used!=p.size()||n<1||n>85)throw std::invalid_argument("range");}catch(...){throw std::runtime_error("Invalid KLIFS pocket position: "+p);}
+ for(auto& r:rows){auto p=field(r,{"residue.klifs_id","klifs_id","klifs_position","position"});if(p.empty()){std::string names;for(auto& kv:r)names+=(names.empty()?"":", ")+kv.first;throw std::runtime_error("KLIFS pocket row has no position (its fields are: "+names+")");}int n=0;try{size_t used=0;n=std::stoi(p,&used);if(used!=p.size()||n<1||n>85)throw std::invalid_argument("range");}catch(...){throw std::runtime_error("Invalid KLIFS pocket position: "+p);}
  if(ordered.count(n))throw std::runtime_error("Duplicate KLIFS position: "+p);
  auto rid=field(r,{"residue.id","residue_id","pdb_residue","resi"});if(rid.empty())continue;
  size_t used=0;int resi=0;try{resi=std::stoi(rid,&used);}catch(...){throw std::runtime_error("Invalid PDB residue: "+rid);}if(!used||used<rid.size()-1 || (used<rid.size()&&!std::isalpha(static_cast<unsigned char>(rid[used]))))throw std::runtime_error("Invalid PDB residue: "+rid);
@@ -49,24 +49,83 @@ std::string fetch(const std::string& url){ CURL* c=curl_easy_init();if(!c)throw 
     curl_easy_setopt(c,CURLOPT_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));curl_easy_setopt(c,CURLOPT_REDIR_PROTOCOLS,static_cast<long>(CURLPROTO_HTTPS));
 #endif
     curl_easy_setopt(c,CURLOPT_NOSIGNAL,1L);curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT,10L);curl_easy_setopt(c,CURLOPT_TIMEOUT,25L);curl_easy_setopt(c,CURLOPT_USERAGENT,"LigInt/" LIGINT_VERSION " KLIFS-pocket");curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,receive);curl_easy_setopt(c,CURLOPT_WRITEDATA,&result);auto rc=curl_easy_perform(c);long code=0;curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&code);curl_easy_cleanup(c);if(rc!=CURLE_OK||code!=200)throw std::runtime_error("KLIFS request failed (HTTP "+std::to_string(code)+", curl "+std::to_string(rc)+"): "+url);return result;}
-struct Json {json_object* p;explicit Json(const std::string& s):p(json_tokener_parse(s.c_str())){if(!p)throw std::runtime_error("Invalid KLIFS JSON response");}~Json(){json_object_put(p);} };
-std::string val(json_object* o,const char* k){json_object* v=nullptr;if(!o||!json_object_object_get_ex(o,k,&v)||!v||json_object_get_type(v)==json_type_null)return {};return json_object_get_string(v);}
-std::vector<json_object*> objects(json_object* root){std::vector<json_object*> result;if(!root)return result;if(json_object_get_type(root)==json_type_array){for(size_t i=0;i<json_object_array_length(root);++i)result.push_back(json_object_array_get_idx(root,i));}else if(json_object_get_type(root)==json_type_object)result.push_back(root);return result;}
+// the first characters of an answer, for the messages (control characters replaced by blanks)
+std::string snippet(const std::string& body){std::string t=body.substr(0,120);for(char& c:t)if(static_cast<unsigned char>(c)<32)c=' ';return t+(body.size()>120?"...":"");}
+struct Json {json_object* p;
+    explicit Json(const std::string& s):p(json_tokener_parse(s.c_str())){if(!p)throw std::runtime_error("Invalid KLIFS JSON response (it starts with: '"+snippet(s)+"')");}
+    ~Json(){json_object_put(p);}
+    Json(const Json&)=delete;Json& operator=(const Json&)=delete;};
+std::string val(json_object* o,const char* k){json_object* v=nullptr;
+    if(!o||!json_object_object_get_ex(o,k,&v)||!v||json_object_get_type(v)==json_type_null)return {};
+    return json_object_get_string(v);}
+// the value of the first of these fields that exists (the service and the client libraries do not name them all alike)
+std::string firstVal(json_object* o,std::initializer_list<const char*> keys){for(auto k:keys){auto v=val(o,k);if(!v.empty())return v;}return {};}
+std::vector<json_object*> objects(json_object* root){std::vector<json_object*> result;
+    if(!root)return result;
+    if(json_object_get_type(root)==json_type_array){for(size_t i=0;i<json_object_array_length(root);++i)result.push_back(json_object_array_get_idx(root,i));}
+    else if(json_object_get_type(root)==json_type_object)result.push_back(root);
+    return result;}
+std::string fieldsOf(json_object* o){std::string names;if(!o||json_object_get_type(o)!=json_type_object)return names;
+    json_object_object_foreach(o,key,value){(void)value;names+=(names.empty()?"":", ")+std::string(key);}
+    return names;}
+std::string describe(const KlifsCandidate& c){return "[ID="+std::to_string(c.id)+" chain="+c.chain+" model="+c.model+"]";}
+
+int choose(const std::string& body,const KlifsOptions& o){
+    if(o.structureId>0)return o.structureId;
+    Json j(body);
+    std::vector<KlifsCandidate> all,matching;
+    std::string fields;
+    for(auto* r:objects(j.p)){
+        if(json_object_get_type(r)!=json_type_object)continue;
+        if(fields.empty())fields=fieldsOf(r);
+        KlifsCandidate c;
+        c.chain=firstVal(r,{"chain","structure.chain"});
+        c.model=firstVal(r,{"alt","alternate_model","structure.alternate_model","alt_model","model","structure.alt"});
+        const std::string sid=firstVal(r,{"structure_ID","structure.klifs_id","structure_id","klifs_id","structure_IDs"});
+        try{size_t used=0;c.id=std::stoi(sid,&used);if(used!=sid.size()||c.id<=0)c.id=0;}catch(...){c.id=0;}
+        if(!c.id)throw std::runtime_error("KLIFS response has no numeric structure ID (its fields are: "+fields+")");
+        all.push_back(c);
+        if(upper(c.chain)==upper(o.chain)&&(o.model.empty()||upper(o.model)==upper(c.model)))matching.push_back(c);
+    }
+    if(matching.size()==1)return matching[0].id;
+    std::ostringstream s;
+    if(matching.empty()){
+        s<<"KLIFS has no structure for chain "<<o.chain<<(o.model.empty()?"":" and model "+o.model)<<" of "<<upper(o.pdbId)<<". Its structures: ";
+        for(const auto& c:all)s<<describe(c)<<' ';
+        if(all.empty())s<<"(none)";
+        throw std::runtime_error(s.str());
+    }
+    bool anyModel=false;for(const auto& c:all)if(!c.model.empty())anyModel=true;
+    s<<"KLIFS matching structures: "<<matching.size()<<" (must be exactly 1). Candidates: ";
+    for(const auto& c:matching)s<<describe(c)<<' ';
+    s<<"Choose one with --klifs-id N";
+    if(anyModel)s<<" or with --klifs-model M";
+    else s<<". The alternate model is not in the answer under a name that ligint knows, so --klifs-model cannot choose (the fields of the answer are: "<<fields<<")";
+    throw KlifsAmbiguousError(s.str(),matching);
+}
 std::vector<std::map<std::string,std::string>> online(const KlifsOptions& o){
- int id=o.structureId;
- if(!id){Json j(fetch("https://klifs.net/api_v2/structures_pdb_list?pdb-codes="+upper(o.pdbId)));std::vector<std::string> choices;int matches=0;
- for(auto* r:objects(j.p)){auto chain=val(r,"chain");if(chain.empty())chain=val(r,"structure.chain");auto model=val(r,"alternate_model");if(model.empty())model=val(r,"structure.alternate_model");auto sid=val(r,"structure_ID");if(sid.empty())sid=val(r,"structure.klifs_id");if(sid.empty())sid=val(r,"structure_IDs");choices.push_back("ID="+sid+" chain="+chain+" model="+model);if(upper(chain)==upper(o.chain)&&(o.model.empty()||upper(o.model)==upper(model))){++matches;try{id=std::stoi(sid);}catch(...){throw std::runtime_error("KLIFS response missing numeric structure ID");}}}
- if(matches!=1){std::ostringstream s;s<<"KLIFS matching structures: "<<matches<<" (must be exactly 1). Candidates: ";for(const auto& x:choices)s<<"["<<x<<"] ";throw std::runtime_error(s.str());}}
- Json data(fetch("https://klifs.net/api_v2/structure_get_pocket?structure_ID="+std::to_string(id)));
- std::vector<std::map<std::string,std::string>> rows;
- for(auto* item:objects(data.p)){std::map<std::string,std::string> r;if(json_object_get_type(item)!=json_type_object)continue;
- json_object_object_foreach(item,key,value){if(value&&json_object_get_type(value)!=json_type_null)r[key]=json_object_get_string(value);}
- rows.push_back(std::move(r));}
- if(rows.empty())throw std::runtime_error("No pocket residue rows returned by KLIFS for structure ID "+std::to_string(id));
- return rows;
+    int id=o.structureId;
+    if(!id)id=choose(fetch("https://klifs.net/api_v2/structures_pdb_list?pdb-codes="+upper(o.pdbId)),o);
+    const std::string body=fetch("https://klifs.net/api_v2/structure_get_pocket?structure_ID="+std::to_string(id));
+    Json data(body);
+    std::vector<std::map<std::string,std::string>> rows;
+    for(auto* item:objects(data.p)){std::map<std::string,std::string> r;
+        if(json_object_get_type(item)!=json_type_object)continue;
+        json_object_object_foreach(item,key,value){if(value&&json_object_get_type(value)!=json_type_null)r[key]=json_object_get_string(value);}
+        rows.push_back(std::move(r));}
+    if(rows.empty())throw std::runtime_error("No pocket residue rows returned by KLIFS for structure ID "+std::to_string(id)+" (the answer starts with: '"+snippet(body)+"')");
+    return rows;
 }
 #endif
 }
+#ifdef LIGINT_KLIFS_ONLINE
+int selectKlifsStructure(const std::string& structuresJson,const KlifsOptions& options){return choose(structuresJson,options);}
+#else
+int selectKlifsStructure(const std::string&,const KlifsOptions& options){
+    if(options.structureId>0)return options.structureId;
+    throw std::runtime_error("Online KLIFS unavailable: rebuild with libcurl and json-c development packages, or provide --klifs-mapping FILE");
+}
+#endif
 bool klifsOnlineAvailable(){
 #ifdef LIGINT_KLIFS_ONLINE
 return true;

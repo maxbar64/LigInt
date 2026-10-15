@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.1
+
+- **KLIFS service, first real run.** It reached the service and found two structures for the same chain (IDs 1445 and 1453), but the alternate model was read as empty,
+  so the program could not choose and stopped. Now: the alternate model is read from `alt`, `alternate_model`, `structure.alternate_model`, `alt_model` or `model`;
+  the error says to choose with `--klifs-id N` (or `--klifs-model M` when the answer names the model), and when the model is not in the answer it lists the fields that
+  the answer has; a response that is not JSON, an empty one, or a pocket row without a position are reported with the beginning of the answer or the names of the fields.
+- **GUI:** when several KLIFS structures match, a window lists the candidates (ID, chain, model) and the request is repeated with the one that you pick.
+  Library: `KlifsAmbiguousError` (with the candidates) and `selectKlifsStructure`, tested with answers in the format of the service.
+- Still not confirmed: the name of the alternate-model field and the answer of the pocket request (`structure_get_pocket`).
+
 ## 0.8.0
 
 - **Downloads from the RCSB** (`--download-pdb ID`, `--download-format`, `--download-output`, `--download-cache`, `--download-refresh`, `--download-only`;

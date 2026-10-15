@@ -123,12 +123,20 @@ file <code>--klifs-output</code> is required; <code>--pocket</code> and <code>--
 mapping: <strong>Local KLIFS mapping CSV/TSV</strong> (a file chooser follows) or, <strong>only in a build that has network support</strong>, <strong>Online (KLIFS service)</strong> (then the KLIFS
 model). It asks where to save the file and works in the <strong>background</strong>; when it finishes the pocket is loaded and the <strong>Log</strong> says how many positions were
 mapped. A structure must be open first.</p>
-<h2 id="the-klifs-service-not-verified"><a name="the-klifs-service-not-verified"></a>The KLIFS service (not verified)</h2>
-<p>Without a mapping file ligint asks the KLIFS web service, for the structures of the PDB entry and then for the pocket of the one that matches the chain
-(and the model, if given; several matches are an error that lists the candidates). <strong>This path has not been verified against the live service</strong>: the
-test environment cannot reach it, and the address that the code uses (<code>https://klifs.net/api_v2/...</code>) is not one that I could confirm in the public
-documentation, where the examples use <code>https://klifs.net/api/</code>. The structure of the response is not confirmed either. If the request or the
-reading of the answer fails, the program says so and writes nothing; use a mapping file. The <a href="https://github.com/maxbar64/LigInt/blob/main/tools/README-KLIFS.md">Python helper</a>
+<h2 id="the-klifs-service-partly-verified"><a name="the-klifs-service-partly-verified"></a>The KLIFS service (partly verified)</h2>
+<p>Without a mapping file ligint asks the KLIFS web service, first for the structures of the PDB entry and then for the pocket of the one that matches the chain.</p>
+<p><strong>What a real run showed.</strong> The first request works against the live service: a user run on a real entry got the list of its structures and read the structure
+ID and the chain from it (two structures of chain A, IDs 1445 and 1453). <strong>Not confirmed</strong>: the field that names the <em>alternate model</em> (ligint looks for <code>alt</code>,
+<code>alternate_model</code>, <code>structure.alternate_model</code>, <code>alt_model</code> and <code>model</code>), and the second request, the one that returns the pocket (<code>structure_get_pocket</code>), including
+the form of its answer. The address that the code uses (<code>https://klifs.net/api_v2/...</code>) is not one that I could find in the public documentation, where the examples
+use <code>https://klifs.net/api/</code>; it answered, but treat the rest as unverified.</p>
+<p><strong>Several structures for the same chain.</strong> A chain can have one KLIFS structure for each alternate model. If the request does not say which, ligint stops and lists the
+candidates with their IDs (<code>KLIFS matching structures: 2 (must be exactly 1). Candidates: [ID=1445 chain=A model=B] ...</code>):
+choose with <code>--klifs-model M</code>, or with <code>--klifs-id N</code> when the answer does not name the model. In the graphical interface a window lists the candidates and lets you
+pick one. KLIFS shows the alternate model of each ID on the page of the structure.</p>
+<p><strong>When something does not match what ligint expects</strong>, the message tells what the answer contained: the names of its fields, or the first characters of a
+response that is not JSON. Please report them: they are what is needed to fix the reading.</p>
+<p>If the request or the reading of the answer fails, the program says so and writes nothing; use a mapping file. The <a href="https://github.com/maxbar64/LigInt/blob/main/tools/README-KLIFS.md">Python helper</a>
 <code>tools/klifs_to_pocket.py</code> uses the OpenCADD client instead and is the better choice for the online step until the native one is verified.</p>
 <p>Requests use HTTPS only, at most 3 redirects, a 10 s connection and a 25 s total timeout, and the answer is limited to 8 MB.</p>
 <h2 id="verified"><a name="verified"></a>Verified</h2>
@@ -150,6 +158,6 @@ cmake --build build-klifs --config Release
 json-c an error instead of building without the service. With a dynamic triplet the DLLs must be available at run time. A successful build says nothing about
 the compatibility with the live service.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
-<p class="foot">ligint 0.8.0 manual</p>
+<p class="foot">ligint 0.8.1 manual</p>
 </body>
 </html>
