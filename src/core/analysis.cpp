@@ -64,8 +64,13 @@ AtomRecord toRecord(const Atom& a) {
 }  // namespace
 
 Result analyzeFile(const std::string& path, const Options& opt) {
-    std::ifstream in(path);
+    std::ifstream in(path, std::ios::binary);
     if (!in) throw std::runtime_error("Cannot open " + path);
+    // files from the PDB archive are often gzip-compressed (.cif.gz, .pdb.gz): say so instead of reading garbage
+    const int b0 = in.get(), b1 = in.get();
+    if (b0 == 0x1f && b1 == 0x8b) throw std::runtime_error(path + " is compressed (gzip): decompress it first, e.g. with gunzip");
+    in.clear();
+    in.seekg(0);
     return analyzeStream(in, opt);
 }
 
@@ -91,83 +96,83 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     map<string, char> altSeen;
     set<char> altlocsPresent;
     set<string> altResidues, hasWanted;      // residues with alternate conformations / with the requested one
-    // choosing a conformation needs to know, for every residue, whether it has it: read the file once to find out
+    // the format: given, or recognized from the content (the first non-blank character does not consume anything useful)
+    // Choosing a conformation needs to know, for every residue, whether it has it: the file is read twice then.
     istringstream buffered;
     istream* src = &in;
+    string all;
     if (wantAlt != 0) {
-        const string all((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
-        size_t pos = 0;
-        while (pos < all.size()) {
-            size_t e = all.find('\n', pos);
-            if (e == string::npos) e = all.size();
-            const string_view l(all.data() + pos, e - pos);
-            pos = e + 1;
-            if (l.substr(0, 6) == "ENDMDL") break;           // first model only
-            if (l.size() < 54 || (l.substr(0, 6) != "ATOM  " && l.substr(0, 6) != "HETATM")) continue;
-            if (l[16] == wantAlt) hasWanted.insert(string(l.substr(21, 6)) + string(l.substr(17, 3)));
-        }
+        all.assign(istreambuf_iterator<char>(in), istreambuf_iterator<char>());
         buffered.str(all);
         src = &buffered;
     }
-    string line;
+    StructureFormat fmt = opt.format;
+    if (fmt == StructureFormat::Auto) {
+        while (src->peek() == '\n' || src->peek() == '\r' || src->peek() == ' ' || src->peek() == '\t') src->get();
+        const int c = src->peek();
+        fmt = (c == 'd' || c == 'D' || c == '#') ? StructureFormat::Mmcif : StructureFormat::Pdb;
+    }
+    res.format = fmt;
+    CifStats cifStats;
+    auto readAtoms = [&](istream& s, const AtomSink& sink) {
+        if (fmt == StructureFormat::Mmcif) readMmcifAtoms(s, sink, cifStats);
+        else readPdbAtoms(s, sink);
+    };
+    auto altKey = [](const RawAtom& r) { return r.chain + "|" + to_string(r.resi) + string(1, r.icode) + "|" + r.res; };
+    if (wantAlt != 0) {
+        istringstream pass1(all);
+        readAtoms(pass1, [&](RawAtom& r) { if (r.alt == wantAlt) hasWanted.insert(altKey(r)); });
+        cifStats = CifStats();                               // the warnings are those of the second pass
+    }
+
     long nBadCoord = 0;
-    while (getline(*src, line)) {
-        if (line.compare(0, 6, "ENDMDL") == 0) break;  // first model only
-        if (line.size() < 54) continue;
-        string rec = line.substr(0, 6);
-        if (rec != "ATOM  " && rec != "HETATM") continue;
+    auto handle = [&](RawAtom& r) {
         Atom a;
-        a.name = trim(line.substr(12, 4));
-        a.res = trim(line.substr(17, 3));
-        a.chain = string(1, line[21]);
-        a.resi = atoi(line.substr(22, 4).c_str());
-        a.icode = line[26];
-        char alt = line[16];
+        a.name = r.name;
+        a.res = r.res;
+        a.chain = r.chain;
+        a.resi = r.resi;
+        a.icode = r.icode;
+        const char alt = r.alt;
         if (alt != ' ') {
             altlocsPresent.insert(alt);
-            const string rk = line.substr(21, 6) + line.substr(17, 3);
+            const string rk = altKey(r);
             altResidues.insert(rk);
             if (wantAlt != 0 && hasWanted.count(rk)) {
-                if (alt != wantAlt) continue;                  // the requested conformation exists for this residue
+                if (alt != wantAlt) return;                    // the requested conformation exists for this residue
             } else {                                           // otherwise the first conformation encountered is kept
                 auto it = altSeen.find(rk);
                 if (it == altSeen.end()) altSeen[rk] = alt;
-                else if (it->second != alt) continue;
+                else if (it->second != alt) return;
             }
         }
-        a.x = atof(line.substr(30, 8).c_str());
-        a.y = atof(line.substr(38, 8).c_str());
-        a.z = atof(line.substr(46, 8).c_str());
+        a.x = r.x; a.y = r.y; a.z = r.z;
         if (!isfinite(a.x) || !isfinite(a.y) || !isfinite(a.z) || fabs(a.x) > 1e5 || fabs(a.y) > 1e5 || fabs(a.z) > 1e5) {
             nBadCoord++;
-            continue;
+            return;
         }
-        a.bf = line.size() >= 66 ? atof(line.substr(60, 6).c_str()) : 0.0;
-        string el = line.size() >= 78 ? trim(line.substr(76, 2)) : "";
-        if (el.empty()) {
-            string nm = line.substr(12, 4);
-            if (rec == "HETATM" && a.name.size() <= 2 && isalpha((unsigned char)nm[0]) && isalpha((unsigned char)nm[1]))
-                el = nm.substr(0, 2);
-            else for (char c : a.name) if (isalpha((unsigned char)c)) { el = string(1, c); break; }
-        }
-        if (el.empty()) continue;
-        el = normEl(el);
+        a.bf = r.bf;
+        if (r.el.empty()) return;
+        const string el = normEl(r.el);
         a.el = el;
-        a.het = rec == "HETATM";
+        a.het = r.het;
         bool isH = isHel(el);
         if (a.res == "HOH" || a.res == "WAT" || a.res == "DOD") {
             if (useWater && el == "O") waters.push_back(a);
-            continue;
+            return;
         }
-        bool isLig = rec == "HETATM" && a.res == ligName &&
+        bool isLig = r.het && a.res == ligName &&
                      (wantChain.empty() || a.chain == wantChain) &&
                      (wantResi == INT_MIN || a.resi == wantResi) &&
                      (wantIcode == 0 || a.icode == wantIcode);
-        if (isH) { hatoms.push_back({a, isLig}); continue; }
-        if (rec == "HETATM") { hetNames[a.res].insert({a.chain, a.resi, a.icode}); hetRes[{a.chain, a.resi, a.icode}].push_back(a); }
+        if (isH) { hatoms.push_back({a, isLig}); return; }
+        if (r.het) { hetNames[a.res].insert({a.chain, a.resi, a.icode}); hetRes[{a.chain, a.resi, a.icode}].push_back(a); }
         if (isLig) ligs[{a.chain, a.resi, a.icode}].push_back(a);
         else prot.push_back(a);
-    }
+    };
+    readAtoms(*src, handle);
+    for (auto& w : cifStats.warnings) res.warnings.push_back(w);
+    if (cifStats.badRows > 0) res.warnings.push_back("Warning: " + to_string(cifStats.badRows) + " mmCIF atoms without atom or residue name ignored");
     if (nBadCoord > 0) res.warnings.push_back("Warning: " + to_string(nBadCoord) + " atoms with invalid coordinates ignored");
     res.altlocs.assign(altlocsPresent.begin(), altlocsPresent.end());
     if (wantAlt != 0) {

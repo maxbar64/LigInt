@@ -14,8 +14,8 @@ using namespace std;
 using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
-    cerr << "Usage: " << prog << " file.pdb [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --version  --help\n"
+    cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
+         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE   (instead of the interaction table)\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
@@ -44,6 +44,14 @@ int main(int argc, char** argv) {
         else if (s == "--backbone-hyd") opt.backboneHyd = true;
         else if (s == "--no-merge") opt.mergeLinked = false;
         else if (s == "--plip-like") {}           // already applied above
+        else if (s == "--format") {
+            if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
+            const string v = argv[++i];
+            if (v == "auto") opt.format = StructureFormat::Auto;
+            else if (v == "pdb") opt.format = StructureFormat::Pdb;
+            else if (v == "cif" || v == "mmcif") opt.format = StructureFormat::Mmcif;
+            else { cerr << "--format expects auto, pdb or cif\n"; return 1; }
+        }
         else if (s == "--altloc") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             const string v = argv[++i];

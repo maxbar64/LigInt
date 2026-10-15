@@ -3,10 +3,10 @@
 ligint\-gui \- graphical interface of ligint
 .SH SYNOPSIS
 .B ligint\-gui
-.RI [ file.pdb ]
+.RI [ structure ]
 .SH DESCRIPTION
 .B ligint\-gui
-opens a PDB file, lists its ligands and shows the non-covalent interactions of the chosen ligand in a 3D view,
+opens a PDB or mmCIF file, lists its ligands and shows the non-covalent interactions of the chosen ligand in a 3D view,
 in tables and as an interaction fingerprint.
 Thresholds, options, chemical templates (SDF or MOL2) and a pocket definition for the fingerprint can be set from the window.
 .PP
@@ -16,8 +16,8 @@ command line that reproduces it is written in the Log tab and can be copied with
 .BR "File > Copy command line" .
 .SH OPTIONS
 .TP
-.I file.pdb
-PDB file to open at start (optional).
+.I structure
+PDB or mmCIF file to open at start (optional).
 .SH SEE ALSO
 .BR ligint (1)
 .SH AUTHORS

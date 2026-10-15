@@ -80,7 +80,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
     resize(1280, 820);
-    statusBar()->showMessage(tr("Open a PDB file (File → Open, or drag it here)"));
+    statusBar()->showMessage(tr("Open a structure file, PDB or mmCIF (File → Open, or drag it here)"));
 }
 
 MainWindow::~MainWindow() {
@@ -97,7 +97,7 @@ void MainWindow::buildUi() {
         menu->addAction(a);
         return a;
     };
-    makeAction(file, tr("&Open PDB…"), &MainWindow::onOpen, QKeySequence::Open);
+    makeAction(file, tr("&Open structure…"), &MainWindow::onOpen, QKeySequence::Open);
     exportAct_ = makeAction(file, tr("Export interactions (&CSV)…"), &MainWindow::onExportCsv);
     imageAct_ = makeAction(file, tr("&Save image…"), &MainWindow::onSaveImage);
     fpAct_ = makeAction(file, tr("Export &fingerprint…"), &MainWindow::onExportFingerprint);
@@ -124,7 +124,7 @@ void MainWindow::buildUi() {
     auto* sv = new QVBoxLayout(gStruct);
     fileLabel_ = new QLabel(tr("(no file)"));
     fileLabel_->setWordWrap(true);
-    auto* openBtn = new QPushButton(tr("Open PDB…"));
+    auto* openBtn = new QPushButton(tr("Open structure…"));
     connect(openBtn, &QPushButton::clicked, this, &MainWindow::onOpen);
     ligandCombo_ = new QComboBox;
     ligandCombo_->setToolTip(tr("Ligands (HETATM residues) present in the file"));
@@ -742,7 +742,7 @@ void MainWindow::onRowChanged() {
 void MainWindow::onOpen() {
     QSettings s("ligint", "ligint-gui");
     QString f = QFileDialog::getOpenFileName(this, tr("Open structure"), s.value("lastDir").toString(),
-                                             tr("PDB structures (*.pdb *.ent);;All files (*)"));
+                                             tr("Structures (*.pdb *.ent *.cif *.mmcif);;All files (*)"));
     if (f.isEmpty()) return;
     s.setValue("lastDir", QFileInfo(f).absolutePath());
     openStructure(f);
@@ -770,7 +770,7 @@ void MainWindow::onSaveImage() {
 
 void MainWindow::onAbout() {
     QMessageBox::about(this, tr("About ligint"),
-                       tr("<b>ligint %1</b><br>Non-covalent ligand-protein interactions from PDB files.<br><br>"
+                       tr("<b>ligint %1</b><br>Non-covalent ligand-protein interactions from PDB and mmCIF files.<br><br>"
                           "The interactions are computed from the geometry; the chemistry of the ligand is inferred "
                           "(or read from SDF/MOL2). The comparison with PLIP is described in the documentation.")
                            .arg(LIGINT_VERSION));

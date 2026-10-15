@@ -1,0 +1,2883 @@
+data_1AZM
+_entry.id 1AZM
+
+_pdbx_database_status.entry_id 1AZM
+_pdbx_database_status.recvd_initial_deposition_date 1993-11-28
+
+loop_
+_audit_author.pdbx_ordinal
+_audit_author.name
+1 'CHAKRAVARTY, S.'
+2 'KANNAN, K.K.'
+
+_cell.entry_id 1AZM
+_cell.length_a 81.85
+_cell.length_b 75.31
+_cell.length_c 37.76
+_cell.angle_alpha 90
+_cell.angle_beta 90
+_cell.angle_gamma 90
+_cell.Z_PDB 4
+
+_symmetry.entry_id 1AZM
+_symmetry.space_group_name_H-M 'P 21 21 21'
+_symmetry.Int_Tables_number 19
+
+loop_
+_entity.id
+_entity.type
+A polymer
+ZN! non-polymer
+AZM! non-polymer
+water water
+
+loop_
+_entity_poly.entity_id
+_entity_poly.type
+_entity_poly.pdbx_strand_id
+_entity_poly.pdbx_seq_one_letter_code
+A polypeptide(L) A ASPDWGYDDKNGPEQWSKLYPIANGNNQSPVDIKTSETKHDTSLKPISVSYNPATAKEIINVGHSFHVNFEDNDNRSVLKGGPFSDSYRLFQFHFHWGSTNEHGSEHTVDGVKYSAELHVAHWNSAKYSSLAEAASKADGLAVIGVLMKVGEANPKLQKVLDALQAIKTKGKRAPFTNFDPSTLLPSSLDFWTYPGSLTHPPLYESVTWIICKESISVSSEQLAQFRSLLSNVEGDNAVPMQHNNRPTQPLKGRTVRASF
+
+loop_
+_struct_ref.id
+_struct_ref.entity_id
+_struct_ref.db_name
+_struct_ref.db_code
+_struct_ref.pdbx_db_accession
+_struct_ref.pdbx_db_isoform
+1 A UNP 'CAH1_HUMAN' P00915 ?
+
+loop_
+_struct_ref_seq.align_id
+_struct_ref_seq.ref_id
+_struct_ref_seq.pdbx_strand_id
+_struct_ref_seq.pdbx_PDB_id_code
+_struct_ref_seq.seq_align_beg
+_struct_ref_seq.seq_align_end
+_struct_ref_seq.pdbx_db_accession
+_struct_ref_seq.db_align_beg
+_struct_ref_seq.db_align_end
+_struct_ref_seq.pdbx_auth_seq_align_beg
+_struct_ref_seq.pdbx_seq_align_beg_ins_code
+_struct_ref_seq.pdbx_auth_seq_align_end
+_struct_ref_seq.pdbx_seq_align_end_ins_code
+1 1 A 1AZM ? ? P00915 1 260 1 ? 260 ?
+
+loop_
+_chem_comp.id
+_chem_comp.type
+ALA .
+ARG .
+ASN .
+ASP .
+AZM .
+CYS .
+GLN .
+GLU .
+GLY .
+HIS .
+HOH .
+ILE .
+LEU .
+LYS .
+MET .
+PHE .
+PRO .
+SER .
+THR .
+TRP .
+TYR .
+VAL .
+ZN .
+
+loop_
+_exptl.entry_id
+_exptl.method
+_exptl.crystals_number
+1AZM 'X-RAY DIFFRACTION' ?
+
+loop_
+_exptl_crystal.id
+_exptl_crystal.description
+1 ?
+
+loop_
+_diffrn.id
+_diffrn.crystal_id
+_diffrn.ambient_temp
+1 1 ?
+
+loop_
+_diffrn_detector.diffrn_id
+_diffrn_detector.pdbx_collection_date
+_diffrn_detector.detector
+_diffrn_detector.type
+_diffrn_detector.details
+1 ? ? ? ?
+
+loop_
+_diffrn_radiation.diffrn_id
+_diffrn_radiation.pdbx_scattering_type
+_diffrn_radiation.pdbx_monochromatic_or_laue_m_l
+_diffrn_radiation.monochromator
+1 x-ray ? ?
+
+loop_
+_diffrn_source.diffrn_id
+_diffrn_source.source
+_diffrn_source.type
+_diffrn_source.pdbx_synchrotron_site
+_diffrn_source.pdbx_synchrotron_beamline
+_diffrn_source.pdbx_wavelength_list
+1 ? ? ? ? ?
+
+loop_
+_reflns.entry_id
+_reflns.pdbx_ordinal
+_reflns.pdbx_diffrn_id
+_reflns.number_obs
+_reflns.d_resolution_high
+_reflns.d_resolution_low
+_reflns.percent_possible_obs
+_reflns.pdbx_redundancy
+_reflns.pdbx_Rmerge_I_obs
+_reflns.pdbx_Rsym_value
+_reflns.pdbx_netI_over_sigmaI
+1AZM 1 1 ? ? ? ? ? ? ? ?
+
+loop_
+_reflns_shell.pdbx_ordinal
+_reflns_shell.pdbx_diffrn_id
+_reflns_shell.d_res_high
+_reflns_shell.d_res_low
+_reflns_shell.percent_possible_all
+_reflns_shell.pdbx_redundancy
+_reflns_shell.Rmerge_I_obs
+_reflns_shell.pdbx_Rsym_value
+_reflns_shell.meanI_over_sigI_obs
+1 1 ? ? ? ? ? ? ?
+
+loop_
+_refine.entry_id
+_refine.pdbx_refine_id
+_refine.ls_d_res_high
+_refine.ls_d_res_low
+_refine.ls_percent_reflns_obs
+_refine.ls_number_reflns_obs
+_refine.ls_number_reflns_R_work
+_refine.ls_R_factor_obs
+1AZM 1 2 10 . 14432 ? 0.195
+
+
+
+
+_struct.entry_id 1AZM
+_struct.title 'DRUG-PROTEIN INTERACTIONS: STRUCTURE OF SULFONAMIDE DRUG COMPLEXED WITH HUMAN CARBONIC ANHYDRASE I'
+
+_struct_keywords.entry_id 1AZM
+_struct_keywords.pdbx_keywords LYASE(OXO-ACID)
+_struct_keywords.text 'PROTEIN-DRUG INTERACTIONS, OXO-ACID LYASE, SULFONAMIDES, LYASE(OXO- ACID)'
+
+loop_
+_struct_asym.id
+_struct_asym.entity_id
+Axp A
+Ax1 ZN!
+Ax2 AZM!
+Axw water
+
+loop_
+_struct_conf.conf_type_id
+_struct_conf.id
+_struct_conf.beg_auth_asym_id
+_struct_conf.beg_label_asym_id
+_struct_conf.beg_label_comp_id
+_struct_conf.beg_label_seq_id
+_struct_conf.beg_auth_seq_id
+_struct_conf.pdbx_beg_PDB_ins_code
+_struct_conf.end_auth_asym_id
+_struct_conf.end_label_asym_id
+_struct_conf.end_label_comp_id
+_struct_conf.end_label_seq_id
+_struct_conf.end_auth_seq_id
+_struct_conf.pdbx_end_PDB_ins_code
+_struct_conf.pdbx_PDB_helix_class
+_struct_conf.pdbx_PDB_helix_length
+HELX_P H1 A Axp TRP ? 16 ? A Axp LYS ? 18 ? 5 3
+HELX_P H2 A Axp PRO ? 21 ? A Axp ASN ? 24 ? 5 4
+HELX_P H3 A Axp THR ? 35 ? A Axp GLU ? 37 ? 5 3
+HELX_P H4 A Axp PRO ? 53 ? A Axp THR ? 55 ? 5 3
+HELX_P H5 A Axp LEU ? 131 ? A Axp ALA ? 134 ? 1 4
+HELX_P H6 A Axp PRO ? 155 ? A Axp LEU ? 157 ? 5 3
+HELX_P H7 A Axp GLN ? 158 ? A Axp ALA ? 163 ? 1 6
+HELX_P H8 A Axp GLN ? 165 ? A Axp ILE ? 167 ? 5 3
+HELX_P H9 A Axp PRO ? 181 ? A Axp LEU ? 184 ? 5 4
+HELX_P H10 A Axp SER ? 220 ? A Axp PHE ? 226 ? 1 7
+
+_struct_conf_type.id HELX_P
+
+loop_
+_struct_sheet.id
+_struct_sheet.number_strands
+B1A 10
+B1B 7
+B2 3
+
+loop_
+_struct_sheet_order.sheet_id
+_struct_sheet_order.range_id_1
+_struct_sheet_order.range_id_2
+_struct_sheet_order.sense
+B1A 1 2 parallel
+B1A 2 3 anti-parallel
+B1A 3 4 anti-parallel
+B1A 4 5 parallel
+B1A 5 6 anti-parallel
+B1A 6 7 anti-parallel
+B1A 7 8 anti-parallel
+B1A 8 9 anti-parallel
+B1A 9 10 anti-parallel
+B1B 1 2 parallel
+B1B 2 3 anti-parallel
+B1B 3 4 anti-parallel
+B1B 4 5 anti-parallel
+B1B 5 6 anti-parallel
+B1B 6 7 anti-parallel
+B2 1 2 anti-parallel
+B2 2 3 anti-parallel
+
+loop_
+_struct_sheet_range.sheet_id
+_struct_sheet_range.id
+_struct_sheet_range.beg_auth_asym_id
+_struct_sheet_range.beg_label_asym_id
+_struct_sheet_range.beg_label_comp_id
+_struct_sheet_range.beg_label_seq_id
+_struct_sheet_range.beg_auth_seq_id
+_struct_sheet_range.pdbx_beg_PDB_ins_code
+_struct_sheet_range.end_auth_asym_id
+_struct_sheet_range.end_label_asym_id
+_struct_sheet_range.end_label_comp_id
+_struct_sheet_range.end_label_seq_id
+_struct_sheet_range.end_auth_seq_id
+_struct_sheet_range.pdbx_end_PDB_ins_code
+B1A 1 A Axp LYS ? 39 ? A Axp HIS ? 40 ?
+B1A 2 A Axp ARG ? 257 ? A Axp ALA ? 258 ?
+B1A 3 A Axp PHE ? 191 ? A Axp GLY ? 196 ?
+B1A 4 A Axp VAL ? 207 ? A Axp CYS ? 212 ?
+B1A 5 A Axp LEU ? 141 ? A Axp VAL ? 150 ?
+B1A 6 A Axp ALA ? 116 ? A Axp ASN ? 124 ?
+B1A 7 A Axp TYR ? 88 ? A Axp TRP ? 97 ?
+B1A 8 A Axp PHE ? 66 ? A Axp PHE ? 70 ?
+B1A 9 A Axp ALA ? 56 ? A Axp ASN ? 61 ?
+B1A 10 A Axp ARG ? 173 ? A Axp PHE ? 176 ?
+B1B 1 A Axp ILE ? 216 ? A Axp VAL ? 218 ?
+B1B 2 A Axp LEU ? 141 ? A Axp VAL ? 150 ?
+B1B 3 A Axp ALA ? 116 ? A Axp ASN ? 124 ?
+B1B 4 A Axp TYR ? 88 ? A Axp TRP ? 97 ?
+B1B 5 A Axp PHE ? 66 ? A Axp PHE ? 70 ?
+B1B 6 A Axp ALA ? 56 ? A Axp ASN ? 61 ?
+B1B 7 A Axp ARG ? 173 ? A Axp PHE ? 176 ?
+B2 1 A Axp ILE ? 47 ? A Axp SER ? 50 ?
+B2 2 A Axp VAL ? 78 ? A Axp GLY ? 81 ?
+B2 3 A Axp TYR ? 88 ? A Axp TRP ? 97 ?
+
+
+loop_
+_pdbx_struct_assembly.id
+_pdbx_struct_assembly.details
+_pdbx_struct_assembly.method_details
+_pdbx_struct_assembly.oligomeric_details
+_pdbx_struct_assembly.oligomeric_count
+1 author_defined_assembly ? monomeric 1
+
+
+loop_
+_pdbx_struct_assembly_gen.assembly_id
+_pdbx_struct_assembly_gen.oper_expression
+_pdbx_struct_assembly_gen.asym_id_list
+1 1 Axp,Ax1,Ax2,Axw
+
+loop_
+_pdbx_struct_oper_list.id
+_pdbx_struct_oper_list.type
+_pdbx_struct_oper_list.matrix[1][1]
+_pdbx_struct_oper_list.matrix[1][2]
+_pdbx_struct_oper_list.matrix[1][3]
+_pdbx_struct_oper_list.vector[1]
+_pdbx_struct_oper_list.matrix[2][1]
+_pdbx_struct_oper_list.matrix[2][2]
+_pdbx_struct_oper_list.matrix[2][3]
+_pdbx_struct_oper_list.vector[2]
+_pdbx_struct_oper_list.matrix[3][1]
+_pdbx_struct_oper_list.matrix[3][2]
+_pdbx_struct_oper_list.matrix[3][3]
+_pdbx_struct_oper_list.vector[3]
+1 'identity operation' 1 0 0 0 0 1 0 0 0 0 1 0
+
+loop_
+_struct_conn.id
+_struct_conn.conn_type_id
+_struct_conn.ptnr1_label_asym_id
+_struct_conn.ptnr1_label_comp_id
+_struct_conn.ptnr1_label_seq_id
+_struct_conn.ptnr1_label_atom_id
+_struct_conn.pdbx_ptnr1_label_alt_id
+_struct_conn.ptnr1_auth_asym_id
+_struct_conn.ptnr1_auth_seq_id
+_struct_conn.pdbx_ptnr1_PDB_ins_code
+_struct_conn.ptnr1_symmetry
+_struct_conn.ptnr2_label_asym_id
+_struct_conn.ptnr2_label_comp_id
+_struct_conn.ptnr2_label_seq_id
+_struct_conn.ptnr2_label_atom_id
+_struct_conn.pdbx_ptnr2_label_alt_id
+_struct_conn.ptnr2_auth_asym_id
+_struct_conn.ptnr2_auth_seq_id
+_struct_conn.pdbx_ptnr2_PDB_ins_code
+_struct_conn.ptnr2_symmetry
+_struct_conn.details
+_struct_conn.pdbx_dist_value
+metalc1 metalc Axp HIS . NE2 ? A 94 ? 1_555 Ax1 ZN . ZN ? A 261 ? 1_555 ? 2.0431
+metalc2 metalc Axp HIS . NE2 ? A 96 ? 1_555 Ax1 ZN . ZN ? A 261 ? 1_555 ? 2.1728
+metalc3 metalc Axp HIS . ND1 ? A 119 ? 1_555 Ax1 ZN . ZN ? A 261 ? 1_555 ? 2.0181
+metalc4 metalc Ax1 ZN . ZN ? A 261 ? 1_555 Ax2 AZM . N1 ? A 262 ? 1_555 ? 2.0118
+
+loop_
+_struct_conn_type.id
+metalc
+
+loop_
+_struct_mon_prot_cis.pdbx_id
+_struct_mon_prot_cis.pdbx_PDB_model_num
+_struct_mon_prot_cis.label_asym_id
+_struct_mon_prot_cis.label_seq_id
+_struct_mon_prot_cis.label_comp_id
+_struct_mon_prot_cis.auth_asym_id
+_struct_mon_prot_cis.auth_seq_id
+_struct_mon_prot_cis.pdbx_PDB_ins_code
+_struct_mon_prot_cis.pdbx_label_asym_id_2
+_struct_mon_prot_cis.pdbx_label_seq_id_2
+_struct_mon_prot_cis.pdbx_label_comp_id_2
+_struct_mon_prot_cis.pdbx_auth_asym_id_2
+_struct_mon_prot_cis.pdbx_auth_seq_id_2
+_struct_mon_prot_cis.pdbx_PDB_ins_code_2
+_struct_mon_prot_cis.label_alt_id
+_struct_mon_prot_cis.pdbx_omega_angle
+1 1 Axp . SER A 29 ? Axp . PRO A 30 ? . -1.1
+2 1 Axp . PRO A 201 ? Axp . PRO A 202 ? . 0.5
+
+loop_
+_atom_type.symbol
+C
+N
+O
+S
+ZN
+
+loop_
+_entity_poly_seq.entity_id
+_entity_poly_seq.num
+_entity_poly_seq.mon_id
+_entity_poly_seq.hetero
+A 1 ALA ?
+A 2 SER ?
+A 3 PRO ?
+A 4 ASP ?
+A 5 TRP ?
+A 6 GLY ?
+A 7 TYR ?
+A 8 ASP ?
+A 9 ASP ?
+A 10 LYS ?
+A 11 ASN ?
+A 12 GLY ?
+A 13 PRO ?
+A 14 GLU ?
+A 15 GLN ?
+A 16 TRP ?
+A 17 SER ?
+A 18 LYS ?
+A 19 LEU ?
+A 20 TYR ?
+A 21 PRO ?
+A 22 ILE ?
+A 23 ALA ?
+A 24 ASN ?
+A 25 GLY ?
+A 26 ASN ?
+A 27 ASN ?
+A 28 GLN ?
+A 29 SER ?
+A 30 PRO ?
+A 31 VAL ?
+A 32 ASP ?
+A 33 ILE ?
+A 34 LYS ?
+A 35 THR ?
+A 36 SER ?
+A 37 GLU ?
+A 38 THR ?
+A 39 LYS ?
+A 40 HIS ?
+A 41 ASP ?
+A 42 THR ?
+A 43 SER ?
+A 44 LEU ?
+A 45 LYS ?
+A 46 PRO ?
+A 47 ILE ?
+A 48 SER ?
+A 49 VAL ?
+A 50 SER ?
+A 51 TYR ?
+A 52 ASN ?
+A 53 PRO ?
+A 54 ALA ?
+A 55 THR ?
+A 56 ALA ?
+A 57 LYS ?
+A 58 GLU ?
+A 59 ILE ?
+A 60 ILE ?
+A 61 ASN ?
+A 62 VAL ?
+A 63 GLY ?
+A 64 HIS ?
+A 65 SER ?
+A 66 PHE ?
+A 67 HIS ?
+A 68 VAL ?
+A 69 ASN ?
+A 70 PHE ?
+A 71 GLU ?
+A 72 ASP ?
+A 73 ASN ?
+A 74 ASP ?
+A 75 ASN ?
+A 76 ARG ?
+A 77 SER ?
+A 78 VAL ?
+A 79 LEU ?
+A 80 LYS ?
+A 81 GLY ?
+A 82 GLY ?
+A 83 PRO ?
+A 84 PHE ?
+A 85 SER ?
+A 86 ASP ?
+A 87 SER ?
+A 88 TYR ?
+A 89 ARG ?
+A 90 LEU ?
+A 91 PHE ?
+A 92 GLN ?
+A 93 PHE ?
+A 94 HIS ?
+A 95 PHE ?
+A 96 HIS ?
+A 97 TRP ?
+A 98 GLY ?
+A 99 SER ?
+A 100 THR ?
+A 101 ASN ?
+A 102 GLU ?
+A 103 HIS ?
+A 104 GLY ?
+A 105 SER ?
+A 106 GLU ?
+A 107 HIS ?
+A 108 THR ?
+A 109 VAL ?
+A 110 ASP ?
+A 111 GLY ?
+A 112 VAL ?
+A 113 LYS ?
+A 114 TYR ?
+A 115 SER ?
+A 116 ALA ?
+A 117 GLU ?
+A 118 LEU ?
+A 119 HIS ?
+A 120 VAL ?
+A 121 ALA ?
+A 122 HIS ?
+A 123 TRP ?
+A 124 ASN ?
+A 125 SER ?
+A 126 ALA ?
+A 127 LYS ?
+A 128 TYR ?
+A 129 SER ?
+A 130 SER ?
+A 131 LEU ?
+A 132 ALA ?
+A 133 GLU ?
+A 134 ALA ?
+A 135 ALA ?
+A 136 SER ?
+A 137 LYS ?
+A 138 ALA ?
+A 139 ASP ?
+A 140 GLY ?
+A 141 LEU ?
+A 142 ALA ?
+A 143 VAL ?
+A 144 ILE ?
+A 145 GLY ?
+A 146 VAL ?
+A 147 LEU ?
+A 148 MET ?
+A 149 LYS ?
+A 150 VAL ?
+A 151 GLY ?
+A 152 GLU ?
+A 153 ALA ?
+A 154 ASN ?
+A 155 PRO ?
+A 156 LYS ?
+A 157 LEU ?
+A 158 GLN ?
+A 159 LYS ?
+A 160 VAL ?
+A 161 LEU ?
+A 162 ASP ?
+A 163 ALA ?
+A 164 LEU ?
+A 165 GLN ?
+A 166 ALA ?
+A 167 ILE ?
+A 168 LYS ?
+A 169 THR ?
+A 170 LYS ?
+A 171 GLY ?
+A 172 LYS ?
+A 173 ARG ?
+A 174 ALA ?
+A 175 PRO ?
+A 176 PHE ?
+A 177 THR ?
+A 178 ASN ?
+A 179 PHE ?
+A 180 ASP ?
+A 181 PRO ?
+A 182 SER ?
+A 183 THR ?
+A 184 LEU ?
+A 185 LEU ?
+A 186 PRO ?
+A 187 SER ?
+A 188 SER ?
+A 189 LEU ?
+A 190 ASP ?
+A 191 PHE ?
+A 192 TRP ?
+A 193 THR ?
+A 194 TYR ?
+A 195 PRO ?
+A 196 GLY ?
+A 197 SER ?
+A 198 LEU ?
+A 199 THR ?
+A 200 HIS ?
+A 201 PRO ?
+A 202 PRO ?
+A 203 LEU ?
+A 204 TYR ?
+A 205 GLU ?
+A 206 SER ?
+A 207 VAL ?
+A 208 THR ?
+A 209 TRP ?
+A 210 ILE ?
+A 211 ILE ?
+A 212 CYS ?
+A 213 LYS ?
+A 214 GLU ?
+A 215 SER ?
+A 216 ILE ?
+A 217 SER ?
+A 218 VAL ?
+A 219 SER ?
+A 220 SER ?
+A 221 GLU ?
+A 222 GLN ?
+A 223 LEU ?
+A 224 ALA ?
+A 225 GLN ?
+A 226 PHE ?
+A 227 ARG ?
+A 228 SER ?
+A 229 LEU ?
+A 230 LEU ?
+A 231 SER ?
+A 232 ASN ?
+A 233 VAL ?
+A 234 GLU ?
+A 235 GLY ?
+A 236 ASP ?
+A 237 ASN ?
+A 238 ALA ?
+A 239 VAL ?
+A 240 PRO ?
+A 241 MET ?
+A 242 GLN ?
+A 243 HIS ?
+A 244 ASN ?
+A 245 ASN ?
+A 246 ARG ?
+A 247 PRO ?
+A 248 THR ?
+A 249 GLN ?
+A 250 PRO ?
+A 251 LEU ?
+A 252 LYS ?
+A 253 GLY ?
+A 254 ARG ?
+A 255 THR ?
+A 256 VAL ?
+A 257 ARG ?
+A 258 ALA ?
+A 259 SER ?
+A 260 PHE ?
+
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.pdbx_formal_charge
+_atom_site.auth_seq_id
+_atom_site.auth_asym_id
+_atom_site.pdbx_PDB_model_num
+ATOM 1 N N . PRO Axp A . ? 40.597 22.51 -31.909 1 43.1 ? 3 A 1
+ATOM 2 C CA . PRO Axp A . ? 40.042 23.115 -30.671 1 42.28 ? 3 A 1
+ATOM 3 C C . PRO Axp A . ? 41.039 24.117 -30.102 1 41.18 ? 3 A 1
+ATOM 4 O O . PRO Axp A . ? 40.692 25.251 -29.699 1 41.26 ? 3 A 1
+ATOM 5 C CB . PRO Axp A . ? 39.802 21.902 -29.772 1 42.41 ? 3 A 1
+ATOM 6 C CG . PRO Axp A . ? 40.956 20.999 -30.126 1 43.04 ? 3 A 1
+ATOM 7 C CD . PRO Axp A . ? 41.121 21.156 -31.65 1 43.03 ? 3 A 1
+ATOM 8 N N . ASP Axp A . ? 42.278 23.652 -30.065 1 39.64 ? 4 A 1
+ATOM 9 C CA . ASP Axp A . ? 43.406 24.468 -29.599 1 37.38 ? 4 A 1
+ATOM 10 C C . ASP Axp A . ? 43.009 25.437 -28.478 1 35.04 ? 4 A 1
+ATOM 11 O O . ASP Axp A . ? 42.708 26.633 -28.675 1 35.64 ? 4 A 1
+ATOM 12 N N . TRP Axp A . ? 43.128 24.9 -27.291 1 31.93 ? 5 A 1
+ATOM 13 C CA . TRP Axp A . ? 42.93 25.476 -25.974 1 28.48 ? 5 A 1
+ATOM 14 C C . TRP Axp A . ? 43.91 24.691 -25.063 1 27.17 ? 5 A 1
+ATOM 15 O O . TRP Axp A . ? 44.316 23.557 -25.427 1 26.52 ? 5 A 1
+ATOM 16 C CB . TRP Axp A . ? 41.472 25.337 -25.516 1 24.33 ? 5 A 1
+ATOM 17 C CG . TRP Axp A . ? 41.031 23.919 -25.371 1 21.06 ? 5 A 1
+ATOM 18 C CD1 . TRP Axp A . ? 40.444 23.155 -26.33 1 19.84 ? 5 A 1
+ATOM 19 C CD2 . TRP Axp A . ? 41.155 23.071 -24.215 1 18.7 ? 5 A 1
+ATOM 20 N NE1 . TRP Axp A . ? 40.152 21.916 -25.854 1 19.16 ? 5 A 1
+ATOM 21 C CE2 . TRP Axp A . ? 40.593 21.826 -24.556 1 18.85 ? 5 A 1
+ATOM 22 C CE3 . TRP Axp A . ? 41.665 23.243 -22.937 1 18.37 ? 5 A 1
+ATOM 23 C CZ2 . TRP Axp A . ? 40.508 20.76 -23.657 1 17.92 ? 5 A 1
+ATOM 24 C CZ3 . TRP Axp A . ? 41.618 22.2 -22.028 1 16.73 ? 5 A 1
+ATOM 25 C CH2 . TRP Axp A . ? 41.066 20.975 -22.387 1 16.99 ? 5 A 1
+ATOM 26 N N . GLY Axp A . ? 44.27 25.272 -23.941 1 25.74 ? 6 A 1
+ATOM 27 C CA . GLY Axp A . ? 45.182 24.585 -23.006 1 24.48 ? 6 A 1
+ATOM 28 C C . GLY Axp A . ? 45.051 25.196 -21.62 1 23.53 ? 6 A 1
+ATOM 29 O O . GLY Axp A . ? 44.072 25.809 -21.262 1 22.52 ? 6 A 1
+ATOM 30 N N . TYR Axp A . ? 46.126 25.029 -20.888 1 23.7 ? 7 A 1
+ATOM 31 C CA . TYR Axp A . ? 46.278 25.507 -19.515 1 24.34 ? 7 A 1
+ATOM 32 C C . TYR Axp A . ? 47.46 26.473 -19.395 1 26.31 ? 7 A 1
+ATOM 33 O O . TYR Axp A . ? 47.706 26.918 -18.286 1 25.76 ? 7 A 1
+ATOM 34 C CB . TYR Axp A . ? 46.408 24.297 -18.596 1 20.7 ? 7 A 1
+ATOM 35 C CG . TYR Axp A . ? 45.122 23.463 -18.471 1 18.17 ? 7 A 1
+ATOM 36 C CD1 . TYR Axp A . ? 44.161 23.86 -17.546 1 15.92 ? 7 A 1
+ATOM 37 C CD2 . TYR Axp A . ? 44.91 22.319 -19.225 1 16.56 ? 7 A 1
+ATOM 38 C CE1 . TYR Axp A . ? 42.991 23.098 -17.416 1 14.79 ? 7 A 1
+ATOM 39 C CE2 . TYR Axp A . ? 43.735 21.549 -19.076 1 14.77 ? 7 A 1
+ATOM 40 C CZ . TYR Axp A . ? 42.789 21.97 -18.172 1 14.36 ? 7 A 1
+ATOM 41 O OH . TYR Axp A . ? 41.608 21.274 -17.979 1 13.79 ? 7 A 1
+ATOM 42 N N . ASP Axp A . ? 48.124 26.77 -20.502 1 29.38 ? 8 A 1
+ATOM 43 C CA . ASP Axp A . ? 49.291 27.721 -20.492 1 32.43 ? 8 A 1
+ATOM 44 C C . ASP Axp A . ? 48.768 29.133 -20.601 1 33.73 ? 8 A 1
+ATOM 45 O O . ASP Axp A . ? 47.567 29.316 -20.876 1 33.84 ? 8 A 1
+ATOM 46 C CB . ASP Axp A . ? 50.358 27.269 -21.495 1 35.01 ? 8 A 1
+ATOM 47 C CG . ASP Axp A . ? 51.091 26.051 -20.906 1 37.16 ? 8 A 1
+ATOM 48 O OD1 . ASP Axp A . ? 50.579 25.54 -19.878 1 38 ? 8 A 1
+ATOM 49 O OD2 . ASP Axp A . ? 52.144 25.589 -21.371 1 39.35 ? 8 A 1
+ATOM 50 N N . ASP Axp A . ? 49.612 30.125 -20.357 1 35.2 ? 9 A 1
+ATOM 51 C CA . ASP Axp A . ? 49.235 31.541 -20.384 1 36.57 ? 9 A 1
+ATOM 52 C C . ASP Axp A . ? 48.532 32.005 -21.639 1 35.77 ? 9 A 1
+ATOM 53 O O . ASP Axp A . ? 47.62 32.833 -21.548 1 36.22 ? 9 A 1
+ATOM 54 C CB . ASP Axp A . ? 50.423 32.451 -19.998 1 41.04 ? 9 A 1
+ATOM 55 C CG . ASP Axp A . ? 50.786 32.267 -18.516 1 44.52 ? 9 A 1
+ATOM 56 O OD1 . ASP Axp A . ? 49.976 31.521 -17.869 1 46.01 ? 9 A 1
+ATOM 57 O OD2 . ASP Axp A . ? 51.811 32.799 -18.016 1 45.61 ? 9 A 1
+ATOM 58 N N . LYS Axp A . ? 48.894 31.495 -22.768 1 35.62 ? 10 A 1
+ATOM 59 C CA . LYS Axp A . ? 48.427 31.755 -24.101 1 34.87 ? 10 A 1
+ATOM 60 C C . LYS Axp A . ? 46.985 31.357 -24.372 1 34.13 ? 10 A 1
+ATOM 61 O O . LYS Axp A . ? 46.218 32.13 -24.958 1 34.19 ? 10 A 1
+ATOM 62 C CB . LYS Axp A . ? 49.196 30.909 -25.16 1 37.58 ? 10 A 1
+ATOM 63 C CG . LYS Axp A . ? 50.702 31.015 -25.217 1 38.84 ? 10 A 1
+ATOM 64 C CD . LYS Axp A . ? 51.365 29.704 -25.678 1 40.22 ? 10 A 1
+ATOM 65 C CE . LYS Axp A . ? 52.83 29.699 -25.223 1 40.97 ? 10 A 1
+ATOM 66 N NZ . LYS Axp A . ? 53.443 31.009 -25.65 1 41.88 ? 10 A 1
+ATOM 67 N N . ASN Axp A . ? 46.716 30.093 -24.038 1 32.95 ? 11 A 1
+ATOM 68 C CA . ASN Axp A . ? 45.399 29.498 -24.319 1 31.37 ? 11 A 1
+ATOM 69 C C . ASN Axp A . ? 44.66 28.95 -23.1 1 29.76 ? 11 A 1
+ATOM 70 O O . ASN Axp A . ? 43.818 28.065 -23.357 1 29.43 ? 11 A 1
+ATOM 71 C CB . ASN Axp A . ? 45.724 28.28 -25.256 1 32.75 ? 11 A 1
+ATOM 72 C CG . ASN Axp A . ? 46.748 27.335 -24.646 1 33.73 ? 11 A 1
+ATOM 73 O OD1 . ASN Axp A . ? 47.094 27.334 -23.447 1 33.88 ? 11 A 1
+ATOM 74 N ND2 . ASN Axp A . ? 47.323 26.458 -25.473 1 34.48 ? 11 A 1
+ATOM 75 N N . GLY Axp A . ? 45.018 29.404 -21.926 1 27.79 ? 12 A 1
+ATOM 76 C CA . GLY Axp A . ? 44.532 28.996 -20.649 1 25.74 ? 12 A 1
+ATOM 77 C C . GLY Axp A . ? 43.107 29.429 -20.337 1 24.18 ? 12 A 1
+ATOM 78 O O . GLY Axp A . ? 42.448 30.013 -21.192 1 23.79 ? 12 A 1
+ATOM 79 N N . PRO Axp A . ? 42.705 29.115 -19.111 1 23.33 ? 13 A 1
+ATOM 80 C CA . PRO Axp A . ? 41.381 29.421 -18.587 1 23.44 ? 13 A 1
+ATOM 81 C C . PRO Axp A . ? 40.963 30.865 -18.706 1 23.46 ? 13 A 1
+ATOM 82 O O . PRO Axp A . ? 39.787 31.218 -18.896 1 22.87 ? 13 A 1
+ATOM 83 C CB . PRO Axp A . ? 41.473 29.03 -17.094 1 22.58 ? 13 A 1
+ATOM 84 C CG . PRO Axp A . ? 42.513 27.954 -17.067 1 23.12 ? 13 A 1
+ATOM 85 C CD . PRO Axp A . ? 43.539 28.377 -18.108 1 22.91 ? 13 A 1
+ATOM 86 N N . GLU Axp A . ? 41.962 31.739 -18.585 1 25 ? 14 A 1
+ATOM 87 C CA . GLU Axp A . ? 41.744 33.19 -18.644 1 25.63 ? 14 A 1
+ATOM 88 C C . GLU Axp A . ? 41.468 33.686 -20.025 1 25.93 ? 14 A 1
+ATOM 89 O O . GLU Axp A . ? 41.063 34.878 -20.146 1 26.24 ? 14 A 1
+ATOM 90 C CB . GLU Axp A . ? 42.914 33.947 -18.011 1 28.25 ? 14 A 1
+ATOM 91 C CG . GLU Axp A . ? 43.077 33.76 -16.492 1 31.19 ? 14 A 1
+ATOM 92 C CD . GLU Axp A . ? 41.809 33.886 -15.69 1 32.51 ? 14 A 1
+ATOM 93 O OE1 . GLU Axp A . ? 40.918 34.692 -15.946 1 33.99 ? 14 A 1
+ATOM 94 O OE2 . GLU Axp A . ? 41.754 33.103 -14.72 1 33.95 ? 14 A 1
+ATOM 95 N N . GLN Axp A . ? 41.653 32.84 -21.021 1 26.09 ? 15 A 1
+ATOM 96 C CA . GLN Axp A . ? 41.451 33.131 -22.426 1 26.57 ? 15 A 1
+ATOM 97 C C . GLN Axp A . ? 40.3 32.382 -23.099 1 26.04 ? 15 A 1
+ATOM 98 O O . GLN Axp A . ? 39.864 32.823 -24.191 1 25.62 ? 15 A 1
+ATOM 99 C CB . GLN Axp A . ? 42.752 32.84 -23.234 1 30.41 ? 15 A 1
+ATOM 100 C CG . GLN Axp A . ? 43.995 33.202 -22.424 1 35.47 ? 15 A 1
+ATOM 101 C CD . GLN Axp A . ? 44.092 34.725 -22.297 1 38.17 ? 15 A 1
+ATOM 102 O OE1 . GLN Axp A . ? 43.114 35.433 -22.113 1 40.08 ? 15 A 1
+ATOM 103 N NE2 . GLN Axp A . ? 45.302 35.25 -22.415 1 40.29 ? 15 A 1
+ATOM 104 N N . TRP Axp A . ? 39.878 31.252 -22.54 1 25.02 ? 16 A 1
+ATOM 105 C CA . TRP Axp A . ? 38.831 30.373 -23.032 1 24.38 ? 16 A 1
+ATOM 106 C C . TRP Axp A . ? 37.574 31.157 -23.429 1 24.35 ? 16 A 1
+ATOM 107 O O . TRP Axp A . ? 36.876 30.738 -24.355 1 24.4 ? 16 A 1
+ATOM 108 C CB . TRP Axp A . ? 38.434 29.214 -22.088 1 21.85 ? 16 A 1
+ATOM 109 C CG . TRP Axp A . ? 39.498 28.204 -21.753 1 20.89 ? 16 A 1
+ATOM 110 C CD1 . TRP Axp A . ? 40.705 28.016 -22.37 1 20.65 ? 16 A 1
+ATOM 111 C CD2 . TRP Axp A . ? 39.453 27.217 -20.7 1 18.88 ? 16 A 1
+ATOM 112 N NE1 . TRP Axp A . ? 41.418 26.974 -21.783 1 20.6 ? 16 A 1
+ATOM 113 C CE2 . TRP Axp A . ? 40.647 26.471 -20.761 1 19.61 ? 16 A 1
+ATOM 114 C CE3 . TRP Axp A . ? 38.511 26.906 -19.738 1 17.94 ? 16 A 1
+ATOM 115 C CZ2 . TRP Axp A . ? 40.926 25.433 -19.874 1 18.92 ? 16 A 1
+ATOM 116 C CZ3 . TRP Axp A . ? 38.771 25.882 -18.849 1 17.6 ? 16 A 1
+ATOM 117 C CH2 . TRP Axp A . ? 39.947 25.174 -18.909 1 16.7 ? 16 A 1
+ATOM 118 N N . SER Axp A . ? 37.291 32.225 -22.723 1 25.3 ? 17 A 1
+ATOM 119 C CA . SER Axp A . ? 36.068 33.019 -22.995 1 26.52 ? 17 A 1
+ATOM 120 C C . SER Axp A . ? 36.028 33.471 -24.458 1 27.13 ? 17 A 1
+ATOM 121 O O . SER Axp A . ? 34.952 33.566 -25.077 1 26.31 ? 17 A 1
+ATOM 122 C CB . SER Axp A . ? 36.131 34.281 -22.133 1 27.42 ? 17 A 1
+ATOM 123 O OG . SER Axp A . ? 37.023 35.152 -22.873 1 30.02 ? 17 A 1
+ATOM 124 N N . LYS Axp A . ? 37.237 33.764 -24.937 1 27.63 ? 18 A 1
+ATOM 125 C CA . LYS Axp A . ? 37.445 34.247 -26.296 1 28.51 ? 18 A 1
+ATOM 126 C C . LYS Axp A . ? 36.901 33.35 -27.378 1 28.16 ? 18 A 1
+ATOM 127 O O . LYS Axp A . ? 36.3 33.914 -28.302 1 28.5 ? 18 A 1
+ATOM 128 C CB . LYS Axp A . ? 38.92 34.462 -26.645 1 30.23 ? 18 A 1
+ATOM 129 C CG . LYS Axp A . ? 39.466 35.814 -26.225 1 30.59 ? 18 A 1
+ATOM 130 C CD . LYS Axp A . ? 40.93 35.877 -26.713 1 32.07 ? 18 A 1
+ATOM 131 C CE . LYS Axp A . ? 41.478 37.261 -26.358 1 34.2 ? 18 A 1
+ATOM 132 N NZ . LYS Axp A . ? 40.317 38.045 -25.789 1 36.32 ? 18 A 1
+ATOM 133 N N . LEU Axp A . ? 37.132 32.064 -27.251 1 28.23 ? 19 A 1
+ATOM 134 C CA . LEU Axp A . ? 36.667 31.046 -28.206 1 28.19 ? 19 A 1
+ATOM 135 C C . LEU Axp A . ? 35.345 30.401 -27.809 1 27.78 ? 19 A 1
+ATOM 136 O O . LEU Axp A . ? 34.603 29.923 -28.676 1 27.65 ? 19 A 1
+ATOM 137 C CB . LEU Axp A . ? 37.793 30.015 -28.351 1 30.07 ? 19 A 1
+ATOM 138 C CG . LEU Axp A . ? 38.714 30.008 -29.564 1 31.75 ? 19 A 1
+ATOM 139 C CD1 . LEU Axp A . ? 38.291 28.927 -30.587 1 31.53 ? 19 A 1
+ATOM 140 C CD2 . LEU Axp A . ? 38.726 31.382 -30.224 1 32.58 ? 19 A 1
+ATOM 141 N N . TYR Axp A . ? 35.087 30.347 -26.507 1 27.58 ? 20 A 1
+ATOM 142 C CA . TYR Axp A . ? 33.875 29.729 -25.941 1 26.56 ? 20 A 1
+ATOM 143 C C . TYR Axp A . ? 33.182 30.686 -24.984 1 26.19 ? 20 A 1
+ATOM 144 O O . TYR Axp A . ? 33.538 30.724 -23.79 1 26.34 ? 20 A 1
+ATOM 145 C CB . TYR Axp A . ? 34.297 28.459 -25.145 1 25.9 ? 20 A 1
+ATOM 146 C CG . TYR Axp A . ? 35.113 27.477 -25.948 1 26.25 ? 20 A 1
+ATOM 147 C CD1 . TYR Axp A . ? 34.463 26.608 -26.848 1 25.87 ? 20 A 1
+ATOM 148 C CD2 . TYR Axp A . ? 36.518 27.44 -25.895 1 25.36 ? 20 A 1
+ATOM 149 C CE1 . TYR Axp A . ? 35.182 25.734 -27.637 1 25.24 ? 20 A 1
+ATOM 150 C CE2 . TYR Axp A . ? 37.227 26.557 -26.693 1 25.58 ? 20 A 1
+ATOM 151 C CZ . TYR Axp A . ? 36.561 25.683 -27.549 1 25.42 ? 20 A 1
+ATOM 152 O OH . TYR Axp A . ? 37.246 24.773 -28.333 1 23.86 ? 20 A 1
+ATOM 153 N N . PRO Axp A . ? 32.213 31.423 -25.495 1 25.98 ? 21 A 1
+ATOM 154 C CA . PRO Axp A . ? 31.464 32.377 -24.668 1 25.84 ? 21 A 1
+ATOM 155 C C . PRO Axp A . ? 30.842 31.753 -23.439 1 24.84 ? 21 A 1
+ATOM 156 O O . PRO Axp A . ? 30.854 32.487 -22.415 1 25 ? 21 A 1
+ATOM 157 C CB . PRO Axp A . ? 30.497 33.073 -25.616 1 25.82 ? 21 A 1
+ATOM 158 C CG . PRO Axp A . ? 31.006 32.804 -26.979 1 25.91 ? 21 A 1
+ATOM 159 C CD . PRO Axp A . ? 31.708 31.434 -26.868 1 26.15 ? 21 A 1
+ATOM 160 N N . ILE Axp A . ? 30.34 30.528 -23.493 1 24.07 ? 22 A 1
+ATOM 161 C CA . ILE Axp A . ? 29.708 29.924 -22.314 1 24.04 ? 22 A 1
+ATOM 162 C C . ILE Axp A . ? 30.64 29.972 -21.089 1 23.39 ? 22 A 1
+ATOM 163 O O . ILE Axp A . ? 30.155 29.813 -19.955 1 22.61 ? 22 A 1
+ATOM 164 C CB . ILE Axp A . ? 29.231 28.437 -22.506 1 25.53 ? 22 A 1
+ATOM 165 C CG1 . ILE Axp A . ? 28.643 28.246 -23.909 1 28.1 ? 22 A 1
+ATOM 166 C CG2 . ILE Axp A . ? 28.205 28.06 -21.395 1 26.77 ? 22 A 1
+ATOM 167 C CD1 . ILE Axp A . ? 27.865 26.911 -24.192 1 28.63 ? 22 A 1
+ATOM 168 N N . ALA Axp A . ? 31.941 30.119 -21.38 1 22.25 ? 23 A 1
+ATOM 169 C CA . ALA Axp A . ? 32.915 30.194 -20.306 1 22.09 ? 23 A 1
+ATOM 170 C C . ALA Axp A . ? 32.494 31.204 -19.23 1 22.35 ? 23 A 1
+ATOM 171 O O . ALA Axp A . ? 32.88 31.101 -18.03 1 22.21 ? 23 A 1
+ATOM 172 C CB . ALA Axp A . ? 34.32 30.472 -20.805 1 22.59 ? 23 A 1
+ATOM 173 N N . ASN Axp A . ? 31.813 32.256 -19.629 1 22.63 ? 24 A 1
+ATOM 174 C CA . ASN Axp A . ? 31.351 33.31 -18.715 1 22.65 ? 24 A 1
+ATOM 175 C C . ASN Axp A . ? 29.882 33.044 -18.356 1 22.19 ? 24 A 1
+ATOM 176 O O . ASN Axp A . ? 29.204 34.04 -18.026 1 22.9 ? 24 A 1
+ATOM 177 C CB . ASN Axp A . ? 31.537 34.737 -19.228 1 23.46 ? 24 A 1
+ATOM 178 C CG . ASN Axp A . ? 32.845 35.173 -19.773 1 25.22 ? 24 A 1
+ATOM 179 O OD1 . ASN Axp A . ? 32.915 35.621 -20.95 1 26.37 ? 24 A 1
+ATOM 180 N ND2 . ASN Axp A . ? 33.934 35.115 -18.996 1 24.92 ? 24 A 1
+ATOM 181 N N . GLY Axp A . ? 29.415 31.82 -18.419 1 21.17 ? 25 A 1
+ATOM 182 C CA . GLY Axp A . ? 28.007 31.477 -18.095 1 20.42 ? 25 A 1
+ATOM 183 C C . GLY Axp A . ? 27.693 31.673 -16.618 1 19.38 ? 25 A 1
+ATOM 184 O O . GLY Axp A . ? 28.494 32.14 -15.822 1 18.72 ? 25 A 1
+ATOM 185 N N . ASN Axp A . ? 26.504 31.271 -16.236 1 19.12 ? 26 A 1
+ATOM 186 C CA . ASN Axp A . ? 25.979 31.343 -14.882 1 19.27 ? 26 A 1
+ATOM 187 C C . ASN Axp A . ? 26.013 30 -14.164 1 17.49 ? 26 A 1
+ATOM 188 O O . ASN Axp A . ? 25.652 29.95 -12.97 1 17.36 ? 26 A 1
+ATOM 189 C CB . ASN Axp A . ? 24.557 31.919 -14.808 1 20.83 ? 26 A 1
+ATOM 190 C CG . ASN Axp A . ? 24.378 33.219 -15.541 1 23.36 ? 26 A 1
+ATOM 191 O OD1 . ASN Axp A . ? 23.235 33.435 -16.011 1 26.49 ? 26 A 1
+ATOM 192 N ND2 . ASN Axp A . ? 25.343 34.089 -15.741 1 23.35 ? 26 A 1
+ATOM 193 N N . ASN Axp A . ? 26.364 28.951 -14.903 1 16.32 ? 27 A 1
+ATOM 194 C CA . ASN Axp A . ? 26.414 27.635 -14.203 1 15.24 ? 27 A 1
+ATOM 195 C C . ASN Axp A . ? 27.795 26.965 -14.475 1 13.86 ? 27 A 1
+ATOM 196 O O . ASN Axp A . ? 27.793 25.778 -14.851 1 12.3 ? 27 A 1
+ATOM 197 C CB . ASN Axp A . ? 25.255 26.743 -14.499 1 18.31 ? 27 A 1
+ATOM 198 C CG . ASN Axp A . ? 23.87 27.216 -14.06 1 21.06 ? 27 A 1
+ATOM 199 O OD1 . ASN Axp A . ? 22.934 26.768 -14.713 1 24.69 ? 27 A 1
+ATOM 200 N ND2 . ASN Axp A . ? 23.619 27.983 -13.026 1 20.08 ? 27 A 1
+ATOM 201 N N . GLN Axp A . ? 28.837 27.786 -14.293 1 11.89 ? 28 A 1
+ATOM 202 C CA . GLN Axp A . ? 30.214 27.312 -14.544 1 10.26 ? 28 A 1
+ATOM 203 C C . GLN Axp A . ? 30.822 26.633 -13.315 1 9.65 ? 28 A 1
+ATOM 204 O O . GLN Axp A . ? 30.565 27.018 -12.175 1 8.38 ? 28 A 1
+ATOM 205 C CB . GLN Axp A . ? 31.12 28.454 -15.051 1 9.27 ? 28 A 1
+ATOM 206 C CG . GLN Axp A . ? 30.719 28.9 -16.488 1 9.68 ? 28 A 1
+ATOM 207 C CD . GLN Axp A . ? 31.015 27.833 -17.495 1 8.65 ? 28 A 1
+ATOM 208 O OE1 . GLN Axp A . ? 32.141 27.431 -17.727 1 11.79 ? 28 A 1
+ATOM 209 N NE2 . GLN Axp A . ? 30.038 27.296 -18.232 1 9.38 ? 28 A 1
+ATOM 210 N N . SER Axp A . ? 31.694 25.654 -13.612 1 8.88 ? 29 A 1
+ATOM 211 C CA . SER Axp A . ? 32.442 24.903 -12.604 1 8.01 ? 29 A 1
+ATOM 212 C C . SER Axp A . ? 33.96 25.068 -12.793 1 7.58 ? 29 A 1
+ATOM 213 O O . SER Axp A . ? 34.472 25.311 -13.897 1 6.57 ? 29 A 1
+ATOM 214 C CB . SER Axp A . ? 32.066 23.412 -12.561 1 5.25 ? 29 A 1
+ATOM 215 O OG . SER Axp A . ? 30.708 23.266 -12.145 1 5.17 ? 29 A 1
+ATOM 216 N N . PRO Axp A . ? 34.747 24.854 -11.728 1 7.57 ? 30 A 1
+ATOM 217 C CA . PRO Axp A . ? 34.365 24.497 -10.368 1 7.35 ? 30 A 1
+ATOM 218 C C . PRO Axp A . ? 33.986 25.704 -9.528 1 7.25 ? 30 A 1
+ATOM 219 O O . PRO Axp A . ? 34.099 26.85 -10.051 1 7.84 ? 30 A 1
+ATOM 220 C CB . PRO Axp A . ? 35.639 23.806 -9.83 1 7.62 ? 30 A 1
+ATOM 221 C CG . PRO Axp A . ? 36.753 24.651 -10.475 1 7.34 ? 30 A 1
+ATOM 222 C CD . PRO Axp A . ? 36.214 24.944 -11.874 1 7.47 ? 30 A 1
+ATOM 223 N N . VAL Axp A . ? 33.636 25.511 -8.296 1 6.78 ? 31 A 1
+ATOM 224 C CA . VAL Axp A . ? 33.231 26.543 -7.348 1 8.7 ? 31 A 1
+ATOM 225 C C . VAL Axp A . ? 33.808 26.25 -5.965 1 9.91 ? 31 A 1
+ATOM 226 O O . VAL Axp A . ? 34.22 25.122 -5.609 1 8.36 ? 31 A 1
+ATOM 227 C CB . VAL Axp A . ? 31.664 26.59 -7.181 1 8.01 ? 31 A 1
+ATOM 228 C CG1 . VAL Axp A . ? 30.889 26.938 -8.417 1 9.39 ? 31 A 1
+ATOM 229 C CG2 . VAL Axp A . ? 31.208 25.23 -6.632 1 7.75 ? 31 A 1
+ATOM 230 N N . ASP Axp A . ? 33.747 27.34 -5.181 1 10.35 ? 32 A 1
+ATOM 231 C CA . ASP Axp A . ? 34.23 27.187 -3.75 1 11.42 ? 32 A 1
+ATOM 232 C C . ASP Axp A . ? 32.953 26.819 -2.95 1 11.3 ? 32 A 1
+ATOM 233 O O . ASP Axp A . ? 31.913 27.485 -3.157 1 11.15 ? 32 A 1
+ATOM 234 C CB . ASP Axp A . ? 34.849 28.493 -3.31 1 13.24 ? 32 A 1
+ATOM 235 C CG . ASP Axp A . ? 35.339 28.519 -1.881 1 15.65 ? 32 A 1
+ATOM 236 O OD1 . ASP Axp A . ? 35.839 27.53 -1.317 1 12.65 ? 32 A 1
+ATOM 237 O OD2 . ASP Axp A . ? 35.282 29.599 -1.273 1 18.2 ? 32 A 1
+ATOM 238 N N . ILE Axp A . ? 33.046 25.789 -2.155 1 10.92 ? 33 A 1
+ATOM 239 C CA . ILE Axp A . ? 31.982 25.303 -1.298 1 11.99 ? 33 A 1
+ATOM 240 C C . ILE Axp A . ? 32.164 25.895 0.119 1 13.3 ? 33 A 1
+ATOM 241 O O . ILE Axp A . ? 33.089 25.512 0.836 1 12.5 ? 33 A 1
+ATOM 242 C CB . ILE Axp A . ? 31.926 23.731 -1.237 1 12.26 ? 33 A 1
+ATOM 243 C CG1 . ILE Axp A . ? 31.711 23.118 -2.651 1 11.29 ? 33 A 1
+ATOM 244 C CG2 . ILE Axp A . ? 30.803 23.28 -0.235 1 13.97 ? 33 A 1
+ATOM 245 C CD1 . ILE Axp A . ? 31.843 21.563 -2.663 1 10.37 ? 33 A 1
+ATOM 246 N N . LYS Axp A . ? 31.316 26.866 0.448 1 14.94 ? 34 A 1
+ATOM 247 C CA . LYS Axp A . ? 31.364 27.486 1.794 1 16.34 ? 34 A 1
+ATOM 248 C C . LYS Axp A . ? 30.438 26.691 2.709 1 16.42 ? 34 A 1
+ATOM 249 O O . LYS Axp A . ? 29.239 26.763 2.558 1 16.04 ? 34 A 1
+ATOM 250 C CB . LYS Axp A . ? 30.905 28.957 1.764 1 18.68 ? 34 A 1
+ATOM 251 C CG . LYS Axp A . ? 31.832 29.676 0.769 1 20.24 ? 34 A 1
+ATOM 252 C CD . LYS Axp A . ? 31.723 31.165 0.795 1 24.52 ? 34 A 1
+ATOM 253 C CE . LYS Axp A . ? 32.162 31.809 -0.536 1 25.57 ? 34 A 1
+ATOM 254 N NZ . LYS Axp A . ? 32.109 33.283 -0.313 1 28.49 ? 34 A 1
+ATOM 255 N N . THR Axp A . ? 31.04 25.923 3.589 1 18.55 ? 35 A 1
+ATOM 256 C CA . THR Axp A . ? 30.316 25.048 4.515 1 20.41 ? 35 A 1
+ATOM 257 C C . THR Axp A . ? 29.258 25.755 5.312 1 22.37 ? 35 A 1
+ATOM 258 O O . THR Axp A . ? 28.199 25.138 5.541 1 23.27 ? 35 A 1
+ATOM 259 C CB . THR Axp A . ? 31.251 24.118 5.336 1 20.38 ? 35 A 1
+ATOM 260 O OG1 . THR Axp A . ? 32.124 24.959 6.16 1 20.1 ? 35 A 1
+ATOM 261 C CG2 . THR Axp A . ? 32.108 23.201 4.42 1 19.55 ? 35 A 1
+ATOM 262 N N . SER Axp A . ? 29.45 27.005 5.663 1 24.04 ? 36 A 1
+ATOM 263 C CA . SER Axp A . ? 28.41 27.73 6.436 1 25.28 ? 36 A 1
+ATOM 264 C C . SER Axp A . ? 27.157 28.097 5.666 1 25.35 ? 36 A 1
+ATOM 265 O O . SER Axp A . ? 26.104 28.422 6.287 1 24.72 ? 36 A 1
+ATOM 266 C CB . SER Axp A . ? 29.052 28.984 7.057 1 26.39 ? 36 A 1
+ATOM 267 O OG . SER Axp A . ? 29.568 29.829 6.053 1 28.1 ? 36 A 1
+ATOM 268 N N . GLU Axp A . ? 27.226 28.074 4.335 1 25.35 ? 37 A 1
+ATOM 269 C CA . GLU Axp A . ? 26.12 28.415 3.458 1 23.97 ? 37 A 1
+ATOM 270 C C . GLU Axp A . ? 25.511 27.239 2.754 1 23.63 ? 37 A 1
+ATOM 271 O O . GLU Axp A . ? 24.636 27.446 1.864 1 25.1 ? 37 A 1
+ATOM 272 C CB . GLU Axp A . ? 26.526 29.381 2.328 1 26.2 ? 37 A 1
+ATOM 273 C CG . GLU Axp A . ? 26.948 30.77 2.783 1 27.76 ? 37 A 1
+ATOM 274 C CD . GLU Axp A . ? 27.291 31.753 1.713 1 30.26 ? 37 A 1
+ATOM 275 O OE1 . GLU Axp A . ? 26.712 31.79 0.634 1 30.52 ? 37 A 1
+ATOM 276 O OE2 . GLU Axp A . ? 28.262 32.513 2.054 1 30.53 ? 37 A 1
+ATOM 277 N N . THR Axp A . ? 25.884 26.032 3.076 1 22.73 ? 38 A 1
+ATOM 278 C CA . THR Axp A . ? 25.25 24.868 2.414 1 22.94 ? 38 A 1
+ATOM 279 C C . THR Axp A . ? 23.893 24.588 3.086 1 23.14 ? 38 A 1
+ATOM 280 O O . THR Axp A . ? 23.674 24.934 4.271 1 23.62 ? 38 A 1
+ATOM 281 C CB . THR Axp A . ? 26.223 23.623 2.444 1 22.42 ? 38 A 1
+ATOM 282 O OG1 . THR Axp A . ? 26.492 23.435 3.866 1 23.11 ? 38 A 1
+ATOM 283 C CG2 . THR Axp A . ? 27.443 23.805 1.553 1 19.65 ? 38 A 1
+ATOM 284 N N . LYS Axp A . ? 23.001 23.963 2.347 1 22.11 ? 39 A 1
+ATOM 285 C CA . LYS Axp A . ? 21.652 23.627 2.841 1 21.62 ? 39 A 1
+ATOM 286 C C . LYS Axp A . ? 21.366 22.163 2.89 1 20.45 ? 39 A 1
+ATOM 287 O O . LYS Axp A . ? 21.531 21.45 1.878 1 20.32 ? 39 A 1
+ATOM 288 C CB . LYS Axp A . ? 20.64 24.438 1.985 1 23.44 ? 39 A 1
+ATOM 289 C CG . LYS Axp A . ? 20.97 25.928 2.349 1 25.63 ? 39 A 1
+ATOM 290 C CD . LYS Axp A . ? 19.858 26.877 1.983 1 27.76 ? 39 A 1
+ATOM 291 C CE . LYS Axp A . ? 20.394 27.948 1.017 1 30.36 ? 39 A 1
+ATOM 292 N NZ . LYS Axp A . ? 19.246 28.802 0.593 1 29.94 ? 39 A 1
+ATOM 293 N N . HIS Axp A . ? 20.966 21.69 4.075 1 19.64 ? 40 A 1
+ATOM 294 C CA . HIS Axp A . ? 20.662 20.246 4.232 1 19.75 ? 40 A 1
+ATOM 295 C C . HIS Axp A . ? 19.386 19.984 3.452 1 19.52 ? 40 A 1
+ATOM 296 O O . HIS Axp A . ? 18.398 20.7 3.552 1 19.86 ? 40 A 1
+ATOM 297 C CB . HIS Axp A . ? 20.58 19.813 5.704 1 19.67 ? 40 A 1
+ATOM 298 C CG . HIS Axp A . ? 20.306 18.372 5.914 1 19.47 ? 40 A 1
+ATOM 299 N ND1 . HIS Axp A . ? 19.348 17.921 6.816 1 21.07 ? 40 A 1
+ATOM 300 C CD2 . HIS Axp A . ? 20.836 17.265 5.373 1 19.59 ? 40 A 1
+ATOM 301 C CE1 . HIS Axp A . ? 19.322 16.575 6.761 1 21.67 ? 40 A 1
+ATOM 302 N NE2 . HIS Axp A . ? 20.218 16.158 5.882 1 20.59 ? 40 A 1
+ATOM 303 N N . ASP Axp A . ? 19.424 18.981 2.579 1 19.49 ? 41 A 1
+ATOM 304 C CA . ASP Axp A . ? 18.21 18.66 1.785 1 18.65 ? 41 A 1
+ATOM 305 C C . ASP Axp A . ? 17.811 17.236 2.222 1 18.48 ? 41 A 1
+ATOM 306 O O . ASP Axp A . ? 18.541 16.276 1.877 1 18.08 ? 41 A 1
+ATOM 307 C CB . ASP Axp A . ? 18.453 18.846 0.305 1 18.5 ? 41 A 1
+ATOM 308 C CG . ASP Axp A . ? 17.265 18.472 -0.583 1 19.08 ? 41 A 1
+ATOM 309 O OD1 . ASP Axp A . ? 16.466 17.581 -0.22 1 20.28 ? 41 A 1
+ATOM 310 O OD2 . ASP Axp A . ? 17.106 19.089 -1.63 1 19.41 ? 41 A 1
+ATOM 311 N N . THR Axp A . ? 16.686 17.195 2.942 1 17.9 ? 42 A 1
+ATOM 312 C CA . THR Axp A . ? 16.201 15.891 3.427 1 18.54 ? 42 A 1
+ATOM 313 C C . THR Axp A . ? 15.735 14.961 2.309 1 17.45 ? 42 A 1
+ATOM 314 O O . THR Axp A . ? 15.563 13.749 2.597 1 17.78 ? 42 A 1
+ATOM 315 C CB . THR Axp A . ? 15.153 15.99 4.592 1 19.33 ? 42 A 1
+ATOM 316 O OG1 . THR Axp A . ? 15.622 16.932 5.606 1 22.19 ? 42 A 1
+ATOM 317 C CG2 . THR Axp A . ? 14.975 14.655 5.309 1 22.85 ? 42 A 1
+ATOM 318 N N . SER Axp A . ? 15.545 15.436 1.107 1 16.46 ? 43 A 1
+ATOM 319 C CA . SER Axp A . ? 15.151 14.632 -0.036 1 16.33 ? 43 A 1
+ATOM 320 C C . SER Axp A . ? 16.295 13.787 -0.623 1 16.53 ? 43 A 1
+ATOM 321 O O . SER Axp A . ? 15.986 12.746 -1.205 1 16.8 ? 43 A 1
+ATOM 322 C CB . SER Axp A . ? 14.473 15.437 -1.115 1 16.65 ? 43 A 1
+ATOM 323 O OG . SER Axp A . ? 15.345 16.111 -1.937 1 17.78 ? 43 A 1
+ATOM 324 N N . LEU Axp A . ? 17.541 14.13 -0.389 1 16 ? 44 A 1
+ATOM 325 C CA . LEU Axp A . ? 18.729 13.408 -0.871 1 15.52 ? 44 A 1
+ATOM 326 C C . LEU Axp A . ? 18.851 12.002 -0.323 1 15.36 ? 44 A 1
+ATOM 327 O O . LEU Axp A . ? 18.855 11.8 0.916 1 15.63 ? 44 A 1
+ATOM 328 C CB . LEU Axp A . ? 19.912 14.317 -0.494 1 15.3 ? 44 A 1
+ATOM 329 C CG . LEU Axp A . ? 20.05 15.597 -1.302 1 15.72 ? 44 A 1
+ATOM 330 C CD1 . LEU Axp A . ? 21.407 16.269 -1.009 1 15.94 ? 44 A 1
+ATOM 331 C CD2 . LEU Axp A . ? 20.03 15.226 -2.8 1 16.14 ? 44 A 1
+ATOM 332 N N . LYS Axp A . ? 18.999 11.028 -1.204 1 15.08 ? 45 A 1
+ATOM 333 C CA . LYS Axp A . ? 19.19 9.607 -0.781 1 15.72 ? 45 A 1
+ATOM 334 C C . LYS Axp A . ? 20.72 9.343 -0.91 1 15.78 ? 45 A 1
+ATOM 335 O O . LYS Axp A . ? 21.423 10.099 -1.591 1 15.29 ? 45 A 1
+ATOM 336 C CB . LYS Axp A . ? 18.528 8.669 -1.784 1 18.2 ? 45 A 1
+ATOM 337 C CG . LYS Axp A . ? 16.971 8.77 -1.878 1 20.43 ? 45 A 1
+ATOM 338 C CD . LYS Axp A . ? 16.521 7.992 -3.131 1 23.08 ? 45 A 1
+ATOM 339 C CE . LYS Axp A . ? 15.02 7.904 -3.286 1 25.56 ? 45 A 1
+ATOM 340 N NZ . LYS Axp A . ? 14.615 6.719 -4.122 1 26.82 ? 45 A 1
+ATOM 341 N N . PRO Axp A . ? 21.164 8.297 -0.234 1 15.67 ? 46 A 1
+ATOM 342 C CA . PRO Axp A . ? 22.54 7.846 -0.335 1 15.37 ? 46 A 1
+ATOM 343 C C . PRO Axp A . ? 22.817 7.494 -1.81 1 15.24 ? 46 A 1
+ATOM 344 O O . PRO Axp A . ? 21.957 7.031 -2.583 1 14.66 ? 46 A 1
+ATOM 345 C CB . PRO Axp A . ? 22.634 6.556 0.51 1 15.42 ? 46 A 1
+ATOM 346 C CG . PRO Axp A . ? 21.342 6.502 1.262 1 15.3 ? 46 A 1
+ATOM 347 C CD . PRO Axp A . ? 20.339 7.388 0.576 1 15.2 ? 46 A 1
+ATOM 348 N N . ILE Axp A . ? 24.061 7.797 -2.174 1 15.29 ? 47 A 1
+ATOM 349 C CA . ILE Axp A . ? 24.5 7.447 -3.526 1 15.9 ? 47 A 1
+ATOM 350 C C . ILE Axp A . ? 24.874 5.933 -3.487 1 15.85 ? 47 A 1
+ATOM 351 O O . ILE Axp A . ? 25.446 5.405 -2.521 1 15.33 ? 47 A 1
+ATOM 352 C CB . ILE Axp A . ? 25.634 8.32 -4.084 1 18.26 ? 47 A 1
+ATOM 353 C CG1 . ILE Axp A . ? 26.849 8.303 -3.107 1 19.45 ? 47 A 1
+ATOM 354 C CG2 . ILE Axp A . ? 25.242 9.804 -4.355 1 18.41 ? 47 A 1
+ATOM 355 C CD1 . ILE Axp A . ? 27.999 9.239 -3.704 1 20.53 ? 47 A 1
+ATOM 356 N N . SER Axp A . ? 24.535 5.298 -4.581 1 15.31 ? 48 A 1
+ATOM 357 C CA . SER Axp A . ? 24.843 3.863 -4.733 1 16.75 ? 48 A 1
+ATOM 358 C C . SER Axp A . ? 25.585 3.673 -6.055 1 16.6 ? 48 A 1
+ATOM 359 O O . SER Axp A . ? 25.051 4.099 -7.084 1 16.54 ? 48 A 1
+ATOM 360 C CB . SER Axp A . ? 23.547 3.072 -4.688 1 18.45 ? 48 A 1
+ATOM 361 O OG . SER Axp A . ? 23.791 1.786 -5.269 1 22.34 ? 48 A 1
+ATOM 362 N N . VAL Axp A . ? 26.788 3.097 -5.964 1 15.9 ? 49 A 1
+ATOM 363 C CA . VAL Axp A . ? 27.564 2.835 -7.175 1 15.61 ? 49 A 1
+ATOM 364 C C . VAL Axp A . ? 27.552 1.315 -7.351 1 16.26 ? 49 A 1
+ATOM 365 O O . VAL Axp A . ? 27.645 0.611 -6.327 1 17.03 ? 49 A 1
+ATOM 366 C CB . VAL Axp A . ? 28.948 3.499 -7.141 1 15.12 ? 49 A 1
+ATOM 367 C CG1 . VAL Axp A . ? 28.912 4.983 -7.492 1 14.67 ? 49 A 1
+ATOM 368 C CG2 . VAL Axp A . ? 29.618 3.355 -5.762 1 14.3 ? 49 A 1
+ATOM 369 N N . SER Axp A . ? 27.378 0.856 -8.568 1 16.6 ? 50 A 1
+ATOM 370 C CA . SER Axp A . ? 27.41 -0.547 -8.92 1 16.37 ? 50 A 1
+ATOM 371 C C . SER Axp A . ? 28.087 -0.7 -10.273 1 15.51 ? 50 A 1
+ATOM 372 O O . SER Axp A . ? 27.429 -0.62 -11.302 1 15.43 ? 50 A 1
+ATOM 373 C CB . SER Axp A . ? 26.139 -1.364 -8.821 1 18.45 ? 50 A 1
+ATOM 374 O OG . SER Axp A . ? 26.6 -2.748 -8.966 1 22.22 ? 50 A 1
+ATOM 375 N N . TYR Axp A . ? 29.413 -0.858 -10.197 1 14.7 ? 51 A 1
+ATOM 376 C CA . TYR Axp A . ? 30.257 -0.987 -11.372 1 15.43 ? 51 A 1
+ATOM 377 C C . TYR Axp A . ? 30.779 -2.414 -11.535 1 15.36 ? 51 A 1
+ATOM 378 O O . TYR Axp A . ? 31.086 -3.112 -10.531 1 16.6 ? 51 A 1
+ATOM 379 C CB . TYR Axp A . ? 31.399 0.022 -11.276 1 15.84 ? 51 A 1
+ATOM 380 C CG . TYR Axp A . ? 31.13 1.458 -10.909 1 13.1 ? 51 A 1
+ATOM 381 C CD1 . TYR Axp A . ? 30.161 2.206 -11.557 1 13.5 ? 51 A 1
+ATOM 382 C CD2 . TYR Axp A . ? 31.933 2.088 -9.962 1 12.43 ? 51 A 1
+ATOM 383 C CE1 . TYR Axp A . ? 29.97 3.587 -11.27 1 10.9 ? 51 A 1
+ATOM 384 C CE2 . TYR Axp A . ? 31.784 3.459 -9.672 1 12.07 ? 51 A 1
+ATOM 385 C CZ . TYR Axp A . ? 30.761 4.178 -10.307 1 10.7 ? 51 A 1
+ATOM 386 O OH . TYR Axp A . ? 30.625 5.512 -9.981 1 11.1 ? 51 A 1
+ATOM 387 N N . ASN Axp A . ? 30.809 -2.826 -12.767 1 14.93 ? 52 A 1
+ATOM 388 C CA . ASN Axp A . ? 31.25 -4.163 -13.215 1 15 ? 52 A 1
+ATOM 389 C C . ASN Axp A . ? 32.69 -3.986 -13.74 1 14.86 ? 52 A 1
+ATOM 390 O O . ASN Axp A . ? 32.84 -3.29 -14.735 1 15.72 ? 52 A 1
+ATOM 391 C CB . ASN Axp A . ? 30.366 -4.65 -14.374 1 15.73 ? 52 A 1
+ATOM 392 C CG . ASN Axp A . ? 30.597 -6.11 -14.712 1 17.66 ? 52 A 1
+ATOM 393 O OD1 . ASN Axp A . ? 29.862 -7.017 -14.269 1 18.95 ? 52 A 1
+ATOM 394 N ND2 . ASN Axp A . ? 31.654 -6.435 -15.438 1 17.2 ? 52 A 1
+ATOM 395 N N . PRO Axp A . ? 33.624 -4.681 -13.154 1 15.4 ? 53 A 1
+ATOM 396 C CA . PRO Axp A . ? 35.045 -4.539 -13.518 1 15.99 ? 53 A 1
+ATOM 397 C C . PRO Axp A . ? 35.335 -4.852 -14.953 1 16.34 ? 53 A 1
+ATOM 398 O O . PRO Axp A . ? 36.281 -4.233 -15.51 1 17.86 ? 53 A 1
+ATOM 399 C CB . PRO Axp A . ? 35.789 -5.384 -12.516 1 15.67 ? 53 A 1
+ATOM 400 C CG . PRO Axp A . ? 34.84 -5.618 -11.397 1 15.71 ? 53 A 1
+ATOM 401 C CD . PRO Axp A . ? 33.463 -5.514 -11.957 1 15.43 ? 53 A 1
+ATOM 402 N N . ALA Axp A . ? 34.549 -5.734 -15.573 1 15.8 ? 54 A 1
+ATOM 403 C CA . ALA Axp A . ? 34.742 -6.144 -16.952 1 14.87 ? 54 A 1
+ATOM 404 C C . ALA Axp A . ? 34.354 -5.1 -17.96 1 14.65 ? 54 A 1
+ATOM 405 O O . ALA Axp A . ? 34.565 -5.338 -19.154 1 15.85 ? 54 A 1
+ATOM 406 C CB . ALA Axp A . ? 33.992 -7.477 -17.195 1 16.9 ? 54 A 1
+ATOM 407 N N . THR Axp A . ? 33.894 -3.921 -17.536 1 13.64 ? 55 A 1
+ATOM 408 C CA . THR Axp A . ? 33.513 -2.8 -18.334 1 11.72 ? 55 A 1
+ATOM 409 C C . THR Axp A . ? 34.783 -1.908 -18.576 1 11.52 ? 55 A 1
+ATOM 410 O O . THR Axp A . ? 34.729 -1.11 -19.532 1 11.27 ? 55 A 1
+ATOM 411 C CB . THR Axp A . ? 32.274 -1.934 -17.872 1 10.4 ? 55 A 1
+ATOM 412 O OG1 . THR Axp A . ? 32.522 -1.385 -16.529 1 11.07 ? 55 A 1
+ATOM 413 C CG2 . THR Axp A . ? 30.934 -2.704 -17.848 1 9.4 ? 55 A 1
+ATOM 414 N N . ALA Axp A . ? 35.805 -2.13 -17.786 1 10.18 ? 56 A 1
+ATOM 415 C CA . ALA Axp A . ? 37.048 -1.332 -17.983 1 10.4 ? 56 A 1
+ATOM 416 C C . ALA Axp A . ? 37.565 -1.697 -19.361 1 10.66 ? 56 A 1
+ATOM 417 O O . ALA Axp A . ? 37.579 -2.906 -19.691 1 11.3 ? 56 A 1
+ATOM 418 C CB . ALA Axp A . ? 38.07 -1.51 -16.917 1 9.46 ? 56 A 1
+ATOM 419 N N . LYS Axp A . ? 37.899 -0.673 -20.127 1 10.52 ? 57 A 1
+ATOM 420 C CA . LYS Axp A . ? 38.404 -0.938 -21.468 1 12.33 ? 57 A 1
+ATOM 421 C C . LYS Axp A . ? 39.768 -0.357 -21.843 1 12.65 ? 57 A 1
+ATOM 422 O O . LYS Axp A . ? 40.631 -1.198 -22.185 1 11.85 ? 57 A 1
+ATOM 423 C CB . LYS Axp A . ? 37.365 -0.704 -22.518 1 14.99 ? 57 A 1
+ATOM 424 C CG . LYS Axp A . ? 37.552 0.298 -23.577 1 17.42 ? 57 A 1
+ATOM 425 C CD . LYS Axp A . ? 36.265 0.578 -24.394 1 21.16 ? 57 A 1
+ATOM 426 C CE . LYS Axp A . ? 36.702 1.214 -25.704 1 22.16 ? 57 A 1
+ATOM 427 N NZ . LYS Axp A . ? 35.528 1.497 -26.569 1 27.26 ? 57 A 1
+ATOM 428 N N . GLU Axp A . ? 40.01 0.952 -21.766 1 12.78 ? 58 A 1
+ATOM 429 C CA . GLU Axp A . ? 41.352 1.459 -22.186 1 13.08 ? 58 A 1
+ATOM 430 C C . GLU Axp A . ? 41.789 2.695 -21.429 1 11.57 ? 58 A 1
+ATOM 431 O O . GLU Axp A . ? 40.952 3.325 -20.761 1 11.37 ? 58 A 1
+ATOM 432 C CB . GLU Axp A . ? 41.172 1.908 -23.677 1 17.97 ? 58 A 1
+ATOM 433 C CG . GLU Axp A . ? 40.499 3.243 -23.818 1 24.05 ? 58 A 1
+ATOM 434 C CD . GLU Axp A . ? 39.995 3.754 -25.12 1 27.16 ? 58 A 1
+ATOM 435 O OE1 . GLU Axp A . ? 39.008 3.38 -25.724 1 29.52 ? 58 A 1
+ATOM 436 O OE2 . GLU Axp A . ? 40.641 4.704 -25.605 1 31.6 ? 58 A 1
+ATOM 437 N N . ILE Axp A . ? 43.078 2.988 -21.465 1 10.84 ? 59 A 1
+ATOM 438 C CA . ILE Axp A . ? 43.749 4.185 -20.898 1 10.07 ? 59 A 1
+ATOM 439 C C . ILE Axp A . ? 44.335 4.939 -22.077 1 9.91 ? 59 A 1
+ATOM 440 O O . ILE Axp A . ? 44.853 4.338 -23.041 1 9.75 ? 59 A 1
+ATOM 441 C CB . ILE Axp A . ? 44.655 3.876 -19.681 1 10.13 ? 59 A 1
+ATOM 442 C CG1 . ILE Axp A . ? 45.162 5.17 -18.98 1 9.36 ? 59 A 1
+ATOM 443 C CG2 . ILE Axp A . ? 45.825 2.906 -20.013 1 8.97 ? 59 A 1
+ATOM 444 C CD1 . ILE Axp A . ? 45.671 4.907 -17.518 1 8.33 ? 59 A 1
+ATOM 445 N N . ILE Axp A . ? 44.141 6.259 -22.101 1 9.39 ? 60 A 1
+ATOM 446 C CA . ILE Axp A . ? 44.584 7.037 -23.28 1 9.16 ? 60 A 1
+ATOM 447 C C . ILE Axp A . ? 45.109 8.425 -22.887 1 8.73 ? 60 A 1
+ATOM 448 O O . ILE Axp A . ? 44.585 9.055 -21.977 1 7.64 ? 60 A 1
+ATOM 449 C CB . ILE Axp A . ? 43.416 7.17 -24.302 1 9.24 ? 60 A 1
+ATOM 450 C CG1 . ILE Axp A . ? 43.904 7.977 -25.543 1 8.6 ? 60 A 1
+ATOM 451 C CG2 . ILE Axp A . ? 42.185 7.898 -23.703 1 7.14 ? 60 A 1
+ATOM 452 C CD1 . ILE Axp A . ? 42.925 7.924 -26.742 1 13.49 ? 60 A 1
+ATOM 453 N N . ASN Axp A . ? 46.169 8.802 -23.576 1 9.25 ? 61 A 1
+ATOM 454 C CA . ASN Axp A . ? 46.793 10.153 -23.344 1 9.2 ? 61 A 1
+ATOM 455 C C . ASN Axp A . ? 46.136 11.09 -24.342 1 8.9 ? 61 A 1
+ATOM 456 O O . ASN Axp A . ? 46.231 10.887 -25.551 1 9.83 ? 61 A 1
+ATOM 457 C CB . ASN Axp A . ? 48.322 10.019 -23.386 1 8.16 ? 61 A 1
+ATOM 458 C CG . ASN Axp A . ? 49.076 11.286 -23.16 1 7.12 ? 61 A 1
+ATOM 459 O OD1 . ASN Axp A . ? 50.223 11.314 -22.61 1 11.1 ? 61 A 1
+ATOM 460 N ND2 . ASN Axp A . ? 48.528 12.408 -23.567 1 5.81 ? 61 A 1
+ATOM 461 N N . VAL Axp A . ? 45.44 12.088 -23.861 1 9.85 ? 62 A 1
+ATOM 462 C CA . VAL Axp A . ? 44.724 13.065 -24.655 1 10.9 ? 62 A 1
+ATOM 463 C C . VAL Axp A . ? 45.404 14.432 -24.604 1 11.24 ? 62 A 1
+ATOM 464 O O . VAL Axp A . ? 44.777 15.468 -24.941 1 11.88 ? 62 A 1
+ATOM 465 C CB . VAL Axp A . ? 43.212 13.069 -24.322 1 10.21 ? 62 A 1
+ATOM 466 C CG1 . VAL Axp A . ? 42.674 11.643 -24.241 1 10.35 ? 62 A 1
+ATOM 467 C CG2 . VAL Axp A . ? 42.953 13.816 -23.037 1 11.15 ? 62 A 1
+ATOM 468 N N . GLY Axp A . ? 46.641 14.42 -24.174 1 10.93 ? 63 A 1
+ATOM 469 C CA . GLY Axp A . ? 47.426 15.652 -24.219 1 12.26 ? 63 A 1
+ATOM 470 C C . GLY Axp A . ? 47.398 16.553 -23.04 1 12.63 ? 63 A 1
+ATOM 471 O O . GLY Axp A . ? 48.477 16.861 -22.494 1 12.43 ? 63 A 1
+ATOM 472 N N . HIS Axp A . ? 46.228 16.971 -22.633 1 12.46 ? 64 A 1
+ATOM 473 C CA . HIS Axp A . ? 46.066 17.849 -21.449 1 12.19 ? 64 A 1
+ATOM 474 C C . HIS Axp A . ? 45.825 16.994 -20.202 1 11.88 ? 64 A 1
+ATOM 475 O O . HIS Axp A . ? 45.849 17.565 -19.096 1 12.93 ? 64 A 1
+ATOM 476 C CB . HIS Axp A . ? 44.936 18.874 -21.573 1 11.14 ? 64 A 1
+ATOM 477 C CG . HIS Axp A . ? 43.608 18.207 -21.779 1 14.27 ? 64 A 1
+ATOM 478 N ND1 . HIS Axp A . ? 43.124 17.868 -23.063 1 14.82 ? 64 A 1
+ATOM 479 C CD2 . HIS Axp A . ? 42.652 17.878 -20.88 1 11.86 ? 64 A 1
+ATOM 480 C CE1 . HIS Axp A . ? 41.941 17.275 -22.863 1 14.64 ? 64 A 1
+ATOM 481 N NE2 . HIS Axp A . ? 41.686 17.24 -21.575 1 14.06 ? 64 A 1
+ATOM 482 N N . SER Axp A . ? 45.643 15.678 -20.386 1 11.09 ? 65 A 1
+ATOM 483 C CA . SER Axp A . ? 45.375 14.765 -19.279 1 9.44 ? 65 A 1
+ATOM 484 C C . SER Axp A . ? 45.328 13.343 -19.816 1 9.83 ? 65 A 1
+ATOM 485 O O . SER Axp A . ? 45.695 13.145 -21 1 9.13 ? 65 A 1
+ATOM 486 C CB . SER Axp A . ? 43.947 15.166 -18.734 1 10.27 ? 65 A 1
+ATOM 487 O OG . SER Axp A . ? 43.592 14.404 -17.595 1 8.69 ? 65 A 1
+ATOM 488 N N . PHE Axp A . ? 44.974 12.372 -19.005 1 9.09 ? 66 A 1
+ATOM 489 C CA . PHE Axp A . ? 44.831 10.96 -19.393 1 9.8 ? 66 A 1
+ATOM 490 C C . PHE Axp A . ? 43.392 10.493 -18.985 1 9.56 ? 66 A 1
+ATOM 491 O O . PHE Axp A . ? 42.95 10.917 -17.902 1 9.46 ? 66 A 1
+ATOM 492 C CB . PHE Axp A . ? 45.852 9.99 -18.82 1 7.87 ? 66 A 1
+ATOM 493 C CG . PHE Axp A . ? 45.905 9.777 -17.357 1 9.04 ? 66 A 1
+ATOM 494 C CD1 . PHE Axp A . ? 46.653 10.637 -16.537 1 9.98 ? 66 A 1
+ATOM 495 C CD2 . PHE Axp A . ? 45.238 8.729 -16.749 1 9.53 ? 66 A 1
+ATOM 496 C CE1 . PHE Axp A . ? 46.682 10.519 -15.165 1 10.1 ? 66 A 1
+ATOM 497 C CE2 . PHE Axp A . ? 45.25 8.555 -15.353 1 10.87 ? 66 A 1
+ATOM 498 C CZ . PHE Axp A . ? 45.973 9.466 -14.558 1 12.02 ? 66 A 1
+ATOM 499 N N . HIS Axp A . ? 42.779 9.646 -19.798 1 9.96 ? 67 A 1
+ATOM 500 C CA . HIS Axp A . ? 41.44 9.092 -19.505 1 10.14 ? 67 A 1
+ATOM 501 C C . HIS Axp A . ? 41.437 7.548 -19.451 1 10.39 ? 67 A 1
+ATOM 502 O O . HIS Axp A . ? 41.973 6.888 -20.32 1 10.85 ? 67 A 1
+ATOM 503 C CB . HIS Axp A . ? 40.37 9.44 -20.582 1 10.4 ? 67 A 1
+ATOM 504 C CG . HIS Axp A . ? 40.166 10.905 -20.717 1 10.68 ? 67 A 1
+ATOM 505 N ND1 . HIS Axp A . ? 39.72 11.558 -21.795 1 13.22 ? 67 A 1
+ATOM 506 C CD2 . HIS Axp A . ? 40.446 11.87 -19.795 1 11.93 ? 67 A 1
+ATOM 507 C CE1 . HIS Axp A . ? 39.679 12.87 -21.561 1 13.48 ? 67 A 1
+ATOM 508 N NE2 . HIS Axp A . ? 40.087 13.078 -20.309 1 12.8 ? 67 A 1
+ATOM 509 N N . VAL Axp A . ? 40.696 7.012 -18.486 1 10.26 ? 68 A 1
+ATOM 510 C CA . VAL Axp A . ? 40.393 5.606 -18.255 1 10.17 ? 68 A 1
+ATOM 511 C C . VAL Axp A . ? 38.943 5.417 -18.748 1 10.51 ? 68 A 1
+ATOM 512 O O . VAL Axp A . ? 37.984 5.895 -18.087 1 9.53 ? 68 A 1
+ATOM 513 C CB . VAL Axp A . ? 40.627 5.138 -16.821 1 10.86 ? 68 A 1
+ATOM 514 C CG1 . VAL Axp A . ? 40.282 3.643 -16.647 1 12.63 ? 68 A 1
+ATOM 515 C CG2 . VAL Axp A . ? 42.053 5.332 -16.34 1 10.69 ? 68 A 1
+ATOM 516 N N . ASN Axp A . ? 38.815 4.799 -19.923 1 10.04 ? 69 A 1
+ATOM 517 C CA . ASN Axp A . ? 37.474 4.615 -20.533 1 10.09 ? 69 A 1
+ATOM 518 C C . ASN Axp A . ? 36.863 3.248 -20.256 1 10.59 ? 69 A 1
+ATOM 519 O O . ASN Axp A . ? 37.542 2.25 -20.035 1 9.15 ? 69 A 1
+ATOM 520 C CB . ASN Axp A . ? 37.509 5.013 -21.99 1 11.03 ? 69 A 1
+ATOM 521 C CG . ASN Axp A . ? 37.883 6.409 -22.275 1 11.94 ? 69 A 1
+ATOM 522 O OD1 . ASN Axp A . ? 37.523 7.408 -21.632 1 12.76 ? 69 A 1
+ATOM 523 N ND2 . ASN Axp A . ? 38.637 6.629 -23.368 1 15.07 ? 69 A 1
+ATOM 524 N N . PHE Axp A . ? 35.51 3.297 -20.161 1 10.1 ? 70 A 1
+ATOM 525 C CA . PHE Axp A . ? 34.671 2.17 -19.9 1 11.87 ? 70 A 1
+ATOM 526 C C . PHE Axp A . ? 33.617 1.955 -21.015 1 13.24 ? 70 A 1
+ATOM 527 O O . PHE Axp A . ? 33.097 2.865 -21.678 1 12.64 ? 70 A 1
+ATOM 528 C CB . PHE Axp A . ? 33.978 2.283 -18.496 1 11.38 ? 70 A 1
+ATOM 529 C CG . PHE Axp A . ? 34.861 2.249 -17.303 1 11.65 ? 70 A 1
+ATOM 530 C CD1 . PHE Axp A . ? 35.682 3.35 -16.999 1 13.05 ? 70 A 1
+ATOM 531 C CD2 . PHE Axp A . ? 34.927 1.125 -16.475 1 11.49 ? 70 A 1
+ATOM 532 C CE1 . PHE Axp A . ? 36.572 3.309 -15.912 1 14.14 ? 70 A 1
+ATOM 533 C CE2 . PHE Axp A . ? 35.782 1.073 -15.382 1 13.78 ? 70 A 1
+ATOM 534 C CZ . PHE Axp A . ? 36.609 2.19 -15.066 1 13.85 ? 70 A 1
+ATOM 535 N N . GLU Axp A . ? 33.387 0.681 -21.296 1 15.11 ? 71 A 1
+ATOM 536 C CA . GLU Axp A . ? 32.355 0.278 -22.271 1 16.7 ? 71 A 1
+ATOM 537 C C . GLU Axp A . ? 30.998 0.798 -21.72 1 16.73 ? 71 A 1
+ATOM 538 O O . GLU Axp A . ? 30.69 0.561 -20.522 1 16.23 ? 71 A 1
+ATOM 539 C CB . GLU Axp A . ? 32.28 -1.239 -22.295 1 19.16 ? 71 A 1
+ATOM 540 C CG . GLU Axp A . ? 33.015 -1.887 -23.44 1 23.9 ? 71 A 1
+ATOM 541 C CD . GLU Axp A . ? 32.929 -3.402 -23.469 1 26.75 ? 71 A 1
+ATOM 542 O OE1 . GLU Axp A . ? 31.87 -4.027 -23.412 1 27.3 ? 71 A 1
+ATOM 543 O OE2 . GLU Axp A . ? 34.093 -3.851 -23.593 1 28.77 ? 71 A 1
+ATOM 544 N N . ASP Axp A . ? 30.267 1.527 -22.517 1 17.94 ? 72 A 1
+ATOM 545 C CA . ASP Axp A . ? 28.971 2.13 -22.048 1 19.51 ? 72 A 1
+ATOM 546 C C . ASP Axp A . ? 27.83 1.793 -23.008 1 21.11 ? 72 A 1
+ATOM 547 O O . ASP Axp A . ? 27.067 2.673 -23.432 1 21.46 ? 72 A 1
+ATOM 548 C CB . ASP Axp A . ? 29.177 3.634 -21.907 1 18.64 ? 72 A 1
+ATOM 549 C CG . ASP Axp A . ? 29.397 4.372 -23.197 1 19.78 ? 72 A 1
+ATOM 550 O OD1 . ASP Axp A . ? 29.674 3.762 -24.229 1 19.59 ? 72 A 1
+ATOM 551 O OD2 . ASP Axp A . ? 29.295 5.632 -23.244 1 19.17 ? 72 A 1
+ATOM 552 N N . ASN Axp A . ? 27.69 0.545 -23.325 1 23.25 ? 73 A 1
+ATOM 553 C CA . ASN Axp A . ? 26.694 0.018 -24.249 1 25.77 ? 73 A 1
+ATOM 554 C C . ASN Axp A . ? 25.487 -0.548 -23.491 1 25.97 ? 73 A 1
+ATOM 555 O O . ASN Axp A . ? 24.424 -0.738 -24.072 1 24.89 ? 73 A 1
+ATOM 556 C CB . ASN Axp A . ? 27.358 -1.121 -25.075 1 30.42 ? 73 A 1
+ATOM 557 C CG . ASN Axp A . ? 28.183 -0.583 -26.217 1 34.75 ? 73 A 1
+ATOM 558 O OD1 . ASN Axp A . ? 28.722 -1.369 -27.024 1 37.73 ? 73 A 1
+ATOM 559 N ND2 . ASN Axp A . ? 28.354 0.753 -26.329 1 38.05 ? 73 A 1
+ATOM 560 N N . ASP Axp A . ? 25.745 -0.831 -22.225 1 26.14 ? 74 A 1
+ATOM 561 C CA . ASP Axp A . ? 24.83 -1.451 -21.284 1 26.25 ? 74 A 1
+ATOM 562 C C . ASP Axp A . ? 24.79 -0.618 -19.97 1 25.13 ? 74 A 1
+ATOM 563 O O . ASP Axp A . ? 25.628 0.266 -19.799 1 24.83 ? 74 A 1
+ATOM 564 C CB . ASP Axp A . ? 25.417 -2.752 -20.691 1 29.45 ? 74 A 1
+ATOM 565 C CG . ASP Axp A . ? 25.698 -3.911 -21.553 1 32.87 ? 74 A 1
+ATOM 566 O OD1 . ASP Axp A . ? 25.8 -3.72 -22.799 1 35.68 ? 74 A 1
+ATOM 567 O OD2 . ASP Axp A . ? 25.864 -5.044 -21.029 1 34.18 ? 74 A 1
+ATOM 568 N N . ASN Axp A . ? 23.94 -1.204 -19.144 1 22.81 ? 75 A 1
+ATOM 569 C CA . ASN Axp A . ? 23.765 -0.653 -17.796 1 22.13 ? 75 A 1
+ATOM 570 C C . ASN Axp A . ? 24.466 -1.543 -16.784 1 20.14 ? 75 A 1
+ATOM 571 O O . ASN Axp A . ? 23.965 -1.714 -15.667 1 19.58 ? 75 A 1
+ATOM 572 C CB . ASN Axp A . ? 22.329 -0.283 -17.486 1 26.65 ? 75 A 1
+ATOM 573 C CG . ASN Axp A . ? 21.801 0.975 -18.152 1 28.27 ? 75 A 1
+ATOM 574 O OD1 . ASN Axp A . ? 20.582 1.255 -18.101 1 32.06 ? 75 A 1
+ATOM 575 N ND2 . ASN Axp A . ? 22.615 1.774 -18.837 1 28.97 ? 75 A 1
+ATOM 576 N N . ARG Axp A . ? 25.605 -2.09 -17.19 1 18.39 ? 76 A 1
+ATOM 577 C CA . ARG Axp A . ? 26.416 -2.922 -16.262 1 16.78 ? 76 A 1
+ATOM 578 C C . ARG Axp A . ? 27.036 -2.083 -15.165 1 15.49 ? 76 A 1
+ATOM 579 O O . ARG Axp A . ? 27.229 -2.579 -14.019 1 16.7 ? 76 A 1
+ATOM 580 C CB . ARG Axp A . ? 27.464 -3.743 -16.996 1 17.9 ? 76 A 1
+ATOM 581 C CG . ARG Axp A . ? 27.038 -5.139 -17.459 1 18.99 ? 76 A 1
+ATOM 582 C CD . ARG Axp A . ? 28.104 -5.764 -18.313 1 22.24 ? 76 A 1
+ATOM 583 N NE . ARG Axp A . ? 28.1 -5.137 -19.641 1 24.93 ? 76 A 1
+ATOM 584 C CZ . ARG Axp A . ? 29.143 -5.305 -20.502 1 26.37 ? 76 A 1
+ATOM 585 N NH1 . ARG Axp A . ? 30.193 -6.049 -20.224 1 25.4 ? 76 A 1
+ATOM 586 N NH2 . ARG Axp A . ? 29.147 -4.679 -21.687 1 27.01 ? 76 A 1
+ATOM 587 N N . SER Axp A . ? 27.386 -0.816 -15.465 1 14.26 ? 77 A 1
+ATOM 588 C CA . SER Axp A . ? 28.081 0.041 -14.406 1 12.37 ? 77 A 1
+ATOM 589 C C . SER Axp A . ? 27.308 1.352 -14.363 1 11.07 ? 77 A 1
+ATOM 590 O O . SER Axp A . ? 27.238 2.058 -15.388 1 10.63 ? 77 A 1
+ATOM 591 C CB . SER Axp A . ? 29.556 0.246 -14.801 1 10.58 ? 77 A 1
+ATOM 592 O OG . SER Axp A . ? 30.231 -0.978 -15.001 1 10.03 ? 77 A 1
+ATOM 593 N N . VAL Axp A . ? 26.655 1.612 -13.254 1 10.8 ? 78 A 1
+ATOM 594 C CA . VAL Axp A . ? 25.795 2.711 -13.018 1 10.83 ? 78 A 1
+ATOM 595 C C . VAL Axp A . ? 25.908 3.253 -11.59 1 11.57 ? 78 A 1
+ATOM 596 O O . VAL Axp A . ? 26.317 2.641 -10.618 1 12 ? 78 A 1
+ATOM 597 C CB . VAL Axp A . ? 24.279 2.348 -13.238 1 11.81 ? 78 A 1
+ATOM 598 C CG1 . VAL Axp A . ? 23.866 1.796 -14.578 1 10.91 ? 78 A 1
+ATOM 599 C CG2 . VAL Axp A . ? 23.795 1.391 -12.161 1 10.12 ? 78 A 1
+ATOM 600 N N . LEU Axp A . ? 25.485 4.501 -11.597 1 12.24 ? 79 A 1
+ATOM 601 C CA . LEU Axp A . ? 25.368 5.299 -10.391 1 12.92 ? 79 A 1
+ATOM 602 C C . LEU Axp A . ? 23.842 5.563 -10.276 1 13.25 ? 79 A 1
+ATOM 603 O O . LEU Axp A . ? 23.225 5.883 -11.31 1 12.68 ? 79 A 1
+ATOM 604 C CB . LEU Axp A . ? 26.192 6.573 -10.647 1 13.19 ? 79 A 1
+ATOM 605 C CG . LEU Axp A . ? 25.825 7.756 -9.755 1 13.75 ? 79 A 1
+ATOM 606 C CD1 . LEU Axp A . ? 26.264 7.438 -8.318 1 14.03 ? 79 A 1
+ATOM 607 C CD2 . LEU Axp A . ? 26.519 8.993 -10.299 1 14.82 ? 79 A 1
+ATOM 608 N N . LYS Axp A . ? 23.375 5.478 -9.051 1 14.3 ? 80 A 1
+ATOM 609 C CA . LYS Axp A . ? 21.975 5.755 -8.686 1 15.15 ? 80 A 1
+ATOM 610 C C . LYS Axp A . ? 21.92 6.413 -7.323 1 15.1 ? 80 A 1
+ATOM 611 O O . LYS Axp A . ? 22.853 6.363 -6.518 1 15.72 ? 80 A 1
+ATOM 612 C CB . LYS Axp A . ? 21.16 4.458 -8.533 1 18.88 ? 80 A 1
+ATOM 613 C CG . LYS Axp A . ? 21.15 3.436 -9.645 1 21.23 ? 80 A 1
+ATOM 614 C CD . LYS Axp A . ? 20.413 2.142 -9.204 1 24.21 ? 80 A 1
+ATOM 615 C CE . LYS Axp A . ? 20.84 1.031 -10.179 1 26.99 ? 80 A 1
+ATOM 616 N NZ . LYS Axp A . ? 21.057 -0.246 -9.441 1 29.07 ? 80 A 1
+ATOM 617 N N . GLY Axp A . ? 20.737 6.946 -6.967 1 15.19 ? 81 A 1
+ATOM 618 C CA . GLY Axp A . ? 20.555 7.555 -5.638 1 13.85 ? 81 A 1
+ATOM 619 C C . GLY Axp A . ? 20.916 9.031 -5.708 1 14.5 ? 81 A 1
+ATOM 620 O O . GLY Axp A . ? 20.803 9.66 -6.748 1 13.79 ? 81 A 1
+ATOM 621 N N . GLY Axp A . ? 21.399 9.548 -4.573 1 14.24 ? 82 A 1
+ATOM 622 C CA . GLY Axp A . ? 21.718 10.996 -4.55 1 15.94 ? 82 A 1
+ATOM 623 C C . GLY Axp A . ? 20.461 11.789 -4.923 1 16.22 ? 82 A 1
+ATOM 624 O O . GLY Axp A . ? 19.385 11.538 -4.399 1 15.82 ? 82 A 1
+ATOM 625 N N . PRO Axp A . ? 20.636 12.781 -5.767 1 17.24 ? 83 A 1
+ATOM 626 C CA . PRO Axp A . ? 19.532 13.654 -6.21 1 17.36 ? 83 A 1
+ATOM 627 C C . PRO Axp A . ? 18.76 13.137 -7.41 1 17.42 ? 83 A 1
+ATOM 628 O O . PRO Axp A . ? 17.8 13.764 -7.851 1 16.39 ? 83 A 1
+ATOM 629 C CB . PRO Axp A . ? 20.269 14.939 -6.575 1 17.61 ? 83 A 1
+ATOM 630 C CG . PRO Axp A . ? 21.548 14.419 -7.228 1 17.34 ? 83 A 1
+ATOM 631 C CD . PRO Axp A . ? 21.919 13.177 -6.395 1 17.42 ? 83 A 1
+ATOM 632 N N . PHE Axp A . ? 19.12 11.982 -7.915 1 17.54 ? 84 A 1
+ATOM 633 C CA . PHE Axp A . ? 18.614 11.351 -9.091 1 18.27 ? 84 A 1
+ATOM 634 C C . PHE Axp A . ? 17.438 10.382 -8.929 1 20.16 ? 84 A 1
+ATOM 635 O O . PHE Axp A . ? 17.249 9.708 -7.916 1 20.83 ? 84 A 1
+ATOM 636 C CB . PHE Axp A . ? 19.781 10.653 -9.822 1 16.42 ? 84 A 1
+ATOM 637 C CG . PHE Axp A . ? 20.952 11.556 -10.107 1 16.14 ? 84 A 1
+ATOM 638 C CD1 . PHE Axp A . ? 20.793 12.688 -10.905 1 15.03 ? 84 A 1
+ATOM 639 C CD2 . PHE Axp A . ? 22.2 11.281 -9.563 1 16.29 ? 84 A 1
+ATOM 640 C CE1 . PHE Axp A . ? 21.868 13.53 -11.165 1 16.1 ? 84 A 1
+ATOM 641 C CE2 . PHE Axp A . ? 23.301 12.093 -9.807 1 15.55 ? 84 A 1
+ATOM 642 C CZ . PHE Axp A . ? 23.153 13.229 -10.622 1 15.29 ? 84 A 1
+ATOM 643 N N . SER Axp A . ? 16.683 10.346 -10.031 1 21.19 ? 85 A 1
+ATOM 644 C CA . SER Axp A . ? 15.524 9.491 -10.202 1 23.29 ? 85 A 1
+ATOM 645 C C . SER Axp A . ? 15.913 8.408 -11.24 1 24 ? 85 A 1
+ATOM 646 O O . SER Axp A . ? 15.266 7.364 -11.234 1 24.83 ? 85 A 1
+ATOM 647 C CB . SER Axp A . ? 14.308 10.177 -10.858 1 23.1 ? 85 A 1
+ATOM 648 O OG . SER Axp A . ? 13.837 11.15 -9.987 1 23.32 ? 85 A 1
+ATOM 649 N N . ASP Axp A . ? 16.886 8.824 -12.049 1 24.16 ? 86 A 1
+ATOM 650 C CA . ASP Axp A . ? 17.326 7.889 -13.126 1 24.83 ? 86 A 1
+ATOM 651 C C . ASP Axp A . ? 18.695 7.354 -12.74 1 23.32 ? 86 A 1
+ATOM 652 O O . ASP Axp A . ? 19.298 7.765 -11.731 1 23.03 ? 86 A 1
+ATOM 653 C CB . ASP Axp A . ? 17.156 8.553 -14.482 1 29.4 ? 86 A 1
+ATOM 654 C CG . ASP Axp A . ? 15.699 8.565 -14.967 1 32.81 ? 86 A 1
+ATOM 655 O OD1 . ASP Axp A . ? 14.786 8.434 -14.123 1 35.75 ? 86 A 1
+ATOM 656 O OD2 . ASP Axp A . ? 15.305 8.702 -16.153 1 34.84 ? 86 A 1
+ATOM 657 N N . SER Axp A . ? 19.115 6.404 -13.511 1 21.58 ? 87 A 1
+ATOM 658 C CA . SER Axp A . ? 20.438 5.731 -13.304 1 19.11 ? 87 A 1
+ATOM 659 C C . SER Axp A . ? 21.36 6.357 -14.336 1 16.88 ? 87 A 1
+ATOM 660 O O . SER Axp A . ? 20.894 6.645 -15.467 1 16.49 ? 87 A 1
+ATOM 661 C CB . SER Axp A . ? 20.223 4.23 -13.492 1 20.97 ? 87 A 1
+ATOM 662 O OG . SER Axp A . ? 20.288 3.981 -14.933 1 24.54 ? 87 A 1
+ATOM 663 N N . TYR Axp A . ? 22.628 6.557 -13.943 1 15.14 ? 88 A 1
+ATOM 664 C CA . TYR Axp A . ? 23.646 7.157 -14.869 1 13.28 ? 88 A 1
+ATOM 665 C C . TYR Axp A . ? 24.731 6.085 -15.12 1 12.61 ? 88 A 1
+ATOM 666 O O . TYR Axp A . ? 25.145 5.438 -14.141 1 13.02 ? 88 A 1
+ATOM 667 C CB . TYR Axp A . ? 24.14 8.456 -14.266 1 11.62 ? 88 A 1
+ATOM 668 C CG . TYR Axp A . ? 23.259 9.678 -14.368 1 9.95 ? 88 A 1
+ATOM 669 C CD1 . TYR Axp A . ? 22.034 9.813 -13.699 1 9.94 ? 88 A 1
+ATOM 670 C CD2 . TYR Axp A . ? 23.68 10.725 -15.179 1 10.29 ? 88 A 1
+ATOM 671 C CE1 . TYR Axp A . ? 21.232 10.963 -13.863 1 8.96 ? 88 A 1
+ATOM 672 C CE2 . TYR Axp A . ? 22.932 11.907 -15.343 1 10.23 ? 88 A 1
+ATOM 673 C CZ . TYR Axp A . ? 21.655 11.962 -14.69 1 9.56 ? 88 A 1
+ATOM 674 O OH . TYR Axp A . ? 21.028 13.193 -14.855 1 10.5 ? 88 A 1
+ATOM 675 N N . ARG Axp A . ? 25.069 5.859 -16.356 1 10.85 ? 89 A 1
+ATOM 676 C CA . ARG Axp A . ? 26.019 4.959 -16.944 1 10.7 ? 89 A 1
+ATOM 677 C C . ARG Axp A . ? 27.443 5.588 -16.862 1 9.26 ? 89 A 1
+ATOM 678 O O . ARG Axp A . ? 27.657 6.732 -17.337 1 8.23 ? 89 A 1
+ATOM 679 C CB . ARG Axp A . ? 25.751 4.662 -18.414 1 11.55 ? 89 A 1
+ATOM 680 C CG . ARG Axp A . ? 26.273 3.34 -18.967 1 16.26 ? 89 A 1
+ATOM 681 C CD . ARG Axp A . ? 25.794 3.154 -20.402 1 18.08 ? 89 A 1
+ATOM 682 N NE . ARG Axp A . ? 24.394 2.677 -20.409 1 20.24 ? 89 A 1
+ATOM 683 C CZ . ARG Axp A . ? 23.601 2.575 -21.477 1 20.42 ? 89 A 1
+ATOM 684 N NH1 . ARG Axp A . ? 23.946 2.897 -22.705 1 20.19 ? 89 A 1
+ATOM 685 N NH2 . ARG Axp A . ? 22.339 2.125 -21.315 1 21.67 ? 89 A 1
+ATOM 686 N N . LEU Axp A . ? 28.297 4.836 -16.228 1 8.28 ? 90 A 1
+ATOM 687 C CA . LEU Axp A . ? 29.699 5.22 -16.042 1 8.57 ? 90 A 1
+ATOM 688 C C . LEU Axp A . ? 30.359 5.149 -17.439 1 7.9 ? 90 A 1
+ATOM 689 O O . LEU Axp A . ? 30.097 4.163 -18.139 1 8.78 ? 90 A 1
+ATOM 690 C CB . LEU Axp A . ? 30.361 4.179 -15.111 1 6.59 ? 90 A 1
+ATOM 691 C CG . LEU Axp A . ? 31.908 4.202 -15.055 1 7.81 ? 90 A 1
+ATOM 692 C CD1 . LEU Axp A . ? 32.388 5.322 -14.167 1 8.09 ? 90 A 1
+ATOM 693 C CD2 . LEU Axp A . ? 32.344 2.849 -14.464 1 7.3 ? 90 A 1
+ATOM 694 N N . PHE Axp A . ? 31.139 6.143 -17.774 1 7.25 ? 91 A 1
+ATOM 695 C CA . PHE Axp A . ? 31.867 6.138 -19.049 1 6.34 ? 91 A 1
+ATOM 696 C C . PHE Axp A . ? 33.381 6.433 -18.806 1 7.2 ? 91 A 1
+ATOM 697 O O . PHE Axp A . ? 34.252 6.034 -19.62 1 7.3 ? 91 A 1
+ATOM 698 C CB . PHE Axp A . ? 31.256 7.003 -20.135 1 6.29 ? 91 A 1
+ATOM 699 C CG . PHE Axp A . ? 31.349 8.505 -19.958 1 6.01 ? 91 A 1
+ATOM 700 C CD1 . PHE Axp A . ? 30.403 9.194 -19.239 1 7.21 ? 91 A 1
+ATOM 701 C CD2 . PHE Axp A . ? 32.408 9.209 -20.518 1 6.78 ? 91 A 1
+ATOM 702 C CE1 . PHE Axp A . ? 30.473 10.586 -19.087 1 7.88 ? 91 A 1
+ATOM 703 C CE2 . PHE Axp A . ? 32.518 10.605 -20.399 1 7.69 ? 91 A 1
+ATOM 704 C CZ . PHE Axp A . ? 31.522 11.309 -19.652 1 7.35 ? 91 A 1
+ATOM 705 N N . GLN Axp A . ? 33.719 7.14 -17.744 1 8.16 ? 92 A 1
+ATOM 706 C CA . GLN Axp A . ? 35.186 7.424 -17.605 1 7.64 ? 92 A 1
+ATOM 707 C C . GLN Axp A . ? 35.543 7.943 -16.24 1 7.62 ? 92 A 1
+ATOM 708 O O . GLN Axp A . ? 34.694 8.367 -15.428 1 7.62 ? 92 A 1
+ATOM 709 C CB . GLN Axp A . ? 35.446 8.521 -18.688 1 8.98 ? 92 A 1
+ATOM 710 C CG . GLN Axp A . ? 36.814 9.209 -18.547 1 10.24 ? 92 A 1
+ATOM 711 C CD . GLN Axp A . ? 36.862 10.501 -19.325 1 9.62 ? 92 A 1
+ATOM 712 O OE1 . GLN Axp A . ? 36.828 11.582 -18.778 1 8.27 ? 92 A 1
+ATOM 713 N NE2 . GLN Axp A . ? 37.001 10.375 -20.652 1 10.09 ? 92 A 1
+ATOM 714 N N . PHE Axp A . ? 36.84 7.891 -15.952 1 7.44 ? 93 A 1
+ATOM 715 C CA . PHE Axp A . ? 37.432 8.55 -14.739 1 7.29 ? 93 A 1
+ATOM 716 C C . PHE Axp A . ? 38.751 9.22 -15.238 1 7.87 ? 93 A 1
+ATOM 717 O O . PHE Axp A . ? 39.368 8.677 -16.222 1 6.24 ? 93 A 1
+ATOM 718 C CB . PHE Axp A . ? 37.493 7.742 -13.509 1 6.2 ? 93 A 1
+ATOM 719 C CG . PHE Axp A . ? 38.554 6.701 -13.385 1 8.95 ? 93 A 1
+ATOM 720 C CD1 . PHE Axp A . ? 39.858 7.154 -13.017 1 8.88 ? 93 A 1
+ATOM 721 C CD2 . PHE Axp A . ? 38.298 5.351 -13.592 1 6.75 ? 93 A 1
+ATOM 722 C CE1 . PHE Axp A . ? 40.905 6.236 -12.896 1 9.72 ? 93 A 1
+ATOM 723 C CE2 . PHE Axp A . ? 39.352 4.437 -13.46 1 7.78 ? 93 A 1
+ATOM 724 C CZ . PHE Axp A . ? 40.653 4.882 -13.144 1 9.38 ? 93 A 1
+ATOM 725 N N . HIS Axp A . ? 39.08 10.329 -14.579 1 7.26 ? 94 A 1
+ATOM 726 C CA . HIS Axp A . ? 40.338 11.057 -14.886 1 6.97 ? 94 A 1
+ATOM 727 C C . HIS Axp A . ? 40.718 11.866 -13.624 1 6.45 ? 94 A 1
+ATOM 728 O O . HIS Axp A . ? 39.934 11.848 -12.671 1 6.23 ? 94 A 1
+ATOM 729 C CB . HIS Axp A . ? 40.301 11.998 -16.076 1 6.03 ? 94 A 1
+ATOM 730 C CG . HIS Axp A . ? 39.181 13 -16.01 1 7.65 ? 94 A 1
+ATOM 731 N ND1 . HIS Axp A . ? 37.919 12.788 -16.563 1 5.51 ? 94 A 1
+ATOM 732 C CD2 . HIS Axp A . ? 39.1 14.168 -15.332 1 7.95 ? 94 A 1
+ATOM 733 C CE1 . HIS Axp A . ? 37.195 13.876 -16.349 1 7.42 ? 94 A 1
+ATOM 734 N NE2 . HIS Axp A . ? 37.834 14.711 -15.544 1 6.04 ? 94 A 1
+ATOM 735 N N . PHE Axp A . ? 41.881 12.514 -13.666 1 4.51 ? 95 A 1
+ATOM 736 C CA . PHE Axp A . ? 42.344 13.308 -12.511 1 4.97 ? 95 A 1
+ATOM 737 C C . PHE Axp A . ? 42.664 14.732 -12.928 1 3.66 ? 95 A 1
+ATOM 738 O O . PHE Axp A . ? 42.731 14.952 -14.157 1 4.32 ? 95 A 1
+ATOM 739 C CB . PHE Axp A . ? 43.623 12.687 -11.877 1 5.36 ? 95 A 1
+ATOM 740 C CG . PHE Axp A . ? 43.451 11.303 -11.318 1 5 ? 95 A 1
+ATOM 741 C CD1 . PHE Axp A . ? 43.614 10.194 -12.09 1 5.15 ? 95 A 1
+ATOM 742 C CD2 . PHE Axp A . ? 43.141 11.148 -9.946 1 6.59 ? 95 A 1
+ATOM 743 C CE1 . PHE Axp A . ? 43.49 8.888 -11.591 1 6.58 ? 95 A 1
+ATOM 744 C CE2 . PHE Axp A . ? 42.987 9.867 -9.412 1 6.57 ? 95 A 1
+ATOM 745 C CZ . PHE Axp A . ? 43.166 8.74 -10.234 1 5.43 ? 95 A 1
+ATOM 746 N N . HIS Axp A . ? 42.83 15.607 -12.013 1 5.2 ? 96 A 1
+ATOM 747 C CA . HIS Axp A . ? 43.228 17.022 -12.12 1 4.85 ? 96 A 1
+ATOM 748 C C . HIS Axp A . ? 44.309 17.29 -11.051 1 5.61 ? 96 A 1
+ATOM 749 O O . HIS Axp A . ? 44.131 16.79 -9.911 1 5.62 ? 96 A 1
+ATOM 750 C CB . HIS Axp A . ? 42.178 18.141 -11.964 1 6.23 ? 96 A 1
+ATOM 751 C CG . HIS Axp A . ? 41.17 18.096 -13.081 1 6.2 ? 96 A 1
+ATOM 752 N ND1 . HIS Axp A . ? 41.184 18.835 -14.216 1 6.97 ? 96 A 1
+ATOM 753 C CD2 . HIS Axp A . ? 40.105 17.261 -13.193 1 5.52 ? 96 A 1
+ATOM 754 C CE1 . HIS Axp A . ? 40.111 18.559 -14.965 1 5.12 ? 96 A 1
+ATOM 755 N NE2 . HIS Axp A . ? 39.488 17.558 -14.342 1 4.58 ? 96 A 1
+ATOM 756 N N . TRP Axp A . ? 45.335 18.012 -11.442 1 6.2 ? 97 A 1
+ATOM 757 C CA . TRP Axp A . ? 46.464 18.269 -10.462 1 8.13 ? 97 A 1
+ATOM 758 C C . TRP Axp A . ? 47.054 19.614 -10.813 1 7.6 ? 97 A 1
+ATOM 759 O O . TRP Axp A . ? 46.673 20.182 -11.858 1 7.28 ? 97 A 1
+ATOM 760 C CB . TRP Axp A . ? 47.53 17.145 -10.58 1 8.72 ? 97 A 1
+ATOM 761 C CG . TRP Axp A . ? 48.101 16.965 -11.949 1 9.62 ? 97 A 1
+ATOM 762 C CD1 . TRP Axp A . ? 49.138 17.68 -12.523 1 10.73 ? 97 A 1
+ATOM 763 C CD2 . TRP Axp A . ? 47.705 15.993 -12.947 1 10.98 ? 97 A 1
+ATOM 764 N NE1 . TRP Axp A . ? 49.394 17.205 -13.778 1 10.6 ? 97 A 1
+ATOM 765 C CE2 . TRP Axp A . ? 48.547 16.155 -14.054 1 11.28 ? 97 A 1
+ATOM 766 C CE3 . TRP Axp A . ? 46.714 14.976 -12.963 1 7.84 ? 97 A 1
+ATOM 767 C CZ2 . TRP Axp A . ? 48.411 15.389 -15.227 1 10.88 ? 97 A 1
+ATOM 768 C CZ3 . TRP Axp A . ? 46.609 14.224 -14.094 1 7.96 ? 97 A 1
+ATOM 769 C CH2 . TRP Axp A . ? 47.413 14.401 -15.23 1 10.05 ? 97 A 1
+ATOM 770 N N . GLY Axp A . ? 47.99 20.099 -9.987 1 9.09 ? 98 A 1
+ATOM 771 C CA . GLY Axp A . ? 48.59 21.423 -10.301 1 8.66 ? 98 A 1
+ATOM 772 C C . GLY Axp A . ? 50.132 21.232 -10.338 1 9.95 ? 98 A 1
+ATOM 773 O O . GLY Axp A . ? 50.626 20.137 -10.045 1 8.88 ? 98 A 1
+ATOM 774 N N . SER Axp A . ? 50.798 22.322 -10.699 1 10.06 ? 99 A 1
+ATOM 775 C CA . SER Axp A . ? 52.3 22.304 -10.735 1 11.11 ? 99 A 1
+ATOM 776 C C . SER Axp A . ? 52.923 22.114 -9.381 1 10.82 ? 99 A 1
+ATOM 777 O O . SER Axp A . ? 54.122 21.724 -9.305 1 11.51 ? 99 A 1
+ATOM 778 C CB . SER Axp A . ? 52.765 23.561 -11.466 1 12.16 ? 99 A 1
+ATOM 779 O OG . SER Axp A . ? 52.577 24.648 -10.562 1 14.68 ? 99 A 1
+ATOM 780 N N . THR Axp A . ? 52.277 22.334 -8.261 1 10.36 ? 100 A 1
+ATOM 781 C CA . THR Axp A . ? 52.794 22.064 -6.912 1 10.34 ? 100 A 1
+ATOM 782 C C . THR Axp A . ? 51.9 20.96 -6.278 1 10.93 ? 100 A 1
+ATOM 783 O O . THR Axp A . ? 50.708 20.828 -6.635 1 9.7 ? 100 A 1
+ATOM 784 C CB . THR Axp A . ? 52.947 23.276 -5.953 1 10.65 ? 100 A 1
+ATOM 785 O OG1 . THR Axp A . ? 51.554 23.575 -5.567 1 11.79 ? 100 A 1
+ATOM 786 C CG2 . THR Axp A . ? 53.557 24.551 -6.569 1 10.06 ? 100 A 1
+ATOM 787 N N . ASN Axp A . ? 52.474 20.167 -5.406 1 11.01 ? 101 A 1
+ATOM 788 C CA . ASN Axp A . ? 51.838 19.07 -4.726 1 11.04 ? 101 A 1
+ATOM 789 C C . ASN Axp A . ? 50.805 19.555 -3.708 1 11.71 ? 101 A 1
+ATOM 790 O O . ASN Axp A . ? 49.95 18.779 -3.342 1 11.59 ? 101 A 1
+ATOM 791 C CB . ASN Axp A . ? 52.765 18.096 -4.042 1 13.02 ? 101 A 1
+ATOM 792 C CG . ASN Axp A . ? 53.727 17.396 -4.967 1 14.04 ? 101 A 1
+ATOM 793 O OD1 . ASN Axp A . ? 54.901 17.197 -4.539 1 14.47 ? 101 A 1
+ATOM 794 N ND2 . ASN Axp A . ? 53.26 17.016 -6.145 1 13.39 ? 101 A 1
+ATOM 795 N N . GLU Axp A . ? 50.841 20.803 -3.324 1 12.54 ? 102 A 1
+ATOM 796 C CA . GLU Axp A . ? 49.894 21.267 -2.302 1 13.45 ? 102 A 1
+ATOM 797 C C . GLU Axp A . ? 48.609 21.853 -2.848 1 13.87 ? 102 A 1
+ATOM 798 O O . GLU Axp A . ? 47.607 21.8 -2.137 1 14.63 ? 102 A 1
+ATOM 799 C CB . GLU Axp A . ? 50.556 22.377 -1.447 1 14.89 ? 102 A 1
+ATOM 800 C CG . GLU Axp A . ? 51.805 21.88 -0.668 1 17.09 ? 102 A 1
+ATOM 801 C CD . GLU Axp A . ? 53.001 21.507 -1.495 1 18.11 ? 102 A 1
+ATOM 802 O OE1 . GLU Axp A . ? 53.468 22.146 -2.428 1 17.88 ? 102 A 1
+ATOM 803 O OE2 . GLU Axp A . ? 53.506 20.421 -1.128 1 20.51 ? 102 A 1
+ATOM 804 N N . HIS Axp A . ? 48.686 22.411 -4.049 1 13.78 ? 103 A 1
+ATOM 805 C CA . HIS Axp A . ? 47.524 23.096 -4.611 1 13.94 ? 103 A 1
+ATOM 806 C C . HIS Axp A . ? 47.229 22.676 -6.042 1 12.59 ? 103 A 1
+ATOM 807 O O . HIS Axp A . ? 47.835 23.274 -6.92 1 13.14 ? 103 A 1
+ATOM 808 C CB . HIS Axp A . ? 47.729 24.662 -4.625 1 16.31 ? 103 A 1
+ATOM 809 C CG . HIS Axp A . ? 47.911 25.184 -3.22 1 18.79 ? 103 A 1
+ATOM 810 N ND1 . HIS Axp A . ? 49.062 25.746 -2.729 1 20.28 ? 103 A 1
+ATOM 811 C CD2 . HIS Axp A . ? 47.065 25.119 -2.174 1 19.64 ? 103 A 1
+ATOM 812 C CE1 . HIS Axp A . ? 48.896 26.05 -1.461 1 20.7 ? 103 A 1
+ATOM 813 N NE2 . HIS Axp A . ? 47.696 25.67 -1.082 1 20.53 ? 103 A 1
+ATOM 814 N N . GLY Axp A . ? 46.292 21.745 -6.212 1 11.06 ? 104 A 1
+ATOM 815 C CA . GLY Axp A . ? 45.957 21.327 -7.574 1 9.06 ? 104 A 1
+ATOM 816 C C . GLY Axp A . ? 44.535 20.852 -7.78 1 8.73 ? 104 A 1
+ATOM 817 O O . GLY Axp A . ? 44.33 20.358 -8.888 1 8.85 ? 104 A 1
+ATOM 818 N N . SER Axp A . ? 43.629 20.994 -6.84 1 8.11 ? 105 A 1
+ATOM 819 C CA . SER Axp A . ? 42.229 20.552 -7.011 1 8.14 ? 105 A 1
+ATOM 820 C C . SER Axp A . ? 41.483 21.634 -7.802 1 8.03 ? 105 A 1
+ATOM 821 O O . SER Axp A . ? 42.084 22.684 -8.112 1 6.59 ? 105 A 1
+ATOM 822 C CB . SER Axp A . ? 41.616 20.254 -5.653 1 7.56 ? 105 A 1
+ATOM 823 O OG . SER Axp A . ? 41.399 21.393 -4.852 1 8.24 ? 105 A 1
+ATOM 824 N N . GLU Axp A . ? 40.294 21.309 -8.256 1 8.28 ? 106 A 1
+ATOM 825 C CA . GLU Axp A . ? 39.416 22.231 -9.011 1 8.03 ? 106 A 1
+ATOM 826 C C . GLU Axp A . ? 38.493 22.895 -7.998 1 7.93 ? 106 A 1
+ATOM 827 O O . GLU Axp A . ? 38.553 24.109 -7.701 1 9.05 ? 106 A 1
+ATOM 828 C CB . GLU Axp A . ? 38.696 21.549 -10.158 1 7.78 ? 106 A 1
+ATOM 829 C CG . GLU Axp A . ? 39.632 20.973 -11.224 1 8.84 ? 106 A 1
+ATOM 830 C CD . GLU Axp A . ? 39.218 21.111 -12.654 1 8.52 ? 106 A 1
+ATOM 831 O OE1 . GLU Axp A . ? 38.239 20.333 -12.924 1 10.96 ? 106 A 1
+ATOM 832 O OE2 . GLU Axp A . ? 39.709 21.814 -13.486 1 5.31 ? 106 A 1
+ATOM 833 N N . HIS Axp A . ? 37.718 22.101 -7.294 1 7.86 ? 107 A 1
+ATOM 834 C CA . HIS Axp A . ? 36.837 22.577 -6.236 1 7.53 ? 107 A 1
+ATOM 835 C C . HIS Axp A . ? 37.655 22.838 -4.951 1 8.23 ? 107 A 1
+ATOM 836 O O . HIS Axp A . ? 38.659 22.189 -4.637 1 8.42 ? 107 A 1
+ATOM 837 C CB . HIS Axp A . ? 35.73 21.529 -5.922 1 6.03 ? 107 A 1
+ATOM 838 C CG . HIS Axp A . ? 34.79 21.317 -7.077 1 5.68 ? 107 A 1
+ATOM 839 N ND1 . HIS Axp A . ? 34.968 20.401 -8.098 1 5.7 ? 107 A 1
+ATOM 840 C CD2 . HIS Axp A . ? 33.632 21.943 -7.352 1 4.85 ? 107 A 1
+ATOM 841 C CE1 . HIS Axp A . ? 33.926 20.473 -8.903 1 5.13 ? 107 A 1
+ATOM 842 N NE2 . HIS Axp A . ? 33.114 21.393 -8.471 1 4.17 ? 107 A 1
+ATOM 843 N N . THR Axp A . ? 37.231 23.824 -4.205 1 9.08 ? 108 A 1
+ATOM 844 C CA . THR Axp A . ? 37.815 24.255 -2.968 1 9.98 ? 108 A 1
+ATOM 845 C C . THR Axp A . ? 36.688 24.2 -1.919 1 10.48 ? 108 A 1
+ATOM 846 O O . THR Axp A . ? 35.506 24.184 -2.301 1 8.53 ? 108 A 1
+ATOM 847 C CB . THR Axp A . ? 38.504 25.676 -3.105 1 9.79 ? 108 A 1
+ATOM 848 O OG1 . THR Axp A . ? 37.446 26.651 -3.276 1 11.68 ? 108 A 1
+ATOM 849 C CG2 . THR Axp A . ? 39.464 25.802 -4.298 1 9.38 ? 108 A 1
+ATOM 850 N N . VAL Axp A . ? 37.108 24.06 -0.68 1 11.13 ? 109 A 1
+ATOM 851 C CA . VAL Axp A . ? 36.156 24.001 0.462 1 11.09 ? 109 A 1
+ATOM 852 C C . VAL Axp A . ? 36.591 25.024 1.485 1 11.73 ? 109 A 1
+ATOM 853 O O . VAL Axp A . ? 37.752 25.006 1.95 1 12.8 ? 109 A 1
+ATOM 854 C CB . VAL Axp A . ? 36.09 22.565 1.028 1 11.49 ? 109 A 1
+ATOM 855 C CG1 . VAL Axp A . ? 35.149 22.51 2.26 1 10.84 ? 109 A 1
+ATOM 856 C CG2 . VAL Axp A . ? 35.611 21.564 0.01 1 10.93 ? 109 A 1
+ATOM 857 N N . ASP Axp A . ? 35.715 25.955 1.839 1 12.99 ? 110 A 1
+ATOM 858 C CA . ASP Axp A . ? 35.997 27.055 2.778 1 14.16 ? 110 A 1
+ATOM 859 C C . ASP Axp A . ? 37.24 27.846 2.361 1 14.22 ? 110 A 1
+ATOM 860 O O . ASP Axp A . ? 38.008 28.319 3.187 1 14.85 ? 110 A 1
+ATOM 861 C CB . ASP Axp A . ? 35.94 26.642 4.253 1 14.85 ? 110 A 1
+ATOM 862 C CG . ASP Axp A . ? 34.498 26.34 4.682 1 15.39 ? 110 A 1
+ATOM 863 O OD1 . ASP Axp A . ? 33.546 27.023 4.284 1 16.15 ? 110 A 1
+ATOM 864 O OD2 . ASP Axp A . ? 34.37 25.354 5.416 1 16.37 ? 110 A 1
+ATOM 865 N N . GLY Axp A . ? 37.378 28.02 1.077 1 14.73 ? 111 A 1
+ATOM 866 C CA . GLY Axp A . ? 38.454 28.709 0.4 1 15.15 ? 111 A 1
+ATOM 867 C C . GLY Axp A . ? 39.749 27.928 0.328 1 15.35 ? 111 A 1
+ATOM 868 O O . GLY Axp A . ? 40.725 28.495 -0.18 1 16.48 ? 111 A 1
+ATOM 869 N N . VAL Axp A . ? 39.79 26.696 0.751 1 14.98 ? 112 A 1
+ATOM 870 C CA . VAL Axp A . ? 40.902 25.788 0.821 1 14.61 ? 112 A 1
+ATOM 871 C C . VAL Axp A . ? 41.027 24.901 -0.415 1 13.66 ? 112 A 1
+ATOM 872 O O . VAL Axp A . ? 40.13 24.134 -0.783 1 13.44 ? 112 A 1
+ATOM 873 C CB . VAL Axp A . ? 40.84 24.944 2.125 1 15.02 ? 112 A 1
+ATOM 874 C CG1 . VAL Axp A . ? 41.839 23.789 2.137 1 15.28 ? 112 A 1
+ATOM 875 C CG2 . VAL Axp A . ? 41.099 25.761 3.373 1 17.01 ? 112 A 1
+ATOM 876 N N . LYS Axp A . ? 42.186 25.046 -1.046 1 12.91 ? 113 A 1
+ATOM 877 C CA . LYS Axp A . ? 42.492 24.246 -2.248 1 13.43 ? 113 A 1
+ATOM 878 C C . LYS Axp A . ? 43.242 22.988 -1.822 1 12.36 ? 113 A 1
+ATOM 879 O O . LYS Axp A . ? 44.214 23.076 -1.056 1 14.79 ? 113 A 1
+ATOM 880 C CB . LYS Axp A . ? 43.188 25.068 -3.318 1 15.24 ? 113 A 1
+ATOM 881 C CG . LYS Axp A . ? 43.741 24.377 -4.525 1 16.25 ? 113 A 1
+ATOM 882 C CD . LYS Axp A . ? 44.134 25.2 -5.71 1 16.91 ? 113 A 1
+ATOM 883 C CE . LYS Axp A . ? 42.984 25.506 -6.619 1 16.99 ? 113 A 1
+ATOM 884 N NZ . LYS Axp A . ? 43.444 25.578 -8.019 1 18.68 ? 113 A 1
+ATOM 885 N N . TYR Axp A . ? 42.837 21.82 -2.258 1 10.84 ? 114 A 1
+ATOM 886 C CA . TYR Axp A . ? 43.416 20.512 -2.016 1 9.46 ? 114 A 1
+ATOM 887 C C . TYR Axp A . ? 44.475 20.24 -3.112 1 8.67 ? 114 A 1
+ATOM 888 O O . TYR Axp A . ? 44.718 21.123 -3.951 1 9.34 ? 114 A 1
+ATOM 889 C CB . TYR Axp A . ? 42.369 19.419 -1.904 1 12.4 ? 114 A 1
+ATOM 890 C CG . TYR Axp A . ? 41.525 19.493 -0.641 1 14.61 ? 114 A 1
+ATOM 891 C CD1 . TYR Axp A . ? 40.812 20.671 -0.315 1 15.74 ? 114 A 1
+ATOM 892 C CD2 . TYR Axp A . ? 41.432 18.403 0.185 1 16.5 ? 114 A 1
+ATOM 893 C CE1 . TYR Axp A . ? 40.049 20.787 0.823 1 17.56 ? 114 A 1
+ATOM 894 C CE2 . TYR Axp A . ? 40.61 18.467 1.337 1 19.17 ? 114 A 1
+ATOM 895 C CZ . TYR Axp A . ? 39.946 19.64 1.647 1 19.56 ? 114 A 1
+ATOM 896 O OH . TYR Axp A . ? 39.175 19.615 2.767 1 21.88 ? 114 A 1
+ATOM 897 N N . SER Axp A . ? 45.128 19.089 -3.045 1 7.72 ? 115 A 1
+ATOM 898 C CA . SER Axp A . ? 46.263 18.764 -3.892 1 8.18 ? 115 A 1
+ATOM 899 C C . SER Axp A . ? 45.952 18.307 -5.303 1 7.61 ? 115 A 1
+ATOM 900 O O . SER Axp A . ? 46.728 18.524 -6.25 1 8.21 ? 115 A 1
+ATOM 901 C CB . SER Axp A . ? 47.071 17.606 -3.249 1 8.97 ? 115 A 1
+ATOM 902 O OG . SER Axp A . ? 47.548 17.953 -1.982 1 10.18 ? 115 A 1
+ATOM 903 N N . ALA Axp A . ? 44.802 17.648 -5.409 1 6.06 ? 116 A 1
+ATOM 904 C CA . ALA Axp A . ? 44.405 17.031 -6.673 1 5.08 ? 116 A 1
+ATOM 905 C C . ALA Axp A . ? 42.905 16.637 -6.541 1 4.93 ? 116 A 1
+ATOM 906 O O . ALA Axp A . ? 42.352 16.72 -5.431 1 5.99 ? 116 A 1
+ATOM 907 C CB . ALA Axp A . ? 45.259 15.781 -6.915 1 3.95 ? 116 A 1
+ATOM 908 N N . GLU Axp A . ? 42.365 16.142 -7.611 1 4.6 ? 117 A 1
+ATOM 909 C CA . GLU Axp A . ? 40.916 15.77 -7.577 1 4.72 ? 117 A 1
+ATOM 910 C C . GLU Axp A . ? 40.644 14.678 -8.547 1 5.31 ? 117 A 1
+ATOM 911 O O . GLU Axp A . ? 41.178 14.749 -9.697 1 7.61 ? 117 A 1
+ATOM 912 C CB . GLU Axp A . ? 40.122 17.01 -8.081 1 3.41 ? 117 A 1
+ATOM 913 C CG . GLU Axp A . ? 38.579 16.929 -7.627 1 3.9 ? 117 A 1
+ATOM 914 C CD . GLU Axp A . ? 37.896 18.27 -7.853 1 4.6 ? 117 A 1
+ATOM 915 O OE1 . GLU Axp A . ? 38.468 19.209 -7.258 1 4.79 ? 117 A 1
+ATOM 916 O OE2 . GLU Axp A . ? 36.839 18.419 -8.483 1 4.67 ? 117 A 1
+ATOM 917 N N . LEU Axp A . ? 39.901 13.672 -8.195 1 4.68 ? 118 A 1
+ATOM 918 C CA . LEU Axp A . ? 39.475 12.574 -9.063 1 4.59 ? 118 A 1
+ATOM 919 C C . LEU Axp A . ? 38.022 12.85 -9.553 1 4.73 ? 118 A 1
+ATOM 920 O O . LEU Axp A . ? 37.172 13.224 -8.747 1 4.97 ? 118 A 1
+ATOM 921 C CB . LEU Axp A . ? 39.57 11.274 -8.232 1 6.01 ? 118 A 1
+ATOM 922 C CG . LEU Axp A . ? 38.658 10.108 -8.669 1 7.01 ? 118 A 1
+ATOM 923 C CD1 . LEU Axp A . ? 39.319 9.423 -9.879 1 6.9 ? 118 A 1
+ATOM 924 C CD2 . LEU Axp A . ? 38.496 9.068 -7.545 1 6.28 ? 118 A 1
+ATOM 925 N N . HIS Axp A . ? 37.733 12.698 -10.808 1 3.74 ? 119 A 1
+ATOM 926 C CA . HIS Axp A . ? 36.434 12.878 -11.416 1 4.1 ? 119 A 1
+ATOM 927 C C . HIS Axp A . ? 35.975 11.543 -12.056 1 4.18 ? 119 A 1
+ATOM 928 O O . HIS Axp A . ? 36.716 11.005 -12.867 1 5.23 ? 119 A 1
+ATOM 929 C CB . HIS Axp A . ? 36.397 13.957 -12.513 1 3.05 ? 119 A 1
+ATOM 930 C CG . HIS Axp A . ? 36.614 15.341 -11.986 1 3.89 ? 119 A 1
+ATOM 931 N ND1 . HIS Axp A . ? 36.906 16.425 -12.783 1 2.1 ? 119 A 1
+ATOM 932 C CD2 . HIS Axp A . ? 36.472 15.789 -10.693 1 2.47 ? 119 A 1
+ATOM 933 C CE1 . HIS Axp A . ? 36.926 17.491 -11.978 1 3.08 ? 119 A 1
+ATOM 934 N NE2 . HIS Axp A . ? 36.688 17.181 -10.729 1 2.05 ? 119 A 1
+ATOM 935 N N . VAL Axp A . ? 34.827 11.069 -11.63 1 3.67 ? 120 A 1
+ATOM 936 C CA . VAL Axp A . ? 34.203 9.821 -12.129 1 6.33 ? 120 A 1
+ATOM 937 C C . VAL Axp A . ? 32.866 10.307 -12.813 1 6.6 ? 120 A 1
+ATOM 938 O O . VAL Axp A . ? 31.915 10.787 -12.181 1 7.74 ? 120 A 1
+ATOM 939 C CB . VAL Axp A . ? 33.989 8.753 -11.089 1 5.57 ? 120 A 1
+ATOM 940 C CG1 . VAL Axp A . ? 33.418 7.428 -11.632 1 5.72 ? 120 A 1
+ATOM 941 C CG2 . VAL Axp A . ? 35.064 8.491 -10.052 1 6.77 ? 120 A 1
+ATOM 942 N N . ALA Axp A . ? 32.859 10.177 -14.118 1 7.41 ? 121 A 1
+ATOM 943 C CA . ALA Axp A . ? 31.801 10.692 -15.007 1 7 ? 121 A 1
+ATOM 944 C C . ALA Axp A . ? 30.884 9.625 -15.506 1 6.5 ? 121 A 1
+ATOM 945 O O . ALA Axp A . ? 31.29 8.472 -15.79 1 7.31 ? 121 A 1
+ATOM 946 C CB . ALA Axp A . ? 32.477 11.416 -16.176 1 5.91 ? 121 A 1
+ATOM 947 N N . HIS Axp A . ? 29.64 10.014 -15.589 1 6.15 ? 122 A 1
+ATOM 948 C CA . HIS Axp A . ? 28.527 9.164 -16.061 1 6.46 ? 122 A 1
+ATOM 949 C C . HIS Axp A . ? 27.575 9.974 -16.958 1 8.25 ? 122 A 1
+ATOM 950 O O . HIS Axp A . ? 27.482 11.18 -16.746 1 7.82 ? 122 A 1
+ATOM 951 C CB . HIS Axp A . ? 27.604 8.827 -14.819 1 7.15 ? 122 A 1
+ATOM 952 C CG . HIS Axp A . ? 28.423 8.321 -13.684 1 5.14 ? 122 A 1
+ATOM 953 N ND1 . HIS Axp A . ? 29.148 9.114 -12.864 1 5.6 ? 122 A 1
+ATOM 954 C CD2 . HIS Axp A . ? 28.566 7.032 -13.257 1 6.3 ? 122 A 1
+ATOM 955 C CE1 . HIS Axp A . ? 29.766 8.375 -11.973 1 4.65 ? 122 A 1
+ATOM 956 N NE2 . HIS Axp A . ? 29.416 7.083 -12.182 1 6.62 ? 122 A 1
+ATOM 957 N N . TRP Axp A . ? 26.827 9.294 -17.844 1 9.45 ? 123 A 1
+ATOM 958 C CA . TRP Axp A . ? 25.878 10.025 -18.708 1 9.94 ? 123 A 1
+ATOM 959 C C . TRP Axp A . ? 24.469 9.417 -18.543 1 10.19 ? 123 A 1
+ATOM 960 O O . TRP Axp A . ? 24.212 8.262 -18.186 1 9.49 ? 123 A 1
+ATOM 961 C CB . TRP Axp A . ? 26.355 10.17 -20.139 1 10.44 ? 123 A 1
+ATOM 962 C CG . TRP Axp A . ? 26.561 8.86 -20.835 1 13.66 ? 123 A 1
+ATOM 963 C CD1 . TRP Axp A . ? 27.7 8.116 -20.883 1 13 ? 123 A 1
+ATOM 964 C CD2 . TRP Axp A . ? 25.595 8.188 -21.668 1 15.23 ? 123 A 1
+ATOM 965 N NE1 . TRP Axp A . ? 27.514 6.993 -21.667 1 16.04 ? 123 A 1
+ATOM 966 C CE2 . TRP Axp A . ? 26.218 7.013 -22.15 1 17.11 ? 123 A 1
+ATOM 967 C CE3 . TRP Axp A . ? 24.294 8.49 -22.065 1 18.25 ? 123 A 1
+ATOM 968 C CZ2 . TRP Axp A . ? 25.573 6.129 -23.013 1 18.81 ? 123 A 1
+ATOM 969 C CZ3 . TRP Axp A . ? 23.63 7.606 -22.919 1 18.59 ? 123 A 1
+ATOM 970 C CH2 . TRP Axp A . ? 24.267 6.449 -23.385 1 19.37 ? 123 A 1
+ATOM 971 N N . ASN Axp A . ? 23.496 10.269 -18.776 1 11.6 ? 124 A 1
+ATOM 972 C CA . ASN Axp A . ? 22.059 9.868 -18.542 1 12.66 ? 124 A 1
+ATOM 973 C C . ASN Axp A . ? 21.584 8.931 -19.643 1 13.03 ? 124 A 1
+ATOM 974 O O . ASN Axp A . ? 21.178 9.391 -20.715 1 13.06 ? 124 A 1
+ATOM 975 C CB . ASN Axp A . ? 21.252 11.146 -18.328 1 12.14 ? 124 A 1
+ATOM 976 C CG . ASN Axp A . ? 19.814 10.825 -17.898 1 12.88 ? 124 A 1
+ATOM 977 O OD1 . ASN Axp A . ? 19.142 11.773 -17.471 1 15.94 ? 124 A 1
+ATOM 978 N ND2 . ASN Axp A . ? 19.371 9.613 -17.939 1 11.07 ? 124 A 1
+ATOM 979 N N . SER Axp A . ? 21.603 7.654 -19.371 1 14.6 ? 125 A 1
+ATOM 980 C CA . SER Axp A . ? 21.189 6.625 -20.33 1 17.88 ? 125 A 1
+ATOM 981 C C . SER Axp A . ? 19.655 6.48 -20.363 1 19.79 ? 125 A 1
+ATOM 982 O O . SER Axp A . ? 19.088 5.902 -21.331 1 19.24 ? 125 A 1
+ATOM 983 C CB . SER Axp A . ? 21.865 5.283 -20.029 1 18.34 ? 125 A 1
+ATOM 984 O OG . SER Axp A . ? 21.835 4.934 -18.635 1 20.93 ? 125 A 1
+ATOM 985 N N . ALA Axp A . ? 19.032 6.947 -19.28 1 20.77 ? 126 A 1
+ATOM 986 C CA . ALA Axp A . ? 17.543 6.827 -19.199 1 22.64 ? 126 A 1
+ATOM 987 C C . ALA Axp A . ? 16.886 7.844 -20.109 1 23.61 ? 126 A 1
+ATOM 988 O O . ALA Axp A . ? 15.79 7.625 -20.631 1 24.64 ? 126 A 1
+ATOM 989 C CB . ALA Axp A . ? 17.105 6.922 -17.758 1 23.47 ? 126 A 1
+ATOM 990 N N . LYS Axp A . ? 17.53 8.951 -20.396 1 24.05 ? 127 A 1
+ATOM 991 C CA . LYS Axp A . ? 17.044 10.015 -21.219 1 24.94 ? 127 A 1
+ATOM 992 C C . LYS Axp A . ? 17.623 10.112 -22.613 1 25.39 ? 127 A 1
+ATOM 993 O O . LYS Axp A . ? 16.87 10.494 -23.513 1 24.65 ? 127 A 1
+ATOM 994 C CB . LYS Axp A . ? 17.303 11.369 -20.593 1 27.35 ? 127 A 1
+ATOM 995 C CG . LYS Axp A . ? 16.291 12.081 -19.745 1 31.31 ? 127 A 1
+ATOM 996 C CD . LYS Axp A . ? 16.602 13.607 -19.83 1 35.64 ? 127 A 1
+ATOM 997 C CE . LYS Axp A . ? 15.382 14.49 -19.534 1 36.27 ? 127 A 1
+ATOM 998 N NZ . LYS Axp A . ? 14.765 14.919 -20.908 1 40.09 ? 127 A 1
+ATOM 999 N N . TYR Axp A . ? 18.965 9.938 -22.758 1 25.24 ? 128 A 1
+ATOM 1000 C CA . TYR Axp A . ? 19.55 10.177 -24.099 1 25.15 ? 128 A 1
+ATOM 1001 C C . TYR Axp A . ? 19.999 8.927 -24.771 1 24.98 ? 128 A 1
+ATOM 1002 O O . TYR Axp A . ? 20.04 7.878 -24.144 1 25.1 ? 128 A 1
+ATOM 1003 C CB . TYR Axp A . ? 20.626 11.294 -23.954 1 23.89 ? 128 A 1
+ATOM 1004 C CG . TYR Axp A . ? 20.039 12.482 -23.229 1 24.02 ? 128 A 1
+ATOM 1005 C CD1 . TYR Axp A . ? 19.239 13.398 -23.938 1 24.8 ? 128 A 1
+ATOM 1006 C CD2 . TYR Axp A . ? 20.209 12.713 -21.88 1 23.88 ? 128 A 1
+ATOM 1007 C CE1 . TYR Axp A . ? 18.652 14.492 -23.313 1 24.4 ? 128 A 1
+ATOM 1008 C CE2 . TYR Axp A . ? 19.646 13.82 -21.236 1 22.88 ? 128 A 1
+ATOM 1009 C CZ . TYR Axp A . ? 18.857 14.705 -21.957 1 24.08 ? 128 A 1
+ATOM 1010 O OH . TYR Axp A . ? 18.282 15.801 -21.378 1 22.1 ? 128 A 1
+ATOM 1011 N N . SER Axp A . ? 20.382 9.025 -26.03 1 26.34 ? 129 A 1
+ATOM 1012 C CA . SER Axp A . ? 20.808 7.866 -26.832 1 27.13 ? 129 A 1
+ATOM 1013 C C . SER Axp A . ? 22.273 7.514 -26.775 1 26.34 ? 129 A 1
+ATOM 1014 O O . SER Axp A . ? 22.647 6.344 -26.995 1 25.19 ? 129 A 1
+ATOM 1015 C CB . SER Axp A . ? 20.508 8.182 -28.333 1 29.81 ? 129 A 1
+ATOM 1016 O OG . SER Axp A . ? 19.772 9.4 -28.344 1 33.82 ? 129 A 1
+ATOM 1017 N N . SER Axp A . ? 23.059 8.571 -26.596 1 25.65 ? 130 A 1
+ATOM 1018 C CA . SER Axp A . ? 24.515 8.441 -26.559 1 24.43 ? 130 A 1
+ATOM 1019 C C . SER Axp A . ? 25.143 9.53 -25.686 1 23.82 ? 130 A 1
+ATOM 1020 O O . SER Axp A . ? 24.465 10.506 -25.319 1 24.05 ? 130 A 1
+ATOM 1021 C CB . SER Axp A . ? 25.035 8.63 -27.989 1 24.93 ? 130 A 1
+ATOM 1022 O OG . SER Axp A . ? 24.712 9.932 -28.459 1 27.5 ? 130 A 1
+ATOM 1023 N N . LEU Axp A . ? 26.438 9.362 -25.414 1 22.15 ? 131 A 1
+ATOM 1024 C CA . LEU Axp A . ? 27.135 10.393 -24.609 1 21.35 ? 131 A 1
+ATOM 1025 C C . LEU Axp A . ? 27.121 11.752 -25.335 1 20.63 ? 131 A 1
+ATOM 1026 O O . LEU Axp A . ? 26.936 12.826 -24.72 1 19.41 ? 131 A 1
+ATOM 1027 C CB . LEU Axp A . ? 28.556 9.897 -24.268 1 20.27 ? 131 A 1
+ATOM 1028 C CG . LEU Axp A . ? 29.496 11.012 -23.786 1 20.03 ? 131 A 1
+ATOM 1029 C CD1 . LEU Axp A . ? 29.067 11.56 -22.423 1 19.66 ? 131 A 1
+ATOM 1030 C CD2 . LEU Axp A . ? 30.916 10.468 -23.691 1 19.93 ? 131 A 1
+ATOM 1031 N N . ALA Axp A . ? 27.313 11.702 -26.635 1 20.64 ? 132 A 1
+ATOM 1032 C CA . ALA Axp A . ? 27.371 12.867 -27.531 1 20.83 ? 132 A 1
+ATOM 1033 C C . ALA Axp A . ? 26.146 13.769 -27.405 1 20.79 ? 132 A 1
+ATOM 1034 O O . ALA Axp A . ? 26.253 15.022 -27.3 1 20.11 ? 132 A 1
+ATOM 1035 C CB . ALA Axp A . ? 27.548 12.378 -28.983 1 22.25 ? 132 A 1
+ATOM 1036 N N . GLU Axp A . ? 25.015 13.105 -27.361 1 20.23 ? 133 A 1
+ATOM 1037 C CA . GLU Axp A . ? 23.708 13.752 -27.222 1 21.04 ? 133 A 1
+ATOM 1038 C C . GLU Axp A . ? 23.572 14.37 -25.825 1 20.65 ? 133 A 1
+ATOM 1039 O O . GLU Axp A . ? 23.299 15.562 -25.658 1 20.13 ? 133 A 1
+ATOM 1040 C CB . GLU Axp A . ? 22.535 12.795 -27.435 1 22.34 ? 133 A 1
+ATOM 1041 C CG . GLU Axp A . ? 21.174 13.442 -27.837 1 26.83 ? 133 A 1
+ATOM 1042 C CD . GLU Axp A . ? 20.014 12.491 -27.691 1 27.29 ? 133 A 1
+ATOM 1043 O OE1 . GLU Axp A . ? 20.104 11.281 -27.665 1 27.35 ? 133 A 1
+ATOM 1044 O OE2 . GLU Axp A . ? 18.907 13.094 -27.543 1 29.55 ? 133 A 1
+ATOM 1045 N N . ALA Axp A . ? 23.759 13.501 -24.843 1 20.38 ? 134 A 1
+ATOM 1046 C CA . ALA Axp A . ? 23.647 13.845 -23.42 1 19.16 ? 134 A 1
+ATOM 1047 C C . ALA Axp A . ? 24.526 14.964 -22.983 1 18.46 ? 134 A 1
+ATOM 1048 O O . ALA Axp A . ? 24.148 15.75 -22.078 1 18.91 ? 134 A 1
+ATOM 1049 C CB . ALA Axp A . ? 23.867 12.565 -22.599 1 17.91 ? 134 A 1
+ATOM 1050 N N . ALA Axp A . ? 25.706 15.112 -23.554 1 18.25 ? 135 A 1
+ATOM 1051 C CA . ALA Axp A . ? 26.746 16.062 -23.25 1 16.38 ? 135 A 1
+ATOM 1052 C C . ALA Axp A . ? 26.406 17.518 -23.222 1 17.11 ? 135 A 1
+ATOM 1053 O O . ALA Axp A . ? 27.05 18.307 -22.466 1 16.67 ? 135 A 1
+ATOM 1054 C CB . ALA Axp A . ? 27.954 15.79 -24.134 1 16.98 ? 135 A 1
+ATOM 1055 N N . SER Axp A . ? 25.407 17.986 -23.981 1 16.74 ? 136 A 1
+ATOM 1056 C CA . SER Axp A . ? 25.119 19.444 -23.899 1 17.02 ? 136 A 1
+ATOM 1057 C C . SER Axp A . ? 23.777 19.703 -23.203 1 17.35 ? 136 A 1
+ATOM 1058 O O . SER Axp A . ? 23.342 20.874 -23.181 1 17.12 ? 136 A 1
+ATOM 1059 C CB . SER Axp A . ? 25.135 20.101 -25.278 1 17.15 ? 136 A 1
+ATOM 1060 O OG . SER Axp A . ? 24.352 19.256 -26.168 1 18.92 ? 136 A 1
+ATOM 1061 N N . LYS Axp A . ? 23.178 18.66 -22.667 1 16.74 ? 137 A 1
+ATOM 1062 C CA . LYS Axp A . ? 21.877 18.823 -21.982 1 17.94 ? 137 A 1
+ATOM 1063 C C . LYS Axp A . ? 22.077 19.07 -20.493 1 16.7 ? 137 A 1
+ATOM 1064 O O . LYS Axp A . ? 23.034 18.509 -19.916 1 16.36 ? 137 A 1
+ATOM 1065 C CB . LYS Axp A . ? 20.974 17.631 -22.317 1 20.12 ? 137 A 1
+ATOM 1066 C CG . LYS Axp A . ? 20.55 17.768 -23.815 1 23.45 ? 137 A 1
+ATOM 1067 C CD . LYS Axp A . ? 19.056 17.445 -23.927 1 29 ? 137 A 1
+ATOM 1068 C CE . LYS Axp A . ? 18.087 18.599 -23.752 1 30.56 ? 137 A 1
+ATOM 1069 N NZ . LYS Axp A . ? 16.636 18.144 -23.928 1 32.28 ? 137 A 1
+ATOM 1070 N N . ALA Axp A . ? 21.198 19.845 -19.894 1 14.92 ? 138 A 1
+ATOM 1071 C CA . ALA Axp A . ? 21.21 20.215 -18.488 1 13.61 ? 138 A 1
+ATOM 1072 C C . ALA Axp A . ? 21.309 19.067 -17.516 1 13.11 ? 138 A 1
+ATOM 1073 O O . ALA Axp A . ? 21.991 19.228 -16.472 1 13.18 ? 138 A 1
+ATOM 1074 C CB . ALA Axp A . ? 19.958 21.055 -18.107 1 12.92 ? 138 A 1
+ATOM 1075 N N . ASP Axp A . ? 20.656 17.946 -17.783 1 12.78 ? 139 A 1
+ATOM 1076 C CA . ASP Axp A . ? 20.638 16.75 -16.972 1 11.69 ? 139 A 1
+ATOM 1077 C C . ASP Axp A . ? 21.434 15.602 -17.626 1 12.05 ? 139 A 1
+ATOM 1078 O O . ASP Axp A . ? 21.208 14.446 -17.185 1 11.91 ? 139 A 1
+ATOM 1079 C CB . ASP Axp A . ? 19.191 16.291 -16.725 1 13.66 ? 139 A 1
+ATOM 1080 C CG . ASP Axp A . ? 18.438 15.993 -18.016 1 15.04 ? 139 A 1
+ATOM 1081 O OD1 . ASP Axp A . ? 18.889 16.407 -19.111 1 13.76 ? 139 A 1
+ATOM 1082 O OD2 . ASP Axp A . ? 17.389 15.34 -17.885 1 15.43 ? 139 A 1
+ATOM 1083 N N . GLY Axp A . ? 22.235 15.91 -18.607 1 11.56 ? 140 A 1
+ATOM 1084 C CA . GLY Axp A . ? 23.042 14.98 -19.37 1 12.55 ? 140 A 1
+ATOM 1085 C C . GLY Axp A . ? 24.113 14.167 -18.675 1 12.27 ? 140 A 1
+ATOM 1086 O O . GLY Axp A . ? 24.257 12.935 -18.915 1 12.71 ? 140 A 1
+ATOM 1087 N N . LEU Axp A . ? 24.887 14.816 -17.829 1 12.44 ? 141 A 1
+ATOM 1088 C CA . LEU Axp A . ? 25.995 14.207 -17.093 1 11.42 ? 141 A 1
+ATOM 1089 C C . LEU Axp A . ? 25.962 14.315 -15.576 1 9.52 ? 141 A 1
+ATOM 1090 O O . LEU Axp A . ? 25.55 15.294 -15.016 1 9.23 ? 141 A 1
+ATOM 1091 C CB . LEU Axp A . ? 27.264 14.974 -17.605 1 10.64 ? 141 A 1
+ATOM 1092 C CG . LEU Axp A . ? 27.531 15.062 -19.093 1 11.15 ? 141 A 1
+ATOM 1093 C CD1 . LEU Axp A . ? 28.805 15.874 -19.328 1 12.93 ? 141 A 1
+ATOM 1094 C CD2 . LEU Axp A . ? 27.7 13.678 -19.721 1 12.78 ? 141 A 1
+ATOM 1095 N N . ALA Axp A . ? 26.534 13.291 -14.936 1 9 ? 142 A 1
+ATOM 1096 C CA . ALA Axp A . ? 26.717 13.302 -13.478 1 8.8 ? 142 A 1
+ATOM 1097 C C . ALA Axp A . ? 28.215 13.065 -13.164 1 7.25 ? 142 A 1
+ATOM 1098 O O . ALA Axp A . ? 28.723 12.029 -13.572 1 6.29 ? 142 A 1
+ATOM 1099 C CB . ALA Axp A . ? 25.888 12.256 -12.76 1 8.25 ? 142 A 1
+ATOM 1100 N N . VAL Axp A . ? 28.869 13.967 -12.436 1 6.83 ? 143 A 1
+ATOM 1101 C CA . VAL Axp A . ? 30.283 13.693 -12.103 1 5.7 ? 143 A 1
+ATOM 1102 C C . VAL Axp A . ? 30.522 13.607 -10.578 1 5.05 ? 143 A 1
+ATOM 1103 O O . VAL Axp A . ? 30.103 14.54 -9.9 1 4.04 ? 143 A 1
+ATOM 1104 C CB . VAL Axp A . ? 31.253 14.697 -12.769 1 3.35 ? 143 A 1
+ATOM 1105 C CG1 . VAL Axp A . ? 32.725 14.315 -12.499 1 2.19 ? 143 A 1
+ATOM 1106 C CG2 . VAL Axp A . ? 31.044 14.742 -14.277 1 4.3 ? 143 A 1
+ATOM 1107 N N . ILE Axp A . ? 31.207 12.553 -10.151 1 4.28 ? 144 A 1
+ATOM 1108 C CA . ILE Axp A . ? 31.561 12.471 -8.691 1 5.91 ? 144 A 1
+ATOM 1109 C C . ILE Axp A . ? 32.981 13.057 -8.572 1 7.14 ? 144 A 1
+ATOM 1110 O O . ILE Axp A . ? 33.822 12.605 -9.354 1 6.7 ? 144 A 1
+ATOM 1111 C CB . ILE Axp A . ? 31.519 11.043 -8.131 1 6.91 ? 144 A 1
+ATOM 1112 C CG1 . ILE Axp A . ? 30.089 10.47 -8.258 1 8.45 ? 144 A 1
+ATOM 1113 C CG2 . ILE Axp A . ? 32.149 10.905 -6.71 1 5.24 ? 144 A 1
+ATOM 1114 C CD1 . ILE Axp A . ? 30.018 8.905 -8.155 1 10.59 ? 144 A 1
+ATOM 1115 N N . GLY Axp A . ? 33.153 14.053 -7.725 1 7.28 ? 145 A 1
+ATOM 1116 C CA . GLY Axp A . ? 34.497 14.626 -7.502 1 8.27 ? 145 A 1
+ATOM 1117 C C . GLY Axp A . ? 34.966 14.212 -6.073 1 8.49 ? 145 A 1
+ATOM 1118 O O . GLY Axp A . ? 34.232 14.36 -5.074 1 6.76 ? 145 A 1
+ATOM 1119 N N . VAL Axp A . ? 36.199 13.745 -5.984 1 7.14 ? 146 A 1
+ATOM 1120 C CA . VAL Axp A . ? 36.77 13.325 -4.671 1 6.74 ? 146 A 1
+ATOM 1121 C C . VAL Axp A . ? 38.105 14.099 -4.536 1 7.99 ? 146 A 1
+ATOM 1122 O O . VAL Axp A . ? 38.957 14.021 -5.442 1 7.01 ? 146 A 1
+ATOM 1123 C CB . VAL Axp A . ? 37.066 11.817 -4.636 1 5.09 ? 146 A 1
+ATOM 1124 C CG1 . VAL Axp A . ? 37.796 11.361 -3.349 1 5.32 ? 146 A 1
+ATOM 1125 C CG2 . VAL Axp A . ? 35.886 10.94 -4.95 1 5.04 ? 146 A 1
+ATOM 1126 N N . LEU Axp A . ? 38.162 14.857 -3.478 1 9.05 ? 147 A 1
+ATOM 1127 C CA . LEU Axp A . ? 39.313 15.707 -3.116 1 9.29 ? 147 A 1
+ATOM 1128 C C . LEU Axp A . ? 40.417 14.806 -2.575 1 8.32 ? 147 A 1
+ATOM 1129 O O . LEU Axp A . ? 40.158 13.817 -1.872 1 8.21 ? 147 A 1
+ATOM 1130 C CB . LEU Axp A . ? 38.841 16.779 -2.161 1 9.49 ? 147 A 1
+ATOM 1131 C CG . LEU Axp A . ? 37.751 17.757 -2.621 1 10.6 ? 147 A 1
+ATOM 1132 C CD1 . LEU Axp A . ? 37.337 18.615 -1.418 1 11.29 ? 147 A 1
+ATOM 1133 C CD2 . LEU Axp A . ? 38.379 18.755 -3.598 1 11.39 ? 147 A 1
+ATOM 1134 N N . MET Axp A . ? 41.619 15.129 -2.976 1 8.85 ? 148 A 1
+ATOM 1135 C CA . MET Axp A . ? 42.831 14.327 -2.624 1 9.43 ? 148 A 1
+ATOM 1136 C C . MET Axp A . ? 43.779 15.25 -1.865 1 10.4 ? 148 A 1
+ATOM 1137 O O . MET Axp A . ? 44.098 16.401 -2.229 1 9.36 ? 148 A 1
+ATOM 1138 C CB . MET Axp A . ? 43.418 13.729 -3.893 1 9.34 ? 148 A 1
+ATOM 1139 C CG . MET Axp A . ? 42.418 12.916 -4.647 1 11.08 ? 148 A 1
+ATOM 1140 S SD . MET Axp A . ? 43.174 12.429 -6.248 1 11.65 ? 148 A 1
+ATOM 1141 C CE . MET Axp A . ? 44.33 11.214 -5.676 1 12.31 ? 148 A 1
+ATOM 1142 N N . LYS Axp A . ? 44.254 14.686 -0.785 1 11.77 ? 149 A 1
+ATOM 1143 C CA . LYS Axp A . ? 45.16 15.483 0.127 1 12.7 ? 149 A 1
+ATOM 1144 C C . LYS Axp A . ? 46.48 14.789 0.35 1 12.68 ? 149 A 1
+ATOM 1145 O O . LYS Axp A . ? 46.591 13.639 0.758 1 11.95 ? 149 A 1
+ATOM 1146 C CB . LYS Axp A . ? 44.281 15.671 1.339 1 16.23 ? 149 A 1
+ATOM 1147 C CG . LYS Axp A . ? 44.855 15.927 2.695 1 19.92 ? 149 A 1
+ATOM 1148 C CD . LYS Axp A . ? 43.94 15.161 3.728 1 23.08 ? 149 A 1
+ATOM 1149 C CE . LYS Axp A . ? 43.343 16.187 4.674 1 24.18 ? 149 A 1
+ATOM 1150 N NZ . LYS Axp A . ? 41.868 16.147 4.637 1 27.13 ? 149 A 1
+ATOM 1151 N N . VAL Axp A . ? 47.531 15.489 -0.022 1 13.72 ? 150 A 1
+ATOM 1152 C CA . VAL Axp A . ? 48.923 14.999 0.104 1 14.55 ? 150 A 1
+ATOM 1153 C C . VAL Axp A . ? 49.193 14.587 1.548 1 14.41 ? 150 A 1
+ATOM 1154 O O . VAL Axp A . ? 48.96 15.313 2.524 1 14.16 ? 150 A 1
+ATOM 1155 C CB . VAL Axp A . ? 49.883 16.045 -0.48 1 14.94 ? 150 A 1
+ATOM 1156 C CG1 . VAL Axp A . ? 50.083 17.255 0.415 1 14.05 ? 150 A 1
+ATOM 1157 C CG2 . VAL Axp A . ? 51.231 15.471 -0.914 1 15.56 ? 150 A 1
+ATOM 1158 N N . GLY Axp A . ? 49.735 13.37 1.64 1 15.14 ? 151 A 1
+ATOM 1159 C CA . GLY Axp A . ? 50.077 12.746 2.961 1 15.18 ? 151 A 1
+ATOM 1160 C C . GLY Axp A . ? 50.67 11.37 2.642 1 16.19 ? 151 A 1
+ATOM 1161 O O . GLY Axp A . ? 51.649 11.29 1.821 1 16.15 ? 151 A 1
+ATOM 1162 N N . GLU Axp A . ? 50.062 10.359 3.243 1 15.95 ? 152 A 1
+ATOM 1163 C CA . GLU Axp A . ? 50.502 8.961 2.99 1 16.78 ? 152 A 1
+ATOM 1164 C C . GLU Axp A . ? 50.21 8.429 1.603 1 16.63 ? 152 A 1
+ATOM 1165 O O . GLU Axp A . ? 49.191 8.771 1.001 1 15.75 ? 152 A 1
+ATOM 1166 C CB . GLU Axp A . ? 49.775 8.046 3.986 1 19.29 ? 152 A 1
+ATOM 1167 C CG . GLU Axp A . ? 50.205 8.252 5.436 1 21.02 ? 152 A 1
+ATOM 1168 C CD . GLU Axp A . ? 51.481 7.596 5.852 1 22.58 ? 152 A 1
+ATOM 1169 O OE1 . GLU Axp A . ? 51.676 6.431 5.402 1 23.22 ? 152 A 1
+ATOM 1170 O OE2 . GLU Axp A . ? 52.236 8.134 6.66 1 24.52 ? 152 A 1
+ATOM 1171 N N . ALA Axp A . ? 51.095 7.59 1.048 1 15.97 ? 153 A 1
+ATOM 1172 C CA . ALA Axp A . ? 50.859 7.005 -0.287 1 16.17 ? 153 A 1
+ATOM 1173 C C . ALA Axp A . ? 49.552 6.168 -0.185 1 16.5 ? 153 A 1
+ATOM 1174 O O . ALA Axp A . ? 49.304 5.606 0.882 1 16.49 ? 153 A 1
+ATOM 1175 C CB . ALA Axp A . ? 51.996 6.128 -0.786 1 14.11 ? 153 A 1
+ATOM 1176 N N . ASN Axp A . ? 48.845 6.119 -1.308 1 15.85 ? 154 A 1
+ATOM 1177 C CA . ASN Axp A . ? 47.548 5.403 -1.448 1 14.73 ? 154 A 1
+ATOM 1178 C C . ASN Axp A . ? 47.758 4.215 -2.376 1 14.6 ? 154 A 1
+ATOM 1179 O O . ASN Axp A . ? 48.034 4.404 -3.581 1 13.76 ? 154 A 1
+ATOM 1180 C CB . ASN Axp A . ? 46.53 6.407 -2.021 1 15.06 ? 154 A 1
+ATOM 1181 C CG . ASN Axp A . ? 45.116 5.837 -2.186 1 14.79 ? 154 A 1
+ATOM 1182 O OD1 . ASN Axp A . ? 44.165 6.657 -2.32 1 14.53 ? 154 A 1
+ATOM 1183 N ND2 . ASN Axp A . ? 44.998 4.555 -2.099 1 10.41 ? 154 A 1
+ATOM 1184 N N . PRO Axp A . ? 47.675 3.033 -1.797 1 15.1 ? 155 A 1
+ATOM 1185 C CA . PRO Axp A . ? 47.884 1.788 -2.544 1 15.12 ? 155 A 1
+ATOM 1186 C C . PRO Axp A . ? 46.879 1.492 -3.6 1 15.55 ? 155 A 1
+ATOM 1187 O O . PRO Axp A . ? 47.198 0.799 -4.585 1 15.71 ? 155 A 1
+ATOM 1188 C CB . PRO Axp A . ? 48.114 0.738 -1.491 1 15.02 ? 155 A 1
+ATOM 1189 C CG . PRO Axp A . ? 47.394 1.267 -0.251 1 15.63 ? 155 A 1
+ATOM 1190 C CD . PRO Axp A . ? 47.333 2.78 -0.376 1 14.96 ? 155 A 1
+ATOM 1191 N N . LYS Axp A . ? 45.679 2.028 -3.534 1 15.87 ? 156 A 1
+ATOM 1192 C CA . LYS Axp A . ? 44.654 1.755 -4.59 1 15.63 ? 156 A 1
+ATOM 1193 C C . LYS Axp A . ? 44.928 2.442 -5.903 1 13.98 ? 156 A 1
+ATOM 1194 O O . LYS Axp A . ? 44.31 2.064 -6.896 1 12.66 ? 156 A 1
+ATOM 1195 C CB . LYS Axp A . ? 43.291 2.196 -4.017 1 17.59 ? 156 A 1
+ATOM 1196 C CG . LYS Axp A . ? 43.34 1.715 -2.533 1 18.82 ? 156 A 1
+ATOM 1197 C CD . LYS Axp A . ? 42.027 1.932 -1.819 1 21.48 ? 156 A 1
+ATOM 1198 C CE . LYS Axp A . ? 41.805 0.623 -0.977 1 21.4 ? 156 A 1
+ATOM 1199 N NZ . LYS Axp A . ? 40.312 0.378 -1.009 1 24.89 ? 156 A 1
+ATOM 1200 N N . LEU Axp A . ? 45.835 3.401 -5.938 1 13.62 ? 157 A 1
+ATOM 1201 C CA . LEU Axp A . ? 46.206 4.092 -7.149 1 13.72 ? 157 A 1
+ATOM 1202 C C . LEU Axp A . ? 47.206 3.308 -7.997 1 13.71 ? 157 A 1
+ATOM 1203 O O . LEU Axp A . ? 47.387 3.667 -9.174 1 14.31 ? 157 A 1
+ATOM 1204 C CB . LEU Axp A . ? 46.835 5.461 -6.798 1 12.87 ? 157 A 1
+ATOM 1205 C CG . LEU Axp A . ? 45.946 6.524 -6.221 1 12.6 ? 157 A 1
+ATOM 1206 C CD1 . LEU Axp A . ? 46.758 7.777 -5.888 1 14.03 ? 157 A 1
+ATOM 1207 C CD2 . LEU Axp A . ? 44.839 6.915 -7.202 1 12.48 ? 157 A 1
+ATOM 1208 N N . GLN Axp A . ? 47.833 2.325 -7.431 1 14.31 ? 158 A 1
+ATOM 1209 C CA . GLN Axp A . ? 48.925 1.579 -8.102 1 15.04 ? 158 A 1
+ATOM 1210 C C . GLN Axp A . ? 48.665 1.116 -9.513 1 13.85 ? 158 A 1
+ATOM 1211 O O . GLN Axp A . ? 49.508 1.366 -10.371 1 12.6 ? 158 A 1
+ATOM 1212 C CB . GLN Axp A . ? 49.439 0.459 -7.201 1 16.72 ? 158 A 1
+ATOM 1213 C CG . GLN Axp A . ? 50.89 0.086 -7.498 1 20 ? 158 A 1
+ATOM 1214 C CD . GLN Axp A . ? 51.839 1.241 -7.376 1 21.16 ? 158 A 1
+ATOM 1215 O OE1 . GLN Axp A . ? 51.992 1.87 -6.324 1 22.59 ? 158 A 1
+ATOM 1216 N NE2 . GLN Axp A . ? 52.46 1.549 -8.526 1 21.13 ? 158 A 1
+ATOM 1217 N N . LYS Axp A . ? 47.571 0.406 -9.745 1 14.61 ? 159 A 1
+ATOM 1218 C CA . LYS Axp A . ? 47.231 -0.098 -11.086 1 15.38 ? 159 A 1
+ATOM 1219 C C . LYS Axp A . ? 47.173 1.018 -12.131 1 14.22 ? 159 A 1
+ATOM 1220 O O . LYS Axp A . ? 47.542 0.809 -13.298 1 13.72 ? 159 A 1
+ATOM 1221 C CB . LYS Axp A . ? 45.925 -0.882 -11.156 1 17.02 ? 159 A 1
+ATOM 1222 C CG . LYS Axp A . ? 45.97 -2.276 -10.561 1 20.84 ? 159 A 1
+ATOM 1223 C CD . LYS Axp A . ? 44.807 -3.153 -11.059 1 21.1 ? 159 A 1
+ATOM 1224 C CE . LYS Axp A . ? 44.682 -4.405 -10.176 1 21.56 ? 159 A 1
+ATOM 1225 N NZ . LYS Axp A . ? 43.615 -5.297 -10.789 1 21.89 ? 159 A 1
+ATOM 1226 N N . VAL Axp A . ? 46.663 2.164 -11.745 1 14.12 ? 160 A 1
+ATOM 1227 C CA . VAL Axp A . ? 46.594 3.32 -12.668 1 15.11 ? 160 A 1
+ATOM 1228 C C . VAL Axp A . ? 48.015 3.826 -12.928 1 15.62 ? 160 A 1
+ATOM 1229 O O . VAL Axp A . ? 48.451 4.064 -14.086 1 14.98 ? 160 A 1
+ATOM 1230 C CB . VAL Axp A . ? 45.657 4.419 -12.119 1 15.93 ? 160 A 1
+ATOM 1231 C CG1 . VAL Axp A . ? 45.764 5.704 -12.944 1 16.72 ? 160 A 1
+ATOM 1232 C CG2 . VAL Axp A . ? 44.221 3.985 -11.999 1 16.04 ? 160 A 1
+ATOM 1233 N N . LEU Axp A . ? 48.788 3.989 -11.85 1 15.04 ? 161 A 1
+ATOM 1234 C CA . LEU Axp A . ? 50.173 4.489 -12.062 1 15.61 ? 161 A 1
+ATOM 1235 C C . LEU Axp A . ? 51.009 3.545 -12.918 1 15.79 ? 161 A 1
+ATOM 1236 O O . LEU Axp A . ? 51.825 4.124 -13.684 1 15.34 ? 161 A 1
+ATOM 1237 C CB . LEU Axp A . ? 50.852 4.802 -10.738 1 14.37 ? 161 A 1
+ATOM 1238 C CG . LEU Axp A . ? 50.07 5.727 -9.791 1 12.21 ? 161 A 1
+ATOM 1239 C CD1 . LEU Axp A . ? 50.721 5.663 -8.432 1 12.85 ? 161 A 1
+ATOM 1240 C CD2 . LEU Axp A . ? 50.149 7.11 -10.396 1 14.36 ? 161 A 1
+ATOM 1241 N N . ASP Axp A . ? 50.863 2.239 -12.751 1 15.29 ? 162 A 1
+ATOM 1242 C CA . ASP Axp A . ? 51.719 1.352 -13.572 1 15.74 ? 162 A 1
+ATOM 1243 C C . ASP Axp A . ? 51.337 1.411 -15.065 1 16.36 ? 162 A 1
+ATOM 1244 O O . ASP Axp A . ? 52.198 1.063 -15.904 1 15.86 ? 162 A 1
+ATOM 1245 C CB . ASP Axp A . ? 51.606 -0.115 -13.151 1 18.67 ? 162 A 1
+ATOM 1246 C CG . ASP Axp A . ? 52.14 -0.416 -11.779 1 20.2 ? 162 A 1
+ATOM 1247 O OD1 . ASP Axp A . ? 52.969 0.389 -11.29 1 21.32 ? 162 A 1
+ATOM 1248 O OD2 . ASP Axp A . ? 51.768 -1.434 -11.221 1 21.45 ? 162 A 1
+ATOM 1249 N N . ALA Axp A . ? 50.061 1.712 -15.331 1 15.35 ? 163 A 1
+ATOM 1250 C CA . ALA Axp A . ? 49.578 1.763 -16.708 1 14.41 ? 163 A 1
+ATOM 1251 C C . ALA Axp A . ? 50.159 2.943 -17.47 1 15.12 ? 163 A 1
+ATOM 1252 O O . ALA Axp A . ? 50.234 2.832 -18.72 1 15.12 ? 163 A 1
+ATOM 1253 C CB . ALA Axp A . ? 48.071 1.775 -16.729 1 13.22 ? 163 A 1
+ATOM 1254 N N . LEU Axp A . ? 50.522 3.996 -16.782 1 15.17 ? 164 A 1
+ATOM 1255 C CA . LEU Axp A . ? 51.062 5.218 -17.317 1 16.59 ? 164 A 1
+ATOM 1256 C C . LEU Axp A . ? 52.287 5.063 -18.175 1 17.36 ? 164 A 1
+ATOM 1257 O O . LEU Axp A . ? 52.494 5.866 -19.114 1 16.99 ? 164 A 1
+ATOM 1258 C CB . LEU Axp A . ? 51.25 6.286 -16.212 1 16.99 ? 164 A 1
+ATOM 1259 C CG . LEU Axp A . ? 50.003 6.697 -15.418 1 15.68 ? 164 A 1
+ATOM 1260 C CD1 . LEU Axp A . ? 50.338 7.928 -14.564 1 16.53 ? 164 A 1
+ATOM 1261 C CD2 . LEU Axp A . ? 48.882 6.972 -16.37 1 15.26 ? 164 A 1
+ATOM 1262 N N . GLN Axp A . ? 53.092 4.043 -17.927 1 18.56 ? 165 A 1
+ATOM 1263 C CA . GLN Axp A . ? 54.321 3.867 -18.722 1 19.99 ? 165 A 1
+ATOM 1264 C C . GLN Axp A . ? 54.062 3.667 -20.194 1 19.91 ? 165 A 1
+ATOM 1265 O O . GLN Axp A . ? 54.88 4.088 -21.056 1 20.39 ? 165 A 1
+ATOM 1266 C CB . GLN Axp A . ? 55.118 2.665 -18.198 1 24.45 ? 165 A 1
+ATOM 1267 C CG . GLN Axp A . ? 55.563 2.969 -16.729 1 27.81 ? 165 A 1
+ATOM 1268 C CD . GLN Axp A . ? 56.047 1.611 -16.211 1 30.27 ? 165 A 1
+ATOM 1269 O OE1 . GLN Axp A . ? 55.242 0.672 -16.124 1 31.54 ? 165 A 1
+ATOM 1270 N NE2 . GLN Axp A . ? 57.384 1.56 -16.017 1 31.53 ? 165 A 1
+ATOM 1271 N N . ALA Axp A . ? 52.932 3.032 -20.473 1 19.02 ? 166 A 1
+ATOM 1272 C CA . ALA Axp A . ? 52.549 2.746 -21.846 1 17.96 ? 166 A 1
+ATOM 1273 C C . ALA Axp A . ? 51.877 3.857 -22.612 1 16.8 ? 166 A 1
+ATOM 1274 O O . ALA Axp A . ? 51.626 3.592 -23.796 1 16.86 ? 166 A 1
+ATOM 1275 C CB . ALA Axp A . ? 51.704 1.468 -21.881 1 18.87 ? 166 A 1
+ATOM 1276 N N . ILE Axp A . ? 51.535 4.991 -22.039 1 15.33 ? 167 A 1
+ATOM 1277 C CA . ILE Axp A . ? 50.833 6.062 -22.777 1 13.83 ? 167 A 1
+ATOM 1278 C C . ILE Axp A . ? 51.517 7.388 -22.432 1 13.47 ? 167 A 1
+ATOM 1279 O O . ILE Axp A . ? 50.934 8.366 -21.999 1 13.03 ? 167 A 1
+ATOM 1280 C CB . ILE Axp A . ? 49.325 6.084 -22.338 1 14.5 ? 167 A 1
+ATOM 1281 C CG1 . ILE Axp A . ? 49.222 6.378 -20.823 1 14.33 ? 167 A 1
+ATOM 1282 C CG2 . ILE Axp A . ? 48.592 4.763 -22.693 1 13.46 ? 167 A 1
+ATOM 1283 C CD1 . ILE Axp A . ? 47.969 7.2 -20.407 1 15.72 ? 167 A 1
+ATOM 1284 N N . LYS Axp A . ? 52.832 7.319 -22.627 1 13.43 ? 168 A 1
+ATOM 1285 C CA . LYS Axp A . ? 53.707 8.439 -22.289 1 12.76 ? 168 A 1
+ATOM 1286 C C . LYS Axp A . ? 53.406 9.681 -23.039 1 11.39 ? 168 A 1
+ATOM 1287 O O . LYS Axp A . ? 53.486 10.75 -22.405 1 12.35 ? 168 A 1
+ATOM 1288 C CB . LYS Axp A . ? 55.195 8.026 -22.489 1 15.01 ? 168 A 1
+ATOM 1289 C CG . LYS Axp A . ? 56.104 9.104 -21.898 1 19.17 ? 168 A 1
+ATOM 1290 C CD . LYS Axp A . ? 55.676 9.351 -20.456 1 20.7 ? 168 A 1
+ATOM 1291 C CE . LYS Axp A . ? 56.791 9.594 -19.473 1 22.8 ? 168 A 1
+ATOM 1292 N NZ . LYS Axp A . ? 56.324 10.757 -18.634 1 24.07 ? 168 A 1
+ATOM 1293 N N . THR Axp A . ? 53.093 9.548 -24.325 1 10.49 ? 169 A 1
+ATOM 1294 C CA . THR Axp A . ? 52.839 10.684 -25.202 1 9.75 ? 169 A 1
+ATOM 1295 C C . THR Axp A . ? 51.433 10.708 -25.773 1 10.01 ? 169 A 1
+ATOM 1296 O O . THR Axp A . ? 50.647 9.735 -25.771 1 9.39 ? 169 A 1
+ATOM 1297 C CB . THR Axp A . ? 53.981 10.737 -26.299 1 7.99 ? 169 A 1
+ATOM 1298 O OG1 . THR Axp A . ? 53.896 9.451 -26.985 1 7.92 ? 169 A 1
+ATOM 1299 C CG2 . THR Axp A . ? 55.412 10.918 -25.734 1 8.87 ? 169 A 1
+ATOM 1300 N N . LYS Axp A . ? 51.049 11.87 -26.211 1 10.61 ? 170 A 1
+ATOM 1301 C CA . LYS Axp A . ? 49.721 12.194 -26.747 1 11.49 ? 170 A 1
+ATOM 1302 C C . LYS Axp A . ? 49.285 11.297 -27.876 1 12.92 ? 170 A 1
+ATOM 1303 O O . LYS Axp A . ? 49.967 11.049 -28.893 1 12.98 ? 170 A 1
+ATOM 1304 C CB . LYS Axp A . ? 49.729 13.64 -27.15 1 12.56 ? 170 A 1
+ATOM 1305 C CG . LYS Axp A . ? 48.497 14.123 -27.838 1 16.16 ? 170 A 1
+ATOM 1306 C CD . LYS Axp A . ? 48.187 15.553 -27.566 1 19.23 ? 170 A 1
+ATOM 1307 C CE . LYS Axp A . ? 47.813 16.257 -28.874 1 21.69 ? 170 A 1
+ATOM 1308 N NZ . LYS Axp A . ? 49.085 16.81 -29.446 1 24.5 ? 170 A 1
+ATOM 1309 N N . GLY Axp A . ? 48.07 10.731 -27.681 1 13.33 ? 171 A 1
+ATOM 1310 C CA . GLY Axp A . ? 47.55 9.773 -28.67 1 13.44 ? 171 A 1
+ATOM 1311 C C . GLY Axp A . ? 47.895 8.324 -28.331 1 14.23 ? 171 A 1
+ATOM 1312 O O . GLY Axp A . ? 47.265 7.447 -28.99 1 14.04 ? 171 A 1
+ATOM 1313 N N . LYS Axp A . ? 48.736 8.024 -27.365 1 13.06 ? 172 A 1
+ATOM 1314 C CA . LYS Axp A . ? 49.019 6.591 -27.013 1 14.31 ? 172 A 1
+ATOM 1315 C C . LYS Axp A . ? 47.826 6.047 -26.22 1 14.98 ? 172 A 1
+ATOM 1316 O O . LYS Axp A . ? 47.173 6.789 -25.458 1 15.54 ? 172 A 1
+ATOM 1317 C CB . LYS Axp A . ? 50.23 6.391 -26.144 1 14.97 ? 172 A 1
+ATOM 1318 C CG . LYS Axp A . ? 51.54 6.909 -26.785 1 15.99 ? 172 A 1
+ATOM 1319 C CD . LYS Axp A . ? 52.099 5.747 -27.63 1 17.99 ? 172 A 1
+ATOM 1320 C CE . LYS Axp A . ? 53.526 6.057 -28.082 1 19.88 ? 172 A 1
+ATOM 1321 N NZ . LYS Axp A . ? 53.674 5.552 -29.493 1 20.12 ? 172 A 1
+ATOM 1322 N N . ARG Axp A . ? 47.552 4.78 -26.378 1 15.54 ? 173 A 1
+ATOM 1323 C CA . ARG Axp A . ? 46.392 4.139 -25.713 1 16.72 ? 173 A 1
+ATOM 1324 C C . ARG Axp A . ? 46.801 2.691 -25.435 1 16.17 ? 173 A 1
+ATOM 1325 O O . ARG Axp A . ? 47.692 2.202 -26.162 1 16.25 ? 173 A 1
+ATOM 1326 C CB . ARG Axp A . ? 45.12 4.195 -26.553 1 20.53 ? 173 A 1
+ATOM 1327 C CG . ARG Axp A . ? 45.259 4.258 -28.041 1 25.07 ? 173 A 1
+ATOM 1328 C CD . ARG Axp A . ? 44.097 3.81 -28.847 1 30.28 ? 173 A 1
+ATOM 1329 N NE . ARG Axp A . ? 44.533 3.065 -30.053 1 36.05 ? 173 A 1
+ATOM 1330 C CZ . ARG Axp A . ? 43.761 2.669 -31.08 1 37.18 ? 173 A 1
+ATOM 1331 N NH1 . ARG Axp A . ? 42.439 2.913 -31.22 1 38.57 ? 173 A 1
+ATOM 1332 N NH2 . ARG Axp A . ? 44.324 1.947 -32.062 1 38.13 ? 173 A 1
+ATOM 1333 N N . ALA Axp A . ? 46.227 2.118 -24.423 1 14.63 ? 174 A 1
+ATOM 1334 C CA . ALA Axp A . ? 46.504 0.78 -23.97 1 14.24 ? 174 A 1
+ATOM 1335 C C . ALA Axp A . ? 45.248 0.165 -23.287 1 14.82 ? 174 A 1
+ATOM 1336 O O . ALA Axp A . ? 44.469 0.859 -22.62 1 13.54 ? 174 A 1
+ATOM 1337 C CB . ALA Axp A . ? 47.69 0.761 -22.991 1 14.84 ? 174 A 1
+ATOM 1338 N N . PRO Axp A . ? 45.157 -1.141 -23.479 1 14.71 ? 175 A 1
+ATOM 1339 C CA . PRO Axp A . ? 44.064 -1.922 -22.882 1 15.01 ? 175 A 1
+ATOM 1340 C C . PRO Axp A . ? 44.192 -1.686 -21.365 1 14.81 ? 175 A 1
+ATOM 1341 O O . PRO Axp A . ? 45.344 -1.525 -20.913 1 14.44 ? 175 A 1
+ATOM 1342 C CB . PRO Axp A . ? 44.349 -3.353 -23.294 1 14.97 ? 175 A 1
+ATOM 1343 C CG . PRO Axp A . ? 45.379 -3.309 -24.35 1 14.65 ? 175 A 1
+ATOM 1344 C CD . PRO Axp A . ? 46.084 -1.981 -24.253 1 15.02 ? 175 A 1
+ATOM 1345 N N . PHE Axp A . ? 43.074 -1.546 -20.696 1 13.46 ? 176 A 1
+ATOM 1346 C CA . PHE Axp A . ? 43.065 -1.307 -19.212 1 13.12 ? 176 A 1
+ATOM 1347 C C . PHE Axp A . ? 41.813 -2.063 -18.809 1 13.85 ? 176 A 1
+ATOM 1348 O O . PHE Axp A . ? 40.751 -1.564 -19.252 1 12.41 ? 176 A 1
+ATOM 1349 C CB . PHE Axp A . ? 42.974 0.182 -18.848 1 12.59 ? 176 A 1
+ATOM 1350 C CG . PHE Axp A . ? 43.086 0.441 -17.359 1 11.43 ? 176 A 1
+ATOM 1351 C CD1 . PHE Axp A . ? 44.366 0.599 -16.78 1 12.09 ? 176 A 1
+ATOM 1352 C CD2 . PHE Axp A . ? 41.954 0.52 -16.576 1 10.02 ? 176 A 1
+ATOM 1353 C CE1 . PHE Axp A . ? 44.47 0.82 -15.385 1 12.19 ? 176 A 1
+ATOM 1354 C CE2 . PHE Axp A . ? 42.072 0.762 -15.193 1 11.28 ? 176 A 1
+ATOM 1355 C CZ . PHE Axp A . ? 43.337 0.885 -14.604 1 11.33 ? 176 A 1
+ATOM 1356 N N . THR Axp A . ? 41.957 -3.201 -18.15 1 14.48 ? 177 A 1
+ATOM 1357 C CA . THR Axp A . ? 40.738 -3.979 -17.867 1 15.52 ? 177 A 1
+ATOM 1358 C C . THR Axp A . ? 40.609 -4.504 -16.471 1 15.45 ? 177 A 1
+ATOM 1359 O O . THR Axp A . ? 41.51 -4.37 -15.637 1 15.75 ? 177 A 1
+ATOM 1360 C CB . THR Axp A . ? 40.683 -5.195 -18.884 1 18.26 ? 177 A 1
+ATOM 1361 O OG1 . THR Axp A . ? 41.782 -6.087 -18.442 1 19.11 ? 177 A 1
+ATOM 1362 C CG2 . THR Axp A . ? 40.806 -4.771 -20.34 1 18.79 ? 177 A 1
+ATOM 1363 N N . ASN Axp A . ? 39.431 -5.095 -16.226 1 14.68 ? 178 A 1
+ATOM 1364 C CA . ASN Axp A . ? 39.134 -5.679 -14.913 1 14.74 ? 178 A 1
+ATOM 1365 C C . ASN Axp A . ? 39.425 -4.676 -13.807 1 13.95 ? 178 A 1
+ATOM 1366 O O . ASN Axp A . ? 40.296 -4.979 -13.006 1 14.22 ? 178 A 1
+ATOM 1367 C CB . ASN Axp A . ? 39.932 -6.982 -14.63 1 16.24 ? 178 A 1
+ATOM 1368 C CG . ASN Axp A . ? 39.611 -8.007 -15.695 1 17.17 ? 178 A 1
+ATOM 1369 O OD1 . ASN Axp A . ? 40.561 -8.596 -16.25 1 20.41 ? 178 A 1
+ATOM 1370 N ND2 . ASN Axp A . ? 38.339 -8.196 -15.98 1 17.75 ? 178 A 1
+ATOM 1371 N N . PHE Axp A . ? 38.693 -3.578 -13.796 1 13.06 ? 179 A 1
+ATOM 1372 C CA . PHE Axp A . ? 38.994 -2.569 -12.743 1 12.42 ? 179 A 1
+ATOM 1373 C C . PHE Axp A . ? 37.652 -1.92 -12.34 1 11.94 ? 179 A 1
+ATOM 1374 O O . PHE Axp A . ? 36.969 -1.496 -13.271 1 10.33 ? 179 A 1
+ATOM 1375 C CB . PHE Axp A . ? 40.012 -1.523 -13.201 1 11.76 ? 179 A 1
+ATOM 1376 C CG . PHE Axp A . ? 40.458 -0.548 -12.144 1 13.54 ? 179 A 1
+ATOM 1377 C CD1 . PHE Axp A . ? 41.363 -0.909 -11.141 1 12.36 ? 179 A 1
+ATOM 1378 C CD2 . PHE Axp A . ? 39.906 0.759 -12.125 1 13.1 ? 179 A 1
+ATOM 1379 C CE1 . PHE Axp A . ? 41.782 0.016 -10.197 1 12.94 ? 179 A 1
+ATOM 1380 C CE2 . PHE Axp A . ? 40.291 1.662 -11.154 1 11.38 ? 179 A 1
+ATOM 1381 C CZ . PHE Axp A . ? 41.25 1.317 -10.211 1 10.92 ? 179 A 1
+ATOM 1382 N N . ASP Axp A . ? 37.506 -1.898 -11.038 1 11.96 ? 180 A 1
+ATOM 1383 C CA . ASP Axp A . ? 36.379 -1.332 -10.313 1 13.47 ? 180 A 1
+ATOM 1384 C C . ASP Axp A . ? 36.861 -0.042 -9.613 1 12.8 ? 180 A 1
+ATOM 1385 O O . ASP Axp A . ? 37.522 -0.099 -8.586 1 13.87 ? 180 A 1
+ATOM 1386 C CB . ASP Axp A . ? 35.653 -2.283 -9.388 1 13.56 ? 180 A 1
+ATOM 1387 C CG . ASP Axp A . ? 34.439 -1.634 -8.757 1 15.76 ? 180 A 1
+ATOM 1388 O OD1 . ASP Axp A . ? 34.06 -0.492 -8.995 1 14.98 ? 180 A 1
+ATOM 1389 O OD2 . ASP Axp A . ? 33.869 -2.344 -7.915 1 18.03 ? 180 A 1
+ATOM 1390 N N . PRO Axp A . ? 36.43 1.057 -10.191 1 12.97 ? 181 A 1
+ATOM 1391 C CA . PRO Axp A . ? 36.772 2.403 -9.734 1 12.58 ? 181 A 1
+ATOM 1392 C C . PRO Axp A . ? 36.167 2.775 -8.416 1 13.05 ? 181 A 1
+ATOM 1393 O O . PRO Axp A . ? 36.696 3.7 -7.737 1 13.24 ? 181 A 1
+ATOM 1394 C CB . PRO Axp A . ? 36.391 3.282 -10.932 1 12.48 ? 181 A 1
+ATOM 1395 C CG . PRO Axp A . ? 35.142 2.578 -11.455 1 12.33 ? 181 A 1
+ATOM 1396 C CD . PRO Axp A . ? 35.567 1.11 -11.447 1 12.23 ? 181 A 1
+ATOM 1397 N N . SER Axp A . ? 35.128 2.043 -7.967 1 12.55 ? 182 A 1
+ATOM 1398 C CA . SER Axp A . ? 34.543 2.37 -6.646 1 12.51 ? 182 A 1
+ATOM 1399 C C . SER Axp A . ? 35.528 2.114 -5.528 1 12.36 ? 182 A 1
+ATOM 1400 O O . SER Axp A . ? 35.297 2.51 -4.372 1 11.81 ? 182 A 1
+ATOM 1401 C CB . SER Axp A . ? 33.232 1.6 -6.37 1 12.85 ? 182 A 1
+ATOM 1402 O OG . SER Axp A . ? 33.58 0.235 -6.1 1 15.82 ? 182 A 1
+ATOM 1403 N N . THR Axp A . ? 36.614 1.419 -5.842 1 13.46 ? 183 A 1
+ATOM 1404 C CA . THR Axp A . ? 37.687 1.061 -4.944 1 13.42 ? 183 A 1
+ATOM 1405 C C . THR Axp A . ? 38.495 2.341 -4.597 1 12.5 ? 183 A 1
+ATOM 1406 O O . THR Axp A . ? 39.14 2.361 -3.577 1 11.12 ? 183 A 1
+ATOM 1407 C CB . THR Axp A . ? 38.686 -0.037 -5.504 1 14.83 ? 183 A 1
+ATOM 1408 O OG1 . THR Axp A . ? 39.222 0.586 -6.723 1 16.46 ? 183 A 1
+ATOM 1409 C CG2 . THR Axp A . ? 38.071 -1.417 -5.765 1 14.64 ? 183 A 1
+ATOM 1410 N N . LEU Axp A . ? 38.351 3.364 -5.403 1 12.79 ? 184 A 1
+ATOM 1411 C CA . LEU Axp A . ? 39.016 4.658 -5.24 1 11.2 ? 184 A 1
+ATOM 1412 C C . LEU Axp A . ? 38.226 5.644 -4.386 1 11.23 ? 184 A 1
+ATOM 1413 O O . LEU Axp A . ? 38.799 6.673 -3.934 1 10.33 ? 184 A 1
+ATOM 1414 C CB . LEU Axp A . ? 39.258 5.265 -6.607 1 11.91 ? 184 A 1
+ATOM 1415 C CG . LEU Axp A . ? 40.128 4.589 -7.654 1 13.12 ? 184 A 1
+ATOM 1416 C CD1 . LEU Axp A . ? 39.994 5.408 -8.911 1 12.35 ? 184 A 1
+ATOM 1417 C CD2 . LEU Axp A . ? 41.58 4.454 -7.218 1 13.47 ? 184 A 1
+ATOM 1418 N N . LEU Axp A . ? 36.975 5.378 -4.142 1 10.79 ? 185 A 1
+ATOM 1419 C CA . LEU Axp A . ? 36.139 6.322 -3.321 1 11.44 ? 185 A 1
+ATOM 1420 C C . LEU Axp A . ? 36.369 6.127 -1.821 1 11.73 ? 185 A 1
+ATOM 1421 O O . LEU Axp A . ? 36.665 5.002 -1.372 1 11.37 ? 185 A 1
+ATOM 1422 C CB . LEU Axp A . ? 34.651 6.042 -3.664 1 12.13 ? 185 A 1
+ATOM 1423 C CG . LEU Axp A . ? 34.299 6.067 -5.13 1 11.47 ? 185 A 1
+ATOM 1424 C CD1 . LEU Axp A . ? 32.8 5.78 -5.294 1 12.97 ? 185 A 1
+ATOM 1425 C CD2 . LEU Axp A . ? 34.639 7.42 -5.695 1 11.73 ? 185 A 1
+ATOM 1426 N N . PRO Axp A . ? 36.148 7.203 -1.084 1 11.22 ? 186 A 1
+ATOM 1427 C CA . PRO Axp A . ? 36.273 7.171 0.372 1 12.28 ? 186 A 1
+ATOM 1428 C C . PRO Axp A . ? 35.241 6.213 0.95 1 14.57 ? 186 A 1
+ATOM 1429 O O . PRO Axp A . ? 34.275 5.758 0.275 1 13.58 ? 186 A 1
+ATOM 1430 C CB . PRO Axp A . ? 35.999 8.625 0.797 1 11.89 ? 186 A 1
+ATOM 1431 C CG . PRO Axp A . ? 35.124 9.168 -0.29 1 11.02 ? 186 A 1
+ATOM 1432 C CD . PRO Axp A . ? 35.77 8.551 -1.576 1 11.21 ? 186 A 1
+ATOM 1433 N N . SER Axp A . ? 35.476 5.911 2.225 1 16.19 ? 187 A 1
+ATOM 1434 C CA . SER Axp A . ? 34.603 5.008 2.975 1 18.97 ? 187 A 1
+ATOM 1435 C C . SER Axp A . ? 33.188 5.522 3.158 1 18.88 ? 187 A 1
+ATOM 1436 O O . SER Axp A . ? 32.238 4.736 2.926 1 20.12 ? 187 A 1
+ATOM 1437 C CB . SER Axp A . ? 35.201 4.625 4.344 1 22.53 ? 187 A 1
+ATOM 1438 O OG . SER Axp A . ? 35.453 3.191 4.163 1 28.06 ? 187 A 1
+ATOM 1439 N N . SER Axp A . ? 33.057 6.764 3.545 1 18.5 ? 188 A 1
+ATOM 1440 C CA . SER Axp A . ? 31.714 7.391 3.7 1 18.54 ? 188 A 1
+ATOM 1441 C C . SER Axp A . ? 31.459 8.175 2.393 1 16.74 ? 188 A 1
+ATOM 1442 O O . SER Axp A . ? 32.388 8.796 1.867 1 14.7 ? 188 A 1
+ATOM 1443 C CB . SER Axp A . ? 31.653 8.284 4.913 1 20.39 ? 188 A 1
+ATOM 1444 O OG . SER Axp A . ? 32.804 9.16 4.844 1 24.08 ? 188 A 1
+ATOM 1445 N N . LEU Axp A . ? 30.197 8.112 1.964 1 15.5 ? 189 A 1
+ATOM 1446 C CA . LEU Axp A . ? 29.706 8.736 0.768 1 15.21 ? 189 A 1
+ATOM 1447 C C . LEU Axp A . ? 28.813 9.948 0.993 1 14.32 ? 189 A 1
+ATOM 1448 O O . LEU Axp A . ? 28.021 10.264 0.049 1 13.54 ? 189 A 1
+ATOM 1449 C CB . LEU Axp A . ? 29.146 7.696 -0.236 1 17.5 ? 189 A 1
+ATOM 1450 C CG . LEU Axp A . ? 30.141 6.688 -0.824 1 18.84 ? 189 A 1
+ATOM 1451 C CD1 . LEU Axp A . ? 29.498 5.835 -1.921 1 20.02 ? 189 A 1
+ATOM 1452 C CD2 . LEU Axp A . ? 31.306 7.46 -1.476 1 18.68 ? 189 A 1
+ATOM 1453 N N . ASP Axp A . ? 28.938 10.598 2.141 1 13.14 ? 190 A 1
+ATOM 1454 C CA . ASP Axp A . ? 28.183 11.874 2.396 1 13.55 ? 190 A 1
+ATOM 1455 C C . ASP Axp A . ? 28.668 12.875 1.332 1 11.45 ? 190 A 1
+ATOM 1456 O O . ASP Axp A . ? 29.849 12.85 1.035 1 11.83 ? 190 A 1
+ATOM 1457 C CB . ASP Axp A . ? 28.368 12.397 3.815 1 15.29 ? 190 A 1
+ATOM 1458 C CG . ASP Axp A . ? 27.671 11.489 4.844 1 19.15 ? 190 A 1
+ATOM 1459 O OD1 . ASP Axp A . ? 26.424 11.281 4.653 1 21.3 ? 190 A 1
+ATOM 1460 O OD2 . ASP Axp A . ? 28.325 11.019 5.784 1 19.69 ? 190 A 1
+ATOM 1461 N N . PHE Axp A . ? 27.821 13.791 0.845 1 10.08 ? 191 A 1
+ATOM 1462 C CA . PHE Axp A . ? 28.253 14.672 -0.223 1 7.6 ? 191 A 1
+ATOM 1463 C C . PHE Axp A . ? 27.581 16.013 -0.208 1 7.51 ? 191 A 1
+ATOM 1464 O O . PHE Axp A . ? 26.575 16.191 0.483 1 6.83 ? 191 A 1
+ATOM 1465 C CB . PHE Axp A . ? 27.956 13.922 -1.596 1 8.76 ? 191 A 1
+ATOM 1466 C CG . PHE Axp A . ? 26.501 13.585 -1.829 1 9.3 ? 191 A 1
+ATOM 1467 C CD1 . PHE Axp A . ? 25.889 12.481 -1.276 1 9.38 ? 191 A 1
+ATOM 1468 C CD2 . PHE Axp A . ? 25.677 14.478 -2.514 1 11.38 ? 191 A 1
+ATOM 1469 C CE1 . PHE Axp A . ? 24.529 12.221 -1.424 1 11.67 ? 191 A 1
+ATOM 1470 C CE2 . PHE Axp A . ? 24.286 14.261 -2.651 1 10.26 ? 191 A 1
+ATOM 1471 C CZ . PHE Axp A . ? 23.716 13.103 -2.137 1 9.46 ? 191 A 1
+ATOM 1472 N N . TRP Axp A . ? 28.107 16.823 -1.115 1 6.14 ? 192 A 1
+ATOM 1473 C CA . TRP Axp A . ? 27.595 18.134 -1.508 1 6.72 ? 192 A 1
+ATOM 1474 C C . TRP Axp A . ? 27.236 18.031 -3.009 1 7.83 ? 192 A 1
+ATOM 1475 O O . TRP Axp A . ? 27.894 17.267 -3.775 1 7.28 ? 192 A 1
+ATOM 1476 C CB . TRP Axp A . ? 28.501 19.27 -1.183 1 7.05 ? 192 A 1
+ATOM 1477 C CG . TRP Axp A . ? 28.952 19.528 0.201 1 9.01 ? 192 A 1
+ATOM 1478 C CD1 . TRP Axp A . ? 28.219 20.048 1.235 1 10.07 ? 192 A 1
+ATOM 1479 C CD2 . TRP Axp A . ? 30.278 19.338 0.727 1 10.31 ? 192 A 1
+ATOM 1480 N NE1 . TRP Axp A . ? 29.009 20.187 2.372 1 11.71 ? 192 A 1
+ATOM 1481 C CE2 . TRP Axp A . ? 30.288 19.765 2.052 1 10.93 ? 192 A 1
+ATOM 1482 C CE3 . TRP Axp A . ? 31.476 18.867 0.154 1 10.15 ? 192 A 1
+ATOM 1483 C CZ2 . TRP Axp A . ? 31.42 19.695 2.856 1 11.24 ? 192 A 1
+ATOM 1484 C CZ3 . TRP Axp A . ? 32.616 18.814 0.957 1 10.11 ? 192 A 1
+ATOM 1485 C CH2 . TRP Axp A . ? 32.587 19.211 2.308 1 10.11 ? 192 A 1
+ATOM 1486 N N . THR Axp A . ? 26.174 18.7 -3.438 1 7.96 ? 193 A 1
+ATOM 1487 C CA . THR Axp A . ? 25.736 18.701 -4.847 1 7.2 ? 193 A 1
+ATOM 1488 C C . THR Axp A . ? 25.291 20.101 -5.289 1 8.05 ? 193 A 1
+ATOM 1489 O O . THR Axp A . ? 24.664 20.871 -4.518 1 6.99 ? 193 A 1
+ATOM 1490 C CB . THR Axp A . ? 24.668 17.597 -5.146 1 7.24 ? 193 A 1
+ATOM 1491 O OG1 . THR Axp A . ? 24.399 17.522 -6.567 1 5.95 ? 193 A 1
+ATOM 1492 C CG2 . THR Axp A . ? 23.324 17.689 -4.401 1 8.39 ? 193 A 1
+ATOM 1493 N N . TYR Axp A . ? 25.604 20.398 -6.553 1 8 ? 194 A 1
+ATOM 1494 C CA . TYR Axp A . ? 25.184 21.679 -7.166 1 8.22 ? 194 A 1
+ATOM 1495 C C . TYR Axp A . ? 25.166 21.489 -8.682 1 7.57 ? 194 A 1
+ATOM 1496 O O . TYR Axp A . ? 25.864 20.61 -9.224 1 5.74 ? 194 A 1
+ATOM 1497 C CB . TYR Axp A . ? 26.071 22.848 -6.705 1 8.08 ? 194 A 1
+ATOM 1498 C CG . TYR Axp A . ? 27.393 22.852 -7.436 1 8.2 ? 194 A 1
+ATOM 1499 C CD1 . TYR Axp A . ? 28.463 22.095 -6.948 1 7.58 ? 194 A 1
+ATOM 1500 C CD2 . TYR Axp A . ? 27.54 23.502 -8.66 1 8.33 ? 194 A 1
+ATOM 1501 C CE1 . TYR Axp A . ? 29.648 22.02 -7.652 1 7.71 ? 194 A 1
+ATOM 1502 C CE2 . TYR Axp A . ? 28.758 23.48 -9.333 1 7.81 ? 194 A 1
+ATOM 1503 C CZ . TYR Axp A . ? 29.793 22.716 -8.839 1 7.56 ? 194 A 1
+ATOM 1504 O OH . TYR Axp A . ? 31.029 22.693 -9.462 1 7.86 ? 194 A 1
+ATOM 1505 N N . PRO Axp A . ? 24.364 22.281 -9.384 1 7.65 ? 195 A 1
+ATOM 1506 C CA . PRO Axp A . ? 24.312 22.216 -10.851 1 7.49 ? 195 A 1
+ATOM 1507 C C . PRO Axp A . ? 25.489 23.033 -11.429 1 8.73 ? 195 A 1
+ATOM 1508 O O . PRO Axp A . ? 25.64 24.229 -11.076 1 10.29 ? 195 A 1
+ATOM 1509 C CB . PRO Axp A . ? 22.994 22.878 -11.197 1 8.32 ? 195 A 1
+ATOM 1510 C CG . PRO Axp A . ? 22.726 23.845 -10.055 1 8.49 ? 195 A 1
+ATOM 1511 C CD . PRO Axp A . ? 23.494 23.363 -8.836 1 7.73 ? 195 A 1
+ATOM 1512 N N . GLY Axp A . ? 26.26 22.42 -12.282 1 8.76 ? 196 A 1
+ATOM 1513 C CA . GLY Axp A . ? 27.444 23.145 -12.853 1 9.13 ? 196 A 1
+ATOM 1514 C C . GLY Axp A . ? 27.74 22.739 -14.264 1 8.64 ? 196 A 1
+ATOM 1515 O O . GLY Axp A . ? 26.856 22.381 -15.059 1 7.57 ? 196 A 1
+ATOM 1516 N N . SER Axp A . ? 29.035 22.746 -14.609 1 9.3 ? 197 A 1
+ATOM 1517 C CA . SER Axp A . ? 29.426 22.407 -16.004 1 9.09 ? 197 A 1
+ATOM 1518 C C . SER Axp A . ? 30.713 21.592 -16.096 1 9.55 ? 197 A 1
+ATOM 1519 O O . SER Axp A . ? 31.291 21.226 -15.077 1 10.05 ? 197 A 1
+ATOM 1520 C CB . SER Axp A . ? 29.711 23.759 -16.7 1 7.4 ? 197 A 1
+ATOM 1521 O OG . SER Axp A . ? 31.027 24.258 -16.325 1 8.96 ? 197 A 1
+ATOM 1522 N N . LEU Axp A . ? 31.074 21.334 -17.354 1 9.04 ? 198 A 1
+ATOM 1523 C CA . LEU Axp A . ? 32.368 20.673 -17.71 1 8.67 ? 198 A 1
+ATOM 1524 C C . LEU Axp A . ? 33.425 21.702 -17.291 1 8.24 ? 198 A 1
+ATOM 1525 O O . LEU Axp A . ? 33.147 22.944 -17.413 1 8.37 ? 198 A 1
+ATOM 1526 C CB . LEU Axp A . ? 32.402 20.398 -19.198 1 7.78 ? 198 A 1
+ATOM 1527 C CG . LEU Axp A . ? 31.379 19.502 -19.878 1 9.23 ? 198 A 1
+ATOM 1528 C CD1 . LEU Axp A . ? 31.726 19.383 -21.388 1 8.63 ? 198 A 1
+ATOM 1529 C CD2 . LEU Axp A . ? 31.435 18.127 -19.278 1 7.97 ? 198 A 1
+ATOM 1530 N N . THR Axp A . ? 34.55 21.286 -16.744 1 8.06 ? 199 A 1
+ATOM 1531 C CA . THR Axp A . ? 35.563 22.213 -16.239 1 6.93 ? 199 A 1
+ATOM 1532 C C . THR Axp A . ? 36.578 22.629 -17.341 1 8.28 ? 199 A 1
+ATOM 1533 O O . THR Axp A . ? 37.445 23.451 -17.066 1 7.8 ? 199 A 1
+ATOM 1534 C CB . THR Axp A . ? 36.238 21.718 -14.928 1 7.45 ? 199 A 1
+ATOM 1535 O OG1 . THR Axp A . ? 37.004 20.498 -15.264 1 4.85 ? 199 A 1
+ATOM 1536 C CG2 . THR Axp A . ? 35.199 21.488 -13.771 1 4.3 ? 199 A 1
+ATOM 1537 N N . HIS Axp A . ? 36.424 22.084 -18.503 1 8.88 ? 200 A 1
+ATOM 1538 C CA . HIS Axp A . ? 37.263 22.469 -19.675 1 10.32 ? 200 A 1
+ATOM 1539 C C . HIS Axp A . ? 36.414 22.456 -20.93 1 11.22 ? 200 A 1
+ATOM 1540 O O . HIS Axp A . ? 35.267 21.938 -20.963 1 9.07 ? 200 A 1
+ATOM 1541 C CB . HIS Axp A . ? 38.568 21.648 -19.735 1 11.66 ? 200 A 1
+ATOM 1542 C CG . HIS Axp A . ? 38.401 20.168 -19.858 1 11.02 ? 200 A 1
+ATOM 1543 N ND1 . HIS Axp A . ? 37.998 19.582 -21.041 1 11.78 ? 200 A 1
+ATOM 1544 C CD2 . HIS Axp A . ? 38.679 19.159 -19.028 1 12.45 ? 200 A 1
+ATOM 1545 C CE1 . HIS Axp A . ? 38.025 18.261 -20.907 1 12.17 ? 200 A 1
+ATOM 1546 N NE2 . HIS Axp A . ? 38.435 17.972 -19.687 1 13.35 ? 200 A 1
+ATOM 1547 N N . PRO Axp A . ? 36.916 23.129 -21.988 1 12.29 ? 201 A 1
+ATOM 1548 C CA . PRO Axp A . ? 36.181 23.232 -23.259 1 12.39 ? 201 A 1
+ATOM 1549 C C . PRO Axp A . ? 35.671 21.907 -23.74 1 13.06 ? 201 A 1
+ATOM 1550 O O . PRO Axp A . ? 36.296 20.831 -23.573 1 13.26 ? 201 A 1
+ATOM 1551 C CB . PRO Axp A . ? 37.176 23.874 -24.235 1 12.44 ? 201 A 1
+ATOM 1552 C CG . PRO Axp A . ? 37.951 24.771 -23.274 1 12.97 ? 201 A 1
+ATOM 1553 C CD . PRO Axp A . ? 38.185 23.829 -22.064 1 11.69 ? 201 A 1
+ATOM 1554 N N . PRO Axp A . ? 34.477 21.874 -24.308 1 13.84 ? 202 A 1
+ATOM 1555 C CA . PRO Axp A . ? 33.527 22.935 -24.573 1 14.03 ? 202 A 1
+ATOM 1556 C C . PRO Axp A . ? 32.744 23.548 -23.434 1 13.36 ? 202 A 1
+ATOM 1557 O O . PRO Axp A . ? 31.833 24.398 -23.695 1 14.61 ? 202 A 1
+ATOM 1558 C CB . PRO Axp A . ? 32.624 22.359 -25.671 1 13.68 ? 202 A 1
+ATOM 1559 C CG . PRO Axp A . ? 32.626 20.888 -25.4 1 14.16 ? 202 A 1
+ATOM 1560 C CD . PRO Axp A . ? 33.94 20.523 -24.714 1 14.3 ? 202 A 1
+ATOM 1561 N N . LEU Axp A . ? 32.992 23.228 -22.185 1 11.82 ? 203 A 1
+ATOM 1562 C CA . LEU Axp A . ? 32.35 23.862 -21.037 1 11.2 ? 203 A 1
+ATOM 1563 C C . LEU Axp A . ? 30.816 23.87 -20.949 1 11.34 ? 203 A 1
+ATOM 1564 O O . LEU Axp A . ? 30.246 24.824 -20.349 1 10.55 ? 203 A 1
+ATOM 1565 C CB . LEU Axp A . ? 32.921 25.291 -21.008 1 9.81 ? 203 A 1
+ATOM 1566 C CG . LEU Axp A . ? 34.391 25.539 -20.794 1 8.77 ? 203 A 1
+ATOM 1567 C CD1 . LEU Axp A . ? 34.757 26.974 -21.163 1 10.26 ? 203 A 1
+ATOM 1568 C CD2 . LEU Axp A . ? 34.754 25.243 -19.322 1 8.09 ? 203 A 1
+ATOM 1569 N N . TYR Axp A . ? 30.171 22.872 -21.526 1 11.22 ? 204 A 1
+ATOM 1570 C CA . TYR Axp A . ? 28.69 22.725 -21.482 1 10.76 ? 204 A 1
+ATOM 1571 C C . TYR Axp A . ? 28.211 22.732 -20.019 1 10.76 ? 204 A 1
+ATOM 1572 O O . TYR Axp A . ? 28.826 22.145 -19.139 1 8.77 ? 204 A 1
+ATOM 1573 C CB . TYR Axp A . ? 28.274 21.366 -22.071 1 12.24 ? 204 A 1
+ATOM 1574 C CG . TYR Axp A . ? 28.566 21.224 -23.556 1 13.33 ? 204 A 1
+ATOM 1575 C CD1 . TYR Axp A . ? 28.408 22.289 -24.409 1 13.8 ? 204 A 1
+ATOM 1576 C CD2 . TYR Axp A . ? 28.966 19.985 -24.09 1 15.64 ? 204 A 1
+ATOM 1577 C CE1 . TYR Axp A . ? 28.659 22.228 -25.763 1 16.33 ? 204 A 1
+ATOM 1578 C CE2 . TYR Axp A . ? 29.19 19.847 -25.47 1 17.6 ? 204 A 1
+ATOM 1579 C CZ . TYR Axp A . ? 29.102 20.994 -26.276 1 18.4 ? 204 A 1
+ATOM 1580 O OH . TYR Axp A . ? 29.347 20.939 -27.624 1 21.79 ? 204 A 1
+ATOM 1581 N N . GLU Axp A . ? 27.072 23.399 -19.809 1 10.6 ? 205 A 1
+ATOM 1582 C CA . GLU Axp A . ? 26.472 23.46 -18.457 1 10.46 ? 205 A 1
+ATOM 1583 C C . GLU Axp A . ? 25.481 22.322 -18.38 1 10.5 ? 205 A 1
+ATOM 1584 O O . GLU Axp A . ? 24.255 22.442 -18.463 1 10.21 ? 205 A 1
+ATOM 1585 C CB . GLU Axp A . ? 25.887 24.855 -18.265 1 12.05 ? 205 A 1
+ATOM 1586 C CG . GLU Axp A . ? 26.963 25.97 -18.197 1 10.37 ? 205 A 1
+ATOM 1587 C CD . GLU Axp A . ? 26.472 27.341 -17.9 1 11.55 ? 205 A 1
+ATOM 1588 O OE1 . GLU Axp A . ? 25.225 27.43 -17.84 1 11.6 ? 205 A 1
+ATOM 1589 O OE2 . GLU Axp A . ? 27.161 28.308 -17.661 1 10.41 ? 205 A 1
+ATOM 1590 N N . SER Axp A . ? 26.047 21.078 -18.328 1 9.98 ? 206 A 1
+ATOM 1591 C CA . SER Axp A . ? 25.327 19.835 -18.333 1 9.26 ? 206 A 1
+ATOM 1592 C C . SER Axp A . ? 25.608 18.872 -17.19 1 8.72 ? 206 A 1
+ATOM 1593 O O . SER Axp A . ? 25.183 17.705 -17.349 1 8.4 ? 206 A 1
+ATOM 1594 C CB . SER Axp A . ? 25.651 18.995 -19.614 1 10.81 ? 206 A 1
+ATOM 1595 O OG . SER Axp A . ? 27.067 19.046 -19.857 1 14.08 ? 206 A 1
+ATOM 1596 N N . VAL Axp A . ? 26.281 19.342 -16.16 1 8.38 ? 207 A 1
+ATOM 1597 C CA . VAL Axp A . ? 26.686 18.48 -15.065 1 7.3 ? 207 A 1
+ATOM 1598 C C . VAL Axp A . ? 26.032 18.724 -13.72 1 6.38 ? 207 A 1
+ATOM 1599 O O . VAL Axp A . ? 25.884 19.815 -13.186 1 7.44 ? 207 A 1
+ATOM 1600 C CB . VAL Axp A . ? 28.257 18.628 -14.882 1 8.85 ? 207 A 1
+ATOM 1601 C CG1 . VAL Axp A . ? 28.71 17.675 -13.782 1 6.7 ? 207 A 1
+ATOM 1602 C CG2 . VAL Axp A . ? 29.041 18.506 -16.163 1 6.6 ? 207 A 1
+ATOM 1603 N N . THR Axp A . ? 25.686 17.6 -13.131 1 6.25 ? 208 A 1
+ATOM 1604 C CA . THR Axp A . ? 25.169 17.598 -11.745 1 6.77 ? 208 A 1
+ATOM 1605 C C . THR Axp A . ? 26.384 17.09 -10.933 1 6.62 ? 208 A 1
+ATOM 1606 O O . THR Axp A . ? 26.658 15.896 -11.012 1 6.63 ? 208 A 1
+ATOM 1607 C CB . THR Axp A . ? 23.875 16.757 -11.531 1 9.69 ? 208 A 1
+ATOM 1608 O OG1 . THR Axp A . ? 22.877 17.384 -12.421 1 9.81 ? 208 A 1
+ATOM 1609 C CG2 . THR Axp A . ? 23.397 16.796 -10.044 1 9.94 ? 208 A 1
+ATOM 1610 N N . TRP Axp A . ? 27.005 18.027 -10.211 1 5.8 ? 209 A 1
+ATOM 1611 C CA . TRP Axp A . ? 28.141 17.655 -9.372 1 6.86 ? 209 A 1
+ATOM 1612 C C . TRP Axp A . ? 27.791 16.938 -8.102 1 7.08 ? 209 A 1
+ATOM 1613 O O . TRP Axp A . ? 26.839 17.373 -7.429 1 7.53 ? 209 A 1
+ATOM 1614 C CB . TRP Axp A . ? 29.062 18.885 -9.064 1 5.66 ? 209 A 1
+ATOM 1615 C CG . TRP Axp A . ? 29.878 19.198 -10.283 1 4.72 ? 209 A 1
+ATOM 1616 C CD1 . TRP Axp A . ? 29.483 20.067 -11.283 1 6 ? 209 A 1
+ATOM 1617 C CD2 . TRP Axp A . ? 31.124 18.62 -10.698 1 4.85 ? 209 A 1
+ATOM 1618 N NE1 . TRP Axp A . ? 30.428 20.038 -12.304 1 6.04 ? 209 A 1
+ATOM 1619 C CE2 . TRP Axp A . ? 31.412 19.119 -11.982 1 4.09 ? 209 A 1
+ATOM 1620 C CE3 . TRP Axp A . ? 31.96 17.643 -10.141 1 4.76 ? 209 A 1
+ATOM 1621 C CZ2 . TRP Axp A . ? 32.605 18.828 -12.646 1 4.6 ? 209 A 1
+ATOM 1622 C CZ3 . TRP Axp A . ? 33.139 17.284 -10.822 1 5.15 ? 209 A 1
+ATOM 1623 C CH2 . TRP Axp A . ? 33.463 17.911 -12.064 1 4.15 ? 209 A 1
+ATOM 1624 N N . ILE Axp A . ? 28.558 15.915 -7.763 1 6.76 ? 210 A 1
+ATOM 1625 C CA . ILE Axp A . ? 28.495 15.201 -6.516 1 8.34 ? 210 A 1
+ATOM 1626 C C . ILE Axp A . ? 29.9 15.33 -5.854 1 8.39 ? 210 A 1
+ATOM 1627 O O . ILE Axp A . ? 30.779 14.563 -6.327 1 9.9 ? 210 A 1
+ATOM 1628 C CB . ILE Axp A . ? 28.11 13.701 -6.601 1 10.76 ? 210 A 1
+ATOM 1629 C CG1 . ILE Axp A . ? 26.795 13.534 -7.417 1 11.7 ? 210 A 1
+ATOM 1630 C CG2 . ILE Axp A . ? 28.003 13 -5.219 1 9.55 ? 210 A 1
+ATOM 1631 C CD1 . ILE Axp A . ? 25.598 14.249 -6.826 1 13.72 ? 210 A 1
+ATOM 1632 N N . ILE Axp A . ? 30.095 16.193 -4.9 1 8.18 ? 211 A 1
+ATOM 1633 C CA . ILE Axp A . ? 31.424 16.351 -4.226 1 7.95 ? 211 A 1
+ATOM 1634 C C . ILE Axp A . ? 31.385 15.591 -2.9 1 7.47 ? 211 A 1
+ATOM 1635 O O . ILE Axp A . ? 30.495 15.854 -2.093 1 6.62 ? 211 A 1
+ATOM 1636 C CB . ILE Axp A . ? 31.777 17.85 -3.955 1 8.86 ? 211 A 1
+ATOM 1637 C CG1 . ILE Axp A . ? 31.544 18.71 -5.219 1 8.95 ? 211 A 1
+ATOM 1638 C CG2 . ILE Axp A . ? 33.188 17.988 -3.295 1 7.24 ? 211 A 1
+ATOM 1639 C CD1 . ILE Axp A . ? 32.348 18.227 -6.462 1 9.27 ? 211 A 1
+ATOM 1640 N N . CYS Axp A . ? 32.319 14.682 -2.718 1 7.31 ? 212 A 1
+ATOM 1641 C CA . CYS Axp A . ? 32.42 13.849 -1.516 1 8.27 ? 212 A 1
+ATOM 1642 C C . CYS Axp A . ? 33.004 14.676 -0.384 1 8.28 ? 212 A 1
+ATOM 1643 O O . CYS Axp A . ? 33.966 15.41 -0.533 1 7.69 ? 212 A 1
+ATOM 1644 C CB . CYS Axp A . ? 33.236 12.592 -1.762 1 9 ? 212 A 1
+ATOM 1645 S SG . CYS Axp A . ? 32.424 11.26 -2.59 1 13.43 ? 212 A 1
+ATOM 1646 N N . LYS Axp A . ? 32.363 14.525 0.775 1 9.5 ? 213 A 1
+ATOM 1647 C CA . LYS Axp A . ? 32.757 15.254 1.959 1 11.94 ? 213 A 1
+ATOM 1648 C C . LYS Axp A . ? 34.115 14.765 2.459 1 12.46 ? 213 A 1
+ATOM 1649 O O . LYS Axp A . ? 34.914 15.557 2.972 1 11.4 ? 213 A 1
+ATOM 1650 C CB . LYS Axp A . ? 31.696 15.153 3.065 1 15.62 ? 213 A 1
+ATOM 1651 C CG . LYS Axp A . ? 32.277 15.498 4.436 1 19.63 ? 213 A 1
+ATOM 1652 C CD . LYS Axp A . ? 31.609 14.589 5.494 1 23.23 ? 213 A 1
+ATOM 1653 C CE . LYS Axp A . ? 31.989 15.093 6.904 1 23.74 ? 213 A 1
+ATOM 1654 N NZ . LYS Axp A . ? 31.386 16.483 6.956 1 25.02 ? 213 A 1
+ATOM 1655 N N . GLU Axp A . ? 34.371 13.486 2.334 1 12.79 ? 214 A 1
+ATOM 1656 C CA . GLU Axp A . ? 35.65 12.877 2.781 1 13.45 ? 214 A 1
+ATOM 1657 C C . GLU Axp A . ? 36.674 12.845 1.659 1 12.97 ? 214 A 1
+ATOM 1658 O O . GLU Axp A . ? 36.379 12.512 0.472 1 12.75 ? 214 A 1
+ATOM 1659 C CB . GLU Axp A . ? 35.428 11.449 3.23 1 18.02 ? 214 A 1
+ATOM 1660 C CG . GLU Axp A . ? 36.518 10.517 3.653 1 25.25 ? 214 A 1
+ATOM 1661 C CD . GLU Axp A . ? 36.145 9.29 4.445 1 29.72 ? 214 A 1
+ATOM 1662 O OE1 . GLU Axp A . ? 35.409 9.548 5.428 1 32.62 ? 214 A 1
+ATOM 1663 O OE2 . GLU Axp A . ? 36.507 8.136 4.238 1 33.1 ? 214 A 1
+ATOM 1664 N N . SER Axp A . ? 37.895 13.19 2.065 1 11.75 ? 215 A 1
+ATOM 1665 C CA . SER Axp A . ? 39.008 13.163 1.043 1 12.06 ? 215 A 1
+ATOM 1666 C C . SER Axp A . ? 39.753 11.838 1.177 1 11.37 ? 215 A 1
+ATOM 1667 O O . SER Axp A . ? 39.537 11.049 2.136 1 11.66 ? 215 A 1
+ATOM 1668 C CB . SER Axp A . ? 39.826 14.421 1.191 1 13.35 ? 215 A 1
+ATOM 1669 O OG . SER Axp A . ? 40.426 14.44 2.512 1 14.46 ? 215 A 1
+ATOM 1670 N N . ILE Axp A . ? 40.537 11.519 0.18 1 10.43 ? 216 A 1
+ATOM 1671 C CA . ILE Axp A . ? 41.398 10.332 0.099 1 9.89 ? 216 A 1
+ATOM 1672 C C . ILE Axp A . ? 42.837 10.894 0.003 1 9.53 ? 216 A 1
+ATOM 1673 O O . ILE Axp A . ? 42.98 12.093 -0.324 1 9.46 ? 216 A 1
+ATOM 1674 C CB . ILE Axp A . ? 41.048 9.403 -1.091 1 10.27 ? 216 A 1
+ATOM 1675 C CG1 . ILE Axp A . ? 41.351 10.196 -2.406 1 10.45 ? 216 A 1
+ATOM 1676 C CG2 . ILE Axp A . ? 39.616 8.812 -1.033 1 8.51 ? 216 A 1
+ATOM 1677 C CD1 . ILE Axp A . ? 41.413 9.332 -3.697 1 11.63 ? 216 A 1
+ATOM 1678 N N . SER Axp A . ? 43.842 10.089 0.277 1 10.48 ? 217 A 1
+ATOM 1679 C CA . SER Axp A . ? 45.234 10.555 0.24 1 10.75 ? 217 A 1
+ATOM 1680 C C . SER Axp A . ? 45.898 10.176 -1.054 1 11.24 ? 217 A 1
+ATOM 1681 O O . SER Axp A . ? 45.392 9.45 -1.941 1 11.23 ? 217 A 1
+ATOM 1682 C CB . SER Axp A . ? 46.119 10.07 1.393 1 12.6 ? 217 A 1
+ATOM 1683 O OG . SER Axp A . ? 46.093 8.625 1.43 1 16.8 ? 217 A 1
+ATOM 1684 N N . VAL Axp A . ? 47.12 10.676 -1.067 1 10.54 ? 218 A 1
+ATOM 1685 C CA . VAL Axp A . ? 48.056 10.466 -2.187 1 10.96 ? 218 A 1
+ATOM 1686 C C . VAL Axp A . ? 49.411 11.012 -1.684 1 11.94 ? 218 A 1
+ATOM 1687 O O . VAL Axp A . ? 49.436 11.957 -0.856 1 12.21 ? 218 A 1
+ATOM 1688 C CB . VAL Axp A . ? 47.546 11.209 -3.407 1 8.98 ? 218 A 1
+ATOM 1689 C CG1 . VAL Axp A . ? 47.37 12.725 -3.075 1 9.48 ? 218 A 1
+ATOM 1690 C CG2 . VAL Axp A . ? 48.392 11.067 -4.647 1 8.5 ? 218 A 1
+ATOM 1691 N N . SER Axp A . ? 50.479 10.417 -2.198 1 12.33 ? 219 A 1
+ATOM 1692 C CA . SER Axp A . ? 51.806 10.977 -1.756 1 12.56 ? 219 A 1
+ATOM 1693 C C . SER Axp A . ? 52.336 11.875 -2.868 1 12.56 ? 219 A 1
+ATOM 1694 O O . SER Axp A . ? 51.923 11.875 -4.023 1 9.82 ? 219 A 1
+ATOM 1695 C CB . SER Axp A . ? 52.776 9.841 -1.447 1 11.3 ? 219 A 1
+ATOM 1696 O OG . SER Axp A . ? 53.152 9.296 -2.693 1 11.12 ? 219 A 1
+ATOM 1697 N N . SER Axp A . ? 53.335 12.699 -2.481 1 13.47 ? 220 A 1
+ATOM 1698 C CA . SER Axp A . ? 53.94 13.612 -3.461 1 14.85 ? 220 A 1
+ATOM 1699 C C . SER Axp A . ? 54.588 12.827 -4.614 1 15.41 ? 220 A 1
+ATOM 1700 O O . SER Axp A . ? 54.605 13.329 -5.765 1 15.66 ? 220 A 1
+ATOM 1701 C CB . SER Axp A . ? 54.949 14.562 -2.824 1 15.76 ? 220 A 1
+ATOM 1702 O OG . SER Axp A . ? 55.975 13.742 -2.286 1 16.83 ? 220 A 1
+ATOM 1703 N N . GLU Axp A . ? 55.103 11.618 -4.341 1 14.87 ? 221 A 1
+ATOM 1704 C CA . GLU Axp A . ? 55.695 10.856 -5.429 1 15.34 ? 221 A 1
+ATOM 1705 C C . GLU Axp A . ? 54.629 10.323 -6.383 1 14.99 ? 221 A 1
+ATOM 1706 O O . GLU Axp A . ? 54.976 10.203 -7.573 1 15.05 ? 221 A 1
+ATOM 1707 C CB . GLU Axp A . ? 56.531 9.689 -5 1 21.37 ? 221 A 1
+ATOM 1708 C CG . GLU Axp A . ? 58.006 10.068 -4.668 1 28.45 ? 221 A 1
+ATOM 1709 C CD . GLU Axp A . ? 58.581 8.929 -3.852 1 33.37 ? 221 A 1
+ATOM 1710 O OE1 . GLU Axp A . ? 57.856 8.721 -2.835 1 35.63 ? 221 A 1
+ATOM 1711 O OE2 . GLU Axp A . ? 59.57 8.314 -4.247 1 37.36 ? 221 A 1
+ATOM 1712 N N . GLN Axp A . ? 53.446 10.024 -5.835 1 12.64 ? 222 A 1
+ATOM 1713 C CA . GLN Axp A . ? 52.369 9.594 -6.768 1 12.62 ? 222 A 1
+ATOM 1714 C C . GLN Axp A . ? 52.018 10.745 -7.704 1 11.98 ? 222 A 1
+ATOM 1715 O O . GLN Axp A . ? 51.909 10.534 -8.907 1 11.28 ? 222 A 1
+ATOM 1716 C CB . GLN Axp A . ? 51.184 9.003 -6.031 1 11 ? 222 A 1
+ATOM 1717 C CG . GLN Axp A . ? 51.584 7.679 -5.385 1 11.11 ? 222 A 1
+ATOM 1718 C CD . GLN Axp A . ? 50.49 7.123 -4.476 1 11.28 ? 222 A 1
+ATOM 1719 O OE1 . GLN Axp A . ? 49.843 7.893 -3.777 1 10.59 ? 222 A 1
+ATOM 1720 N NE2 . GLN Axp A . ? 50.342 5.816 -4.518 1 10.45 ? 222 A 1
+ATOM 1721 N N . LEU Axp A . ? 51.904 11.97 -7.196 1 11.97 ? 223 A 1
+ATOM 1722 C CA . LEU Axp A . ? 51.556 13.129 -8.019 1 13.03 ? 223 A 1
+ATOM 1723 C C . LEU Axp A . ? 52.579 13.454 -9.088 1 13.51 ? 223 A 1
+ATOM 1724 O O . LEU Axp A . ? 52.336 13.999 -10.188 1 12.34 ? 223 A 1
+ATOM 1725 C CB . LEU Axp A . ? 51.239 14.322 -7.062 1 13.05 ? 223 A 1
+ATOM 1726 C CG . LEU Axp A . ? 50.013 14.23 -6.179 1 14.94 ? 223 A 1
+ATOM 1727 C CD1 . LEU Axp A . ? 50.055 15.294 -5.042 1 13.55 ? 223 A 1
+ATOM 1728 C CD2 . LEU Axp A . ? 48.743 14.464 -6.972 1 12.9 ? 223 A 1
+ATOM 1729 N N . ALA Axp A . ? 53.846 13.187 -8.713 1 14.31 ? 224 A 1
+ATOM 1730 C CA . ALA Axp A . ? 54.993 13.456 -9.588 1 14.1 ? 224 A 1
+ATOM 1731 C C . ALA Axp A . ? 54.943 12.571 -10.825 1 14.51 ? 224 A 1
+ATOM 1732 O O . ALA Axp A . ? 55.429 13.045 -11.865 1 14.92 ? 224 A 1
+ATOM 1733 C CB . ALA Axp A . ? 56.286 13.401 -8.769 1 13.58 ? 224 A 1
+ATOM 1734 N N . GLN Axp A . ? 54.355 11.398 -10.727 1 14.69 ? 225 A 1
+ATOM 1735 C CA . GLN Axp A . ? 54.138 10.455 -11.817 1 14.87 ? 225 A 1
+ATOM 1736 C C . GLN Axp A . ? 53.107 11.032 -12.796 1 14.1 ? 225 A 1
+ATOM 1737 O O . GLN Axp A . ? 53.292 10.937 -14.041 1 14.69 ? 225 A 1
+ATOM 1738 C CB . GLN Axp A . ? 53.732 9.063 -11.287 1 17.57 ? 225 A 1
+ATOM 1739 C CG . GLN Axp A . ? 54.951 8.245 -10.792 1 19.61 ? 225 A 1
+ATOM 1740 C CD . GLN Axp A . ? 54.598 6.924 -10.15 1 20.87 ? 225 A 1
+ATOM 1741 O OE1 . GLN Axp A . ? 54.52 6.699 -8.948 1 22.07 ? 225 A 1
+ATOM 1742 N NE2 . GLN Axp A . ? 54.362 5.882 -10.993 1 22.41 ? 225 A 1
+ATOM 1743 N N . PHE Axp A . ? 52.058 11.7 -12.348 1 12.28 ? 226 A 1
+ATOM 1744 C CA . PHE Axp A . ? 51.086 12.295 -13.302 1 12.24 ? 226 A 1
+ATOM 1745 C C . PHE Axp A . ? 51.782 13.42 -14.088 1 12.62 ? 226 A 1
+ATOM 1746 O O . PHE Axp A . ? 51.652 13.589 -15.298 1 11.54 ? 226 A 1
+ATOM 1747 C CB . PHE Axp A . ? 49.868 12.899 -12.626 1 12.09 ? 226 A 1
+ATOM 1748 C CG . PHE Axp A . ? 48.928 12.05 -11.823 1 13.26 ? 226 A 1
+ATOM 1749 C CD1 . PHE Axp A . ? 48.837 10.694 -12.031 1 12.32 ? 226 A 1
+ATOM 1750 C CD2 . PHE Axp A . ? 48.087 12.676 -10.888 1 11.46 ? 226 A 1
+ATOM 1751 C CE1 . PHE Axp A . ? 47.952 9.906 -11.272 1 13.86 ? 226 A 1
+ATOM 1752 C CE2 . PHE Axp A . ? 47.221 11.906 -10.118 1 13.77 ? 226 A 1
+ATOM 1753 C CZ . PHE Axp A . ? 47.171 10.514 -10.312 1 11.82 ? 226 A 1
+ATOM 1754 N N . ARG Axp A . ? 52.519 14.21 -13.259 1 13.51 ? 227 A 1
+ATOM 1755 C CA . ARG Axp A . ? 53.24 15.39 -13.775 1 14.69 ? 227 A 1
+ATOM 1756 C C . ARG Axp A . ? 54.348 15.069 -14.753 1 15.24 ? 227 A 1
+ATOM 1757 O O . ARG Axp A . ? 54.821 15.986 -15.47 1 16.17 ? 227 A 1
+ATOM 1758 C CB . ARG Axp A . ? 53.615 16.269 -12.602 1 15.96 ? 227 A 1
+ATOM 1759 C CG . ARG Axp A . ? 53.348 17.746 -12.755 1 17.71 ? 227 A 1
+ATOM 1760 C CD . ARG Axp A . ? 53.741 18.563 -11.585 1 17.6 ? 227 A 1
+ATOM 1761 N NE . ARG Axp A . ? 52.977 18.515 -10.414 1 15.7 ? 227 A 1
+ATOM 1762 C CZ . ARG Axp A . ? 53.144 18.05 -9.183 1 16.52 ? 227 A 1
+ATOM 1763 N NH1 . ARG Axp A . ? 54.207 17.447 -8.664 1 16.6 ? 227 A 1
+ATOM 1764 N NH2 . ARG Axp A . ? 52.095 18.229 -8.358 1 14.64 ? 227 A 1
+ATOM 1765 N N . SER Axp A . ? 54.767 13.836 -14.876 1 14.72 ? 228 A 1
+ATOM 1766 C CA . SER Axp A . ? 55.769 13.296 -15.748 1 15.17 ? 228 A 1
+ATOM 1767 C C . SER Axp A . ? 55.257 12.893 -17.126 1 14.6 ? 228 A 1
+ATOM 1768 O O . SER Axp A . ? 56.135 12.688 -18.006 1 13.85 ? 228 A 1
+ATOM 1769 C CB . SER Axp A . ? 56.406 12.015 -15.148 1 17.86 ? 228 A 1
+ATOM 1770 O OG . SER Axp A . ? 57.22 12.357 -14.028 1 22.51 ? 228 A 1
+ATOM 1771 N N . LEU Axp A . ? 53.934 12.728 -17.325 1 12.74 ? 229 A 1
+ATOM 1772 C CA . LEU Axp A . ? 53.407 12.395 -18.677 1 11.68 ? 229 A 1
+ATOM 1773 C C . LEU Axp A . ? 53.67 13.564 -19.626 1 10.7 ? 229 A 1
+ATOM 1774 O O . LEU Axp A . ? 53.773 14.707 -19.156 1 10.31 ? 229 A 1
+ATOM 1775 C CB . LEU Axp A . ? 51.881 12.144 -18.618 1 10.85 ? 229 A 1
+ATOM 1776 C CG . LEU Axp A . ? 51.496 10.928 -17.783 1 12.85 ? 229 A 1
+ATOM 1777 C CD1 . LEU Axp A . ? 49.968 10.845 -17.64 1 14.51 ? 229 A 1
+ATOM 1778 C CD2 . LEU Axp A . ? 52.029 9.701 -18.497 1 11.98 ? 229 A 1
+ATOM 1779 N N . LEU Axp A . ? 53.654 13.271 -20.919 1 10.32 ? 230 A 1
+ATOM 1780 C CA . LEU Axp A . ? 53.979 14.295 -21.915 1 10.56 ? 230 A 1
+ATOM 1781 C C . LEU Axp A . ? 52.8 14.708 -22.748 1 10.24 ? 230 A 1
+ATOM 1782 O O . LEU Axp A . ? 51.937 13.888 -23.11 1 11.66 ? 230 A 1
+ATOM 1783 C CB . LEU Axp A . ? 55.168 13.735 -22.755 1 9.45 ? 230 A 1
+ATOM 1784 C CG . LEU Axp A . ? 56.446 13.387 -22.071 1 9.42 ? 230 A 1
+ATOM 1785 C CD1 . LEU Axp A . ? 57.541 13.027 -23.071 1 9.09 ? 230 A 1
+ATOM 1786 C CD2 . LEU Axp A . ? 56.921 14.677 -21.346 1 9.56 ? 230 A 1
+ATOM 1787 N N . SER Axp A . ? 52.797 15.978 -23.075 1 10.88 ? 231 A 1
+ATOM 1788 C CA . SER Axp A . ? 51.676 16.55 -23.886 1 10.96 ? 231 A 1
+ATOM 1789 C C . SER Axp A . ? 52.033 16.462 -25.352 1 10.18 ? 231 A 1
+ATOM 1790 O O . SER Axp A . ? 51.136 16.677 -26.203 1 9.17 ? 231 A 1
+ATOM 1791 C CB . SER Axp A . ? 51.476 18.061 -23.554 1 13.19 ? 231 A 1
+ATOM 1792 O OG . SER Axp A . ? 50.988 18.214 -22.227 1 15.1 ? 231 A 1
+ATOM 1793 N N . ASN Axp A . ? 53.305 16.21 -25.655 1 9.72 ? 232 A 1
+ATOM 1794 C CA . ASN Axp A . ? 53.646 16.15 -27.106 1 9.41 ? 232 A 1
+ATOM 1795 C C . ASN Axp A . ? 53.435 14.799 -27.725 1 9.99 ? 232 A 1
+ATOM 1796 O O . ASN Axp A . ? 53.349 13.751 -27.08 1 8.34 ? 232 A 1
+ATOM 1797 C CB . ASN Axp A . ? 55.168 16.567 -27.222 1 10.23 ? 232 A 1
+ATOM 1798 C CG . ASN Axp A . ? 55.99 15.609 -26.387 1 9.56 ? 232 A 1
+ATOM 1799 O OD1 . ASN Axp A . ? 56.632 14.641 -26.899 1 12.4 ? 232 A 1
+ATOM 1800 N ND2 . ASN Axp A . ? 55.987 15.8 -25.128 1 8.02 ? 232 A 1
+ATOM 1801 N N . VAL Axp A . ? 53.411 14.785 -29.089 1 10.51 ? 233 A 1
+ATOM 1802 C CA . VAL Axp A . ? 53.359 13.482 -29.747 1 12.84 ? 233 A 1
+ATOM 1803 C C . VAL Axp A . ? 54.795 12.903 -29.682 1 14.42 ? 233 A 1
+ATOM 1804 O O . VAL Axp A . ? 55.761 13.636 -29.466 1 15.44 ? 233 A 1
+ATOM 1805 C CB . VAL Axp A . ? 52.779 13.466 -31.163 1 14.89 ? 233 A 1
+ATOM 1806 C CG1 . VAL Axp A . ? 51.471 14.198 -31.254 1 14.62 ? 233 A 1
+ATOM 1807 C CG2 . VAL Axp A . ? 53.78 13.922 -32.21 1 17.14 ? 233 A 1
+ATOM 1808 N N . GLU Axp A . ? 54.889 11.597 -29.818 1 15.1 ? 234 A 1
+ATOM 1809 C CA . GLU Axp A . ? 56.122 10.865 -29.759 1 17.07 ? 234 A 1
+ATOM 1810 C C . GLU Axp A . ? 57.098 11.33 -30.832 1 17.42 ? 234 A 1
+ATOM 1811 O O . GLU Axp A . ? 56.668 11.625 -31.984 1 16.94 ? 234 A 1
+ATOM 1812 C CB . GLU Axp A . ? 55.865 9.354 -29.905 1 18.85 ? 234 A 1
+ATOM 1813 C CG . GLU Axp A . ? 57.111 8.476 -29.602 1 21.56 ? 234 A 1
+ATOM 1814 C CD . GLU Axp A . ? 56.821 7.019 -29.93 1 23.77 ? 234 A 1
+ATOM 1815 O OE1 . GLU Axp A . ? 55.751 6.635 -30.336 1 26.7 ? 234 A 1
+ATOM 1816 O OE2 . GLU Axp A . ? 57.779 6.244 -29.781 1 26.59 ? 234 A 1
+ATOM 1817 N N . GLY Axp A . ? 58.374 11.438 -30.454 1 17.55 ? 235 A 1
+ATOM 1818 C CA . GLY Axp A . ? 59.352 11.927 -31.459 1 16.73 ? 235 A 1
+ATOM 1819 C C . GLY Axp A . ? 59.718 13.393 -31.285 1 16.35 ? 235 A 1
+ATOM 1820 O O . GLY Axp A . ? 60.91 13.712 -31.563 1 16.47 ? 235 A 1
+ATOM 1821 N N . ASP Axp A . ? 58.805 14.225 -30.851 1 15.48 ? 236 A 1
+ATOM 1822 C CA . ASP Axp A . ? 58.945 15.665 -30.64 1 14.12 ? 236 A 1
+ATOM 1823 C C . ASP Axp A . ? 59.667 15.97 -29.32 1 13.09 ? 236 A 1
+ATOM 1824 O O . ASP Axp A . ? 59.944 14.993 -28.601 1 12.57 ? 236 A 1
+ATOM 1825 C CB . ASP Axp A . ? 57.544 16.342 -30.631 1 15.53 ? 236 A 1
+ATOM 1826 C CG . ASP Axp A . ? 57 16.478 -32.051 1 16.78 ? 236 A 1
+ATOM 1827 O OD1 . ASP Axp A . ? 57.592 15.821 -32.908 1 17.5 ? 236 A 1
+ATOM 1828 O OD2 . ASP Axp A . ? 55.984 17.17 -32.31 1 18.43 ? 236 A 1
+ATOM 1829 N N . ASN Axp A . ? 59.918 17.254 -29.1 1 12.69 ? 237 A 1
+ATOM 1830 C CA . ASN Axp A . ? 60.55 17.761 -27.873 1 13.78 ? 237 A 1
+ATOM 1831 C C . ASN Axp A . ? 59.537 17.57 -26.709 1 13.82 ? 237 A 1
+ATOM 1832 O O . ASN Axp A . ? 58.307 17.768 -26.898 1 14.71 ? 237 A 1
+ATOM 1833 C CB . ASN Axp A . ? 61.031 19.198 -28.017 1 13.12 ? 237 A 1
+ATOM 1834 C CG . ASN Axp A . ? 60.029 20.263 -28.31 1 12.75 ? 237 A 1
+ATOM 1835 O OD1 . ASN Axp A . ? 59.431 20.268 -29.382 1 14.03 ? 237 A 1
+ATOM 1836 N ND2 . ASN Axp A . ? 59.742 21.222 -27.402 1 12.04 ? 237 A 1
+ATOM 1837 N N . ALA Axp A . ? 60.008 17.179 -25.565 1 13.93 ? 238 A 1
+ATOM 1838 C CA . ALA Axp A . ? 59.245 16.891 -24.332 1 14 ? 238 A 1
+ATOM 1839 C C . ALA Axp A . ? 58.646 18.082 -23.662 1 14.62 ? 238 A 1
+ATOM 1840 O O . ALA Axp A . ? 59.382 19.044 -23.3 1 14.34 ? 238 A 1
+ATOM 1841 C CB . ALA Axp A . ? 60.215 16.134 -23.389 1 13.2 ? 238 A 1
+ATOM 1842 N N . VAL Axp A . ? 57.328 18.098 -23.457 1 14.15 ? 239 A 1
+ATOM 1843 C CA . VAL Axp A . ? 56.56 19.197 -22.811 1 14.91 ? 239 A 1
+ATOM 1844 C C . VAL Axp A . ? 55.651 18.519 -21.772 1 15.42 ? 239 A 1
+ATOM 1845 O O . VAL Axp A . ? 54.654 17.913 -22.216 1 15.76 ? 239 A 1
+ATOM 1846 C CB . VAL Axp A . ? 55.662 19.887 -23.849 1 15.48 ? 239 A 1
+ATOM 1847 C CG1 . VAL Axp A . ? 54.605 20.769 -23.194 1 16.38 ? 239 A 1
+ATOM 1848 C CG2 . VAL Axp A . ? 56.426 20.667 -24.931 1 17.73 ? 239 A 1
+ATOM 1849 N N . PRO Axp A . ? 56.023 18.581 -20.512 1 14.95 ? 240 A 1
+ATOM 1850 C CA . PRO Axp A . ? 55.254 17.884 -19.473 1 14.23 ? 240 A 1
+ATOM 1851 C C . PRO Axp A . ? 53.875 18.474 -19.26 1 13.78 ? 240 A 1
+ATOM 1852 O O . PRO Axp A . ? 53.59 19.651 -19.496 1 12.78 ? 240 A 1
+ATOM 1853 C CB . PRO Axp A . ? 56.113 17.928 -18.221 1 14.77 ? 240 A 1
+ATOM 1854 C CG . PRO Axp A . ? 57.492 18.271 -18.742 1 14.39 ? 240 A 1
+ATOM 1855 C CD . PRO Axp A . ? 57.2 19.229 -19.918 1 14.62 ? 240 A 1
+ATOM 1856 N N . MET Axp A . ? 53.104 17.539 -18.74 1 13.83 ? 241 A 1
+ATOM 1857 C CA . MET Axp A . ? 51.683 17.8 -18.369 1 15.13 ? 241 A 1
+ATOM 1858 C C . MET Axp A . ? 51.719 18.346 -16.95 1 15.64 ? 241 A 1
+ATOM 1859 O O . MET Axp A . ? 51.341 17.637 -16 1 16.69 ? 241 A 1
+ATOM 1860 C CB . MET Axp A . ? 51.016 16.442 -18.548 1 14.77 ? 241 A 1
+ATOM 1861 C CG . MET Axp A . ? 49.624 16.486 -19.055 1 14.13 ? 241 A 1
+ATOM 1862 S SD . MET Axp A . ? 48.874 14.816 -18.998 1 13.7 ? 241 A 1
+ATOM 1863 C CE . MET Axp A . ? 49.257 14.272 -20.671 1 13.35 ? 241 A 1
+ATOM 1864 N N . GLN Axp A . ? 52.199 19.566 -16.827 1 16.52 ? 242 A 1
+ATOM 1865 C CA . GLN Axp A . ? 52.439 20.284 -15.575 1 16.47 ? 242 A 1
+ATOM 1866 C C . GLN Axp A . ? 51.231 20.58 -14.701 1 15.87 ? 242 A 1
+ATOM 1867 O O . GLN Axp A . ? 51.322 20.503 -13.46 1 14.2 ? 242 A 1
+ATOM 1868 C CB . GLN Axp A . ? 53.249 21.585 -15.828 1 19.04 ? 242 A 1
+ATOM 1869 C CG . GLN Axp A . ? 53.806 22.209 -14.558 1 22.65 ? 242 A 1
+ATOM 1870 C CD . GLN Axp A . ? 54.316 23.615 -14.618 1 24.23 ? 242 A 1
+ATOM 1871 O OE1 . GLN Axp A . ? 55.326 23.988 -13.955 1 27.27 ? 242 A 1
+ATOM 1872 N NE2 . GLN Axp A . ? 53.683 24.522 -15.341 1 24.78 ? 242 A 1
+ATOM 1873 N N . HIS Axp A . ? 50.092 20.924 -15.305 1 15.22 ? 243 A 1
+ATOM 1874 C CA . HIS Axp A . ? 48.888 21.243 -14.514 1 14.81 ? 243 A 1
+ATOM 1875 C C . HIS Axp A . ? 47.701 21.235 -15.487 1 12.93 ? 243 A 1
+ATOM 1876 O O . HIS Axp A . ? 47.918 21.35 -16.689 1 13.17 ? 243 A 1
+ATOM 1877 C CB . HIS Axp A . ? 48.978 22.609 -13.762 1 15.63 ? 243 A 1
+ATOM 1878 C CG . HIS Axp A . ? 49.254 23.728 -14.706 1 19.55 ? 243 A 1
+ATOM 1879 N ND1 . HIS Axp A . ? 48.473 24.857 -14.851 1 21.98 ? 243 A 1
+ATOM 1880 C CD2 . HIS Axp A . ? 50.249 23.912 -15.609 1 20.97 ? 243 A 1
+ATOM 1881 C CE1 . HIS Axp A . ? 48.999 25.655 -15.76 1 21.51 ? 243 A 1
+ATOM 1882 N NE2 . HIS Axp A . ? 50.086 25.114 -16.229 1 19.24 ? 243 A 1
+ATOM 1883 N N . ASN Axp A . ? 46.523 21.049 -14.961 1 12.21 ? 244 A 1
+ATOM 1884 C CA . ASN Axp A . ? 45.286 20.973 -15.726 1 11.27 ? 244 A 1
+ATOM 1885 C C . ASN Axp A . ? 44.086 21.294 -14.824 1 10.81 ? 244 A 1
+ATOM 1886 O O . ASN Axp A . ? 43.072 20.622 -14.99 1 11.01 ? 244 A 1
+ATOM 1887 C CB . ASN Axp A . ? 45.136 19.625 -16.467 1 10.27 ? 244 A 1
+ATOM 1888 C CG . ASN Axp A . ? 45.239 18.44 -15.513 1 10.31 ? 244 A 1
+ATOM 1889 O OD1 . ASN Axp A . ? 45.467 17.293 -15.96 1 12.98 ? 244 A 1
+ATOM 1890 N ND2 . ASN Axp A . ? 45.025 18.601 -14.26 1 5.24 ? 244 A 1
+ATOM 1891 N N . ASN Axp A . ? 44.206 22.278 -13.961 1 10.85 ? 245 A 1
+ATOM 1892 C CA . ASN Axp A . ? 43.058 22.638 -13.076 1 10.29 ? 245 A 1
+ATOM 1893 C C . ASN Axp A . ? 42.543 24.053 -13.429 1 10.99 ? 245 A 1
+ATOM 1894 O O . ASN Axp A . ? 43.331 25.019 -13.528 1 10.2 ? 245 A 1
+ATOM 1895 C CB . ASN Axp A . ? 43.393 22.484 -11.598 1 9.81 ? 245 A 1
+ATOM 1896 C CG . ASN Axp A . ? 44.435 23.46 -11.036 1 12.68 ? 245 A 1
+ATOM 1897 O OD1 . ASN Axp A . ? 44.197 24.563 -10.474 1 13.41 ? 245 A 1
+ATOM 1898 N ND2 . ASN Axp A . ? 45.718 23.112 -11.14 1 10.08 ? 245 A 1
+ATOM 1899 N N . ARG Axp A . ? 41.216 24.235 -13.433 1 10.23 ? 246 A 1
+ATOM 1900 C CA . ARG Axp A . ? 40.652 25.586 -13.695 1 10.4 ? 246 A 1
+ATOM 1901 C C . ARG Axp A . ? 40.321 26.315 -12.385 1 11.3 ? 246 A 1
+ATOM 1902 O O . ARG Axp A . ? 39.829 25.737 -11.422 1 10.51 ? 246 A 1
+ATOM 1903 C CB . ARG Axp A . ? 39.277 25.34 -14.409 1 9.74 ? 246 A 1
+ATOM 1904 C CG . ARG Axp A . ? 38.638 26.605 -14.911 1 10.94 ? 246 A 1
+ATOM 1905 C CD . ARG Axp A . ? 37.213 26.485 -15.256 1 8.96 ? 246 A 1
+ATOM 1906 N NE . ARG Axp A . ? 36.697 27.539 -16.127 1 9.33 ? 246 A 1
+ATOM 1907 C CZ . ARG Axp A . ? 35.394 27.635 -16.507 1 9.25 ? 246 A 1
+ATOM 1908 N NH1 . ARG Axp A . ? 34.463 26.749 -16.224 1 7.99 ? 246 A 1
+ATOM 1909 N NH2 . ARG Axp A . ? 34.996 28.725 -17.211 1 9.67 ? 246 A 1
+ATOM 1910 N N . PRO Axp A . ? 40.553 27.64 -12.319 1 12 ? 247 A 1
+ATOM 1911 C CA . PRO Axp A . ? 40.206 28.423 -11.141 1 11.73 ? 247 A 1
+ATOM 1912 C C . PRO Axp A . ? 38.696 28.342 -10.894 1 12.37 ? 247 A 1
+ATOM 1913 O O . PRO Axp A . ? 37.84 28.118 -11.787 1 11.62 ? 247 A 1
+ATOM 1914 C CB . PRO Axp A . ? 40.627 29.856 -11.493 1 11.55 ? 247 A 1
+ATOM 1915 C CG . PRO Axp A . ? 41.475 29.788 -12.704 1 11.28 ? 247 A 1
+ATOM 1916 C CD . PRO Axp A . ? 41.175 28.457 -13.394 1 11.28 ? 247 A 1
+ATOM 1917 N N . THR Axp A . ? 38.3 28.542 -9.628 1 12.29 ? 248 A 1
+ATOM 1918 C CA . THR Axp A . ? 36.884 28.502 -9.27 1 12.84 ? 248 A 1
+ATOM 1919 C C . THR Axp A . ? 36.101 29.65 -9.901 1 13.46 ? 248 A 1
+ATOM 1920 O O . THR Axp A . ? 36.626 30.725 -10.182 1 12.33 ? 248 A 1
+ATOM 1921 C CB . THR Axp A . ? 36.64 28.457 -7.708 1 13.13 ? 248 A 1
+ATOM 1922 O OG1 . THR Axp A . ? 37.459 29.549 -7.164 1 15.52 ? 248 A 1
+ATOM 1923 C CG2 . THR Axp A . ? 36.974 27.093 -7.141 1 13.41 ? 248 A 1
+ATOM 1924 N N . GLN Axp A . ? 34.808 29.365 -10.122 1 13.72 ? 249 A 1
+ATOM 1925 C CA . GLN Axp A . ? 33.962 30.419 -10.771 1 14.89 ? 249 A 1
+ATOM 1926 C C . GLN Axp A . ? 32.894 30.898 -9.772 1 15.55 ? 249 A 1
+ATOM 1927 O O . GLN Axp A . ? 32.591 30.234 -8.745 1 15.55 ? 249 A 1
+ATOM 1928 C CB . GLN Axp A . ? 33.344 29.854 -12.053 1 13.53 ? 249 A 1
+ATOM 1929 C CG . GLN Axp A . ? 34.341 29.05 -12.922 1 13.18 ? 249 A 1
+ATOM 1930 C CD . GLN Axp A . ? 35.287 30.043 -13.588 1 14.55 ? 249 A 1
+ATOM 1931 O OE1 . GLN Axp A . ? 34.808 31.015 -14.184 1 14.48 ? 249 A 1
+ATOM 1932 N NE2 . GLN Axp A . ? 36.563 29.831 -13.496 1 12.46 ? 249 A 1
+ATOM 1933 N N . PRO Axp A . ? 32.374 32.085 -10.05 1 15.65 ? 250 A 1
+ATOM 1934 C CA . PRO Axp A . ? 31.303 32.658 -9.234 1 15.69 ? 250 A 1
+ATOM 1935 C C . PRO Axp A . ? 30.1 31.732 -9.219 1 16.13 ? 250 A 1
+ATOM 1936 O O . PRO Axp A . ? 29.668 31.152 -10.212 1 15.5 ? 250 A 1
+ATOM 1937 C CB . PRO Axp A . ? 30.915 33.96 -9.953 1 15.64 ? 250 A 1
+ATOM 1938 C CG . PRO Axp A . ? 32.109 34.34 -10.776 1 15.88 ? 250 A 1
+ATOM 1939 C CD . PRO Axp A . ? 32.693 32.94 -11.231 1 15.41 ? 250 A 1
+ATOM 1940 N N . LEU Axp A . ? 29.528 31.651 -8.022 1 17.61 ? 251 A 1
+ATOM 1941 C CA . LEU Axp A . ? 28.329 30.84 -7.736 1 18.89 ? 251 A 1
+ATOM 1942 C C . LEU Axp A . ? 27.105 31.365 -8.48 1 18.97 ? 251 A 1
+ATOM 1943 O O . LEU Axp A . ? 26.295 30.574 -8.984 1 18.59 ? 251 A 1
+ATOM 1944 C CB . LEU Axp A . ? 28.254 30.806 -6.196 1 20.02 ? 251 A 1
+ATOM 1945 C CG . LEU Axp A . ? 27.469 29.775 -5.467 1 21.91 ? 251 A 1
+ATOM 1946 C CD1 . LEU Axp A . ? 27.804 28.348 -5.913 1 22.43 ? 251 A 1
+ATOM 1947 C CD2 . LEU Axp A . ? 27.801 29.923 -3.963 1 23.04 ? 251 A 1
+ATOM 1948 N N . LYS Axp A . ? 26.976 32.687 -8.641 1 19.23 ? 252 A 1
+ATOM 1949 C CA . LYS Axp A . ? 25.86 33.333 -9.343 1 19.35 ? 252 A 1
+ATOM 1950 C C . LYS Axp A . ? 24.48 32.925 -8.872 1 19.29 ? 252 A 1
+ATOM 1951 O O . LYS Axp A . ? 23.543 32.653 -9.65 1 20.22 ? 252 A 1
+ATOM 1952 C CB . LYS Axp A . ? 25.976 33.232 -10.876 1 20.55 ? 252 A 1
+ATOM 1953 C CG . LYS Axp A . ? 26.923 34.341 -11.355 1 22.21 ? 252 A 1
+ATOM 1954 C CD . LYS Axp A . ? 27.723 34.007 -12.611 1 23.06 ? 252 A 1
+ATOM 1955 C CE . LYS Axp A . ? 28.103 35.386 -13.232 1 24.36 ? 252 A 1
+ATOM 1956 N NZ . LYS Axp A . ? 28.423 35.214 -14.65 1 24.61 ? 252 A 1
+ATOM 1957 N N . GLY Axp A . ? 24.365 32.796 -7.567 1 19.24 ? 253 A 1
+ATOM 1958 C CA . GLY Axp A . ? 23.201 32.443 -6.825 1 19.86 ? 253 A 1
+ATOM 1959 C C . GLY Axp A . ? 22.77 31.006 -6.767 1 19.81 ? 253 A 1
+ATOM 1960 O O . GLY Axp A . ? 21.58 30.779 -6.388 1 20.39 ? 253 A 1
+ATOM 1961 N N . ARG Axp A . ? 23.668 30.078 -7.082 1 18.23 ? 254 A 1
+ATOM 1962 C CA . ARG Axp A . ? 23.353 28.623 -7.019 1 16.34 ? 254 A 1
+ATOM 1963 C C . ARG Axp A . ? 23.419 28.259 -5.55 1 15.93 ? 254 A 1
+ATOM 1964 O O . ARG Axp A . ? 23.943 29.039 -4.739 1 16.21 ? 254 A 1
+ATOM 1965 C CB . ARG Axp A . ? 24.323 27.767 -7.869 1 14.11 ? 254 A 1
+ATOM 1966 C CG . ARG Axp A . ? 23.99 27.841 -9.359 1 12.66 ? 254 A 1
+ATOM 1967 C CD . ARG Axp A . ? 25.142 27.28 -10.17 1 12.05 ? 254 A 1
+ATOM 1968 N NE . ARG Axp A . ? 26.332 28.125 -10.129 1 9.61 ? 254 A 1
+ATOM 1969 C CZ . ARG Axp A . ? 27.491 27.648 -10.653 1 11.52 ? 254 A 1
+ATOM 1970 N NH1 . ARG Axp A . ? 27.533 26.369 -11.13 1 10.14 ? 254 A 1
+ATOM 1971 N NH2 . ARG Axp A . ? 28.55 28.462 -10.747 1 8.53 ? 254 A 1
+ATOM 1972 N N . THR Axp A . ? 22.837 27.129 -5.193 1 16.01 ? 255 A 1
+ATOM 1973 C CA . THR Axp A . ? 22.772 26.609 -3.844 1 14.95 ? 255 A 1
+ATOM 1974 C C . THR Axp A . ? 23.504 25.268 -3.804 1 14.66 ? 255 A 1
+ATOM 1975 O O . THR Axp A . ? 23.224 24.449 -4.678 1 14.99 ? 255 A 1
+ATOM 1976 C CB . THR Axp A . ? 21.229 26.313 -3.461 1 14.94 ? 255 A 1
+ATOM 1977 O OG1 . THR Axp A . ? 20.585 27.615 -3.403 1 15.46 ? 255 A 1
+ATOM 1978 C CG2 . THR Axp A . ? 21.046 25.508 -2.184 1 14.91 ? 255 A 1
+ATOM 1979 N N . VAL Axp A . ? 24.379 25.113 -2.833 1 14.67 ? 256 A 1
+ATOM 1980 C CA . VAL Axp A . ? 25.077 23.849 -2.608 1 13.79 ? 256 A 1
+ATOM 1981 C C . VAL Axp A . ? 24.348 23.069 -1.505 1 13.78 ? 256 A 1
+ATOM 1982 O O . VAL Axp A . ? 24.403 23.412 -0.316 1 15.03 ? 256 A 1
+ATOM 1983 C CB . VAL Axp A . ? 26.571 24.062 -2.321 1 13.52 ? 256 A 1
+ATOM 1984 C CG1 . VAL Axp A . ? 27.289 22.7 -2.213 1 12.73 ? 256 A 1
+ATOM 1985 C CG2 . VAL Axp A . ? 27.177 24.948 -3.414 1 11.98 ? 256 A 1
+ATOM 1986 N N . ARG Axp A . ? 23.697 21.994 -1.935 1 12.66 ? 257 A 1
+ATOM 1987 C CA . ARG Axp A . ? 22.993 21.101 -1.039 0.99 12.34 ? 257 A 1
+ATOM 1988 C C . ARG Axp A . ? 23.941 20.078 -0.385 0.68 11.49 ? 257 A 1
+ATOM 1989 O O . ARG Axp A . ? 24.896 19.61 -1.057 0.83 10.76 ? 257 A 1
+ATOM 1990 C CB . ARG Axp A . ? 21.833 20.389 -1.737 1 11.73 ? 257 A 1
+ATOM 1991 C CG . ARG Axp A . ? 20.802 21.359 -2.328 0.99 12.94 ? 257 A 1
+ATOM 1992 C CD . ARG Axp A . ? 19.623 20.648 -2.912 0.99 12.48 ? 257 A 1
+ATOM 1993 N NE . ARG Axp A . ? 19.934 20.081 -4.197 1 11.16 ? 257 A 1
+ATOM 1994 C CZ . ARG Axp A . ? 19.347 19.045 -4.752 1 10.33 ? 257 A 1
+ATOM 1995 N NH1 . ARG Axp A . ? 18.312 18.398 -4.207 0.93 8.28 ? 257 A 1
+ATOM 1996 N NH2 . ARG Axp A . ? 19.847 18.55 -5.894 1 9.88 ? 257 A 1
+ATOM 1997 N N . ALA Axp A . ? 23.666 19.802 0.888 1 10.05 ? 258 A 1
+ATOM 1998 C CA . ALA Axp A . ? 24.342 18.795 1.702 1 11.3 ? 258 A 1
+ATOM 1999 C C . ALA Axp A . ? 23.399 17.651 2.03 0.97 11.39 ? 258 A 1
+ATOM 2000 O O . ALA Axp A . ? 22.189 17.767 2.353 0.8 11.61 ? 258 A 1
+ATOM 2001 C CB . ALA Axp A . ? 24.985 19.339 3.007 1 10.16 ? 258 A 1
+ATOM 2002 N N . SER Axp A . ? 23.965 16.438 1.971 1 11.15 ? 259 A 1
+ATOM 2003 C CA . SER Axp A . ? 23.156 15.255 2.268 0.98 12.53 ? 259 A 1
+ATOM 2004 C C . SER Axp A . ? 23.172 14.899 3.751 0.76 13.58 ? 259 A 1
+ATOM 2005 O O . SER Axp A . ? 22.665 13.814 4.122 0.89 13.92 ? 259 A 1
+ATOM 2006 C CB . SER Axp A . ? 23.615 14.054 1.415 1 10.9 ? 259 A 1
+ATOM 2007 O OG . SER Axp A . ? 24.878 13.627 1.975 0.95 12.57 ? 259 A 1
+ATOM 2008 N N . PHE Axp A . ? 23.758 15.746 4.571 0.97 14.63 ? 260 A 1
+ATOM 2009 C CA . PHE Axp A . ? 23.914 15.555 6.018 0.79 15.19 ? 260 A 1
+ATOM 2010 C C . PHE Axp A . ? 23.744 16.92 6.709 0.8 15.88 ? 260 A 1
+ATOM 2011 O O . PHE Axp A . ? 23.407 16.842 7.914 0.59 16.14 ? 260 A 1
+ATOM 2012 C CB . PHE Axp A . ? 25.292 14.94 6.424 1 14.64 ? 260 A 1
+ATOM 2013 C CG . PHE Axp A . ? 26.412 15.751 5.809 1 15.11 ? 260 A 1
+ATOM 2014 C CD1 . PHE Axp A . ? 26.685 15.586 4.434 0.95 14.98 ? 260 A 1
+ATOM 2015 C CD2 . PHE Axp A . ? 27.073 16.739 6.521 0.6 14.89 ? 260 A 1
+ATOM 2016 C CE1 . PHE Axp A . ? 27.677 16.323 3.808 1 14.85 ? 260 A 1
+ATOM 2017 C CE2 . PHE Axp A . ? 28.042 17.524 5.891 0.79 14.51 ? 260 A 1
+ATOM 2018 C CZ . PHE Axp A . ? 28.34 17.306 4.534 1 14.36 ? 260 A 1
+ATOM 2019 O OXT . PHE Axp A . ? 23.953 17.94 6.02 1 16.33 ? 260 A 1
+HETATM 2020 ZN ZN . ZN Ax1 ZN! . ? 37.595 16.545 -14.676 1 7.51 ? 261 A 1
+HETATM 2021 C C1 . AZM Ax2 AZM! . ? 34.763 17.193 -17.938 0.96 8.58 ? 262 A 1
+HETATM 2022 C C2 . AZM Ax2 AZM! . ? 34.437 16.448 -20.145 0.97 9.8 ? 262 A 1
+HETATM 2023 C C3 . AZM Ax2 AZM! . ? 32.939 14.771 -20.994 0.96 9.59 ? 262 A 1
+HETATM 2024 C C4 . AZM Ax2 AZM! . ? 32.451 14.002 -22.139 0.7 10.04 ? 262 A 1
+HETATM 2025 N N1 . AZM Ax2 AZM! . ? 36.491 17.63 -15.961 0.93 7.39 ? 262 A 1
+HETATM 2026 N N2 . AZM Ax2 AZM! . ? 35.066 17.627 -20.043 1 9.24 ? 262 A 1
+HETATM 2027 N N3 . AZM Ax2 AZM! . ? 35.188 18.071 -18.767 0.66 9.07 ? 262 A 1
+HETATM 2028 N N4 . AZM Ax2 AZM! . ? 33.759 15.835 -21.214 0.61 9.42 ? 262 A 1
+HETATM 2029 O O1 . AZM Ax2 AZM! . ? 34.672 16.01 -15.723 1 5.33 ? 262 A 1
+HETATM 2030 O O2 . AZM Ax2 AZM! . ? 34.171 18.417 -15.693 0.64 7.08 ? 262 A 1
+HETATM 2031 O O3 . AZM Ax2 AZM! . ? 32.582 14.429 -19.863 0.32 8.64 ? 262 A 1
+HETATM 2032 S S1 . AZM Ax2 AZM! . ? 34.954 17.373 -16.193 0.99 7.94 ? 262 A 1
+HETATM 2033 S S2 . AZM Ax2 AZM! . ? 34.048 15.811 -18.609 0.71 9.8 ? 262 A 1
+HETATM 2034 O O . HOH Axw water . ? 42.078 18.536 -18.176 1 11.66 ? 263 A 1
+HETATM 2035 O O . HOH Axw water . ? 39.845 21.898 -16.195 1 7.29 ? 264 A 1
+HETATM 2036 O O . HOH Axw water . ? 32.212 11.495 1.797 1 9.96 ? 265 A 1
+HETATM 2037 O O . HOH Axw water . ? 55.271 18.421 -1.882 1 14.69 ? 266 A 1
+HETATM 2038 O O . HOH Axw water . ? 36.257 14.527 -1.322 1 5.74 ? 267 A 1
+HETATM 2039 O O . HOH Axw water . ? 23.131 16.773 -15.074 0.83 12.79 ? 268 A 1
+HETATM 2040 O O . HOH Axw water . ? 22.249 19.711 -7.208 0.95 10.56 ? 269 A 1
+HETATM 2041 O O . HOH Axw water . ? 62.919 17.773 -25.245 0.91 13.73 ? 270 A 1
+HETATM 2042 O O . HOH Axw water . ? 21.847 22.104 -5.598 0.95 12.39 ? 271 A 1
+HETATM 2043 O O . HOH Axw water . ? 41.874 16.024 -16.751 1 7.45 ? 272 A 1
+HETATM 2044 O O . HOH Axw water . ? 19.943 16.669 -12.98 1 11.09 ? 273 A 1
+HETATM 2045 O O . HOH Axw water . ? 25.763 8.964 0.117 1 7.57 ? 274 A 1
+HETATM 2046 O O . HOH Axw water . ? 37.771 32.588 -20.211 1 19.26 ? 275 A 1
+HETATM 2047 O O . HOH Axw water . ? 19.775 28.816 -5.583 0.93 18.29 ? 276 A 1
+HETATM 2048 O O . HOH Axw water . ? 39.753 15.89 -18.747 1 12.14 ? 277 A 1
+HETATM 2049 O O . HOH Axw water . ? 29.214 30.721 -13.162 1 16.61 ? 278 A 1
+HETATM 2050 O O . HOH Axw water . ? 38.142 29.815 -17.179 0.91 18.58 ? 279 A 1
+HETATM 2051 O O . HOH Axw water . ? 33.141 29.862 -6.204 1 12.75 ? 280 A 1
+HETATM 2052 O O . HOH Axw water . ? 57.029 17.038 -10.031 0.93 23.31 ? 281 A 1
+HETATM 2053 O O . HOH Axw water . ? 53.173 24.902 -2.432 0.89 19.26 ? 282 A 1
+HETATM 2054 O O . HOH Axw water . ? 30.853 -1.536 -7.405 0.93 18.34 ? 283 A 1
+HETATM 2055 O O . HOH Axw water . ? 37.663 -5.283 -18.537 0.98 14.77 ? 284 A 1
+HETATM 2056 O O . HOH Axw water . ? 45.426 -0.421 -7.774 0.82 19.37 ? 285 A 1
+HETATM 2057 O O . HOH Axw water . ? 30.647 25.675 -25.839 0.72 19.28 ? 286 A 1
+HETATM 2058 O O . HOH Axw water . ? 17.205 16.576 -5.502 0.82 22.08 ? 287 A 1
+HETATM 2059 O O . HOH Axw water . ? 47.857 19.893 -18.941 1 15.84 ? 288 A 1
+HETATM 2060 O O . HOH Axw water . ? 20.86 30.413 -17.095 0.82 26.68 ? 289 A 1
+HETATM 2061 O O . HOH Axw water . ? 18.479 6.936 -8.828 0.82 23.09 ? 290 A 1
+HETATM 2062 O O . HOH Axw water . ? 51.199 26.326 -4.244 0.59 23.16 ? 291 A 1
+HETATM 2063 O O . HOH Axw water . ? 29.271 27.271 -0.827 1 31.69 ? 292 A 1
+HETATM 2064 O O . HOH Axw water . ? 49.028 18.806 -7.555 1 7.59 ? 293 A 1
+HETATM 2065 O O . HOH Axw water . ? 37.729 31.433 -3.085 1 25.28 ? 294 A 1
+HETATM 2066 O O . HOH Axw water . ? 25.676 24.81 -21.894 0.76 9.28 ? 295 A 1
+HETATM 2067 O O . HOH Axw water . ? 58.372 14.296 -18.054 0.84 13.73 ? 296 A 1
+HETATM 2068 O O . HOH Axw water . ? 48.632 -1.824 -14.099 0.76 20.06 ? 297 A 1
+HETATM 2069 O O . HOH Axw water . ? 28.063 21.219 4.562 0.83 15.49 ? 298 A 1
+HETATM 2070 O O . HOH Axw water . ? 42.684 12.47 2.99 0.71 17.43 ? 299 A 1
+HETATM 2071 O O . HOH Axw water . ? 54.849 8.791 -15.021 0.86 26.57 ? 300 A 1
+HETATM 2072 O O . HOH Axw water . ? 40.211 25.951 -8.434 1 11.86 ? 301 A 1
+HETATM 2073 O O . HOH Axw water . ? 53.839 12.639 0.561 0.94 13.08 ? 302 A 1
+HETATM 2074 O O . HOH Axw water . ? 34.05 5.786 -22.808 0.92 23.24 ? 303 A 1
+HETATM 2075 O O . HOH Axw water . ? 48.442 3.853 -29.212 0.38 8.48 ? 304 A 1
+HETATM 2076 O O . HOH Axw water . ? 44.734 11.658 -27.775 0.96 19.4 ? 305 A 1
+HETATM 2077 O O . HOH Axw water . ? 57.065 15.363 -12.213 0.67 18.61 ? 306 A 1
+HETATM 2078 O O . HOH Axw water . ? 57.043 16.059 -6.108 0.91 28.67 ? 307 A 1
+HETATM 2079 O O . HOH Axw water . ? 29.108 -3.234 -2.653 0.48 27.23 ? 308 A 1
+HETATM 2080 O O . HOH Axw water . ? 54.319 22.181 -19.636 0.89 17.98 ? 309 A 1
+HETATM 2081 O O . HOH Axw water . ? 32.257 32.084 -15.188 0.65 17.2 ? 310 A 1
+HETATM 2082 O O . HOH Axw water . ? 43.853 32.756 -11.549 1 26.85 ? 311 A 1
+HETATM 2083 O O . HOH Axw water . ? 55.65 7.315 -26.164 0.86 13.03 ? 312 A 1
+HETATM 2084 O O . HOH Axw water . ? 22.147 24.231 -17.787 0.55 19.32 ? 313 A 1
+HETATM 2085 O O . HOH Axw water . ? 34.893 8.524 -23.049 0.7 15.34 ? 314 A 1
+HETATM 2086 O O . HOH Axw water . ? 45.651 25.134 0.224 0.47 24.31 ? 315 A 1
+HETATM 2087 O O . HOH Axw water . ? 56.721 16.19 -0.729 0.73 17.6 ? 316 A 1
+HETATM 2088 O O . HOH Axw water . ? 24.37 -2.36 -11.842 0.74 27.28 ? 317 A 1
+HETATM 2089 O O . HOH Axw water . ? 34.294 16.772 -23.821 0.55 20.17 ? 318 A 1
+HETATM 2090 O O . HOH Axw water . ? 57.857 20.267 -11.779 0.48 13.95 ? 319 A 1
+HETATM 2091 O O . HOH Axw water . ? 54.257 17.461 -30.56 0.93 15.16 ? 320 A 1
+HETATM 2092 O O . HOH Axw water . ? 52.346 9.964 -29.57 1 11.19 ? 321 A 1
+HETATM 2093 O O . HOH Axw water . ? 47.422 10.56 -32.801 0.86 19.76 ? 322 A 1
+HETATM 2094 O O . HOH Axw water . ? 61.427 12.445 -24.206 1 19.95 ? 323 A 1
+HETATM 2095 O O . HOH Axw water . ? 32.963 -8.87 -13.934 0.45 16.09 ? 324 A 1
+HETATM 2096 O O . HOH Axw water . ? 44.963 29.246 -14.198 0.88 19.25 ? 325 A 1
+HETATM 2097 O O . HOH Axw water . ? 22.736 12.222 -31.387 0.73 24.34 ? 326 A 1
+HETATM 2098 O O . HOH Axw water . ? 41.2 5.873 -2.849 0.94 18.44 ? 327 A 1
+HETATM 2099 O O . HOH Axw water . ? 16.374 14.392 -4.595 0.83 18.05 ? 328 A 1
+HETATM 2100 O O . HOH Axw water . ? 39.39 -3.474 -9.28 0.66 13.58 ? 329 A 1
+HETATM 2101 O O . HOH Axw water . ? 42.33 0.094 -6.567 0.76 12.16 ? 330 A 1
+HETATM 2102 O O . HOH Axw water . ? 36.001 30.734 1.555 0.63 24.53 ? 331 A 1
+HETATM 2103 O O . HOH Axw water . ? 42.634 7.156 1.465 0.85 21.69 ? 332 A 1
+HETATM 2104 O O . HOH Axw water . ? 25.002 27.268 -1.06 0.9 17.03 ? 333 A 1
+HETATM 2105 O O . HOH Axw water . ? 40.648 28.639 -7.733 1 22.98 ? 334 A 1
+HETATM 2106 O O . HOH Axw water . ? 14.288 12.515 -7.467 0.61 21.82 ? 335 A 1
+HETATM 2107 O O . HOH Axw water . ? 39.722 15.84 -24.019 0.54 19.91 ? 336 A 1
+HETATM 2108 O O . HOH Axw water . ? 43.878 12.039 -15.407 1 8.16 ? 337 A 1
+HETATM 2109 O O . HOH Axw water . ? 30.018 1.691 -18.176 0.98 12.25 ? 338 A 1
+HETATM 2110 O O . HOH Axw water . ? 23.32 21.209 -14.874 0.76 14.03 ? 339 A 1
+HETATM 2111 O O . HOH Axw water . ? 45.043 31.376 -18.537 1 26.67 ? 340 A 1
+HETATM 2112 O O . HOH Axw water . ? 49.882 24.53 -7.648 0.61 8.99 ? 341 A 1
+HETATM 2113 O O . HOH Axw water . ? 19.571 13.764 3.171 1 21.05 ? 342 A 1
+HETATM 2114 O O . HOH Axw water . ? 14.637 19.115 -3.192 0.64 13.32 ? 343 A 1
+HETATM 2115 O O . HOH Axw water . ? 24.373 -7.159 -16.564 0.67 16.96 ? 344 A 1
+HETATM 2116 O O . HOH Axw water . ? 22.942 26.957 -19.318 0.57 22.04 ? 345 A 1
+HETATM 2117 O O . HOH Axw water . ? 18.383 20.85 -29.086 0.72 25.73 ? 346 A 1
+HETATM 2118 O O . HOH Axw water . ? 21.652 25.631 -7.263 0.68 10.72 ? 347 A 1
+HETATM 2119 O O . HOH Axw water . ? 19.213 21.547 -21.653 0.99 25.99 ? 348 A 1
+HETATM 2120 O O . HOH Axw water . ? 38.802 10.09 -23.789 0.64 10.84 ? 349 A 1
+HETATM 2121 O O . HOH Axw water . ? 54.134 -2.169 -11.619 0.53 24.1 ? 350 A 1
+HETATM 2122 O O . HOH Axw water . ? 30.499 28.388 -26.1 0.89 26.23 ? 351 A 1
+HETATM 2123 O O . HOH Axw water . ? 58.798 12.563 -5.718 1 35.53 ? 352 A 1
+HETATM 2124 O O . HOH Axw water . ? 20.682 5.216 -23.774 0.65 14.08 ? 353 A 1
+HETATM 2125 O O . HOH Axw water . ? 21.408 10.951 2.736 0.75 28.13 ? 354 A 1
+HETATM 2126 O O . HOH Axw water . ? 48.828 25.284 -11.048 1 20.51 ? 355 A 1
+HETATM 2127 O O . HOH Axw water . ? 54.844 7.276 -2.802 0.79 18.55 ? 356 A 1
+HETATM 2128 O O . HOH Axw water . ? 54.534 3.459 -11.128 0.53 16.97 ? 357 A 1
+HETATM 2129 O O . HOH Axw water . ? 55.432 -3.357 -13.686 1 26.34 ? 358 A 1
+HETATM 2130 O O . HOH Axw water . ? 36.881 18.161 -24.502 0.48 13.17 ? 359 A 1
+HETATM 2131 O O . HOH Axw water . ? 36.217 14.21 -20.706 0.6 22.1 ? 360 A 1
+HETATM 2132 O O . HOH Axw water . ? 49.27 20.398 -20.883 0.59 20.9 ? 361 A 1
+HETATM 2133 O O . HOH Axw water . ? 28.284 16.305 -27.55 0.82 26.26 ? 362 A 1
+HETATM 2134 O O . HOH Axw water . ? 43.85 27.607 -0.889 0.72 21.33 ? 363 A 1
+HETATM 2135 O O . HOH Axw water . ? 43.788 28.782 -8.062 0.65 30.43 ? 364 A 1
+HETATM 2136 O O . HOH Axw water . ? 38.856 14.181 5.551 0.48 18.1 ? 365 A 1
+HETATM 2137 O O . HOH Axw water . ? 39.052 31.947 -14.177 1 21.87 ? 366 A 1
+HETATM 2138 O O . HOH Axw water . ? 32.293 29.23 8.4 0.66 24.9 ? 367 A 1
+HETATM 2139 O O . HOH Axw water . ? 31.214 26.08 8.955 0.71 29.51 ? 368 A 1
+HETATM 2140 O O . HOH Axw water . ? 46.87 5.655 2.776 0.61 21.7 ? 369 A 1
+HETATM 2141 O O . HOH Axw water . ? 19.138 24.71 -16.604 0.38 15.39 ? 370 A 1
+HETATM 2142 O O . HOH Axw water . ? 28.821 25.543 -28.712 0.45 12.9 ? 371 A 1
+HETATM 2143 O O . HOH Axw water . ? 25.115 25.773 -25.938 0.16 11.21 ? 372 A 1
+HETATM 2144 O O . HOH Axw water . ? 55.88 20.578 -15.65 0.8 37.87 ? 373 A 1
+HETATM 2145 O O . HOH Axw water . ? 56.284 19.61 -28.738 0.79 20.35 ? 374 A 1
+HETATM 2146 O O . HOH Axw water . ? 53.127 20.028 -27.517 0.51 21.7 ? 375 A 1
+HETATM 2147 O O . HOH Axw water . ? 18.516 24.237 -11.457 0.91 19.43 ? 376 A 1
+HETATM 2148 O O . HOH Axw water . ? 23.031 -5.127 -16.814 0.66 23.75 ? 377 A 1
+HETATM 2149 O O . HOH Axw water . ? 41.119 -3.945 -7.324 0.75 27.63 ? 378 A 1
+HETATM 2150 O O . HOH Axw water . ? 35.352 -10.299 -13.704 0.52 33.14 ? 379 A 1
+HETATM 2151 O O . HOH Axw water . ? 20.885 -5.207 -21.888 0.96 31.87 ? 380 A 1
+HETATM 2152 O O . HOH Axw water . ? 29.873 -9.341 -17.185 0.82 24.59 ? 381 A 1
+HETATM 2153 O O . HOH Axw water . ? 27.66 -0.203 -18.203 1 11.37 ? 382 A 1
+HETATM 2154 O O . HOH Axw water . ? 28.493 -1.295 -21.362 0.91 16.4 ? 383 A 1
+HETATM 2155 O O . HOH Axw water . ? 17.527 26.319 -10.417 0.37 17.29 ? 384 A 1
+HETATM 2156 O O . HOH Axw water . ? 58.402 10.825 -27.416 0.38 17.68 ? 385 A 1
+HETATM 2157 O O . HOH Axw water . ? 27.936 6.463 -25.882 0.76 25.96 ? 386 A 1
+HETATM 2158 O O . HOH Axw water . ? 43.65 -8.656 -14.717 0.64 25.63 ? 387 A 1
+HETATM 2159 O O . HOH Axw water . ? 38.218 29.015 -4.181 0.65 23.86 ? 388 A 1
+HETATM 2160 O O . HOH Axw water . ? 23.318 -5.136 -19.643 0.84 31.87 ? 389 A 1
+HETATM 2161 O O . HOH Axw water . ? 12.123 18.6 -1.38 0.78 20.76 ? 390 A 1
+HETATM 2162 O O . HOH Axw water . ? 18.512 14.235 -13.732 0.82 21.59 ? 391 A 1
+HETATM 2163 O O . HOH Axw water . ? 43.778 -2.467 -14.515 1 32.51 ? 392 A 1
+HETATM 2164 O O . HOH Axw water . ? 24.687 30.831 -18.518 0.61 15.94 ? 393 A 1
+HETATM 2165 O O . HOH Axw water . ? 25.39 31.208 -2.121 0.86 27.23 ? 394 A 1
+HETATM 2166 O O . HOH Axw water . ? 36.889 33.683 -0.853 0.63 20.54 ? 395 A 1
+HETATM 2167 O O . HOH Axw water . ? 35.223 31.168 -5.958 0.69 16.25 ? 396 A 1
+HETATM 2168 O O . HOH Axw water . ? 20.429 24.024 5.96 0.77 21.07 ? 397 A 1
+HETATM 2169 O O . HOH Axw water . ? 22.608 23.069 -20.781 0.94 27.5 ? 398 A 1
+HETATM 2170 O O . HOH Axw water . ? 50.946 3.918 3.221 0.55 20.9 ? 399 A 1
+HETATM 2171 O O . HOH Axw water . ? 48.494 23.177 -21.715 0.74 24.27 ? 400 A 1
+HETATM 2172 O O . HOH Axw water . ? 48.972 11.998 -31.571 0.7 19.13 ? 401 A 1
+HETATM 2173 O O . HOH Axw water . ? 51.267 18.223 -32.138 0.37 9.15 ? 402 A 1
+HETATM 2174 O O . HOH Axw water . ? 17.105 10.738 -27.841 0.61 24.77 ? 403 A 1
+HETATM 2175 O O . HOH Axw water . ? 44.284 -0.412 -26.666 1 34.17 ? 404 A 1
+HETATM 2176 O O . HOH Axw water . ? 30.139 -0.615 -4.693 0.56 14.62 ? 405 A 1
+HETATM 2177 O O . HOH Axw water . ? 22.805 30.23 -11.593 0.5 15.18 ? 406 A 1
+HETATM 2178 O O . HOH Axw water . ? 35.851 -4.211 -5.875 0.32 12.93 ? 407 A 1
+HETATM 2179 O O . HOH Axw water . ? 46.168 33.512 -13.086 0.31 22.71 ? 408 A 1
+HETATM 2180 O O . HOH Axw water . ? 16.427 20.737 -22.655 0.25 16.31 ? 409 A 1
+HETATM 2181 O O . HOH Axw water . ? 57.426 17.192 -14.959 0.29 9.05 ? 410 A 1
+HETATM 2182 O O . HOH Axw water . ? 35.473 -3.292 -21.769 0.67 20.55 ? 411 A 1
+HETATM 2183 O O . HOH Axw water . ? 51.575 20.597 -21.499 0.56 8.92 ? 412 A 1
+HETATM 2184 O O . HOH Axw water . ? 59.004 5.394 -5.632 1 36.83 ? 413 A 1
+HETATM 2185 O O . HOH Axw water . ? 16.539 11.998 -4.127 0.48 17.34 ? 414 A 1
+HETATM 2186 O O . HOH Axw water . ? 16.848 4.884 -14.706 0.71 22.88 ? 415 A 1
+HETATM 2187 O O . HOH Axw water . ? 52.624 4.127 -5.71 0.66 19.7 ? 416 A 1
+HETATM 2188 O O . HOH Axw water . ? 24.478 36.323 -17.226 0.78 33.31 ? 417 A 1
+HETATM 2189 O O . HOH Axw water . ? 16.447 13.251 -11.728 0.4 16.11 ? 418 A 1
+HETATM 2190 O O . HOH Axw water . ? 59.403 13.783 -13.231 0.33 11.77 ? 419 A 1
+HETATM 2191 O O . HOH Axw water . ? 25.823 23.974 7.089 0.84 29.1 ? 420 A 1
+HETATM 2192 O O . HOH Axw water . ? 24.326 -4.586 -9.156 0.39 15.97 ? 421 A 1
+HETATM 2193 O O . HOH Axw water . ? 55.219 -1.193 -6.203 0.95 26.97 ? 422 A 1
+HETATM 2194 O O . HOH Axw water . ? 42.355 -2.279 -26.269 0.58 27.04 ? 423 A 1
+HETATM 2195 O O . HOH Axw water . ? 26.78 -5.561 -14.173 0.77 18.53 ? 424 A 1
+HETATM 2196 O O . HOH Axw water . ? 34.281 11.466 5.325 0.83 28.11 ? 425 A 1
+HETATM 2197 O O . HOH Axw water . ? 28.513 -0.975 -1.704 0.44 15.04 ? 426 A 1
+HETATM 2198 O O . HOH Axw water . ? 54.973 21.117 -3.945 0.74 7.4 ? 427 A 1
+HETATM 2199 O O . HOH Axw water . ? 16.561 10.889 -15.584 0.98 24.31 ? 428 A 1
+HETATM 2200 O O . HOH Axw water . ? 46.081 12.983 3.233 0.55 13.43 ? 429 A 1
+HETATM 2201 O O . HOH Axw water . ? 23.788 10.167 2.036 0.47 12.37 ? 430 A 1
+HETATM 2202 O O . HOH Axw water . ? 46.059 24.791 -14.585 0.55 16.25 ? 431 A 1
+HETATM 2203 O O . HOH Axw water . ? 14.253 17.215 -4.609 0.51 18.06 ? 432 A 1
+HETATM 2204 O O . HOH Axw water . ? 52.623 25.033 -18.325 0.66 28.08 ? 433 A 1
+HETATM 2205 O O . HOH Axw water . ? 37.587 33.121 -11.482 0.34 24 ? 434 A 1
+HETATM 2206 O O . HOH Axw water . ? 43.851 -4.673 -7.24 0.36 28.59 ? 435 A 1
+HETATM 2207 O O . HOH Axw water . ? 23.265 23.492 -15.297 0.49 19.35 ? 436 A 1
+HETATM 2208 O O . HOH Axw water . ? 53.512 7.297 3.891 0.46 22.37 ? 437 A 1
+HETATM 2209 O O . HOH Axw water . ? 16.189 12.006 -25.796 0.46 35.91 ? 438 A 1
+HETATM 2210 O O . HOH Axw water . ? 57.191 25.716 -11.881 0.43 30.99 ? 439 A 1
+HETATM 2211 O O . HOH Axw water . ? 40.486 0.273 -27.189 0.54 17.9 ? 440 A 1
+HETATM 2212 O O . HOH Axw water . ? 40.842 29.419 3.765 0.59 17.5 ? 441 A 1
+HETATM 2213 O O . HOH Axw water . ? 14.436 11.553 -18.291 0.88 34.64 ? 442 A 1
+
+loop_
+_software.pdbx_ordinal
+_software.classification
+_software.name
+_software.version
+1 refinement PROTEIN .

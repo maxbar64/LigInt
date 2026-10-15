@@ -1,6 +1,6 @@
 # ligint
 
-Non-covalent **ligand-protein interactions** from a PDB file: hydrogen bonds, salt bridges, hydrophobic contacts,
+Non-covalent **ligand-protein interactions** from a PDB or PDBx/mmCIF file: hydrogen bonds, salt bridges, hydrophobic contacts,
 π-stacking, cation-π, halogen bonds, metal coordination and water bridges, plus clashes and repulsions. The project
 contains:
 
@@ -71,7 +71,7 @@ With CMake ≥ 3.21 you can use the presets: `cmake --preset release && cmake --
 ### Command line
 
 ```
-ligint structure.pdb                       list the ligands (HETATM) present, with the number of copies
+ligint structure.pdb                       list the ligands (HETATM) present, with the number of copies (structure.cif works the same way)
 ligint structure.pdb ATP                   analyze all ATP ligands
 ligint structure.pdb ATP A 501             only chain A, residue 501 (501A = with insertion code A, 501- = without a code)
 ligint structure.pdb ATP --altloc B        use alternate conformation B (the listing shows which ones the file has)
@@ -79,11 +79,12 @@ ligint structure.pdb ATP --csv             CSV output (service information goes 
 ligint structure.pdb LIG --sdf lig.sdf     chemical annotation from SDF (also --mol2)
 ligint structure.pdb LIG --plip-like       preset for the comparison with PLIP
 ligint structure.pdb LIG --fingerprint csv|json|svg [--pocket FILE]   interaction fingerprint instead of the table
+ligint structure.dat LIG --format cif      force the input format (default: recognized from the content)
 ligint --help                              thresholds and default values
 ```
 
 Options: `--csv`, `--no-water`, `--no-merge`, `--plip-like`, `--sdf F`, `--mol2 F`, `--metal-donors`,
-`--backbone-hyd`, `--altloc X`, `--hb-long X`, `--salt-centroid X`, `--fingerprint FORMAT`, `--pocket FILE`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
+`--backbone-hyd`, `--altloc X`, `--format F`, `--hb-long X`, `--salt-centroid X`, `--fingerprint FORMAT`, `--pocket FILE`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
 `--hyd-max`, ...; see `--help`). Unknown options, non-numeric thresholds or missing files end with an error
 (exit code 1); thresholds above 6 Å for the grid searches are limited with a warning.
 
@@ -93,7 +94,7 @@ listed below and are available as constants in `ligint::type`.
 ### Graphical interface
 
 ```
-ligint-gui [structure.pdb]
+ligint-gui [structure.pdb|structure.cif]
 ```
 
 Open a PDB (menu, drag and drop or argument), choose the ligand, adjust options and thresholds, press **Analyze**.
@@ -162,6 +163,8 @@ Crystallographic PDB files have no hydrogens, so the ligand chemistry is inferre
   His and other N bound to a metal make no H-bonds.
 - **Histidine:** donor and acceptor, never charged.
 - **Protein:** DNA/RNA are partners (phosphates, bases, stacking); if the PDB contains the protein hydrogens they are used.
+- **PDB and PDBx/mmCIF** files are read; the format is recognized from the content (see [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md):
+  columns used, chains of several characters, limits; gzip-compressed files must be decompressed first).
 - **Only the first model is read.** For residues with alternate locations (altloc) the first conformation encountered is kept,
   or the one given with `--altloc X` (GUI: *Alternate conformation*): a residue that does not have it keeps its first one. The
   program reports for how many residues the requested conformation was used and warns if the file does not have it. The
@@ -189,7 +192,7 @@ uncertain effect.
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     76 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     83 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -234,16 +237,16 @@ was not tried by hand.
 
 ```
 include/ligint/ligint.hpp   public API
-src/core/                   library: analysis.cpp, chemistry.cpp, templates.cpp, report.cpp, fingerprint.cpp, svg.cpp, internal.hpp
+src/core/                   library: analysis.cpp, pdb.cpp, mmcif.cpp, chemistry.cpp, templates.cpp, report.cpp, fingerprint.cpp, svg.cpp, internal.hpp
 src/cli/main.cpp            command line
 packaging/                  icon, desktop entry, manual pages, Windows resources (installers: see docs/INSTALL.md)
 gui/                        Qt GUI (MainWindow, ViewerWidget, SvgView, HitsModel, Style) and screenshot tool
-tests/                      unit/ (C++), gui/ (smoke test), run_tests.py, compare_plip.py, benchmark.py, data/ (test PDB files)
+tests/                      unit/ (C++), gui/ (smoke test), run_tests.py, compare_plip.py, benchmark.py, data/ (test PDB and mmCIF files)
 docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (reports), img/
 cmake/                      CMake package configuration and packaging (CPack) files
 ```
 
-Other documents: [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
+Other documents: [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md), [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

@@ -15,6 +15,7 @@ Groups:
     tmpl   SDF / MOL2 templates (matching by coordinates, explicit H, fallback)
     pdb    PDB parsing (altlocs, insertion codes, models, ligand selection, CSV)
     fp     interaction fingerprints (CSV/JSON/SVG output, pocket definition files)
+    cif    PDBx/mmCIF input (same results as the PDB, long chain ids, malformed files)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -22,6 +23,7 @@ Groups:
 Exit code: 0 if all the tests pass, 1 otherwise.
 """
 import argparse
+import glob
 import json
 import math
 import os
@@ -1106,6 +1108,216 @@ def fingerprint_several_ligands():
     v = run_fp(s, "svg")
     check(v.rc == 0 and "only the first is drawn" in v.err, "SVG with several ligands: " + v.err)
     ET.fromstring(v.out)
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP cif: PDBx/mmCIF input
+# ----------------------------------------------------------------------------------------------
+CIF_COLUMNS = ["group_PDB", "id", "type_symbol", "label_atom_id", "label_alt_id", "label_comp_id", "label_asym_id", "label_entity_id",
+               "label_seq_id", "pdbx_PDB_ins_code", "Cartn_x", "Cartn_y", "Cartn_z", "occupancy", "B_iso_or_equiv", "pdbx_formal_charge",
+               "auth_seq_id", "auth_comp_id", "auth_asym_id", "auth_atom_id", "pdbx_PDB_model_num"]
+
+
+def cif_quote(v):
+    return '"%s"' % v if "'" in v else v
+
+
+def pdb_to_cif(text, chain_map=None, extra_before=""):
+    """PDB text -> PDBx/mmCIF text (only the atoms). The label_* columns are made different from the auth_* ones on purpose:
+    a reader that used the wrong columns would be caught. chain_map renames chains (e.g. {"A": "AA"})."""
+    rows, model, n = [], 1, 0
+    for l in text.splitlines():
+        if l.startswith("ENDMDL"):
+            model += 1
+            continue
+        if l[:6] not in ("ATOM  ", "HETATM") or len(l) < 54:
+            continue
+        n += 1
+        chain = l[21]
+        chain = (chain_map or {}).get(chain, chain)
+        el = l[76:78].strip() if len(l) >= 78 else ""
+        alt = l[16] if l[16] != " " else "."
+        ins = l[26] if l[26] != " " else "?"
+        name = l[12:16].strip()
+        seq = int(l[22:26])
+        rows.append("%s %d %s %s %s %s %sx 1 %d %s %s %s %s 1.00 %s ? %d %s %s %s %d" % (
+            l[:6].strip(), n, el or "?", cif_quote(name), alt, l[17:20].strip(), chain if chain != " " else "Z",
+            seq + 5000, ins, l[30:38].strip(), l[38:46].strip(), l[46:54].strip(), l[60:66].strip() or "0.00",
+            seq, l[17:20].strip(), chain if chain != " " else "?", cif_quote(name), model))
+    return ("data_TEST\n#\n_entry.id TEST\n" + extra_before + "loop_\n" + "".join("_atom_site.%s\n" % c for c in CIF_COLUMNS) +
+            "\n".join(rows) + "\n#\n")
+
+
+def both_formats(system_or_text, args, **kw):
+    """Runs the same analysis on a PDB text and on its mmCIF conversion; returns both results."""
+    text = system_or_text if isinstance(system_or_text, str) else system_or_text.text()
+    a = run_raw([tmpfile(text), *args], **kw)
+    b = run_raw([tmpfile(pdb_to_cif(text), ".cif"), *args], **kw)
+    return a, b
+
+
+def same_result(a, b, what):
+    check(a.rc == b.rc and a.out == b.out and a.err == b.err,
+          "%s: PDB and mmCIF differ\n--- PDB\n%s%s\n--- mmCIF\n%s%s" % (what, a.out[:400], a.err[:200], b.out[:400], b.err[:200]))
+
+
+@test("cif")
+def cif_matches_pdb_on_synthetic_systems():
+    systems = {"carboxylate+lysine": Sys().ligand(carboxylate()).prot("LYS", "NZ", at(carboxylate().atoms[2][2], (0.5, 0.866, 0), 2.8)),
+               "methanol+asn": fp_system(), "alternate conformations": altloc_system()}
+    for name, s in systems.items():
+        for args in (["LIG", "--csv"], ["LIG"], ["LIG", "--altloc", "B", "--csv"], ["LIG", "--plip-like", "--csv"], ["LIG", "--fingerprint", "csv"],
+                     ["LIG", "--fingerprint", "svg"], []):
+            a, b = both_formats(s, args)
+            same_result(a, b, "%s %s" % (name, " ".join(args)))
+    # insertion codes, a second model, a blank chain
+    t = Sys()
+    t.atom("HETATM", "C1", "LIG", "L", 5, (0, 0, 0), "C")
+    t.atom("HETATM", "C1", "LIG", "L", 5, (30, 0, 0), "C", icode="A")
+    t.atom("HETATM", "O1", "LIG", "L", 5, (31.43, 0, 0), "O", icode="A")
+    t.prot("ASN", "OD1", (33.0, 2.4, 0), resi=10)
+    t.lines.append("ENDMDL")
+    t.atom("HETATM", "C1", "LIG", "M", 7, (60, 0, 0), "C")
+    for spec in ("5", "5A", "5-"):
+        a, b = both_formats(t, ["LIG", "L", spec, "--csv"])
+        same_result(a, b, "residue " + spec)
+    a, b = both_formats(t, [])
+    same_result(a, b, "listing with a second model")
+    # (a blank chain id does not exist in mmCIF: a null auth_asym_id falls back to label_asym_id, see docs/INPUT_FORMATS.md)
+
+
+@test("cif")
+def cif_matches_pdb_on_real_complexes():
+    n = 0
+    for f in sorted(glob.glob(os.path.join(CFG["real_dir"], "*.pdb"))):
+        text = open(f).read()
+        listing = run_raw([f])
+        names = [m.group(1) for m in re.finditer(r"(\S+?)\(\d+\)", listing.out.splitlines()[0] if listing.out else "")][:3]
+        for nm in names:
+            for args in ([nm, "--csv"], [nm, "--plip-like"], [nm, "--fingerprint", "csv"]):
+                a, b = both_formats(text, args)
+                same_result(a, b, "%s %s" % (os.path.basename(f), " ".join(args)))
+                n += 1
+    if n == 0:
+        raise Skip("no real complexes in " + CFG["real_dir"])
+
+
+@test("cif")
+def cif_real_file_converted_with_gemmi_matches_pdb():
+    """tests/data/1AZM.cif was written by gemmi (see tests/data/README.md): a file with the usual mmCIF structure, not made by our converter."""
+    pdb, cif = os.path.join(CFG["real_dir"], "1AZM.pdb"), os.path.join(CFG["real_dir"], "1AZM.cif")
+    if not (os.path.exists(pdb) and os.path.exists(cif)):
+        raise Skip("missing 1AZM.pdb or 1AZM.cif")
+    for args in ([], ["AZM", "--csv"], ["AZM"], ["AZM", "--plip-like", "--csv"], ["AZM", "--fingerprint", "csv"], ["ZN", "--csv"]):
+        a, b = run_raw([pdb] + args), run_raw([cif] + args)
+        same_result(a, b, "1AZM " + " ".join(args))
+    r = run_raw([cif, "AZM"])
+    check("Coordination sphere" in r.out and "HIS 94A:NE2" in r.out and "Hydrogen bond" in r.out, "the mmCIF analysis must show the Zn sphere: " + r.out[:300])
+
+
+@test("cif")
+def cif_long_chain_ids_and_residue_names():
+    m = methanol()
+    o1 = m.atoms[1][2]
+    # a PDB line cannot hold a five-character component id: convert a normal system and rename the ligand in the mmCIF text
+    s = Sys().ligand(m, res="LIG").prot("ASN", "OD1", at(o1, (0.5, 0.866, 0), 2.8), chain="A")
+    text = re.sub(r"\bLIG\b", "ABCDE", pdb_to_cif(s.text(), chain_map={"A": "AA"}))
+    p = tmpfile(text, ".cif")
+    r = run_raw([p, "ABCDE", "--csv"])
+    check(r.rc == 0 and "ASN 10 [AA]:OD1" in r.out and r.out.count("ABCDE 1L") >= 1, "long chain label: " + r.out + r.err)
+    check("Hydrogen bond" in r.out, "the H-bond must be found")
+    f = run_raw([p, "ABCDE", "--fingerprint", "csv"])
+    rows = [l.split(",") for l in f.out.strip().splitlines()[1:]]
+    check(f.rc == 0 and len(rows) == 1 and rows[0][1] == "ASN 10 [AA]" and rows[0][2] == "AA" and rows[0][3] == "10",
+          "fingerprint with a long chain: " + f.out)
+    # ligand chain of two characters selected by name, and the listing
+    check("ABCDE(1)" in run_raw([p]).out, "listing shows the long name")
+    t2 = re.sub(r" L ", " LL ", text).replace(" Lx ", " LLx ")
+    sel = run_raw([tmpfile(t2, ".cif"), "ABCDE", "LL", "--csv"])
+    check(sel.rc == 0 and "ABCDE 1 [LL]" in sel.out, "ligand with a chain of two characters: " + sel.out + sel.err)
+    check("No ligand 'ABCDE' found" in run_raw([tmpfile(t2, ".cif"), "ABCDE", "L", "--csv"]).out, "chain L does not exist")
+    # a pocket definition with a long chain
+    pk = tmpfile("@name P\nAA\t10\tp10\treg\tASN\nAA\t11\tp11\treg\tGLY\n", ".tsv")
+    v = run_raw([p, "ABCDE", "--fingerprint", "csv", "--pocket", pk])
+    rows = [l.split(",") for l in v.out.strip().splitlines()[1:]]
+    check(v.rc == 0 and [r[1] for r in rows] == ["ASN 10 [AA]", "GLY 11 [AA]"] and rows[0][4] == "p10", "pocket with a long chain: " + v.out + v.err)
+
+
+@test("cif")
+def cif_format_option_and_compressed_files():
+    cif = tmpfile(pdb_to_cif(fp_system().text()), ".cif")
+    pdb = tmpfile(fp_system().text())
+    for args, what in (([cif, "LIG", "--csv"], "auto"), ([cif, "LIG", "--csv", "--format", "cif"], "cif"), ([cif, "LIG", "--csv", "--format", "mmcif"], "mmcif"),
+                       ([cif, "LIG", "--csv", "--format", "auto"], "auto explicit")):
+        r = run_raw(args)
+        check(r.rc == 0 and "Hydrogen bond" in r.out, "%s: %s" % (what, r.out + r.err))
+    check("Hydrogen bond" in run_raw([pdb, "LIG", "--csv", "--format", "pdb"]).out, "--format pdb on a PDB")
+    forced = run_raw([pdb, "LIG", "--csv", "--format", "cif"])
+    check(forced.rc == 0 and "no _atom_site category" in forced.err and "Hydrogen bond" not in forced.out, "PDB read as mmCIF: " + forced.err)
+    forced = run_raw([cif, "LIG", "--csv", "--format", "pdb"])
+    check(forced.rc == 0 and "Hydrogen bond" not in forced.out, "mmCIF read as PDB finds nothing")
+    for args, what in (([cif, "--format"], "missing value"), ([cif, "--format", "xyz"], "unknown format")):
+        r = run_raw(args)
+        check(r.rc == 1 and "--format" in r.err, "%s: rc=%d %s" % (what, r.rc, r.err[:100]))
+        no_crash(r)
+    # gzip: refused with a clear message, whatever the extension
+    for suffix in (".cif.gz", ".pdb.gz", ".cif"):
+        g = tmpfile(b"\x1f\x8b\x08\x00" + bytes(random.getrandbits(8) for _ in range(200)), suffix, binary=True)
+        r = run_raw([g, "LIG"])
+        check(r.rc == 1 and "compressed" in r.err and "gunzip" in r.err, "%s: rc=%d %s" % (suffix, r.rc, r.err[:150]))
+        no_crash(r)
+    # the listing shows the alternate conformations of an mmCIF file too
+    r = run_raw([tmpfile(pdb_to_cif(altloc_system().text()), ".cif")])
+    check("Alternate conformations present: A, B" in r.out, "listing: " + r.out)
+
+
+@test("cif")
+def cif_robustness():
+    random.seed(11)
+    valid = pdb_to_cif(fp_system().text(), extra_before="_struct.title\n;a title\nwith lines\n;\n_cell.length_a 10\nloop_\n_x.a\n_x.b\n1 'it''s'\n")
+    cases = {
+        "empty": "", "only data": "data_X\n", "only loop": "data_X\nloop_\n", "tags without values": "data_X\nloop_\n_atom_site.Cartn_x\n_atom_site.Cartn_y\n",
+        "unterminated quote": "data_X\nloop_\n_atom_site.group_PDB\n_atom_site.Cartn_x\nATOM 'unterminated\n",
+        "unterminated text field": "data_X\n_struct.title\n;never closed\nATOM\n", "text field in the atom loop":
+        "data_X\nloop_\n_atom_site.group_PDB\n_atom_site.label_atom_id\n_atom_site.Cartn_x\n;\nHETATM\n;\nC1 1.0\n",
+        "huge token": "data_X\n_struct.title " + "x" * 500000 + "\n", "binary": bytes(random.getrandbits(8) for _ in range(5000)).decode("latin-1"),
+        "many tags": "data_X\nloop_\n" + "".join("_atom_site.t%d\n" % i for i in range(5000)) + "1 2 3\n",
+        "nan coordinates": valid.replace(" 20.00 ", " 20.00 ").replace("0.000 ", "nan ", 1),
+        "null coordinates": re.sub(r"(\d+\.\d{3}) (\d+\.\d{3}) (\d+\.\d{3}) 1\.00", r"? ? ? 1.00", valid, count=1),
+    }
+    for name, text in cases.items():
+        r = run_raw([tmpfile(text, ".cif"), "LIG", "--csv"])
+        check(r.rc == 0, "%s: rc=%d %s" % (name, r.rc, r.err[:150]))
+        no_crash(r)
+    # random mutations of a valid file
+    for i in range(60):
+        t = list(valid)
+        for _ in range(8):
+            k = random.randrange(len(t))
+            op = random.choice("dirt")
+            if op == "d": del t[k:k + random.randint(1, 10)]
+            elif op == "i": t.insert(k, random.choice("';\"#_\n \t?."))
+            elif op == "r": t[k] = random.choice("';\"#_\n \t?.0a")
+            else: t = t[:k] or ["d"]
+        r = run_raw([tmpfile("".join(t), ".cif"), "LIG", "--csv"])
+        check(r.rc == 0, "mutation %d: rc=%d %s" % (i, r.rc, r.err[:120]))
+        no_crash(r)
+
+
+@test("cif")
+def cif_large_file_runs_in_reasonable_time():
+    random.seed(4)
+    s = Sys().ligand(carboxylate())
+    for i in range(40000):
+        base = (random.uniform(-60, 60), random.uniform(-60, 60), random.uniform(-60, 60))
+        for nm in ("N", "CA", "C", "O", "CB"):
+            s.atom("ATOM", nm, "ALA", "A", i % 9999 + 1, (base[0] + random.uniform(-1.5, 1.5), base[1] + random.uniform(-1.5, 1.5),
+                                                          base[2] + random.uniform(-1.5, 1.5)), nm[0])
+    text = pdb_to_cif(s.text())
+    limit = 120 if CFG["sanitize"] else 40
+    t0 = time.time()
+    r = run_raw([tmpfile(text, ".cif"), "LIG", "--csv"], timeout=limit * 3)
+    check(r.rc == 0 and time.time() - t0 < limit, "200000 atoms in mmCIF: %.1f s (limit %d s)" % (time.time() - t0, limit))
 
 
 # ----------------------------------------------------------------------------------------------

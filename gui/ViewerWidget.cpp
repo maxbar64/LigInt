@@ -168,7 +168,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
     p.fillRect(rect, QColor("#fbfbfd"));
     if (!hasData_) {
         p.setPen(QColor("#868e96"));
-        p.drawText(rect, Qt::AlignCenter, QObject::tr("Open a PDB file, choose a ligand and press \u00abAnalyze\u00bb"));
+        p.drawText(rect, Qt::AlignCenter, QObject::tr("Open a structure file, choose a ligand and press \u00abAnalyze\u00bb"));
         return;
     }
     const double s = fitScale(rect);

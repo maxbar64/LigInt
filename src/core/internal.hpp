@@ -46,6 +46,25 @@ struct Atom {
     vector<V3> hs;    // bonded explicit hydrogens
 };
 struct Role { bool don = false, acc = false, hyd = false, metal = false, hal = false; int q = 0; };
+// An atom as read from a structure file, before the analysis applies its rules (alternate conformations, waters, ligand...).
+struct RawAtom {
+    string name, res, chain, el;      // el is empty when it cannot be known
+    int resi = 0;
+    char icode = ' ', alt = ' ';
+    double x = 0, y = 0, z = 0, bf = 0;
+    bool het = false;                 // HETATM
+};
+using AtomSink = std::function<void(RawAtom&)>;
+
+// Readers: call the sink for every atom of the first model, in file order.
+void readPdbAtoms(std::istream& in, const AtomSink& sink);
+struct CifStats {
+    bool sawAtomSite = false;
+    long badRows = 0;                 // rows without a usable atom or residue name
+    vector<string> warnings;
+};
+void readMmcifAtoms(std::istream& in, const AtomSink& sink, CifStats& stats);
+
 // Interaction found (internal version of HitRecord, with the coordinates for the graphics).
 struct Hit {
     string type, la, pa, pres, note;
@@ -105,8 +124,12 @@ inline string normEl(string e) {
     for (size_t i = 1; i < e.size(); i++) e[i] = tolower(e[i]);
     return e;
 }
+// Residue label: "ASP 189A" (name, number, insertion code if any, chain). A chain of more than one character
+// (possible in mmCIF) is written in brackets, so that the label stays unambiguous: "ASP 189 [AA]".
 inline string resLabel(const Atom& a) {
-    return a.res + " " + to_string(a.resi) + (a.icode != ' ' ? string(1, a.icode) : "") + a.chain;
+    const string num = to_string(a.resi) + (a.icode != ' ' ? string(1, a.icode) : "");
+    if (a.chain.size() > 1) return a.res + " " + num + " [" + a.chain + "]";
+    return a.res + " " + num + a.chain;
 }
 inline string label(const Atom& a) { return resLabel(a) + ":" + a.name; }
 inline bool isHel(const string& e) { return e == "H" || e == "D"; }

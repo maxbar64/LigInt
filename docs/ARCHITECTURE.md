@@ -6,7 +6,8 @@
 include/ligint/ligint.hpp   public API: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv, ligint::type
 src/core/
   internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
-  analysis.cpp              Params, PDB reading and analysis (analyzeStream)
+  analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
+  pdb.cpp, mmcif.cpp        readers of the PDB and PDBx/mmCIF formats: both produce RawAtom (internal.hpp), nothing else differs
   chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
   templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
   report.cpp                text reports (table and CSV)
@@ -21,7 +22,7 @@ results) is in `Result`. The GUI and the CLI are two clients of the same API.
 
 ## Flow of `analyzeStream`
 
-1. **PDB reading** (first model): heavy atoms, alternative conformation (the first encountered per residue), invalid
+1. **Reading** (PDB or mmCIF, recognized from the content; first model): heavy atoms, alternative conformation (the first encountered per residue), invalid
    coordinates discarded, waters kept apart, PDB hydrogens assigned to the nearby heavy atom (if there are at least 10 for the protein).
    If no ligand is requested (or it does not exist) the result is only the listing (`listingOnly`).
 2. **Protein roles:** donor/acceptor/charge/hydrophobic per residue and atom; refined with explicit hydrogens;

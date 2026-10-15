@@ -43,7 +43,7 @@ public:
     // With interactive = false errors do not open dialog boxes (used by the tests).
     void setInteractive(bool on) { interactive_ = on; }
 
-    bool openStructure(const QString& path);      // reads the PDB and lists the ligands
+    bool openStructure(const QString& path);      // reads the structure (PDB or mmCIF) and lists the ligands
     int ligandCount() const;
     void selectLigand(int index);
     void analyze(bool wait = false);              // wait = true: waits for the result (tests)

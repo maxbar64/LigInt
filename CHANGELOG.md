@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.0
+
+- **PDBx/mmCIF input.** `ligint structure.cif LIG` gives the same results as the PDB file of the same entry: the format is recognized
+  from the content (`--format pdb|cif|auto`, library: `Options::format`, `Result::format`). The `_atom_site` category is read as a stream
+  (first model, author chain and numbering, `label_*` as fallback), so very large structures are fine. mmCIF allows what the PDB
+  format cannot: residue names of five characters (new ligands) and chains of several characters.
+- Residue labels with a chain of several characters are written `ASP 189 [AA]` (the labels of one-character chains do not change);
+  the fingerprint uses the same rule, also for the positions of a pocket definition without contacts.
+- gzip-compressed files are refused with a clear message instead of being read as garbage.
+- The readers are separated from the analysis (`pdb.cpp`, `mmcif.cpp` produce the same internal atom record): the output for PDB files
+  is unchanged (1314 runs on 119 structures, also with `--altloc`, compared with 0.5.1).
+- GUI: opens `.cif` and `.mmcif` files (dialog, window texts).
+- Tests: 119 real structures converted to mmCIF with gemmi give the same results as the PDB files (1314 runs, 0 differences);
+  C++ and Python tests for quoting, text fields, comments, null values, long names and chains, models, alternate conformations,
+  malformed and randomly corrupted files, speed on 200,000 atoms; `tests/data/1AZM.cif` (gemmi conversion) in the GUI test.
+- `docs/INPUT_FORMATS.md`: columns used, labels, limits. The reader has not been tried on files downloaded from the PDB archive.
+
 ## 0.5.1
 
 Installers and packages (no change to the programs):

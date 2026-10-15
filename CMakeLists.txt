@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ligint
-    VERSION 0.5.1
+    VERSION 0.6.0
     DESCRIPTION "Non-covalent ligand-protein interactions from PDB files"
     LANGUAGES CXX)
 
@@ -77,7 +77,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ligintConfig.cmake ${CMAKE_CURRENT_BIN
 # documentation
 install(FILES README.md LICENSE CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
 install(DIRECTORY docs/img docs/examples DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
-install(FILES docs/ARCHITECTURE.md docs/BENCHMARK.md docs/FINGERPRINT.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+install(FILES docs/ARCHITECTURE.md docs/BENCHMARK.md docs/FINGERPRINT.md docs/INPUT_FORMATS.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
 
 # manual pages and copyright file (Unix); the pages are compressed when gzip is available, as Debian requires
 if(UNIX AND NOT APPLE)

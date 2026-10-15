@@ -1,9 +1,9 @@
 .TH LIGINT 1 "" "ligint @VERSION@" "User Commands"
 .SH NAME
-ligint \- non-covalent ligand-protein interactions from a PDB file
+ligint \- non-covalent ligand-protein interactions from a PDB or mmCIF file
 .SH SYNOPSIS
 .B ligint
-.I file.pdb
+.I structure
 .RI [ RESNAME
 .RI [ chain
 .RI [ resseq\c
@@ -11,14 +11,14 @@ ligint \- non-covalent ligand-protein interactions from a PDB file
 .RI [ options ]
 .SH DESCRIPTION
 .B ligint
-finds the non-covalent interactions between a ligand (a HETATM residue) and the protein of a PDB file:
+finds the non-covalent interactions between a ligand (a HETATM residue) and the protein of a PDB or PDBx/mmCIF file:
 hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, halogen bonds, metal coordination
 and water bridges, plus steric clashes and electrostatic repulsions.
 It can also summarize them as an interaction fingerprint (one row per protein residue, one column per
 interaction class) in CSV, JSON or SVG.
 .PP
 With only
-.I file.pdb
+.I structure
 it lists the ligands present (and the alternate conformations of the file, if any).
 With
 .I RESNAME
@@ -58,6 +58,15 @@ Let O and N coordinated to a metal remain possible hydrogen-bond donors.
 .TP
 .B \-\-backbone\-hyd
 Count apolar contacts with the protein backbone.
+.TP
+.BI \-\-format " FORMAT"
+Format of the structure file:
+.BR auto
+(default, recognized from the content),
+.B pdb
+or
+.BR cif .
+Compressed (gzip) files must be decompressed first.
 .TP
 .BI \-\-altloc " X"
 Use the alternate conformation

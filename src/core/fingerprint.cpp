@@ -160,7 +160,14 @@ bool parseResidueLabel(const std::string& label, ResId& id) {
     while (i < label.size() && std::isdigit(static_cast<unsigned char>(label[i]))) i++;
     if (i == d0) return false;
     id.resi = std::atoi(label.substr(d0, i - d0).c_str());
-    std::string rest = label.substr(i);          // [icode] + chain (chain may be a blank)
+    std::string rest = label.substr(i);
+    const size_t br = rest.find(" [");
+    if (br != std::string::npos && rest.back() == ']') {      // "ASP 189A [AA]": chain of several characters in brackets
+        id.chain = rest.substr(br + 2, rest.size() - br - 3);
+        id.icode = br == 1 ? rest[0] : ' ';
+        return true;
+    }
+    // [icode] + chain (the chain may be a blank)
     if (rest.empty()) { id.chain = ""; id.icode = ' '; }
     else if (rest.size() == 1) { id.chain = rest; id.icode = ' '; }
     else { id.icode = rest[0]; id.chain = rest.substr(1); }
@@ -200,6 +207,12 @@ std::vector<int> classesOf(const HitRecord& h) {
     return c;
 }
 
+// Same rule as the labels of the analysis: "ASP 189A", and a chain of several characters in brackets: "ASP 189 [AA]".
+std::string residueLabel(const std::string& name, int resi, char icode, const std::string& chain) {
+    const std::string num = std::to_string(resi) + (icode != ' ' ? std::string(1, icode) : "");
+    return chain.size() > 1 ? name + " " + num + " [" + chain + "]" : name + " " + num + chain;
+}
+
 }  // namespace
 
 Fingerprint makeFingerprint(const LigandResult& lig, const PocketDefinition* pocket) {
@@ -215,7 +228,7 @@ Fingerprint makeFingerprint(const LigandResult& lig, const PocketDefinition* poc
             e.chain = p.chain; e.resi = p.resi; e.icode = p.icode;
             e.resName = p.resName;
             e.position = p.label; e.region = p.region;
-            e.residue = (p.resName.empty() ? "?" : p.resName) + " " + std::to_string(p.resi) + (p.icode != ' ' ? std::string(1, p.icode) : "") + p.chain;
+            e.residue = residueLabel(p.resName.empty() ? "?" : p.resName, p.resi, p.icode, p.chain);
             fp.entries.push_back(e);
         }
     }

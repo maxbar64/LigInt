@@ -301,6 +301,30 @@ int main(int argc, char** argv) {
     }
 #endif
 
+    // a PDBx/mmCIF file gives the same interactions as the PDB file of the same entry
+    {
+        const QString cifPath = QFileInfo(argv[1]).absolutePath() + "/1AZM.cif";
+        CHECK(QFileInfo::exists(cifPath));
+        auto keysOf = [](gui::MainWindow& win, const QString& path) {
+            QStringList keys;
+            if (!win.openStructure(path) || win.ligandCount() < 1) return keys;
+            win.selectLigand(0);
+            win.analyze(true);
+            if (win.result().ligands.empty()) return keys;
+            for (const auto& h : win.result().ligands.front().hits)
+                keys << (QString::fromStdString(h.type) + "|" + QString::fromStdString(h.ligandAtom) + "|" + QString::fromStdString(h.proteinAtom) + "|" +
+                         QString::number(h.distance, 'f', 2));
+            keys.sort();
+            return keys;
+        };
+        gui::MainWindow wp, wc;
+        wp.setInteractive(false);
+        wc.setInteractive(false);
+        const QStringList fromPdb = keysOf(wp, argv[1]), fromCif = keysOf(wc, cifPath);
+        CHECK(!fromPdb.isEmpty() && fromPdb == fromCif);
+        CHECK(wc.logText().contains("Command line: ligint") && wc.lastCommandLine().contains("1AZM.cif"));
+    }
+
     if (failures) { std::cerr << failures << " checks failed\n"; return 1; }
     std::cout << "ligint_gui_smoke: ok (" << w.hitsModel()->rowCount() << " interactions, image saved)\n";
     return 0;

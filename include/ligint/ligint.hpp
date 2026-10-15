@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.5.1"
+#define LIGINT_VERSION "0.6.0"
 #endif
 
 namespace ligint {
@@ -86,7 +86,12 @@ bool loadMol2(const std::string& path, std::vector<Tmpl>& out, std::vector<std::
 // ---------------------------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------------------------
+// File format of the structure. Auto recognizes it from the content: PDBx/mmCIF files start with "data_" (or a
+// comment), PDB files with a record name. Compressed files (gzip) are not supported: decompress them first.
+enum class StructureFormat { Auto, Pdb, Mmcif };
+
 struct Options {
+    StructureFormat format = StructureFormat::Auto;
     Params params;
     std::string ligName;            // HETATM residue name (e.g. "ATP"); empty = only list the ligands
     std::string chain;              // optional: ligand chain
@@ -158,6 +163,7 @@ struct Result {
     bool listingOnly = false;               // no ligand requested or found: only the listing
     std::map<std::string, int> hetCounts;   // name -> number of residues (only if listingOnly)
     std::vector<LigandId> hetResidues;      // same, residue by residue
+    StructureFormat format = StructureFormat::Pdb;   // format that was read (never Auto)
     std::string notFound;                   // requested name that is absent (only if listingOnly)
     std::vector<char> altlocs;              // alternate-conformation identifiers found in the first model (sorted)
     std::vector<std::string> warnings;      // warnings (invalid coordinates, limited thresholds...)
@@ -165,7 +171,8 @@ struct Result {
     std::vector<LigandResult> ligands;
 };
 
-// Analyze the PDB. Throws std::runtime_error if the file cannot be opened.
+// Analyze a structure file (PDB or PDBx/mmCIF). Throws std::runtime_error if the file cannot be opened
+// or is compressed.
 Result analyzeFile(const std::string& path, const Options& opt);
 Result analyzeStream(std::istream& in, const Options& opt);
 

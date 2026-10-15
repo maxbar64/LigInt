@@ -16,7 +16,3 @@ ligint_gui_*.png
 .vscode/
 .idea/
 *.swp
-
-# Qt Creator
-.qtcreator/
-CMakeLists.txt.user*

@@ -2,6 +2,8 @@
 add_library(ligint_core
     core/analysis.cpp
     core/chemistry.cpp
+    core/mmcif.cpp
+    core/pdb.cpp
     core/fingerprint.cpp
     core/report.cpp
     core/svg.cpp
