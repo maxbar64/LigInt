@@ -26,9 +26,34 @@ else()
     message(STATUS "ligint: Qt Svg not found: the GUI will show the fingerprint as a table only")
 endif()
 
-add_executable(ligint-gui main.cpp)
+set(CMAKE_AUTORCC ON)
+add_executable(ligint-gui main.cpp resources.qrc)
 target_link_libraries(ligint-gui PRIVATE ligint_gui_lib ligint_options)
-install(TARGETS ligint-gui RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+ligint_add_windows_resources(ligint-gui ligint-gui "ligint - ligand-protein interactions")
+if(WIN32)
+    set_target_properties(ligint-gui PROPERTIES WIN32_EXECUTABLE ON)     # no console window
+endif()
+install(TARGETS ligint-gui RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime)
+
+# desktop integration (Linux): menu entry, PDB association and icon
+if(UNIX AND NOT APPLE)
+    install(FILES ${PROJECT_SOURCE_DIR}/packaging/ligint-gui.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications COMPONENT Runtime)
+    install(FILES ${PROJECT_SOURCE_DIR}/packaging/ligint.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps COMPONENT Runtime)
+endif()
+
+# Windows: copy the Qt libraries and plugins next to the program when installing (needs Qt 6.3 or later)
+if(WIN32 AND QT_VERSION_MAJOR EQUAL 6)
+    if(COMMAND qt_generate_deploy_app_script)
+        set(LIGINT_DEPLOY_OPTIONS NO_UNSUPPORTED_PLATFORM_ERROR)
+        if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
+            list(APPEND LIGINT_DEPLOY_OPTIONS NO_TRANSLATIONS)     # the GUI is in English: skip the Qt translation files
+        endif()
+        qt_generate_deploy_app_script(TARGET ligint-gui OUTPUT_SCRIPT LIGINT_QT_DEPLOY_SCRIPT ${LIGINT_DEPLOY_OPTIONS})
+        install(SCRIPT ${LIGINT_QT_DEPLOY_SCRIPT} COMPONENT Runtime)
+    else()
+        message(WARNING "ligint: qt_generate_deploy_app_script not available (Qt older than 6.3): the Windows installer will not include the Qt libraries")
+    endif()
+endif()
 
 # Tool to generate the documentation screenshots (optional)
 option(LIGINT_BUILD_SCREENSHOT_TOOL "Build ligint-screenshot (images for the documentation)" OFF)

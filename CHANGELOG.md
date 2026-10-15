@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.5.1
+
+Installers and packages (no change to the programs):
+
+- CPack configuration: `ligint` and `ligint-dev` `.deb` packages and a portable `.tar.gz` for Linux (`.rpm` with
+  `cpack -G RPM`), an NSIS installer and a portable `.zip` for Windows. The installers include the programs, the
+  documentation, the manual pages (`man ligint`, `man ligint-gui`), the menu entry with icon and the PDB file
+  association (Linux), the Qt libraries (Windows), the Start menu entry and an optional `PATH` update (Windows).
+- Application icon, window icon and Windows version information.
+- CI: `linux-packages` and `windows` jobs build, try (install, run, uninstall) and keep the installers as artifacts;
+  a `v*` tag publishes them in a GitHub release.
+- Install rules split in two components (`Runtime`, `Development`); `docs/INSTALL.md`.
+- The Windows installer and the MSVC build have not been run by the authors: the first CI run will show whether they need adjustments.
+
+## 0.5.0
+
+- `--altloc X` (library: `Options::altloc`) chooses the alternate conformation: for every residue with alternate locations the
+  conformation X is used if the residue has it, otherwise its first one (as before). The program reports for how many
+  residues X was used and warns if X does not exist in the first model. Occupancies are not considered.
+- The listing of the ligands now also shows the alternate conformations present in the file
+  (`Alternate conformations present: A, B`; `Result::altlocs`); it appears only for files that have them, so the listing of
+  those files changes (27 of the 119 structures used in the tests), while the rest of the output is unchanged
+  (1075 runs compared with 0.4.0).
+- GUI: *Alternate conformation* selector in the Options group (filled from the file), included in the copied command line.
+- Tests: C++ unit tests, 2 new Python tests (also on a ligand with alternate conformations, ENDMDL, invalid arguments, speed on
+  200,000 atoms) and the GUI smoke test (combo, command line and equivalence with the CLI for the chosen conformation).
+
 ## 0.4.0
 
 - GUI: the equivalent `ligint` command line of each analysis is written in the Log tab and can be copied

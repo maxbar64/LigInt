@@ -1,6 +1,7 @@
 // GUI smoke test: opens a PDB, analyzes, checks tables, filters and rendering ("offscreen" platform).
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QClipboard>
 #include <QDir>
 #include <QDoubleSpinBox>
@@ -254,6 +255,38 @@ int main(int argc, char** argv) {
                 if (c.endsWith(" 5A")) CHECK(!w2.result().ligands.front().hits.empty());
                 CHECK(w2.result().ligands.size() == 1);
             }
+        }
+
+
+        // alternate conformations: the combo lists those of the file and the choice goes into the command line
+        {
+            const QString altPdb = dir.filePath("altloc.pdb");
+            QFile f(altPdb);
+            CHECK(f.open(QIODevice::WriteOnly));
+            f.write("HETATM    1  C1  LIG L   1       0.000   0.000   0.000  1.00 20.00           C\n"
+                    "HETATM    2  O1  LIG L   1       1.430   0.000   0.000  1.00 20.00           O\n"
+                    "ATOM      3  OD1AASN A  10       9.000   0.000   0.000  0.50 20.00           O\n"
+                    "ATOM      4  OD1BASN A  10       2.150   2.420   0.000  0.50 20.00           O\n"
+                    "END\n");
+            f.close();
+            gui::MainWindow w3;
+            w3.setInteractive(false);
+            QComboBox* combo = w3.findChild<QComboBox*>("opt_altloc");
+            CHECK(combo != nullptr && !combo->isEnabled());                       // no alternate conformations before opening a file
+            CHECK(w3.openStructure(argv[1]) && !combo->isEnabled() && combo->count() == 1);   // 1AZM has none
+            CHECK(w3.openStructure(altPdb) && combo->isEnabled() && combo->count() == 3);
+            CHECK(combo->itemText(1) == "A" && combo->itemText(2) == "B");
+            w3.selectLigand(0);
+            w3.analyze(true);
+            CHECK(!w3.lastCommandLine().contains("--altloc") && w3.result().ligands.front().hits.empty());
+            checkEquivalence(w3, binary, "altloc default", true);
+            combo->setCurrentIndex(2);                                             // B
+            w3.analyze(true);
+            CHECK(w3.lastCommandLine().contains("--altloc B") && !w3.result().ligands.front().hits.empty());
+            checkEquivalence(w3, binary, "altloc B");
+            CHECK(w3.logText().contains("Alternate conformation B"));
+            CHECK(w3.openStructure(altPdb) && combo->currentText() == "B");        // the choice survives reopening a file that has it
+            CHECK(w3.openStructure(argv[1]) && combo->currentIndex() == 0);        // and is reset when the file has none
         }
 
         // shell quoting: every argument comes back unchanged through a real shell

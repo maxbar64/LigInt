@@ -1,5 +1,6 @@
 // ligint-gui: Qt graphical interface.
 #include <QApplication>
+#include <QIcon>
 #include <QCommandLineParser>
 
 #include "MainWindow.h"
@@ -10,6 +11,8 @@ int main(int argc, char** argv) {
     QApplication::setOrganizationName("ligint");
     QApplication::setApplicationName("ligint-gui");
     QApplication::setApplicationVersion(LIGINT_VERSION);
+    QApplication::setWindowIcon(QIcon(":/icons/ligint-256.png"));
+    QGuiApplication::setDesktopFileName("ligint-gui");      // ties the window to the menu entry (ligint-gui.desktop)
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Ligand-protein interactions from PDB files");

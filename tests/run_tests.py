@@ -884,6 +884,65 @@ def ligand_selection_with_insertion_code():
         check(r.rc == 1 and "Invalid residue number" in r.err, "%r must be rejected: rc=%d %s" % (bad, r.rc, r.err[:100]))
 
 
+def altloc_system():
+    """Methanol ligand; ASN 10 OD1 is far away in conformation A and 2.8 A from O1 in conformation B."""
+    m = methanol()
+    o1 = m.atoms[1][2]
+    s = Sys().ligand(m)
+    s.atom("ATOM", "OD1", "ASN", "A", 10, (9, 0, 0), "O", alt="A")
+    s.atom("ATOM", "OD1", "ASN", "A", 10, at(o1, (0.5, 0.866, 0), 2.8), "O", alt="B")
+    s.atom("ATOM", "OG", "SER", "A", 11, (20, 0, 0), "O", alt="A")
+    return s
+
+
+@test("pdb")
+def altloc_option_selects_the_conformation():
+    s = altloc_system()
+    pdb = tmpfile(s.text())
+    default = run_raw([pdb, "LIG", "--csv"])
+    check(default.rc == 0 and len(default.out.strip().splitlines()) == 1, "default (first conformation, A): no contact: " + default.out)
+    b = run_raw([pdb, "LIG", "--altloc", "B", "--csv"])
+    check(b.rc == 0 and "Hydrogen bond" in b.out and "ASN 10A:OD1" in b.out, "conformation B: H-bond expected: " + b.out + b.err)
+    check("Alternate conformation B: used for 1 of 2 residues" in b.err, "the choice must be reported on stderr: " + b.err)
+    a = run_raw([pdb, "LIG", "--altloc", "A", "--csv"])
+    check(a.rc == 0 and "Hydrogen bond" not in a.out, "conformation A: no H-bond")
+    c = run_raw([pdb, "LIG", "--altloc", "C", "--csv"])
+    check(c.rc == 0 and "alternate conformation C not found" in c.err and "present: A, B" in c.err, "missing conformation must warn: " + c.err)
+    # the option combines with the others and with the fingerprint
+    fp = run_raw([pdb, "LIG", "--altloc", "B", "--fingerprint", "csv"])
+    check(fp.rc == 0 and "ASN 10A" in fp.out, "fingerprint with --altloc: " + fp.out)
+    fp0 = run_raw([pdb, "LIG", "--fingerprint", "csv"])
+    check(fp0.rc == 0 and "ASN 10A" not in fp0.out, "fingerprint without --altloc: no contact")
+    check(run_raw([pdb, "LIG", "--altloc", "B", "--plip-like", "--no-water", "--no-merge"]).rc == 0, "combined options")
+
+
+@test("pdb")
+def altloc_listing_and_argument_errors():
+    pdb = tmpfile(altloc_system().text())
+    r = run_raw([pdb])
+    check(r.rc == 0 and "Alternate conformations present: A, B" in r.out, "listing must show the conformations: " + r.out)
+    plain = run_raw([tmpfile(fp_system().text())])
+    check("Alternate conformations" not in plain.out, "no line when the structure has none")
+    for args, what in [([pdb, "LIG", "--altloc"], "missing value"), ([pdb, "LIG", "--altloc", "AB"], "two characters"),
+                       ([pdb, "LIG", "--altloc", ""], "empty"), ([pdb, "LIG", "--altloc", " "], "a blank")]:
+        p = run_raw(args)
+        check(p.rc == 1 and "altloc" in p.err, "%s: expected code 1, got %d (%s)" % (what, p.rc, p.err[:100]))
+        no_crash(p)
+    # every conformation can be chosen for a ligand with alternate conformations, and atoms in a second model are ignored
+    t = Sys()
+    t.atom("HETATM", "C1", "LIG", "L", 1, (0, 0, 0), "C", alt="A")
+    t.atom("HETATM", "O1", "LIG", "L", 1, (1.43, 0, 0), "O", alt="A")
+    t.atom("HETATM", "C1", "LIG", "L", 1, (50, 0, 0), "C", alt="B")
+    t.atom("HETATM", "O1", "LIG", "L", 1, (51.43, 0, 0), "O", alt="B")
+    t.prot("ASN", "OD1", at((1.43, 0, 0), (0.5, 0.866, 0), 2.8))
+    pdbt = tmpfile(t.text())
+    check("Hydrogen bond" in run_raw([pdbt, "LIG", "--altloc", "A", "--csv"]).out, "ligand in conformation A touches the ASN")
+    check("Hydrogen bond" not in run_raw([pdbt, "LIG", "--altloc", "B", "--csv"]).out, "ligand in conformation B is far away")
+    t.lines.append("ENDMDL")
+    t.atom("ATOM", "OD1", "ASN", "A", 10, (0, 0, 0), "O", alt="C")
+    check(run_raw([tmpfile(t.text()), "LIG", "--altloc", "C", "--csv"]).rc == 0, "altloc after ENDMDL is ignored without errors")
+
+
 @test("pdb")
 def csv_is_well_formed():
     s, p = lys_salt_system()
@@ -1251,6 +1310,10 @@ def large_system_runs_in_reasonable_time():
     limit = 120 if CFG["sanitize"] else 40
     r = go(s, timeout=limit * 3)
     check(CFG["last_time"] < limit, "200000 atoms: %.1f s (limit %d s)" % (CFG["last_time"], limit))
+    # choosing an alternate conformation reads the file twice: it must stay in the same order of magnitude
+    t0 = time.time()
+    r2 = run_raw([tmpfile(s.text()), "LIG", "--altloc", "A", "--csv"], timeout=limit * 3)
+    check(r2.rc == 0 and time.time() - t0 < limit, "200000 atoms with --altloc: %.1f s (limit %d s)" % (time.time() - t0, limit))
     no_crash(r)
 
 

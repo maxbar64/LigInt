@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="icons/ligint-256.png">../packaging/ligint-256.png</file>
+    </qresource>
+</RCC>

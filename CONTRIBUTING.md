@@ -28,6 +28,12 @@ Before changing the library it is also worth checking the sanitizers:
 - Changes that alter the results must be measured with `tests/benchmark.py` on structures that were **not** used to
   decide the change. A comparison with PLIP measures the agreement with PLIP, not correctness.
 
+## Installers and releases
+
+The packages are described in `cmake/Packaging.cmake` and `cmake/CPackOptions.cmake` (CPack) and tried by the `linux-packages`
+and `windows` jobs of the CI. See `docs/INSTALL.md` for how to build them and how to publish a release (tag `v<version>`).
+A new installed file needs a component (`COMPONENT Runtime` or `Development`) or it ends up in no package.
+
 ## Benchmark
 
 ```

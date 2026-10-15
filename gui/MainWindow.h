@@ -117,6 +117,7 @@ private:
                    *hydMax_ = nullptr, *piAngle_ = nullptr;
     QLabel* templateLabel_ = nullptr;
     QLabel* pocketLabel_ = nullptr;
+    QComboBox* altlocCombo_ = nullptr;
     QPushButton* runButton_ = nullptr;
     QListWidget* typeList_ = nullptr;
 

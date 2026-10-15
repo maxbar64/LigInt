@@ -191,6 +191,63 @@ static void testInsertionCodeSelection() {
     CHECK(run(s.str(), opt).ligands.empty());
 }
 
+static std::string withAltloc(std::string line, char alt) {
+    line[16] = alt;
+    return line;
+}
+
+static void testAlternateConformationSelection() {
+    // methanol ligand; ASN 10 has an OD1 far away in conformation A and 2.8 A from O1 in conformation B;
+    // SER 11 has only conformation A (far away); GLY 12 has no alternate conformations
+    std::ostringstream s;
+    s << atomLine("HETATM", 1, "C1", "LIG", 'L', 1, 0, 0, 0, "C") << "\n"
+      << atomLine("HETATM", 2, "O1", "LIG", 'L', 1, 1.43, 0, 0, "O") << "\n"
+      << withAltloc(atomLine("ATOM", 3, "OD1", "ASN", 'A', 10, 9, 0, 0, "O"), 'A') << "\n"
+      << withAltloc(atomLine("ATOM", 4, "OD1", "ASN", 'A', 10, 1.43 + 2.8 * 0.5, 2.8 * 0.866, 0, "O"), 'B') << "\n"
+      << withAltloc(atomLine("ATOM", 5, "OG", "SER", 'A', 11, 20, 0, 0, "O"), 'A') << "\n"
+      << atomLine("ATOM", 6, "O", "GLY", 'A', 12, 30, 0, 0, "O") << "\n";
+    ligint::Options opt;
+    opt.ligName = "LIG";
+    ligint::Result r = run(s.str(), opt);                                     // default: the first conformation (A)
+    CHECK(r.altlocs.size() == 2 && r.altlocs[0] == 'A' && r.altlocs[1] == 'B');
+    CHECK(r.ligands.size() == 1 && r.ligands[0].hits.empty() && r.warnings.empty());
+    opt.altloc = 'A';
+    CHECK(run(s.str(), opt).ligands[0].hits.empty());
+    opt.altloc = 'B';
+    r = run(s.str(), opt);                                                    // conformation B: the H-bond appears
+    CHECK(r.ligands[0].hits.size() == 1);
+    if (r.ligands[0].hits.size() == 1) {
+        CHECK(r.ligands[0].hits[0].type == ligint::type::HydrogenBond);
+        CHECK(r.ligands[0].hits[0].proteinAtom == "ASN 10A:OD1" && std::fabs(r.ligands[0].hits[0].distance - 2.8) < 0.01);
+    }
+    bool info = false;
+    for (auto& i : r.info) if (i.find("Alternate conformation B: used for 1 of 2 residues") != std::string::npos) info = true;
+    CHECK(info);                                                              // SER 11 has no B and keeps A: reported
+    opt.altloc = 'C';                                                         // not present anywhere: warning, same as the default
+    r = run(s.str(), opt);
+    CHECK(r.warnings.size() == 1 && r.warnings[0].find("alternate conformation C not found") != std::string::npos &&
+          r.warnings[0].find("present: A, B") != std::string::npos && r.ligands[0].hits.empty());
+    // a structure without alternate conformations
+    opt.altloc = 'B';
+    r = run(methanolSystem(), opt);
+    CHECK(r.warnings.size() == 1 && r.warnings[0].find("no alternate conformations") != std::string::npos && !r.ligands[0].hits.empty());
+    // the ligand can have alternate conformations too, and the first model only is read
+    std::ostringstream t;
+    t << withAltloc(atomLine("HETATM", 1, "C1", "LIG", 'L', 1, 0, 0, 0, "C"), 'A') << "\n"
+      << withAltloc(atomLine("HETATM", 2, "O1", "LIG", 'L', 1, 1.43, 0, 0, "O"), 'A') << "\n"
+      << withAltloc(atomLine("HETATM", 3, "C1", "LIG", 'L', 1, 50, 0, 0, "C"), 'B') << "\n"
+      << withAltloc(atomLine("HETATM", 4, "O1", "LIG", 'L', 1, 51.43, 0, 0, "O"), 'B') << "\n"
+      << atomLine("ATOM", 5, "OD1", "ASN", 'A', 10, 1.43 + 2.8 * 0.5, 2.8 * 0.866, 0, "O") << "\n"
+      << "ENDMDL\n"
+      << withAltloc(atomLine("ATOM", 6, "OD1", "ASN", 'A', 10, 0, 0, 0, "O"), 'C') << "\n";
+    opt.altloc = 'A';
+    CHECK(run(t.str(), opt).ligands[0].hits.size() == 1);                     // ligand in conformation A, next to the ASN
+    opt.altloc = 'B';
+    CHECK(run(t.str(), opt).ligands[0].hits.empty());                         // ligand in conformation B, far from it
+    opt.altloc = 'C';
+    CHECK(!run(t.str(), opt).warnings.empty());                               // C is after ENDMDL: not part of the first model
+}
+
 static void testMalformedInputDoesNotCrash() {
     ligint::Options opt;
     opt.ligName = "LIG";
@@ -351,6 +408,7 @@ int main() {
     testLinkedResiduesAreMerged();
     testMalformedInputDoesNotCrash();
     testInsertionCodeSelection();
+    testAlternateConformationSelection();
     testFingerprintClasses();
     testPocketDefinition();
     testFingerprintWithPocket();

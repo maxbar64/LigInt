@@ -27,6 +27,11 @@ void printListing(std::ostream& out, const Result& r) {
     out << "Ligands (HETATM) present:";
     for (auto& kv : r.hetCounts) out << " " << kv.first << "(" << kv.second << ")";
     out << "\n";
+    if (!r.altlocs.empty()) {
+        out << "Alternate conformations present:";
+        for (size_t i = 0; i < r.altlocs.size(); i++) out << (i ? ", " : " ") << r.altlocs[i];
+        out << "\n";
+    }
     if (!r.notFound.empty()) out << "No ligand '" << r.notFound << "' found.\n";
 }
 

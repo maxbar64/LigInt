@@ -22,7 +22,7 @@
 #include <vector>
 
 #ifndef LIGINT_VERSION
-#define LIGINT_VERSION "0.4.0"
+#define LIGINT_VERSION "0.5.1"
 #endif
 
 namespace ligint {
@@ -92,6 +92,8 @@ struct Options {
     std::string chain;              // optional: ligand chain
     int resi = INT_MIN;             // optional: residue number (INT_MIN = any)
     char icode = 0;                 // optional: insertion code (0 = any, ' ' = none, otherwise that code)
+    char altloc = 0;                // alternate conformation to use (e.g. 'B'); 0 = the first conformation of each residue.
+                                    // A residue without that conformation keeps its first one.
     bool useWater = true;           // consider waters (water bridges)
     bool metalDonors = false;       // O/N coordinated to a metal remain possible donors
     bool backboneHyd = false;       // apolar contacts with backbone CA/C
@@ -157,6 +159,7 @@ struct Result {
     std::map<std::string, int> hetCounts;   // name -> number of residues (only if listingOnly)
     std::vector<LigandId> hetResidues;      // same, residue by residue
     std::string notFound;                   // requested name that is absent (only if listingOnly)
+    std::vector<char> altlocs;              // alternate-conformation identifiers found in the first model (sorted)
     std::vector<std::string> warnings;      // warnings (invalid coordinates, limited thresholds...)
     std::vector<std::string> info;          // global information (protein hydrogens, templates loaded)
     std::vector<LigandResult> ligands;

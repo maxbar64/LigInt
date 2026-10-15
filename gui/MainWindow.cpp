@@ -148,6 +148,17 @@ void MainWindow::buildUi() {
     backbone_ = new QCheckBox(tr("Apolar contacts with the backbone"));
     metalDonors_ = new QCheckBox(tr("O/N coordinated to metals may donate H"));
     for (auto* c : {water_, merge_, plipLike_, backbone_, metalDonors_}) ov->addWidget(c);
+    {
+        auto* altRow = new QHBoxLayout;
+        altRow->addWidget(new QLabel(tr("Alternate conformation:")));
+        altlocCombo_ = new QComboBox;
+        altlocCombo_->addItem(tr("first (default)"), QString());
+        altlocCombo_->setToolTip(tr("Conformation to use for the residues that have alternate locations (altloc). "
+                                    "Residues without it keep their first conformation."));
+        altlocCombo_->setEnabled(false);
+        altRow->addWidget(altlocCombo_, 1);
+        ov->addLayout(altRow);
+    }
     connect(plipLike_, &QCheckBox::toggled, this, &MainWindow::onPresetToggled);
     lv->addWidget(gOpt);
 
@@ -288,6 +299,7 @@ void MainWindow::buildUi() {
     plipLike_->setObjectName("opt_plip");
     backbone_->setObjectName("opt_backbone");
     metalDonors_->setObjectName("opt_metalDonors");
+    altlocCombo_->setObjectName("opt_altloc");
     hbMax_->setObjectName("thr_hbMax");
     hbLong_->setObjectName("thr_hbLong");
     saltMax_->setObjectName("thr_saltMax");
@@ -337,6 +349,15 @@ bool MainWindow::openStructure(const QString& path) {
     }
     path_ = path;
     allLigands_ = listing.hetResidues;
+    {   // alternate conformations present in the file; the previous choice is kept if it still exists
+        const QString previous = altlocCombo_->currentData().toString();
+        altlocCombo_->clear();
+        altlocCombo_->addItem(tr("first (default)"), QString());
+        for (char c : listing.altlocs) altlocCombo_->addItem(QString(QChar(c)), QString(QChar(c)));
+        const int keep = altlocCombo_->findData(previous);
+        altlocCombo_->setCurrentIndex(keep >= 0 ? keep : 0);
+        altlocCombo_->setEnabled(!listing.altlocs.empty());
+    }
     result_ = ligint::Result();
     model_->setHits({});
     viewer_->clear();
@@ -430,6 +451,10 @@ ligint::Options MainWindow::buildOptions() const {
     opt.mergeLinked = merge_->isChecked();
     opt.backboneHyd = backbone_->isChecked();
     opt.metalDonors = metalDonors_->isChecked();
+    {
+        const QString alt = altlocCombo_->currentData().toString();
+        opt.altloc = alt.isEmpty() ? 0 : alt[0].toLatin1();
+    }
     opt.templates = templates_;
     auto& p = opt.params;
     p.hbMax = hbMax_->value();
@@ -573,6 +598,7 @@ QStringList MainWindow::currentArgs() const {
     if (!merge_->isChecked()) a << "--no-merge";
     if (backbone_->isChecked()) a << "--backbone-hyd";
     if (metalDonors_->isChecked()) a << "--metal-donors";
+    if (!altlocCombo_->currentData().toString().isEmpty()) a << "--altloc" << altlocCombo_->currentData().toString();
     thr("hb-max", hbMax_->value(), d.hbMax);
     thr("hb-long", hbLong_->value(), d.hbLong);
     thr("salt-max", saltMax_->value(), d.saltMax);

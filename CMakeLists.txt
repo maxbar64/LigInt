@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ligint
-    VERSION 0.4.0
+    VERSION 0.5.1
     DESCRIPTION "Non-covalent ligand-protein interactions from PDB files"
     LANGUAGES CXX)
 
@@ -35,6 +35,7 @@ else()
     endif()
 endif()
 
+include(cmake/LigintWindowsResources.cmake)
 add_subdirectory(src)
 
 if(LIGINT_BUILD_GUI)
@@ -59,13 +60,63 @@ endif()
 # ----------------------------------------------------------------------------------------------
 # Installation (library, headers, programs) and CMake package for those who want to use the library
 # ----------------------------------------------------------------------------------------------
+set(LIGINT_PACKAGE_MAINTAINER "ligint authors <ligint@invalid.example>" CACHE STRING
+    "Maintainer of the .deb/.rpm packages, as: Name <email> (replace the placeholder before publishing)")
+
+# Two components: Runtime (programs, documentation, desktop integration) and Development (headers, library, CMake package)
 include(CMakePackageConfigHelpers)
-install(DIRECTORY include/ligint DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(EXPORT ligintTargets NAMESPACE ligint:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ligint)
+install(DIRECTORY include/ligint DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT Development)
+install(EXPORT ligintTargets NAMESPACE ligint:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ligint COMPONENT Development)
 configure_package_config_file(cmake/ligintConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/ligintConfig.cmake
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ligint)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ligintConfigVersion.cmake
     VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ligintConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/ligintConfigVersion.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ligint)
-install(FILES README.md LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ligint COMPONENT Development)
+
+# documentation
+install(FILES README.md LICENSE CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+install(DIRECTORY docs/img docs/examples DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+install(FILES docs/ARCHITECTURE.md docs/BENCHMARK.md docs/FINGERPRINT.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+
+# manual pages and copyright file (Unix); the pages are compressed when gzip is available, as Debian requires
+if(UNIX AND NOT APPLE)
+    set(LIGINT_MAN_DIR ${CMAKE_CURRENT_BINARY_DIR}/man)
+    set(LIGINT_MAN_PAGES ligint.1)
+    if(TARGET ligint-gui)                       # only when the GUI was really built (Qt found)
+        list(APPEND LIGINT_MAN_PAGES ligint-gui.1)
+    endif()
+    find_program(LIGINT_GZIP gzip)
+    set(LIGINT_MAN_FILES "")
+    foreach(page ${LIGINT_MAN_PAGES})
+        set(VERSION ${PROJECT_VERSION})
+        configure_file(packaging/${page} ${LIGINT_MAN_DIR}/${page} @ONLY)
+        if(LIGINT_GZIP)
+            add_custom_command(OUTPUT ${LIGINT_MAN_DIR}/${page}.gz
+                COMMAND ${LIGINT_GZIP} -9 -n -c ${LIGINT_MAN_DIR}/${page} > ${LIGINT_MAN_DIR}/${page}.gz
+                DEPENDS ${LIGINT_MAN_DIR}/${page} VERBATIM)
+            list(APPEND LIGINT_MAN_FILES ${LIGINT_MAN_DIR}/${page}.gz)
+        else()
+            list(APPEND LIGINT_MAN_FILES ${LIGINT_MAN_DIR}/${page})
+        endif()
+    endforeach()
+    # changelog in Debian format (native package), compressed like the manual pages
+    string(TIMESTAMP LIGINT_CHANGELOG_DATE "%a, %d %b %Y %H:%M:%S +0000" UTC)
+    configure_file(packaging/changelog.in ${LIGINT_MAN_DIR}/changelog @ONLY)
+    if(LIGINT_GZIP)
+        add_custom_command(OUTPUT ${LIGINT_MAN_DIR}/changelog.gz
+            COMMAND ${LIGINT_GZIP} -9 -n -c ${LIGINT_MAN_DIR}/changelog > ${LIGINT_MAN_DIR}/changelog.gz
+            DEPENDS ${LIGINT_MAN_DIR}/changelog VERBATIM)
+        set(LIGINT_CHANGELOG_FILE ${LIGINT_MAN_DIR}/changelog.gz)
+    else()
+        set(LIGINT_CHANGELOG_FILE ${LIGINT_MAN_DIR}/changelog)
+    endif()
+    add_custom_target(ligint_man ALL DEPENDS ${LIGINT_MAN_FILES} ${LIGINT_CHANGELOG_FILE})
+    install(FILES ${LIGINT_MAN_FILES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT Runtime)
+    install(FILES packaging/copyright ${LIGINT_CHANGELOG_FILE} DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+    # the development package has its own documentation directory (Debian policy: copyright and changelog)
+    install(FILES packaging/copyright ${LIGINT_CHANGELOG_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ligint-dev COMPONENT Development)
+endif()
+
+# installers and packages (cpack): .deb / .tar.gz on Linux, NSIS installer / .zip on Windows
+include(cmake/Packaging.cmake)

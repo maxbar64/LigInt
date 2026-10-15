@@ -1,6 +1,10 @@
 // Analysis: PDB reading, chemical roles, interaction search.
 #include "internal.hpp"
 
+#include <iterator>
+#include <sstream>
+#include <string_view>
+
 namespace ligint {
 
 // ---------------------------------------------------------------------------------------------
@@ -77,6 +81,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     const string& wantChain = opt.chain;
     const int wantResi = opt.resi;
     const char wantIcode = opt.icode;
+    const char wantAlt = opt.altloc;
 
     vector<Atom> prot, waters;
     vector<pair<Atom,bool>> hatoms;  // PDB hydrogens (bool = belongs to a target ligand)
@@ -84,9 +89,29 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     map<LKey, vector<Atom>> hetRes;   // all HETATM residues (water excluded), to merge the linked ones
     map<string, set<LKey>> hetNames;
     map<string, char> altSeen;
+    set<char> altlocsPresent;
+    set<string> altResidues, hasWanted;      // residues with alternate conformations / with the requested one
+    // choosing a conformation needs to know, for every residue, whether it has it: read the file once to find out
+    istringstream buffered;
+    istream* src = &in;
+    if (wantAlt != 0) {
+        const string all((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
+        size_t pos = 0;
+        while (pos < all.size()) {
+            size_t e = all.find('\n', pos);
+            if (e == string::npos) e = all.size();
+            const string_view l(all.data() + pos, e - pos);
+            pos = e + 1;
+            if (l.substr(0, 6) == "ENDMDL") break;           // first model only
+            if (l.size() < 54 || (l.substr(0, 6) != "ATOM  " && l.substr(0, 6) != "HETATM")) continue;
+            if (l[16] == wantAlt) hasWanted.insert(string(l.substr(21, 6)) + string(l.substr(17, 3)));
+        }
+        buffered.str(all);
+        src = &buffered;
+    }
     string line;
     long nBadCoord = 0;
-    while (getline(in, line)) {
+    while (getline(*src, line)) {
         if (line.compare(0, 6, "ENDMDL") == 0) break;  // first model only
         if (line.size() < 54) continue;
         string rec = line.substr(0, 6);
@@ -98,11 +123,17 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         a.resi = atoi(line.substr(22, 4).c_str());
         a.icode = line[26];
         char alt = line[16];
-        if (alt != ' ') {  // for each residue the first conformation encountered is kept
-            string rk = line.substr(21, 6) + line.substr(17, 3);
-            auto it = altSeen.find(rk);
-            if (it == altSeen.end()) altSeen[rk] = alt;
-            else if (it->second != alt) continue;
+        if (alt != ' ') {
+            altlocsPresent.insert(alt);
+            const string rk = line.substr(21, 6) + line.substr(17, 3);
+            altResidues.insert(rk);
+            if (wantAlt != 0 && hasWanted.count(rk)) {
+                if (alt != wantAlt) continue;                  // the requested conformation exists for this residue
+            } else {                                           // otherwise the first conformation encountered is kept
+                auto it = altSeen.find(rk);
+                if (it == altSeen.end()) altSeen[rk] = alt;
+                else if (it->second != alt) continue;
+            }
         }
         a.x = atof(line.substr(30, 8).c_str());
         a.y = atof(line.substr(38, 8).c_str());
@@ -138,6 +169,19 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         else prot.push_back(a);
     }
     if (nBadCoord > 0) res.warnings.push_back("Warning: " + to_string(nBadCoord) + " atoms with invalid coordinates ignored");
+    res.altlocs.assign(altlocsPresent.begin(), altlocsPresent.end());
+    if (wantAlt != 0) {
+        if (altlocsPresent.count(wantAlt) == 0) {
+            string present;
+            for (char c : altlocsPresent) present += (present.empty() ? "" : ", ") + string(1, c);
+            res.warnings.push_back("Warning: alternate conformation " + string(1, wantAlt) + " not found in the structure (" +
+                                   (present.empty() ? "it has no alternate conformations" : "present: " + present) +
+                                   "); the first conformation of each residue is used");
+        } else {
+            res.info.push_back("Alternate conformation " + string(1, wantAlt) + ": used for " + to_string(hasWanted.size()) + " of " +
+                               to_string(altResidues.size()) + " residues with alternate conformations; the others use their first conformation.");
+        }
+    }
     if (ligName.empty() || ligs.empty()) {
         res.listingOnly = true;
         for (auto& [n, s] : hetNames) res.hetCounts[n] = (int)s.size();

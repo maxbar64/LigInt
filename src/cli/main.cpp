@@ -15,7 +15,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " file.pdb [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --version  --help\n"
+         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --version  --help\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE   (instead of the interaction table)\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
@@ -44,6 +44,12 @@ int main(int argc, char** argv) {
         else if (s == "--backbone-hyd") opt.backboneHyd = true;
         else if (s == "--no-merge") opt.mergeLinked = false;
         else if (s == "--plip-like") {}           // already applied above
+        else if (s == "--altloc") {
+            if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
+            const string v = argv[++i];
+            if (v.size() != 1 || v[0] == ' ') { cerr << "--altloc expects a single character, e.g. A or B\n"; return 1; }
+            opt.altloc = v[0];
+        }
         else if (s == "--fingerprint" || s == "--pocket") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             string v = argv[++i];
