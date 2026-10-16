@@ -287,6 +287,10 @@ jobs:
           fi
       - name: Install the development package and build a program with it
         run: |
+          # ligint-devel needs the development packages of libcurl and json-c; json-c-devel is in the CodeReady Linux Builder repository (CRB).
+          # Only this step enables it: the program itself must install from the default repositories (previous step).
+          dnf install -y dnf-plugins-core
+          dnf config-manager --set-enabled crb
           dnf install -y gcc-c++ cmake make ./rpms/ligint-devel-*.rpm
           mkdir consumer
           cat > consumer/CMakeLists.txt <<'EOF'
