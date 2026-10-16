@@ -112,4 +112,4 @@ depend on Qt.
   example) is not computed; it must come from the definition file.
 - Comparison of the fingerprint with those of other tools.
 
-The fingerprints of several ligands on the same columns, one bit for each position and class, are in the [interaction matrix](MATRIX.md).
+The fingerprints of several ligands on the same columns, one bit for each position and class, are in the [interaction matrix](MATRIX.md). Pocket definitions for kinases come from [KLIFS](KLIFS.md) and for GPCRs from the generic residue numbers of [GPCRdb](GPCRDB.md).

@@ -89,6 +89,15 @@ others (<code>--klifs-sequence</code>, <code>_</code> marks a missing residue). 
 (<code>--klifs-mapping</code>); the online path of the native client is not verified (<a href="klifs.html#the-klifs-service-partly-verified">KLIFS kinase pockets</a>).</p>
 <p><strong>The pocket is built but the figure has fewer than 85 cells.</strong> The residues that are missing in the crystal (<code>_</code> in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.</p>
+<h2 id="gpcr-pockets"><a name="gpcr-pockets"></a>GPCR pockets</h2>
+<p><strong><code>GPCRdb: The B-factor column of the structure does not have GPCRdb generic numbers</code>.</strong> The structure was not annotated. Upload the PDB file to the tool <em>Generic residue numbering (PDB)</em> of GPCRdb
+and give ligint the file that it returns (<code>--gpcrdb-pdb</code>), or use a table (<code>--gpcrdb-mapping</code>). The message tells how many residues of each chain have a number.</p>
+<p><strong><code>GPCRdb: The Ballesteros-Weinstein numbers (with a point, e.g. 3.32) are not in this structure</code>.</strong> The numbers with a point are read from the N atoms, where GPCRdb writes them (class A), and
+the file does not have them. Use the GPCRdb numbers (<code>3x32</code>), which are in the CA atoms, or a table with a <code>bw</code> column. The two schemes are not the same near helix bulges and constrictions:
+<code>5.42</code> and <code>5x42</code> can be different residues, so ligint does not use one for the other.</p>
+<p><strong><code>GPCRdb: Several chains have generic numbers (A, B)</code>.</strong> Choose the receptor with <code>--gpcrdb-chain</code>.</p>
+<p><strong><code>Warning: positions that this structure does not have ...</code>.</strong> The residue of those numbers is missing in the structure, or has no number. They are left out of this pocket; with a matrix the other structures still have them.</p>
+<p><strong><code>GPCRdb: None of the requested positions ... has a residue in this structure</code>.</strong> Check the chain and the scheme of the numbers (<code>x</code> for GPCRdb, a point for BW), and that the list is of the receptor class of the structure.</p>
 <h2 id="the-interaction-matrix"><a name="the-interaction-matrix"></a>The interaction matrix</h2>
 <p><strong><code>Matrix: Line N: the list needs a header line with a 'structure' column</code>.</strong> The first line of the list (after comments) must name the columns, at least <code>structure</code> and <code>ligand</code>
 (<a href="matrix.html#the-list-of-ligands">the list of ligands</a>).</p>
@@ -112,6 +121,6 @@ SVG export still produces the figure.</p>
 the GUI, copy it with <strong>File &gt; Copy command line</strong>), what you expected and what happened, and, if you can share it, the structure file (or its PDB code).
 For the graphical interface add the contents of the <strong>Log</strong> tab.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
-<p class="foot">ligint 0.9.0 manual</p>
+<p class="foot">ligint 0.10.0 manual</p>
 </body>
 </html>

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ligint
-    VERSION 0.9.0
+    VERSION 0.10.0
     DESCRIPTION "Non-covalent ligand-protein interactions from PDB files"
     LANGUAGES CXX)
 
@@ -79,7 +79,7 @@ install(FILES README.md LICENSE CHANGELOG.md DESTINATION ${CMAKE_INSTALL_DOCDIR}
 install(DIRECTORY docs/img docs/examples DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
 # the HTML manual (it is also embedded in ligint-gui): open manual/index.html with a web browser
 install(DIRECTORY docs/manual/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR}/manual COMPONENT Runtime PATTERN "manual.qrc" EXCLUDE)
-install(FILES docs/ARCHITECTURE.md docs/BENCHMARK.md docs/FINGERPRINT.md docs/INPUT_FORMATS.md docs/KLIFS.md docs/RCSB.md docs/MATRIX.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
+install(FILES docs/ARCHITECTURE.md docs/BENCHMARK.md docs/FINGERPRINT.md docs/INPUT_FORMATS.md docs/KLIFS.md docs/RCSB.md docs/MATRIX.md docs/GPCRDB.md DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT Runtime)
 
 # manual pages and copyright file (Unix); the pages are compressed when gzip is available, as Debian requires
 if(UNIX AND NOT APPLE)

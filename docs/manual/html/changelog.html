@@ -21,6 +21,18 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="0100"><a name="0100"></a>0.10.0</h2>
+<ul>
+<li><strong>GPCR pockets from generic residue numbers (GPCRdb)</strong>: <code>--gpcrdb-positions LIST</code> (the pocket of interest: <code>3x32,6x48...</code> in the GPCRdb scheme, or <code>3.32</code> in Ballesteros-Weinstein where the file has them),
+  <code>--gpcrdb-pdb FILE</code> (a structure annotated by the GPCRdb tool <em>Generic residue numbering (PDB)</em>: GPCRdb numbers in the CA B-factors, BW in the N atoms, bulges as negative values or repeated numbers),
+  <code>--gpcrdb-mapping FILE</code> (a table of residue and number), <code>--gpcrdb-chain</code>, <code>--gpcrdb-name</code>, <code>--gpcrdb-output</code>. The pocket definition has the positions in the order of the receptor and the segments
+  (TM1-7, H8, ICL1-3, ECL1-3) as regions, so the fingerprint and the matrix use it as they use a KLIFS pocket. Library: <code>ligint/gpcrdb.hpp</code>.</li>
+<li>A file without numbers is refused, the BW numbers are never read as GPCRdb numbers (they differ near bulges: in the beta-2 adrenergic receptor <code>5x42</code> is Ala202, <code>5.42</code> of the literature is Ser203), positions that a
+  structure does not have are a warning, and the conflict with <code>--klifs-*</code> is detected before anything is done.</li>
+<li>Tests: the numbers, the lists, the structures annotated as GPCRdb writes them (loops, helix 8, bulges, BW, chains, errors) and the tables in C++; six tests of the command line (fingerprint, matrix, table, rules, bulges, corrupted files).
+  Checked by hand with a real annotated beta-2 receptor and 2RH1 with carazolol: the contacts at Asp113 (<code>3x32</code>), Ser203, Asn312 and Tyr316 are found at the expected numbers.</li>
+<li>Not done: the interface, the GPCRdb web service, and trying the output of the GPCRdb tool unmodified (the real file had gone through another program).</li>
+</ul>
 <h2 id="090"><a name="090"></a>0.9.0</h2>
 <ul>
 <li><strong>Interaction matrix</strong>: the fingerprints of several ligands on the same columns, one bit for each pocket position and interaction class (with the 85 positions of a KLIFS pocket and
@@ -199,6 +211,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.9.0 manual</p>
+<p class="foot">ligint 0.10.0 manual</p>
 </body>
 </html>

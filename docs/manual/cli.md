@@ -34,6 +34,7 @@ check the output, not only the exit code, in scripts.
 | `--format F` | `auto` (default: recognized from the content), `pdb` or `cif` |
 | `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`) instead of the interaction table, optionally with a pocket definition |
 | `--download-pdb ID` | download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. `--download-format pdb\|cif`, `--download-output FILE`, `--download-cache DIR`, `--download-refresh` and `--download-only` (stop after the download and print the path; it requires `--download-pdb`) complete it ([Downloading from the RCSB](rcsb.md)) |
+| `--gpcrdb-positions LIST`, `--gpcrdb-pdb FILE`, `--gpcrdb-mapping FILE`, `--gpcrdb-chain C`, `--gpcrdb-name TEXT`, `--gpcrdb-output FILE` | build the pocket definition of a GPCR from generic residue numbers (the positions that you list), for `--fingerprint` or to save ([GPCR pockets](gpcrdb.md)) |
 | `--matrix LIST` | the [interaction matrix](matrix.md) of the ligands of a list file instead of a structure: one row for each ligand, one column for each pocket position and class. `--matrix-format csv\|json\|svg` (default `csv`), `--matrix-classes klifs\|all\|NAMES`, `--matrix-hide-empty`, `--matrix-title TEXT` and `--pocket FILE` (the common pocket definition) complete it |
 | `--klifs-pdb ID`, `--klifs-chain C`, `--klifs-mapping FILE`, `--klifs-sequence S`, `--klifs-output FILE`, `--klifs-model M`, `--klifs-id N` | build a pocket definition from a KLIFS mapping, to use with `--fingerprint` or to save ([KLIFS kinase pockets](klifs.md)) |
 | `--version` | print the version |
@@ -121,6 +122,7 @@ ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv > figur
 ligint --download-pdb 3EYG STI --csv                  download from the RCSB and analyze the ligand in one command
 ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output 3eyg-pocket.tsv     a KLIFS pocket definition from a mapping
 ligint --matrix ligands.tsv --pocket pocket.tsv --matrix-format svg > matrix.svg     the interaction matrix of the ligands of a list
+ligint numbered.pdb CAU --fingerprint svg --gpcrdb-positions 3x32,3x33,6x48 > figure.svg     the fingerprint on a GPCR pocket, by generic residue numbers
 ```
 
 Analyze many structures that contain the same ligand name, in a POSIX shell:

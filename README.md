@@ -90,12 +90,13 @@ ligint structure.pdb LIG --fingerprint csv|json|svg [--pocket FILE]   interactio
 ligint structure.dat LIG --format cif      force the input format (default: recognized from the content)
 ligint --download-pdb 3EYG STI --csv       download an entry from the RCSB and analyze the ligand STI in one command
 ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output pocket.tsv     a kinase pocket definition from a KLIFS mapping
+ligint numbered.pdb CAU --fingerprint svg --gpcrdb-positions 3x32,3x33,6x48 > figure.svg   a GPCR pocket by generic residue numbers (GPCRdb)
 ligint --matrix ligands.tsv --pocket pocket.tsv --matrix-format svg > matrix.svg     the interaction matrix of the ligands of a list (CSV, JSON or heat map)
 ligint --help                              thresholds and default values
 ```
 
 Options: `--csv`, `--no-water`, `--no-merge`, `--plip-like`, `--sdf F`, `--mol2 F`, `--metal-donors`,
-`--backbone-hyd`, `--altloc X`, `--format F`, `--download-pdb ID` (and `--download-*`), `--klifs-*`, `--matrix LIST` (and `--matrix-*`), `--hb-long X`, `--salt-centroid X`, `--fingerprint FORMAT`, `--pocket FILE`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
+`--backbone-hyd`, `--altloc X`, `--format F`, `--download-pdb ID` (and `--download-*`), `--klifs-*`, `--matrix LIST` (and `--matrix-*`), `--gpcrdb-*`, `--hb-long X`, `--salt-centroid X`, `--fingerprint FORMAT`, `--pocket FILE`, `--version` and all the thresholds (`--hb-max`, `--salt-max`,
 `--hyd-max`, ...; see `--help`). Unknown options, non-numeric thresholds or missing files end with an error
 (exit code 1); thresholds above 6 Å for the grid searches are limited with a warning.
 
@@ -203,7 +204,7 @@ uncertain effect.
 
 ```
 ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     106 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     112 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -257,7 +258,7 @@ docs/                       ARCHITECTURE.md, BENCHMARK.md, benchmark/ (reports),
 cmake/                      CMake package configuration and packaging (CPack) files
 ```
 
-Other documents: [`docs/manual/index.md`](docs/manual/index.md) (the manual), [`docs/RCSB.md`](docs/RCSB.md), [`docs/KLIFS.md`](docs/KLIFS.md), [`docs/MATRIX.md`](docs/MATRIX.md), [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md), [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
+Other documents: [`docs/manual/index.md`](docs/manual/index.md) (the manual), [`docs/RCSB.md`](docs/RCSB.md), [`docs/KLIFS.md`](docs/KLIFS.md), [`docs/MATRIX.md`](docs/MATRIX.md), [`docs/GPCRDB.md`](docs/GPCRDB.md), [`docs/INPUT_FORMATS.md`](docs/INPUT_FORMATS.md), [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/FINGERPRINT.md`](docs/FINGERPRINT.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 

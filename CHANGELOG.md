@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0
+
+- **GPCR pockets from generic residue numbers (GPCRdb)**: `--gpcrdb-positions LIST` (the pocket of interest: `3x32,6x48...` in the GPCRdb scheme, or `3.32` in Ballesteros-Weinstein where the file has them),
+  `--gpcrdb-pdb FILE` (a structure annotated by the GPCRdb tool *Generic residue numbering (PDB)*: GPCRdb numbers in the CA B-factors, BW in the N atoms, bulges as negative values or repeated numbers),
+  `--gpcrdb-mapping FILE` (a table of residue and number), `--gpcrdb-chain`, `--gpcrdb-name`, `--gpcrdb-output`. The pocket definition has the positions in the order of the receptor and the segments
+  (TM1-7, H8, ICL1-3, ECL1-3) as regions, so the fingerprint and the matrix use it as they use a KLIFS pocket. Library: `ligint/gpcrdb.hpp`.
+- A file without numbers is refused, the BW numbers are never read as GPCRdb numbers (they differ near bulges: in the beta-2 adrenergic receptor `5x42` is Ala202, `5.42` of the literature is Ser203), positions that a
+  structure does not have are a warning, and the conflict with `--klifs-*` is detected before anything is done.
+- Tests: the numbers, the lists, the structures annotated as GPCRdb writes them (loops, helix 8, bulges, BW, chains, errors) and the tables in C++; six tests of the command line (fingerprint, matrix, table, rules, bulges, corrupted files).
+  Checked by hand with a real annotated beta-2 receptor and 2RH1 with carazolol: the contacts at Asp113 (`3x32`), Ser203, Asn312 and Tyr316 are found at the expected numbers.
+- Not done: the interface, the GPCRdb web service, and trying the output of the GPCRdb tool unmodified (the real file had gone through another program).
+
 ## 0.9.0
 
 - **Interaction matrix**: the fingerprints of several ligands on the same columns, one bit for each pocket position and interaction class (with the 85 positions of a KLIFS pocket and

@@ -19,6 +19,7 @@ Groups:
     manual the HTML manual (up to date, links resolve, agrees with the program)
     net    KLIFS pocket definitions and RCSB downloads (no real network traffic)
     matrix the interaction matrix of several ligands (--matrix)
+    gpcr   pocket definitions of GPCRs from generic residue numbers (--gpcrdb-*)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -1905,6 +1906,241 @@ def matrix_robustness():
     r = run_raw(["--matrix", tmpfile(many, ".tsv"), "--pocket", pocket], timeout=120)
     check(r.rc == 0 and len(r.out.strip().splitlines()) == 151, "150 rows: rc=%d %.1f s" % (r.rc, CFG["last_time"]))
     check(CFG["last_time"] < 60, "150 rows in a reasonable time: %.1f s" % CFG["last_time"])
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP gpcr: pocket definitions of GPCRs from the generic residue numbers of GPCRdb (--gpcrdb-*)
+# ----------------------------------------------------------------------------------------------
+def pdb_atom_line(serial, name, res, chain, resi, xyz, b, el):
+    return "ATOM  %5d %-4s %3s %s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s" % (serial, name, res, chain, resi, xyz[0], xyz[1], xyz[2], 1.0, b, el)
+
+
+def generic_number(r):
+    return 3 + (22 + r) / 100.0                         # residue 1 is 3x23, residue 10 is 3x32, residue 30 is 3x52
+
+
+def numbered_lines(chain="A", count=40, names=None, annotated=True, bw=False):
+    """CA (GPCRdb number) and N (Ballesteros-Weinstein number or 1.00) atoms of `count` residues, as GPCRdb writes them; or B-factors of a structure."""
+    out, serial = [], 5000
+    for r in range(1, count + 1):
+        res = (names or {}).get(r, "GLY")
+        b = generic_number(r) if annotated else 40.0 + (r * 37 % 53) / 3.0
+        out.append(pdb_atom_line(serial, " N  ", res, chain, r, (r * 1.5, 30.0, 30.0), b if (bw and annotated) else 1.0, " N"))
+        out.append(pdb_atom_line(serial + 1, " CA ", res, chain, r, (r * 1.5 + 1.0, 30.0, 30.0), b, " C"))
+        serial += 2
+    return "\n".join(out) + "\n"
+
+
+def add_lines(text, lines):
+    check(text.rstrip().endswith("END"), "the system must end with END")
+    return text.rstrip()[:-3] + lines + "END\n"
+
+
+def gpcr_structures(annotated=True, bw=False):
+    """(A) ASN 10 (3x32) accepts a hydrogen bond from the ligand; (B) LYS 30 (3x52) is positive and donates to a carboxylate."""
+    a = fp_system().text()
+    b = Sys().ligand(carboxylate()).prot("LYS", "NZ", at((0.62, 1.07, 0), (0.5, 0.866, 0), 2.8), resi=30).text()
+    return (add_lines(a, numbered_lines(names={10: "ASN"}, annotated=annotated, bw=bw)), add_lines(b, numbered_lines(names={30: "LYS"}, annotated=annotated, bw=bw)))
+
+
+def gpcr_cli(pdb, positions, out=None, extra=()):
+    args = ["--gpcrdb-pdb", pdb, "--gpcrdb-positions", positions] + (["--gpcrdb-output", out] if out else []) + list(extra)
+    return run_raw(args)
+
+
+def pocket_lines(path):
+    return [l.split("\t") for l in open(path, encoding="utf-8").read().splitlines() if l and l[0] not in "#@"]
+
+
+@test("gpcr")
+def gpcr_pocket_from_the_annotated_structure():
+    a, b = gpcr_structures()
+    pa = tmpfile(a)
+    out = os.path.join(CFG["tmp"], "gpcr_pocket.tsv")
+    r = gpcr_cli(pa, "3x40,3x32, 3X25 ,3x32", out)                       # any order, blanks, upper case, a repeated number
+    check(r.rc == 0 and "GPCRdb pocket: 3 positions" in r.err and not r.out, "rc=%d %s" % (r.rc, r.err[:200]))
+    text = open(out, encoding="utf-8").read()
+    check(text.startswith("@name GPCR pocket (generic residue numbers, chain A)\n@color TM3 #") and text.count("@color") == 1, "the header: " + text[:120])
+    check(pocket_lines(out) == [["A", "3", "3x25", "TM3", "GLY"], ["A", "10", "3x32", "TM3", "ASN"], ["A", "18", "3x40", "TM3", "GLY"]], str(pocket_lines(out)))
+    # the positions of a file with comments, and the pocket from the structure of the analysis itself
+    plist = tmpfile("# the pocket of interest\n3x32\n3x40  # a comment\n", ".txt")
+    r2 = run_raw(["--gpcrdb-pdb", pa, "--gpcrdb-positions", plist, "--gpcrdb-output", os.path.join(CFG["tmp"], "gpcr_pocket2.tsv")])
+    check(r2.rc == 0 and "2 positions" in r2.err, "positions from a file: " + r2.err)
+    # the pocket file is the pocket definition of the fingerprint
+    fp = run_raw([pa, "LIG", "--fingerprint", "csv", "--pocket", out])
+    rows = {l.split(",")[4]: l.split(",") for l in fp.out.strip().splitlines()[1:]}
+    head = fp.out.splitlines()[0].split(",")
+    check(fp.rc == 0 and list(rows) == ["3x25", "3x32", "3x40"] and rows["3x32"][head.index("hbond_acceptor")] == "1" and rows["3x32"][5] == "TM3", "fingerprint: " + fp.out[:300] + fp.err[:200])
+
+
+@test("gpcr")
+def gpcr_fingerprint_and_matrix_with_generic_numbers():
+    a, b = gpcr_structures()
+    pa, pb = tmpfile(a), tmpfile(b)
+    pocket = os.path.join(CFG["tmp"], "gpcr_ref.tsv")
+    check(gpcr_cli(pa, "3x25,3x32,3x40,3x52", pocket).rc == 0, "generate")
+    ref = run_raw([pa, "LIG", "--fingerprint", "csv", "--pocket", pocket]).out
+    # the same in one command: the structure of the analysis is the annotated file
+    one = run_raw([pa, "LIG", "--fingerprint", "csv", "--gpcrdb-positions", "3x25,3x32,3x40,3x52"])
+    check(one.rc == 0 and one.out == ref and "GPCRdb pocket: 4 positions" in one.err, "one command: " + one.err[:200])
+    # a structure without numbers (the original of the PDB) and the file annotated by GPCRdb apart
+    plain, _ = gpcr_structures(annotated=False)
+    original = tmpfile(fp_system().text())
+    sep = run_raw([original, "LIG", "--fingerprint", "csv", "--gpcrdb-pdb", pa, "--gpcrdb-positions", "3x25,3x32,3x40,3x52"])
+    check(sep.rc == 0 and sep.out == ref, "annotated file apart: " + sep.err[:200])
+    for fmt in ("json", "svg"):
+        r = run_raw([pa, "LIG", "--fingerprint", fmt, "--gpcrdb-positions", "3x25,3x32"])
+        check(r.rc == 0, fmt + ": " + r.err[:150])
+        if fmt == "json":
+            json.loads(r.out)
+        else:
+            ET.fromstring(r.out.encode("utf-8"))
+    # a matrix of two receptors on the same generic positions
+    pocket_a, pocket_b = os.path.join(CFG["tmp"], "gpcr_pa.tsv"), os.path.join(CFG["tmp"], "gpcr_pb.tsv")
+    check(gpcr_cli(pa, "3x32,3x52", pocket_a).rc == 0 and gpcr_cli(pb, "3x32,3x52", pocket_b).rc == 0, "pockets")
+    lst = tmpfile("structure\tligand\tlabel\tpocket\n%s\tLIG\talpha\t%s\n%s\tLIG\tbeta\t%s\n" % (os.path.basename(pa), os.path.basename(pocket_a), os.path.basename(pb), os.path.basename(pocket_b)), ".tsv")
+    m = run_raw(["--matrix", lst])
+    check(m.rc == 0, "matrix: " + m.err[:200])
+    head, rows = matrix_csv(m.out)
+    check([h.split(":")[0] for h in head[3::7]] == ["3x32", "3x52"], "the columns are the generic numbers: " + str(head[3::7]))
+    check(set(bits_of(rows["alpha"])) == {"3x32:hbond_acceptor"} and set(bits_of(rows["beta"])) == {"3x52:hbond_donor", "3x52:ionic_positive"}, "bits: %s %s" % (bits_of(rows["alpha"]), bits_of(rows["beta"])))
+    svg = run_raw(["--matrix", lst, "--matrix-format", "svg"])
+    check(svg.rc == 0 and "TM3" in svg.out, "the segment is the region of the matrix")
+
+
+@test("gpcr")
+def gpcr_table_gives_the_same_pocket_as_the_annotated_structure():
+    a, _ = gpcr_structures()
+    pa = tmpfile(a)
+    out1, out2 = os.path.join(CFG["tmp"], "gpcr_t1.tsv"), os.path.join(CFG["tmp"], "gpcr_t2.tsv")
+    check(gpcr_cli(pa, "3x25,3x32,3x40", out1, ["--gpcrdb-chain", "A"]).rc == 0, "from the structure")
+    rows = ["chain,resi,gpcrdb,aa"] + ["A,%d,%dx%02d,%s" % (r, 3, 22 + r, "N" if r == 10 else "G") for r in range(1, 41)] + ["A,100,-,G", "A,101,,K"]
+    table = tmpfile("\n".join(rows) + "\n", ".csv")
+    r = run_raw(["--gpcrdb-mapping", table, "--gpcrdb-chain", "A", "--gpcrdb-positions", "3x25,3x32,3x40", "--gpcrdb-output", out2])
+    check(r.rc == 0, "from the table: " + r.err[:200])
+    check(open(out1, encoding="utf-8").read() == open(out2, encoding="utf-8").read(), "the pocket is the same from the structure and from the table:\n%s\n%s" % (open(out1).read(), open(out2).read()))
+    # the numbers of GPCRdb written together, Ballesteros-Weinstein numbers, a segment and an insertion code
+    t2 = tmpfile("resi\tgpcrdb\tbw\tsegment\n113\t3.32x32\t\tTM3\n203\t\t5.42\tTM5\n316A\t7x42\t\t\n", ".tsv")
+    out3 = os.path.join(CFG["tmp"], "gpcr_t3.tsv")
+    r = run_raw(["--gpcrdb-mapping", t2, "--gpcrdb-positions", "3.32,3x32,5.42,7x42", "--gpcrdb-output", out3])
+    check(r.rc == 0, "table with several forms: " + r.err[:200])
+    # the same position asked in two notations keeps the order of the request
+    check(pocket_lines(out3) == [["", "113", "3.32", "TM3", ""], ["", "113", "3x32", "TM3", ""], ["", "203", "5.42", "TM5", ""], ["", "316A", "7x42", "TM7", ""]], str(pocket_lines(out3)))
+
+
+@test("gpcr")
+def gpcr_errors_and_rules():
+    a, b = gpcr_structures()
+    pa = tmpfile(a)
+    out = os.path.join(CFG["tmp"], "gpcr_never.tsv")
+    def fails(args, *texts):
+        r = run_raw(args)
+        check(r.rc == 1 and r.err.startswith(("GPCRdb: ", "--", "Choose", "Warning")) and not r.out, "%s: rc=%d %s" % (args[:4], r.rc, r.err[:250]))
+        for t in texts:
+            check(t in r.err, "%s must contain %r: %s" % (args[:4], t, r.err[:300]))
+        return r
+    # Ballesteros-Weinstein numbers need the N atoms; the numbers with an x do not; they are not the same
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "3.32", "--gpcrdb-output", out], "Ballesteros-Weinstein numbers", "5.42 and 5x42")
+    a_bw, _ = gpcr_structures(bw=True)
+    pbw = tmpfile(a_bw)
+    r = run_raw(["--gpcrdb-pdb", pbw, "--gpcrdb-positions", "3.32,3x32", "--gpcrdb-output", out])
+    check(r.rc == 0 and [l[2] for l in pocket_lines(out)] == ["3.32", "3x32"] and all(l[1] == "10" for l in pocket_lines(out)), "BW and GPCRdb numbers: " + r.err[:200] + str(pocket_lines(out)))
+    # a structure that is not annotated: the B-factors of the structure are not numbers
+    plain, _ = gpcr_structures(annotated=False)
+    fails(["--gpcrdb-pdb", tmpfile(plain), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "does not have GPCRdb generic numbers", "generic_numbering_index")
+    fails(["--gpcrdb-pdb", tmpfile(fp_system().text()), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "no protein residues with CA atoms")
+    # chains
+    two = tmpfile(add_lines(a, numbered_lines(chain="B", names={10: "ASN"})))
+    fails(["--gpcrdb-pdb", two, "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "Several chains have generic numbers (A, B)", "--gpcrdb-chain")
+    r = run_raw(["--gpcrdb-pdb", two, "--gpcrdb-chain", "B", "--gpcrdb-positions", "3x32", "--gpcrdb-output", out])
+    check(r.rc == 0 and pocket_lines(out)[0][0] == "B", "chain B: " + r.err[:200])
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-chain", "Z", "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "Chain Z is not in the structure")
+    # positions that the structure does not have: a warning; none of them: an error
+    r = run_raw(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "3x32,3x99,6x48", "--gpcrdb-output", out])
+    check(r.rc == 0 and "Warning: positions that this structure does not have" in r.err and "3x99, 6x48" in r.err and "1 positions" in r.err, "missing: " + r.err)
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "3x99,6x48", "--gpcrdb-output", out], "None of the requested positions (3x99, 6x48)")
+    # the list of positions
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "3x32,hello", "--gpcrdb-output", out], "Invalid generic residue number 'hello'")
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "9x50", "--gpcrdb-output", out], "Invalid generic residue number '9x50'")
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-output", out], "--gpcrdb-positions is required")
+    fails(["--gpcrdb-pdb", pa, "--gpcrdb-positions", " ", "--gpcrdb-output", out], "No generic residue numbers")
+    fails(["--gpcrdb-pdb", os.path.join(CFG["tmp"], "no_such.pdb"), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "Cannot open")
+    fails(["--gpcrdb-mapping", tmpfile("name\tvalue\nx\ty\n", ".tsv"), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "needs a header with a residue number column")
+    fails(["--gpcrdb-mapping", tmpfile("resi\tgpcrdb\n12AB\t3x32\n", ".tsv"), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "invalid residue number '12AB'")
+    fails(["--gpcrdb-mapping", os.path.join(CFG["tmp"], "no_such_table.tsv"), "--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "Cannot open")
+    # the rules of the command line
+    fails(["--gpcrdb-positions", "3x32", "--gpcrdb-pdb", pa], "needs --gpcrdb-output")
+    fails(["--gpcrdb-positions", "3x32", "--gpcrdb-output", out], "--gpcrdb-pdb FILE")
+    fails([pa, "LIG", "--pocket", out, "--fingerprint", "csv", "--gpcrdb-positions", "3x32"], "either --pocket or --gpcrdb")
+    fails([pa, "LIG", "--fingerprint", "csv", "--gpcrdb-positions", "3x32", "--klifs-pdb", "3EYG", "--klifs-chain", "A"], "either --klifs-* or --gpcrdb-*")
+    lst = tmpfile("structure\tligand\n%s\tLIG\n" % os.path.basename(pa), ".tsv")
+    fails(["--matrix", lst, "--gpcrdb-positions", "3x32"], "--matrix cannot be combined")
+    for opt in ("--gpcrdb-positions", "--gpcrdb-pdb", "--gpcrdb-mapping", "--gpcrdb-chain", "--gpcrdb-name", "--gpcrdb-output"):
+        r = run_raw([opt])
+        check(r.rc == 1 and "requires a value" in r.err, "%s without a value" % opt)
+    # without --fingerprint the pocket is not used: a warning, and the analysis goes on
+    r = run_raw([pa, "LIG", "--gpcrdb-positions", "3x32"])
+    check(r.rc == 0 and "only used with --fingerprint" in r.err, "warning: " + r.err[:200])
+    # a name for the pocket
+    r = run_raw(["--gpcrdb-pdb", pa, "--gpcrdb-positions", "3x32", "--gpcrdb-name", "Orthosteric site", "--gpcrdb-output", out])
+    check(r.rc == 0 and open(out, encoding="utf-8").read().startswith("@name Orthosteric site\n"), "name")
+
+
+@test("gpcr")
+def gpcr_bulges_loops_and_helix_8_of_a_numbered_structure():
+    # numbers of a structure as GPCRdb writes them: a repeated number is a bulge; a negative B-factor is a bulge too; loops are 12, 23, 34, 45, 56, 67; helix 8 is 8
+    lines, serial = [], 1
+    spec = [(2, 2.53, "ALA"), (3, 2.54, "GLY"), (4, 2.55, "LEU"), (5, 2.55, "ALA"), (6, 2.56, "VAL"), (7, 2.57, "VAL"), (8, 2.58, "PRO"), (9, 3.50, "ARG"), (10, 3.51, "TYR"),
+            (11, 34.49, "PRO"), (12, 34.50, "PHE"), (13, 45.50, "CYS"), (14, 56.50, "SER"), (15, 67.50, "GLU"), (16, 23.50, "TRP"), (17, 12.50, "LEU"), (18, 8.47, "SER"), (19, 6.48, "TRP"),
+            (20, 6.49, "ALA"), (21, 6.49, "ALA"), (22, 6.50, "PRO"), (23, 6.51, "PHE"), (24, 6.52, "PHE")]
+    for i in range(1, 31):
+        spec.append((100 + i, 1.0 + (19 + i) / 100.0, "GLY"))                  # a helix of 30 residues so that the structure looks like an annotated one
+    spec.append((200, -2.57, "SER"))                                            # a bulge as GPCRdb writes it in its own output: after 2.57
+    for resi, b, res in spec:
+        lines.append(pdb_atom_line(serial, " N  ", res, "A", resi, (resi * 1.5, 0, 0), 1.0, " N"))
+        lines.append(pdb_atom_line(serial + 1, " CA ", res, "A", resi, (resi * 1.5 + 1, 0, 0), b, " C"))
+        serial += 2
+    pdb = tmpfile("\n".join(lines) + "\nEND\n")
+    out = os.path.join(CFG["tmp"], "gpcr_bulge.tsv")
+    r = gpcr_cli(pdb, "2x55,2x551,2x56,2x571,3x50,34x50,45x50,56x50,67x50,23x50,12x50,8x47,6x49,6x491", out)
+    check(r.rc == 0, "rc=%d %s" % (r.rc, r.err[:300]))
+    got = {l[2]: (l[3], l[1]) for l in pocket_lines(out)}
+    check(got["2x55"] == ("TM2", "4") and got["2x551"] == ("TM2", "5"), "a repeated number: the second residue is the bulge 2x551: " + str(got))
+    check(got["2x571"] == ("TM2", "200"), "a negative B-factor is a bulge: the number of the preceding residue, 2x57, followed by 1: " + str(got))
+    check(got["34x50"] == ("ICL2", "12") and got["45x50"] == ("ECL2", "13") and got["56x50"] == ("ICL3", "14") and got["67x50"] == ("ECL3", "15") and got["23x50"] == ("ECL1", "16") and
+          got["12x50"] == ("ICL1", "17") and got["8x47"] == ("H8", "18"), "loops and helix 8: " + str(got))
+    check(got["6x49"] == ("TM6", "20") and got["6x491"] == ("TM6", "21"), "another repeated number: " + str(got))
+    order = [l[2] for l in pocket_lines(out)]
+    check(order.index("12x50") < order.index("2x55") < order.index("2x551") < order.index("2x56") < order.index("2x571") < order.index("23x50") < order.index("3x50") < order.index("34x50") <
+          order.index("45x50") < order.index("56x50") < order.index("6x49") < order.index("6x491") < order.index("67x50") < order.index("8x47"),
+          "in the order of the receptor (ICL1, TM2, ECL1, TM3, ICL2, ECL2, ICL3, TM6, ECL3, H8): " + str(order))
+
+
+@test("gpcr")
+def gpcr_robustness():
+    a, _ = gpcr_structures()
+    rnd = random.Random(52)
+    for i in range(50):
+        t = list(a)
+        for _ in range(10):
+            k = rnd.randrange(len(t))
+            t[k] = rnd.choice(" -.0123456789ACN\n\x00\u00e9")
+        r = run_raw(["--gpcrdb-pdb", tmpfile("".join(t)), "--gpcrdb-positions", "3x25,3x32,3x40", "--gpcrdb-output", os.path.join(CFG["tmp"], "gpcr_fuzz.tsv")])
+        no_crash(r)
+        check(r.rc in (0, 1), "corrupted structure %d: rc=%d" % (i, r.rc))
+    table = "chain,resi,gpcrdb,aa\n" + "".join("A,%d,3x%02d,G\n" % (r, 22 + r) for r in range(1, 30))
+    for i in range(50):
+        t = list(table)
+        for _ in range(8):
+            k = rnd.randrange(len(t))
+            t[k] = rnd.choice(",\t\n\"x.0123456789A-#\x00")
+        r = run_raw(["--gpcrdb-mapping", tmpfile("".join(t), ".csv"), "--gpcrdb-positions", "3x25,3x32", "--gpcrdb-output", os.path.join(CFG["tmp"], "gpcr_fuzz.tsv")])
+        no_crash(r)
+        check(r.rc in (0, 1), "corrupted table %d: rc=%d" % (i, r.rc))
+    garbage = tmpfile(bytes(random.Random(8).getrandbits(8) for _ in range(5000)), ".pdb", binary=True)
+    r = run_raw(["--gpcrdb-pdb", garbage, "--gpcrdb-positions", "3x32", "--gpcrdb-output", os.path.join(CFG["tmp"], "gpcr_fuzz.tsv")])
+    no_crash(r)
+    check(r.rc == 1, "binary garbage: rc=%d" % r.rc)
 
 
 def mol2_pocket(residues, eol="\n"):

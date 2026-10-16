@@ -50,7 +50,7 @@ structure	ligand	label
 - A residue in contact with a ligand that is **not in the definition** is not a column. It is reported, with the first residues, as a warning, so that an
   incomplete definition does not go unnoticed.
 
-For kinases the pocket definition of each structure can be made with [KLIFS kinase pockets](klifs.md): one `--klifs-*` command for each structure, and its output in the
+For GPCRs the pocket definition of each structure is made with [GPCR pockets](gpcrdb.md): the same list of generic numbers for every structure. For kinases the pocket definition of each structure can be made with [KLIFS kinase pockets](klifs.md): one `--klifs-*` command for each structure, and its output in the
 `pocket` column. Then position 20 is the same position in every row, whatever the residue number of the kinase.
 
 ## Classes

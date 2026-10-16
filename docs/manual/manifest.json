@@ -48,6 +48,11 @@
       "src": "docs/KLIFS.md"
     },
     {
+      "id": "gpcrdb",
+      "title": "GPCR pockets (GPCRdb)",
+      "src": "docs/GPCRDB.md"
+    },
+    {
       "id": "rcsb",
       "title": "Downloading from the RCSB",
       "src": "docs/RCSB.md"

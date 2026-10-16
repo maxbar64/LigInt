@@ -92,6 +92,21 @@ others (`--klifs-sequence`, `_` marks a missing residue). The KLIFS service give
 **The pocket is built but the figure has fewer than 85 cells.** The residues that are missing in the crystal (`_` in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.
 
+## GPCR pockets
+
+**`GPCRdb: The B-factor column of the structure does not have GPCRdb generic numbers`.** The structure was not annotated. Upload the PDB file to the tool *Generic residue numbering (PDB)* of GPCRdb
+and give ligint the file that it returns (`--gpcrdb-pdb`), or use a table (`--gpcrdb-mapping`). The message tells how many residues of each chain have a number.
+
+**`GPCRdb: The Ballesteros-Weinstein numbers (with a point, e.g. 3.32) are not in this structure`.** The numbers with a point are read from the N atoms, where GPCRdb writes them (class A), and
+the file does not have them. Use the GPCRdb numbers (`3x32`), which are in the CA atoms, or a table with a `bw` column. The two schemes are not the same near helix bulges and constrictions:
+`5.42` and `5x42` can be different residues, so ligint does not use one for the other.
+
+**`GPCRdb: Several chains have generic numbers (A, B)`.** Choose the receptor with `--gpcrdb-chain`.
+
+**`Warning: positions that this structure does not have ...`.** The residue of those numbers is missing in the structure, or has no number. They are left out of this pocket; with a matrix the other structures still have them.
+
+**`GPCRdb: None of the requested positions ... has a residue in this structure`.** Check the chain and the scheme of the numbers (`x` for GPCRdb, a point for BW), and that the list is of the receptor class of the structure.
+
 ## The interaction matrix
 
 **`Matrix: Line N: the list needs a header line with a 'structure' column`.** The first line of the list (after comments) must name the columns, at least `structure` and `ligand`

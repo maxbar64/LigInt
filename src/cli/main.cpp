@@ -1,6 +1,7 @@
 // ligint - command-line interface.
 #include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
+#include "ligint/gpcrdb.hpp"
 #include "ligint/klifs.hpp"
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
@@ -21,6 +22,7 @@ static void usage(const char* prog, const Params& p) {
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
+         << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
          << "Matrix: --matrix LIST [--matrix-format csv|json|svg] [--matrix-classes klifs|all|NAMES] [--matrix-hide-empty] [--matrix-title TEXT] [--pocket FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
@@ -39,7 +41,7 @@ int main(int argc, char** argv) {
     vector<string> pa;
     bool csv = false;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
-    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
+    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
         string s = argv[i];
         if (s == "--help" || s == "-h") { usage(argv[0], P); return 0; }
@@ -78,6 +80,17 @@ int main(int argc, char** argv) {
             }
         }
         else if (s == "--matrix-hide-empty") { matrixHide = true; matrixOptionGiven = true; }
+        else if (s == "--gpcrdb-positions" || s == "--gpcrdb-pdb" || s == "--gpcrdb-mapping" || s == "--gpcrdb-chain" || s == "--gpcrdb-name" || s == "--gpcrdb-output") {
+            if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
+            const string v = argv[++i];
+            useGpcrdb = true;
+            if (s == "--gpcrdb-positions") gpcrdbPositions = v;
+            else if (s == "--gpcrdb-pdb") gpcrdb.numberedStructure = v;
+            else if (s == "--gpcrdb-mapping") gpcrdb.mappingFile = v;
+            else if (s == "--gpcrdb-chain") gpcrdb.chain = v;
+            else if (s == "--gpcrdb-name") gpcrdb.name = v;
+            else gpcrdbOutput = v;
+        }
         else if (s == "--klifs-pdb" || s == "--klifs-chain" || s == "--klifs-model" || s == "--klifs-mapping" || s == "--klifs-output" || s == "--klifs-id" || s == "--klifs-sequence") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             string v=argv[++i];useKlifs=true;
@@ -130,7 +143,7 @@ int main(int argc, char** argv) {
     if (!matrixPath.empty()) {
         // the matrix: one row for each ligand of the list, the structures are in the list
         if (!pa.empty()) { cerr << "--matrix takes no structure argument: the structures are in the list\n"; return 1; }
-        if (useRcsb || useKlifs || !fpFormat.empty() || csv) { cerr << "--matrix cannot be combined with --download-pdb, --klifs-*, --fingerprint or --csv\n"; return 1; }
+        if (useRcsb || useKlifs || useGpcrdb || !fpFormat.empty() || csv) { cerr << "--matrix cannot be combined with --download-pdb, --klifs-*, --gpcrdb-*, --fingerprint or --csv\n"; return 1; }
         for (auto& w : P.clampToGrid()) cerr << w << "\n";
         try {
             MatrixOptions mo;
@@ -156,7 +169,7 @@ int main(int argc, char** argv) {
     // with --download-pdb the positional arguments are the ligand: RESNAME [chain [resseq]] (the structure is the downloaded file)
     if(useRcsb && !pa.empty()){ifstream existing(pa[0]);if(existing){cerr<<"Use --download-pdb without a separate structure path (the arguments after the options are the ligand: RESNAME [chain [resseq]])\n";return 1;}}
     if(useRcsb){try{string path=downloadRcsbStructure(rcsb);cerr<<"RCSB structure: "<<path<<"\n";if(downloadOnly){cout<<path<<"\n";return 0;}pa.insert(pa.begin(),path);}catch(const exception& e){cerr<<"RCSB: "<<e.what()<<"\n";return 1;}}
-    if (pa.empty() && !useKlifs) { usage(argv[0], P); return 1; }
+    if (pa.empty() && !useKlifs && !useGpcrdb) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     opt.chain = pa.size() > 2 ? pa[2] : "";
@@ -175,18 +188,38 @@ int main(int argc, char** argv) {
     }
 
     PocketDefinition pocket;
+    if(useGpcrdb && useKlifs){cerr<<"Choose either --klifs-* or --gpcrdb-*\n";return 1;}
+    if(useGpcrdb && !pocketPath.empty()){cerr<<"Choose either --pocket or --gpcrdb-*\n";return 1;}
     if(useKlifs && !pocketPath.empty()){cerr<<"Choose either --pocket or --klifs-*\n";return 1;}
     if(useKlifs && pa.empty() && klifsOutput.empty()){cerr<<"--klifs-* without a structure needs --klifs-output FILE (otherwise the pocket would not be saved anywhere)\n";return 1;}
     if(useKlifs && !pa.empty() && fpFormat.empty()) cerr<<"Warning: the KLIFS pocket is only used with --fingerprint\n";
     if(useKlifs){try{pocket=generateKlifsPocket(klifs);if(!klifsOutput.empty())saveKlifsPocket(pocket,klifsOutput);cerr<<"KLIFS pocket: "<<pocket.positions.size()<<" mapped positions\n";}catch(const exception& e){cerr<<"KLIFS: "<<e.what()<<"\n";return 1;}}
+    if(useGpcrdb && pa.empty() && gpcrdbOutput.empty()){cerr<<"--gpcrdb-* without a structure needs --gpcrdb-output FILE (otherwise the pocket would not be saved anywhere)\n";return 1;}
+    if(useGpcrdb && !pa.empty() && fpFormat.empty()) cerr<<"Warning: the GPCRdb pocket is only used with --fingerprint\n";
+    if(useGpcrdb){
+        try{
+            if(gpcrdbPositions.empty()){cerr<<"--gpcrdb-positions is required (the pocket: generic residue numbers, e.g. 3x32,6x48 or a file with them)\n";return 1;}
+            gpcrdb.positions=parseGpcrdbPositions(gpcrdbPositions);
+            if(gpcrdb.numberedStructure.empty() && gpcrdb.mappingFile.empty()){
+                // the structure of the analysis can be the file annotated by GPCRdb
+                if(pa.empty()){cerr<<"--gpcrdb-* without a structure needs --gpcrdb-pdb FILE (annotated by GPCRdb) or --gpcrdb-mapping FILE\n";return 1;}
+                gpcrdb.numberedStructure=pa[0];
+            }
+            const GpcrdbPocket gp=generateGpcrdbPocket(gpcrdb);
+            for(auto& w:gp.warnings)cerr<<"Warning: "<<w<<"\n";
+            pocket=gp.pocket;
+            if(!gpcrdbOutput.empty())saveGpcrdbPocket(pocket,gpcrdbOutput);
+            cerr<<"GPCRdb pocket: "<<pocket.positions.size()<<" positions\n";
+        }catch(const exception& e){cerr<<"GPCRdb: "<<e.what()<<"\n";return 1;}
+    }
     if(pa.empty()) return 0; // generate TSV without structure analysis
-    const bool havePocket = useKlifs || !pocketPath.empty();
+    const bool havePocket = useKlifs || useGpcrdb || !pocketPath.empty();
     if (!pocketPath.empty()) {
         vector<string> pw;
         if (!loadPocketDefinition(pocketPath, pocket, pw)) { cerr << "Cannot open " << pocketPath << "\n"; return 1; }
         for (auto& w : pw) cerr << "Warning: " << w << "\n";
     }
-    if (havePocket && fpFormat.empty() && !useKlifs) { cerr << "--pocket requires --fingerprint\n"; return 1; }
+    if (havePocket && fpFormat.empty() && !useKlifs && !useGpcrdb) { cerr << "--pocket requires --fingerprint\n"; return 1; }
 
     try {
         Result r = analyzeFile(pa[0], opt);

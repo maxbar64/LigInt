@@ -19,6 +19,7 @@ analysis, the command line that reproduces it outside the program.
 - [Interaction fingerprints](fingerprint.md): classes, pocket definition files, CSV, JSON and SVG output.
 - [Interaction matrix](matrix.md): the fingerprints of several ligands on the same columns, as CSV, JSON or a heat map.
 - [KLIFS kinase pockets](klifs.md): pocket definitions for kinase fingerprints, from a KLIFS mapping.
+- [GPCR pockets (GPCRdb)](gpcrdb.md): pocket definitions for GPCRs, from the generic residue numbers of GPCRdb.
 - [Downloading from the RCSB](rcsb.md): fetch a structure by its PDB ID, in the interface and on the command line.
 - [Validation and limits](validation.md): how the results were checked, and what to keep in mind when reading them.
 - [Comparison with PLIP](benchmark.md): the measurement of the agreement with another tool.
@@ -36,6 +37,7 @@ analysis, the command line that reproduces it outside the program.
 | know exactly what counts as an interaction | [Interactions and assumptions](interactions.md) |
 | make a pocket-position figure for a series of ligands | [Interaction fingerprints](fingerprint.md), and [KLIFS kinase pockets](klifs.md) for kinases |
 | compare the interactions of several ligands, or feed them to a clustering | [Interaction matrix](matrix.md) |
+| use the same positions for different GPCRs (3x32, 6x48...) | [GPCR pockets (GPCRdb)](gpcrdb.md) |
 | analyze an entry of the Protein Data Bank without downloading it by hand | [Downloading from the RCSB](rcsb.md) |
 | understand why a result differs from another program | [Validation and limits](validation.md) |
 | use a file that does not open | [Input formats](formats.md) and [Troubleshooting](troubleshooting.md) |

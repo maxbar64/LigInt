@@ -94,7 +94,7 @@ structure   ligand  label
 <li>A residue in contact with a ligand that is <strong>not in the definition</strong> is not a column. It is reported, with the first residues, as a warning, so that an
   incomplete definition does not go unnoticed.</li>
 </ul>
-<p>For kinases the pocket definition of each structure can be made with <a href="klifs.html">KLIFS kinase pockets</a>: one <code>--klifs-*</code> command for each structure, and its output in the
+<p>For GPCRs the pocket definition of each structure is made with <a href="gpcrdb.html">GPCR pockets</a>: the same list of generic numbers for every structure. For kinases the pocket definition of each structure can be made with <a href="klifs.html">KLIFS kinase pockets</a>: one <code>--klifs-*</code> command for each structure, and its output in the
 <code>pocket</code> column. Then position 20 is the same position in every row, whatever the residue number of the kinase.</p>
 <h2 id="classes"><a name="classes"></a>Classes</h2>
 <table border="1" cellspacing="0" cellpadding="5" width="100%">
@@ -172,6 +172,6 @@ that each row <strong>agrees with the fingerprint of the same ligand</strong> co
 <li>There is no similarity measure between the rows (Tanimoto and the like): the matrix is the input for them.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="klifs.html">KLIFS kinase pockets</a> &raquo;</p>
-<p class="foot">ligint 0.9.0 manual</p>
+<p class="foot">ligint 0.10.0 manual</p>
 </body>
 </html>

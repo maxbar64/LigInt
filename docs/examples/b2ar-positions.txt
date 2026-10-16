@@ -1,0 +1,7 @@
+# GPCRdb generic residue numbers around the site of the beta blockers in the human beta-2 adrenergic receptor.
+# An illustration for docs/GPCRDB.md, chosen from the contacts of carazolol (2RH1); it is not a curated definition of the pocket.
+# GPCRdb numbers (with an x): they are not the Ballesteros-Weinstein numbers of the literature near the bulges (see the manual).
+3x32 3x33 3x36 3x37
+5x42 5x43 5x44 5x46 5x461
+6x48 6x51 6x52 6x55
+7x35 7x38 7x39 7x42 7x43

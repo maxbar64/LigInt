@@ -7,6 +7,7 @@
 #include <string>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/gpcrdb.hpp"
 #include "ligint/klifs.hpp"
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
@@ -561,6 +562,162 @@ static void writeTextFile(const std::string& path, const std::string& text) {
     f << text;
 }
 
+// A residue of a receptor as GPCRdb annotates it: CA with the GPCRdb number (or 0), N with the Ballesteros-Weinstein number (or 1.00)
+static std::string annotatedAtoms(const std::string& chain, int resi, const std::string& res, double ca, double n, int& serial) {
+    auto line = [&](const char* name, double b, double x) {
+        char buf[100];
+        std::snprintf(buf, sizeof buf, "%-6s%5d %-4s %3s %c%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n", "ATOM", serial++, name, res.c_str(), chain[0], resi, x, 0.0, 0.0, 1.0, b,
+                      name[1] == 'N' ? " N" : " C");
+        return std::string(buf);
+    };
+    return line(" N  ", n, resi * 1.5) + line(" CA ", ca, resi * 1.5 + 1.0);
+}
+
+// 30 residues of TM3 (numbers 3.23-3.52, resi 100-129) with a bulge after 3.35 (the next residue repeats the number), then 5 residues without number,
+// ICL2, ECL2 and H8 residues, and a residue with the bulge written as GPCRdb writes it (negative B-factor)
+static std::string annotatedReceptor(bool withBw, const std::string& chain = "A", bool numbers = true) {
+    std::string t;
+    int serial = 1;
+    auto add = [&](int resi, const char* res, double ca, double bw) { t += annotatedAtoms(chain, resi, res, numbers ? ca : 20.0 + resi * 0.37, withBw && numbers ? bw : 1.0, serial); };
+    int resi = 100;
+    for (int k = 23; k <= 52; ++k) {
+        const double v = 3.0 + k / 100.0;
+        add(resi++, k == 32 ? "ASP" : "ALA", v, v);
+        if (k == 35) add(resi++, "SER", v, 3.36);                      // a bulge: the number of the preceding residue again (a file that went through another program)
+    }
+    for (int i = 0; i < 5; ++i) add(resi++, "GLY", 0.0, 1.0);          // not numbered
+    add(resi++, "PRO", 34.49, 0);                                         // loops and helix 8
+    add(resi++, "PRO", 34.50, 0);
+    add(resi++, "CYS", 45.52, 0);
+    add(resi++, "TYR", 8.47, 0);
+    add(resi++, "LEU", 2.55, 2.55);
+    add(resi++, "ALA", -2.55, 2.56);                                     // a bulge in the raw output: negative, the number of the preceding residue
+    t += "END\n";
+    return t;
+}
+
+static void testGpcrdbNumbers() {
+    namespace fs = std::filesystem;
+    std::string c;
+    char sch = 0;
+    CHECK(ligint::parseGenericNumber("3x32", c, sch) && c == "3x32" && sch == 'x');
+    CHECK(ligint::parseGenericNumber(" 3X32 ", c, sch) && c == "3x32");
+    CHECK(ligint::parseGenericNumber("03x32", c, sch) && c == "3x32");
+    CHECK(ligint::parseGenericNumber("3.32", c, sch) && c == "3.32" && sch == '.');
+    CHECK(ligint::parseGenericNumber("2x551", c, sch) && c == "2x551");                               // a bulge
+    CHECK(ligint::parseGenericNumber("45x50", c, sch) && c == "45x50" && ligint::parseGenericNumber("8x47", c, sch) && ligint::parseGenericNumber("12x50", c, sch));
+    for (const char* bad : {"", "3", "x32", "3x", "3x3", "3x32345", "3y32", "9x50", "13x50", "3.321", "45.50", "ab", "3x3a", "3 x32", "-3x32", "100x32"})
+        CHECK(!ligint::parseGenericNumber(bad, c, sch));
+    CHECK(ligint::genericSegment("3x32") == "TM3" && ligint::genericSegment("8x47") == "H8" && ligint::genericSegment("12x50") == "ICL1" && ligint::genericSegment("23x50") == "ECL1" &&
+          ligint::genericSegment("34x50") == "ICL2" && ligint::genericSegment("45x50") == "ECL2" && ligint::genericSegment("56x50") == "ICL3" && ligint::genericSegment("67x50") == "ECL3" &&
+          ligint::genericSegment("nonsense").empty());
+    // lists of positions
+    auto pos = ligint::parseGpcrdbPositions("3x32, 3x33;6x48\n# a comment\n 3X32 7.39 # again\n");
+    CHECK((pos == std::vector<std::string>{"3x32", "3x33", "6x48", "7.39"}));
+    writeTextFile("gp_list.txt", "# the pocket\n3x32 3x33\n\n6x48\n");
+    CHECK((ligint::parseGpcrdbPositions("gp_list.txt") == std::vector<std::string>{"3x32", "3x33", "6x48"}));
+    auto listFailure = [](const std::string& text) {
+        try { ligint::parseGpcrdbPositions(text); } catch (const std::runtime_error& e) { return std::string(e.what()); }
+        return std::string("(no exception)");
+    };
+    CHECK(listFailure("3x32,xyz").find("Invalid generic residue number 'xyz'") != std::string::npos && listFailure("").find("No generic residue numbers") != std::string::npos &&
+          listFailure("# only a comment").find("No generic residue numbers") != std::string::npos);
+    std::remove("gp_list.txt");
+
+    // a structure annotated by GPCRdb
+    writeTextFile("gp_a.pdb", annotatedReceptor(false));
+    auto failure = [](const ligint::GpcrdbOptions& o) {
+        try { ligint::generateGpcrdbPocket(o); } catch (const std::runtime_error& e) { return std::string(e.what()); }
+        return std::string("(no exception)");
+    };
+    ligint::GpcrdbOptions o;
+    o.numberedStructure = "gp_a.pdb";
+    o.positions = {"3x40", "3x32", "3x351", "3x35", "3x36", "34x50", "45x52", "8x47", "2x551", "3x99"};
+    auto g = ligint::generateGpcrdbPocket(o);
+    std::vector<std::string> labels, regions;
+    for (const auto& p : g.pocket.positions) { labels.push_back(p.label); regions.push_back(p.region); }
+    // in the order of the receptor: TM2, TM3, ICL2, ECL2, H8; a bulge number comes after the number that it follows
+    CHECK((labels == std::vector<std::string>{"2x551", "3x32", "3x35", "3x351", "3x36", "3x40", "34x50", "45x52", "8x47"}));
+    CHECK((regions == std::vector<std::string>{"TM2", "TM3", "TM3", "TM3", "TM3", "TM3", "ICL2", "ECL2", "H8"}));
+    CHECK(g.pocket.positions[1].resName == "ASP" && g.pocket.positions[1].resi == 109 && g.pocket.positions[1].chain == "A");                  // 3.32 is the 10th numbered residue
+    CHECK(g.pocket.positions[3].resName == "SER" && g.pocket.positions[3].resi == g.pocket.positions[2].resi + 1);                             // the repeated number is the bulge: 3x351
+    CHECK(g.pocket.positions[0].resName == "ALA" && g.pocket.positions[0].resi == 141);                                  // 2x551 is the residue after Leu 140 (2x55); 100-130 are TM3, 131-135 are not numbered, 136-139 loops and H8
+    CHECK((g.missing == std::vector<std::string>{"3x99"}) && g.warnings.size() == 1 && g.warnings[0].find("3x99") != std::string::npos);
+    CHECK(g.pocket.colors.size() == 5 && g.pocket.name.find("chain A") != std::string::npos);                    // TM2, TM3, ICL2, ECL2, H8
+    // the same with the negative B-factor: the raw output of GPCRdb
+    CHECK(g.pocket.positions[0].label == "2x551" && g.pocket.positions[0].chain == "A");
+    // the pocket file can be read back
+    ligint::saveGpcrdbPocket(g.pocket, "gp_pocket.tsv");
+    ligint::PocketDefinition back;
+    std::vector<std::string> warnings;
+    CHECK(ligint::loadPocketDefinition("gp_pocket.tsv", back, warnings) && warnings.empty() && back.positions.size() == g.pocket.positions.size() && back.name == g.pocket.name &&
+          back.positions[3].label == "3x351" && back.positions[3].region == "TM3" && back.positions[6].region == "ICL2" && back.colors.size() == g.pocket.colors.size());
+    // Ballesteros-Weinstein numbers need the N atoms
+    o.positions = {"3.32", "3.40"};
+    CHECK(failure(o).find("Ballesteros-Weinstein numbers (with a point") != std::string::npos && failure(o).find("5.42 and 5x42") != std::string::npos);
+    writeTextFile("gp_b.pdb", annotatedReceptor(true));
+    o.numberedStructure = "gp_b.pdb";
+    g = ligint::generateGpcrdbPocket(o);
+    CHECK(g.pocket.positions.size() == 2 && g.pocket.positions[0].label == "3.32" && g.pocket.positions[0].resName == "ASP" && g.pocket.positions[1].label == "3.40");
+    o.positions = {"3x32", "3.32"};                                                                    // both schemes in one list
+    CHECK(ligint::generateGpcrdbPocket(o).pocket.positions.size() == 2);
+    // not annotated: the B-factors of a structure
+    writeTextFile("gp_plain.pdb", annotatedReceptor(false, "A", false));
+    o.numberedStructure = "gp_plain.pdb";
+    o.positions = {"3x32"};
+    CHECK(failure(o).find("does not have GPCRdb generic numbers") != std::string::npos && failure(o).find("generic_numbering_index") != std::string::npos);
+    // chains
+    writeTextFile("gp_two.pdb", annotatedReceptor(false, "A") + annotatedReceptor(false, "B"));
+    o.numberedStructure = "gp_two.pdb";
+    CHECK(failure(o).find("Several chains have generic numbers (A, B)") != std::string::npos);
+    o.chain = "B";
+    CHECK(ligint::generateGpcrdbPocket(o).pocket.positions[0].chain == "B");
+    o.chain = "Z";
+    CHECK(failure(o).find("Chain Z is not in the structure (chains: A: 37 of 42") != std::string::npos);
+    o.chain.clear();
+    // errors
+    o.numberedStructure = "gp_a.pdb";
+    o.positions = {"3x98", "3x99"};
+    CHECK(failure(o).find("None of the requested positions (3x98, 3x99)") != std::string::npos);
+    o.positions.clear();
+    CHECK(failure(o).find("No generic residue numbers") != std::string::npos);
+    o.positions = {"junk"};
+    CHECK(failure(o).find("Invalid generic residue number 'junk'") != std::string::npos);
+    o.positions = {"3x32"};
+    o.numberedStructure = "no_such_file.pdb";
+    CHECK(failure(o).find("Cannot open") != std::string::npos);
+    o.numberedStructure.clear();
+    CHECK(failure(o).find("annotated with generic numbers, or a table") != std::string::npos);
+
+    // a table: the residue number, the numbers (GPCRdb, Ballesteros-Weinstein or both) and optionally chain, segment and amino acid
+    writeTextFile("gp_table.tsv", "chain\tresi\tgpcrdb\tbw\tsegment\taa\nA\t113\t3x32\t3.32\tTM3\tD\nA\t114\t3x33\t3.33\tTM3\tV\nA\t203\t5x43\t5.42\tTM5\tS\nA\t204\t-\t-\t\tS\n"
+                                  "A\t312\t7.39x38\t\tTM7\tN\nA\t316A\t7x42\t\t\tY\nB\t113\t3x32\t\tTM3\tD\nA\t118\tjunk\t\t\tT\n");
+    ligint::GpcrdbOptions t;
+    t.mappingFile = "gp_table.tsv";
+    t.chain = "A";
+    t.positions = {"3x32", "5.42", "7x38", "7.39", "7x42", "3x33"};
+    g = ligint::generateGpcrdbPocket(t);
+    std::vector<std::string> tl;
+    for (const auto& p : g.pocket.positions) tl.push_back(p.label + "=" + p.chain + std::to_string(p.resi) + (p.icode == ' ' ? "" : std::string(1, p.icode)) + p.resName);
+    CHECK((tl == std::vector<std::string>{"3x32=A113ASP", "3x33=A114VAL", "5.42=A203SER", "7x38=A312ASN", "7.39=A312ASN", "7x42=A316ATYR"}));   // in the order of the receptor; "7.39x38" gives both numbers
+    CHECK(g.pocket.positions[2].region == "TM5" && g.pocket.positions[4].region == "TM7" && g.missing.empty());
+    CHECK(g.warnings.size() == 1 && g.warnings[0].find("'junk' is not a generic residue number") != std::string::npos);
+    t.chain = "B";
+    t.positions = {"3x32", "3x33"};
+    g = ligint::generateGpcrdbPocket(t);
+    CHECK(g.pocket.positions.size() == 1 && g.pocket.positions[0].chain == "B" && (g.missing == std::vector<std::string>{"3x33"}));
+    writeTextFile("gp_table_bad.tsv", "chain\tname\nA\tx\n");
+    t.mappingFile = "gp_table_bad.tsv";
+    CHECK(failure(t).find("needs a header with a residue number column") != std::string::npos);
+    writeTextFile("gp_table_bad.tsv", "resi\tgpcrdb\n12AB\t3x32\n");
+    CHECK(failure(t).find("Line 2: invalid residue number '12AB'") != std::string::npos);
+    writeTextFile("gp_table_bad.tsv", "resi,gpcrdb\n");
+    CHECK(failure(t).find("has no generic numbers") != std::string::npos);
+    writeTextFile("gp_table_bad.tsv", "");
+    CHECK(failure(t).find("empty") != std::string::npos);
+    for (const char* f : {"gp_a.pdb", "gp_b.pdb", "gp_plain.pdb", "gp_two.pdb", "gp_pocket.tsv", "gp_table.tsv", "gp_table_bad.tsv"}) std::remove(f);
+}
+
 static void testMatrixList() {
     // header in any order, aliases, comments, quotes, a BOM and Windows line ends
     std::istringstream in("\xEF\xBB\xBF# a list\r\nlabel,Ligand,FILE,chain,resi,altloc,pocket\r\n"
@@ -1031,6 +1188,7 @@ int main() {
     testKlifsStructureSelection();
     testKlifsPocketMol2();
     testMatrixList();
+    testGpcrdbNumbers();
     testMatrixBuild();
     testPocketDefinition();
     testFingerprintWithPocket();

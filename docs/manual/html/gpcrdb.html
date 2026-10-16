@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GPCR pockets (GPCRdb) - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="klifs.html">KLIFS kinase pockets</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
+<h1 id="gpcr-pockets-from-generic-residue-numbers-gpcrdb"><a name="gpcr-pockets-from-generic-residue-numbers-gpcrdb"></a>GPCR pockets from generic residue numbers (GPCRdb)</h1>
+<p>For the <a href="fingerprint.html">fingerprint</a> and the <a href="matrix.html">interaction matrix</a> of a G protein-coupled receptor (GPCR) the positions of the pocket are <strong>generic residue
+numbers</strong>: the same number names the equivalent residue in every receptor of a class, whatever the residue number of the protein. ligint reads the numbers that
+<a href="https://gpcrdb.org">GPCRdb</a> puts in a structure, takes the pocket that you ask for, and writes the <a href="fingerprint.html#pocket-definition-file">pocket definition</a>.</p>
+<h2 id="the-numbers"><a name="the-numbers"></a>The numbers</h2>
+<ul>
+<li><strong>GPCRdb scheme</strong>, written with an <code>x</code>: <code>3x32</code> is the position 32 of helix 3. It is built from crystal structures and corrects the helix bulges and constrictions, so
+  that equivalent residues have the same number in all the receptors. It exists for every class.</li>
+<li><strong>Ballesteros-Weinstein (BW)</strong>, written with a point: <code>3.32</code>. It is sequence-based and exists for class A (class B, C and F have their own schemes: Wootten, Pin, Wang).</li>
+<li>In both, the helix comes first and the most conserved residue of the helix is <code>.50</code> (<code>3x50</code>). A <strong>bulge</strong> residue repeats the number of the one before, followed by a <code>1</code>: <code>2x551</code>.</li>
+<li>The <strong>segments</strong>: the helices <code>TM1</code>-<code>TM7</code> (numbers <code>1x..</code> to <code>7x..</code>), helix 8 (<code>8x..</code>) and the loops, which have two digits: <code>12</code> is ICL1 (between TM1 and TM2), <code>23</code> ECL1,
+  <code>34</code> ICL2, <code>45</code> ECL2, <code>56</code> ICL3, <code>67</code> ECL3. The segment is the region of the pocket definition, so the fingerprint and the matrix draw it.</li>
+</ul>
+<p><strong>The two schemes are not the same near bulges and constrictions.</strong> In the receptor that I used to check this (the human beta-2 adrenergic receptor, 2RH1, numbered by GPCRdb) the
+GPCRdb number <code>5x42</code> is Ala202 and <code>7x38</code> is Asn312, <code>7x42</code> is Tyr316; in the BW numbering that appears in the literature the same residues are Ser203 (5.42), Asn312 (7.39) and Tyr316 (7.43)
+(check them on GPCRdb for your receptor). A list of residues taken from a paper in BW numbers is <strong>not</strong> the same list in GPCRdb numbers, and ligint does not convert one into the other: it
+reads the BW numbers only where GPCRdb wrote them (see below) and refuses to guess.</p>
+<h2 id="the-pocket-is-what-you-choose"><a name="the-pocket-is-what-you-choose"></a>The pocket is what you choose</h2>
+<p>A kinase has one pocket of 85 positions (<a href="klifs.html">KLIFS</a>). A GPCR has numbers for its whole 7TM domain, and the pocket depends on the class and on the site (orthosteric, allosteric...). So the pocket
+of interest is <strong>a list of generic numbers that you give</strong>, for example the residues of the site that the ligands of your series share. The pocket definition has those positions, ordered along the
+receptor (TM1, ICL1, TM2, ECL1, TM3...), and each one with its segment as region.</p>
+<h2 id="getting-the-numbers-of-a-structure"><a name="getting-the-numbers-of-a-structure"></a>Getting the numbers of a structure</h2>
+<p><strong>From GPCRdb.</strong> Its tool <em>Generic residue numbering (PDB)</em> (<a href="https://gpcrdb.org/structure/generic_numbering_index">upload a PDB file</a>) annotates the file with the numbers in the B-factor column and returns it. ligint reads
+the annotated file as the tool writes it:</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Where</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the <strong>CA</strong> atom of a residue</td>
+<td>the GPCRdb number, for example <code>3.32</code> for <code>3x32</code>; for the loops <code>34.50</code> is <code>34x50</code></td>
+</tr>
+<tr>
+<td>the <strong>N</strong> atom</td>
+<td>the Ballesteros-Weinstein number, if the file has it (class A)</td>
+</tr>
+<tr>
+<td>a B-factor of <code>0.00</code></td>
+<td>the residue has no number</td>
+</tr>
+<tr>
+<td>a <strong>negative</strong> B-factor</td>
+<td>a bulge: the number of the preceding residue followed by <code>1</code> (<code>-2.55</code> is <code>2x551</code>)</td>
+</tr>
+<tr>
+<td>a number that repeats on the next residue</td>
+<td>also a bulge (files that were rewritten by another program lose the negative sign): <code>2x55</code> on two residues in a row is <code>2x55</code> and <code>2x551</code></td>
+</tr>
+<tr>
+<td>a B-factor of <code>1.00</code></td>
+<td>a filler, not a number</td>
+</tr>
+</tbody>
+</table>
+<p>A file that does not carry numbers is <strong>refused</strong> (a PDB file with its normal B-factors has a few residues that look like numbers, but not many, and they do not grow along the helices): the message tells
+which tool to use. The residues with a number must be at least 20 and 30% of the chain, and the numbers must grow along the helices.</p>
+<p><strong>From a table.</strong> A TSV or CSV with a header line, one line per residue (the columns can be in any order; other columns are ignored):</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>resi</code></td>
+<td>the residue number in the structure (<code>113</code>, <code>316A</code>); also <code>resseq</code>, <code>residue</code>, <code>resnum</code>, <code>number</code></td>
+</tr>
+<tr>
+<td><code>gpcrdb</code></td>
+<td>the GPCRdb number (<code>3x32</code>); also <code>generic</code>, <code>generic_number</code>, <code>display_generic_number</code></td>
+</tr>
+<tr>
+<td><code>bw</code></td>
+<td>the Ballesteros-Weinstein number (<code>3.32</code>)</td>
+</tr>
+<tr>
+<td><code>chain</code>, <code>segment</code>, <code>aa</code></td>
+<td>optional: the chain, the segment (<code>TM3</code>...; otherwise it comes from the number), the amino acid (one or three letters)</td>
+</tr>
+</tbody>
+</table>
+<p>A cell may have both numbers as GPCRdb writes them (<code>3.32x32</code>) and <code>-</code> or an empty cell means none. The residue numbers must be those of the structure that you analyze (a receptor with a fusion partner
+or a different numbering than the table needs the table of that structure). Use this when you have the numbers from a lookup table of GPCRdb or from your own work.</p>
+<h2 id="command-line"><a name="command-line"></a>Command line</h2>
+<pre><code class="language-text">ligint --gpcrdb-pdb numbered.pdb --gpcrdb-positions 3x32,3x33,3x36,6x48,7x39 --gpcrdb-output pocket.tsv
+ligint --gpcrdb-mapping numbers.tsv --gpcrdb-chain A --gpcrdb-positions positions.txt --gpcrdb-output pocket.tsv
+ligint 2RH1.pdb CAU --fingerprint svg --gpcrdb-pdb numbered.pdb --gpcrdb-positions positions.txt &gt; figure.svg
+ligint numbered.pdb CAU --fingerprint csv --gpcrdb-positions 3x32,3x33,3x36        the structure of the analysis is the numbered file
+</code></pre>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--gpcrdb-positions LIST</code></td>
+<td><strong>required</strong>: the pocket, generic numbers separated by commas, blanks or lines (<code>3x32,3x33</code>), or the name of a file with them (<code>#</code> starts a comment)</td>
+</tr>
+<tr>
+<td><code>--gpcrdb-pdb FILE</code></td>
+<td>the structure annotated by GPCRdb; by default the structure of the analysis</td>
+</tr>
+<tr>
+<td><code>--gpcrdb-mapping FILE</code></td>
+<td>a table of numbers instead of the annotated structure</td>
+</tr>
+<tr>
+<td><code>--gpcrdb-chain C</code></td>
+<td>the chain of the receptor; by default the only chain that has numbers</td>
+</tr>
+<tr>
+<td><code>--gpcrdb-name TEXT</code></td>
+<td>the name of the pocket definition</td>
+</tr>
+<tr>
+<td><code>--gpcrdb-output FILE</code></td>
+<td>where to write the pocket definition (required without a structure)</td>
+</tr>
+</tbody>
+</table>
+<p>With a structure and <code>--fingerprint</code> the pocket is used at once; with no structure the file is written. A position that this structure does not have (a residue that is missing or not numbered) is listed as a warning and left out, so the same list works for
+a series of structures; if none is there it is an error. <code>--pocket</code> and <code>--klifs-*</code> cannot be given with <code>--gpcrdb-*</code>.</p>
+<p>For a <strong>matrix</strong> of several receptors write the pocket of each structure with the same list of positions and name it in the <code>pocket</code> column of the <a href="matrix.html#the-list-of-ligands">list of ligands</a>: the columns are the generic numbers.</p>
+<h2 id="example-carazolol-in-the-beta-2-adrenergic-receptor"><a name="example-carazolol-in-the-beta-2-adrenergic-receptor"></a>Example: carazolol in the beta-2 adrenergic receptor</h2>
+<p><code>docs/examples/b2ar-positions.txt</code> has 18 GPCRdb positions around the site of the beta blockers (an illustration, not a curated definition). With the structure 2RH1 and a copy of the receptor annotated by GPCRdb:</p>
+<pre><code class="language-text">ligint 2RH1.pdb CAU --fingerprint csv --gpcrdb-pdb numbered.pdb --gpcrdb-positions docs/examples/b2ar-positions.txt
+</code></pre>
+<p>gives, among the 18 positions, a hydrogen bond and a salt bridge with Asp113 (<code>3x32</code>), hydrophobic contacts with Val114 (<code>3x33</code>), Val117 (<code>3x36</code>), Phe289 (<code>6x51</code>) and Phe290 (<code>6x52</code>), hydrogen bonds with Ser203 (<code>5x43</code>),
+Asn312 (<code>7x38</code>) and Tyr316 (<code>7x42</code>), and an aromatic edge-to-face contact with Phe290.</p>
+<h2 id="checked-and-not-checked"><a name="checked-and-not-checked"></a>Checked and not checked</h2>
+<ul>
+<li><strong>Checked with a real structure.</strong> A GPCR with numbers in the B-factor (the beta-2 adrenergic receptor), taken from a public repository of a tool that uses GPCRdb numbers: the helices, the loops (12, 23, 34, 45), helix 8, the zeros for the residues without a number, the repeated numbers of the bulges
+  (2x55 and 5x46 appear twice, so 2x551 and 5x461) and the known residues (Asp113 is <code>3x32</code>, Trp286 <code>6x48</code>, the DRY of <code>3x50</code>). With that file and 2RH1 the fingerprint of carazolol has the contacts above. The original 2RH1, without numbers, is refused.</li>
+<li><strong>Checked only on files that I built from the description of the tool</strong>: the BW numbers in the N atoms, the negative B-factors of the bulges, the table in its various forms, several chains. The real file that I had
+  did <strong>not</strong> have the BW numbers (the N atoms were <code>1.00</code>) and had no negative values, because it had been rewritten by another program: the output of the GPCRdb tool itself, as it is, has not been tried.</li>
+<li><strong>Not done</strong>: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), the interface (the <strong>Matrix</strong> and the pocket group of the window do not have a <em>Generate from GPCRdb</em> yet),
+  classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as <code>N.NN</code> in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="klifs.html">KLIFS kinase pockets</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
+<p class="foot">ligint 0.10.0 manual</p>
+</body>
+</html>
