@@ -76,6 +76,20 @@ a series of structures; if none is there it is an error. `--pocket` and `--klifs
 
 For a **matrix** of several receptors write the pocket of each structure with the same list of positions and name it in the `pocket` column of the [list of ligands](matrix.md#the-list-of-ligands): the columns are the generic numbers.
 
+## Graphical interface
+
+In the **Pocket definition (fingerprint)** group of the window, **Generate from GPCRdb...** asks, one after the other:
+
+1. **where the numbers are**: the open structure (if GPCRdb annotated it), another structure annotated by GPCRdb, or a table of generic numbers (TSV or CSV);
+2. **the positions of the pocket**: generic numbers separated by blanks, commas or lines (`3x32 3x33 6x48`), or the path of a file with them; the last list is remembered;
+3. **the chain** of the receptor (empty: the only chain that has numbers);
+4. **where to save** the pocket definition.
+
+It works in the background, saves the file, **loads it** as the pocket definition of the fingerprint, writes in the **Log** the positions that the structure does not have (as warnings) and the
+`ligint` command that makes the same pocket. If the structure is not annotated, a number is not valid or the file cannot be read, the message says so and nothing is loaded. The
+[fingerprint](FINGERPRINT.md) and its command line (**File > Copy fingerprint command line**) then use that file. A [matrix](matrix.md) with a different pocket for each structure takes them from
+the `pocket` column of its list: make them with the command line or one by one with this button.
+
 ## Example: carazolol in the beta-2 adrenergic receptor
 
 `docs/examples/b2ar-positions.txt` has 18 GPCRdb positions around the site of the beta blockers (an illustration, not a curated definition). With the structure 2RH1 and a copy of the receptor annotated by GPCRdb:
@@ -93,5 +107,6 @@ Asn312 (`7x38`) and Tyr316 (`7x42`), and an aromatic edge-to-face contact with P
   (2x55 and 5x46 appear twice, so 2x551 and 5x461) and the known residues (Asp113 is `3x32`, Trp286 `6x48`, the DRY of `3x50`). With that file and 2RH1 the fingerprint of carazolol has the contacts above. The original 2RH1, without numbers, is refused.
 - **Checked only on files that I built from the description of the tool**: the BW numbers in the N atoms, the negative B-factors of the bulges, the table in its various forms, several chains. The real file that I had
   did **not** have the BW numbers (the N atoms were `1.00`) and had no negative values, because it had been rewritten by another program: the output of the GPCRdb tool itself, as it is, has not been tried.
-- **Not done**: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), the interface (the **Matrix** and the pocket group of the window do not have a *Generate from GPCRdb* yet),
-  classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as `N.NN` in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).
+- **Checked by the automated test of the window** (with numbers that I wrote on the residues of another structure, not with a real receptor): the numbers of the open structure and of another one, the table, the
+  background thread, the errors, and that the command line of the log makes the same pocket as the window.
+- **Not done**: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as `N.NN` in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).

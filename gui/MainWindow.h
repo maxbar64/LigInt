@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/gpcrdb.hpp"
 #include "ligint/matrix.hpp"
 #include <QPointer>
 #include "ligint/ligint.hpp"
@@ -44,6 +45,7 @@ struct TaskOutcome {
     QString error;
     QString path;          // the file that was downloaded or written
     int positions = 0;     // pocket positions (KLIFS)
+    QStringList warnings;          // GPCRdb: positions that the structure does not have, and the like
     QStringList candidateLabels;   // KLIFS: several structures match; the user can choose one
     QList<int> candidateIds;
 };
@@ -78,7 +80,13 @@ public:
     // structureId > 0 names the KLIFS structure to use (several can match the same PDB entry and chain: one for each alternate model).
     bool generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
                              const QString& output, bool wait = false, int structureId = 0);
-    bool taskRunning() const;                     // a download or a KLIFS generation is in progress
+    // Builds a GPCR pocket definition (docs/GPCRDB.md): the positions of the pocket are generic residue numbers ("3x32 3x33 6x48", or the path of a file with
+    // them); the numbers come from a structure annotated by GPCRdb (numberedStructure; empty = the open structure) or from a table (mappingFile). Saves the
+    // definition in `output` and loads it. Same rules for the thread and the return value (false if the numbers cannot be read, the details are in the log).
+    bool generateGpcrdbPocket(const QString& numberedStructure, const QString& mappingFile, const QString& chain, const QString& positions, const QString& output,
+                              bool wait = false);
+    QString gpcrdbCommandLine() const { return lastGpcrdbCommand_; }   // the `ligint` command that makes the last GPCR pocket
+    bool taskRunning() const;                     // a download, a KLIFS or a GPCRdb generation is in progress
 
     // Interaction matrix: the fingerprints of the ligands of a list file on the same columns (docs/MATRIX.md).
     // loadMatrixList reads the list (and shows the Matrix tab); runMatrix builds the matrix in a background thread with the
@@ -134,6 +142,7 @@ private slots:
     void onAddTemplate();
     void onLoadPocket();
     void onGenerateKlifsPocket();
+    void onGenerateGpcrdbPocket();
     void onExportFingerprint();
     void onHelp();
     void onCopyCommand();
@@ -204,9 +213,10 @@ private:
     QTableWidget* matrixTable_ = nullptr;
     SvgView* matrixFigure_ = nullptr;
     QAction *matrixExportAct_ = nullptr, *matrixCmdAct_ = nullptr;
-    QString taskKind_;                            // "rcsb" or "klifs" while a task runs
+    QString taskKind_;                            // "rcsb", "klifs" or "gpcrdb" while a task runs
     QString taskLabel_;                           // PDB ID of the running task, for the messages
     KlifsRequest lastKlifs_;
+    QString lastGpcrdbCommand_;
     void applyTask(const TaskOutcome& o);
     void startTask(const QString& kind, const QString& label, const QString& message, std::function<TaskOutcome()> job, bool wait);
     QAction *exportAct_ = nullptr, *imageAct_ = nullptr, *fpAct_ = nullptr;

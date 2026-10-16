@@ -79,6 +79,9 @@ The **Pocket definition (fingerprint)** group loads a text file that maps residu
 draw the [fingerprint](fingerprint.md). **Load definition...** reads it, **Clear** removes it. Without a definition the fingerprint
 lists the residues in contact, sorted by number.
 
+**Generate from GPCRdb...** builds the definition of a GPCR pocket from the generic residue numbers that you choose (`3x32 6x48...`), read from a structure annotated by GPCRdb or from a table; it saves
+the file, loads it and writes in the **Log** the command that makes it. See [GPCR pockets](gpcrdb.md).
+
 **Generate from KLIFS...** builds the definition of a kinase pocket from a KLIFS mapping: it asks for the PDB ID, the chain and the source (a mapping file, or the
 KLIFS service in builds that have network support), where to save the file, works in the background and loads the result. A structure must be open first. See
 [KLIFS kinase pockets](klifs.md), which also explains which alternate conformation to choose.

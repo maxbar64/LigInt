@@ -21,6 +21,13 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="0101"><a name="0101"></a>0.10.1</h2>
+<ul>
+<li><strong>GUI: Generate from GPCRdb...</strong> in the pocket group: the positions of the pocket (generic residue numbers) and where the numbers are (the open structure, another structure annotated by GPCRdb, or a
+  table); it works in the background, saves and loads the pocket definition for the fingerprint, reports the positions that the structure does not have, and writes in the log the <code>ligint</code> command that makes the
+  same pocket. Library of the window: <code>generateGpcrdbPocket</code> and <code>gpcrdbCommandLine</code>.</li>
+<li>Test of the window: the open structure that is not annotated, invalid numbers, missing positions, the table, the background thread, and the command line of the log run through the shell and compared with the pocket of the window.</li>
+</ul>
 <h2 id="0100"><a name="0100"></a>0.10.0</h2>
 <ul>
 <li><strong>GPCR pockets from generic residue numbers (GPCRdb)</strong>: <code>--gpcrdb-positions LIST</code> (the pocket of interest: <code>3x32,6x48...</code> in the GPCRdb scheme, or <code>3.32</code> in Ballesteros-Weinstein where the file has them),
@@ -211,6 +218,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.10.0 manual</p>
+<p class="foot">ligint 0.10.1 manual</p>
 </body>
 </html>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.1
+
+- **GUI: Generate from GPCRdb...** in the pocket group: the positions of the pocket (generic residue numbers) and where the numbers are (the open structure, another structure annotated by GPCRdb, or a
+  table); it works in the background, saves and loads the pocket definition for the fingerprint, reports the positions that the structure does not have, and writes in the log the `ligint` command that makes the
+  same pocket. Library of the window: `generateGpcrdbPocket` and `gpcrdbCommandLine`.
+- Test of the window: the open structure that is not annotated, invalid numbers, missing positions, the table, the background thread, and the command line of the log run through the shell and compared with the pocket of the window.
+
 ## 0.10.0
 
 - **GPCR pockets from generic residue numbers (GPCRdb)**: `--gpcrdb-positions LIST` (the pocket of interest: `3x32,6x48...` in the GPCRdb scheme, or `3.32` in Ballesteros-Weinstein where the file has them),

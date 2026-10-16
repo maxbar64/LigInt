@@ -1,6 +1,6 @@
 {
  "title": "ligint manual",
- "version": "0.10.0",
+ "version": "0.10.1",
  "pages": [
   {
    "id": "index",
@@ -427,6 +427,11 @@
     },
     {
      "level": 2,
+     "text": "Graphical interface",
+     "id": "graphical-interface"
+    },
+    {
+     "level": 2,
      "text": "Example: carazolol in the beta-2 adrenergic receptor",
      "id": "example-carazolol-in-the-beta-2-adrenergic-receptor"
     },
@@ -689,6 +694,11 @@
    "title": "Changelog",
    "file": "changelog.html",
    "headings": [
+    {
+     "level": 2,
+     "text": "0.10.1",
+     "id": "0101"
+    },
     {
      "level": 2,
      "text": "0.10.0",

@@ -12,6 +12,7 @@
 #include <QAction>
 #include <QListWidget>
 #include <QProcess>
+#include <QPushButton>
 #include <QRegularExpression>
 #include <QTabWidget>
 #include <QTextBrowser>
@@ -23,6 +24,7 @@
 #include <QSet>
 #include <QTableWidget>
 #include <QTemporaryDir>
+#include <cstdio>
 #include <iostream>
 
 #include "CommandLine.h"
@@ -535,6 +537,88 @@ int main(int argc, char** argv) {
         CHECK(m.runMatrix(true) && m.logText().contains("Matrix failed") && m.logText().contains("Entry 2") && m.matrix().rows.empty() && m.matrixCommandLine().isEmpty());
         CHECK(!m.exportMatrix(dir.filePath("matrix_never.csv")) && !QFile::exists(dir.filePath("matrix_never.csv")));
         CHECK(m.matrixTable()->rowCount() == 2 && m.matrixTable()->item(1, 1)->text() == "ZZZ");                   // back to the list of the entries
+    }
+
+    // ---- GPCR pocket from generic residue numbers: the numbers of a structure annotated as GPCRdb writes them, here on the residues 90-129 of 1AZM
+    {
+        auto writeFile = [](const QString& path, const QString& text) {
+            QFile f(path);
+            const bool ok = f.open(QIODevice::WriteOnly);
+            f.write(text.toUtf8());
+            return ok;
+        };
+        auto readFile = [](const QString& path) {
+            QFile f(path);
+            return f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.readAll()) : QString();
+        };
+        QString numbered, table = "chain\tresi\tgpcrdb\taa\n";
+        int serial = 1;
+        for (int resi = 90; resi < 130; ++resi) {
+            const char* res = resi == 91 ? "PHE" : resi == 92 ? "GLN" : "GLY";                  // the residue names of 1AZM where they touch the ligand
+            const int n = resi - 59;                                                              // 91 is 3x32, 92 is 3x33
+            for (const char* atom : {" N  ", " CA "}) {
+                char buf[120];
+                const bool ca = atom[1] == 'C';
+                std::snprintf(buf, sizeof buf, "%-6s%5d %-4s %3s %c%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n", "ATOM", serial++, atom, res, 'A', resi, resi * 1.5, 0.0, 0.0, 1.0,
+                              ca ? 3.0 + n / 100.0 : 1.0, ca ? " C" : " N");
+                numbered += buf;
+            }
+            table += QString("A\t%1\t3x%2\t%3\n").arg(resi).arg(n).arg(res == QLatin1String("GLY") ? "G" : res == QLatin1String("PHE") ? "F" : "Q");
+        }
+        const QString numberedFile = dir.filePath("gpcr_numbered.pdb"), tableFile = dir.filePath("gpcr_numbers.tsv");
+        CHECK(writeFile(numberedFile, numbered + "END\n") && writeFile(tableFile, table));
+        gui::MainWindow g;
+        g.setInteractive(false);
+        CHECK(g.findChild<QPushButton*>("pocket_gpcrdb") && g.findChild<QPushButton*>("pocket_gpcrdb")->isEnabled());
+        const QString out = dir.filePath("gpcr_pocket.tsv");
+        CHECK(!g.generateGpcrdbPocket(QString(), QString(), "A", "3x32", out, true) && g.logText().contains("Open a structure annotated by GPCRdb"));   // nothing is open yet
+        CHECK(g.openStructure(argv[1]));
+        g.selectLigand(0);
+        g.analyze(true);
+        // refused at once: a number that is not one, no file to write
+        CHECK(!g.generateGpcrdbPocket(numberedFile, QString(), "A", "3x32 hello", out, true) && g.logText().contains("Invalid generic residue number 'hello'") && !QFile::exists(out));
+        CHECK(!g.generateGpcrdbPocket(numberedFile, QString(), "A", "3x32", QString(), true) && g.logText().contains("No file to save"));
+        // the open structure has its own B-factors, not generic numbers: the error is reported and nothing is loaded
+        CHECK(g.generateGpcrdbPocket(QString(), QString(), "A", "3x32", out, true) && g.logText().contains("GPCRdb generation failed") && g.logText().contains("does not have GPCRdb generic numbers") &&
+              !QFile::exists(out) && g.fingerprint().pocketName.empty());
+        // the pocket: 3x99 is not in the structure, which is a warning
+        CHECK(g.generateGpcrdbPocket(numberedFile, QString(), "A", "3x32, 3x33 3x40 3x99", out, true));
+        CHECK(QFile::exists(out) && g.logText().contains("GPCRdb: generated 3 positions") && g.logText().contains("positions that this structure does not have") && g.logText().contains("3x99"));
+        CHECK(QString::fromStdString(g.fingerprint().pocketName).contains("GPCR pocket") && g.fingerprint().entries.size() >= 3);
+        bool seen32 = false;
+        for (const auto& e : g.fingerprint().entries)
+            if (e.position == "3x32") {
+                seen32 = true;
+                CHECK(e.region == "TM3" && e.counts[ligint::FpHydrophobic] > 0);                                   // Phe 91 touches the ligand
+            }
+        CHECK(seen32);
+        // the command line in the log makes the same pocket
+        const QString pocketText = readFile(out);
+        CHECK(g.gpcrdbCommandLine().contains("--gpcrdb-pdb") && g.gpcrdbCommandLine().contains("--gpcrdb-positions 3x32,3x33,3x40,3x99") && g.gpcrdbCommandLine().contains("--gpcrdb-chain A") &&
+              g.logText().contains("Command line: " + g.gpcrdbCommandLine()));
+#ifndef Q_OS_WIN
+        if (argc > 2) {
+            QFile::remove(out);
+            bool ok = false;
+            runShell(withBinary(g.gpcrdbCommandLine(), argv[2], ""), &ok);
+            if (!(ok && readFile(out) == pocketText)) std::cerr << "the GPCRdb command line does not make the pocket of the window\n";
+            CHECK(ok && readFile(out) == pocketText);
+        }
+#endif
+        // the same pocket from a table
+        const QString out2 = dir.filePath("gpcr_pocket_table.tsv");
+        CHECK(g.generateGpcrdbPocket(QString(), tableFile, "A", "3x32 3x33 3x40 3x99", out2, true) && readFile(out2) == pocketText);
+        CHECK(g.gpcrdbCommandLine().contains("--gpcrdb-mapping"));
+        // in a background thread
+        const QString out3 = dir.filePath("gpcr_pocket_bg.tsv");
+        CHECK(g.generateGpcrdbPocket(numberedFile, QString(), QString(), "3x32", out3));
+        QElapsedTimer timer;
+        timer.start();
+        while (g.taskRunning() && timer.elapsed() < 20000) QApplication::processEvents(QEventLoop::AllEvents, 20);
+        QApplication::processEvents();
+        CHECK(!g.taskRunning() && QFile::exists(out3) && g.fingerprint().entries.size() >= 1 && readFile(out3).contains("3x32"));
+        // a table that is not one, a structure that does not exist: reported
+        CHECK(g.generateGpcrdbPocket(dir.filePath("no_such_file.pdb"), QString(), "A", "3x32", out, true) && g.logText().contains("Cannot open"));
     }
 
     // a PDBx/mmCIF file gives the same interactions as the PDB file of the same entry

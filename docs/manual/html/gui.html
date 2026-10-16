@@ -139,6 +139,8 @@ not. Templates stay loaded when you open another structure. See <a href="interac
 <p>The <strong>Pocket definition (fingerprint)</strong> group loads a text file that maps residues to positions and regions of a binding pocket, used to
 draw the <a href="fingerprint.html">fingerprint</a>. <strong>Load definition...</strong> reads it, <strong>Clear</strong> removes it. Without a definition the fingerprint
 lists the residues in contact, sorted by number.</p>
+<p><strong>Generate from GPCRdb...</strong> builds the definition of a GPCR pocket from the generic residue numbers that you choose (<code>3x32 6x48...</code>), read from a structure annotated by GPCRdb or from a table; it saves
+the file, loads it and writes in the <strong>Log</strong> the command that makes it. See <a href="gpcrdb.html">GPCR pockets</a>.</p>
 <p><strong>Generate from KLIFS...</strong> builds the definition of a kinase pocket from a KLIFS mapping: it asks for the PDB ID, the chain and the source (a mapping file, or the
 KLIFS service in builds that have network support), where to save the file, works in the background and loads the result. A structure must be open first. See
 <a href="klifs.html">KLIFS kinase pockets</a>, which also explains which alternate conformation to choose.</p>
@@ -299,6 +301,6 @@ The toolbar has <strong>Back</strong> and <strong>Forward</strong> (<code>Alt+Le
 HTML files of the manual are installed on this computer, <strong>Open in browser</strong>. <code>Ctrl+F</code> searches the current page. Links to web sites open
 in your browser.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="quickstart.html">Quick start</a> &middot; <a href="cli.html">Command-line reference</a> &raquo;</p>
-<p class="foot">ligint 0.10.0 manual</p>
+<p class="foot">ligint 0.10.1 manual</p>
 </body>
 </html>

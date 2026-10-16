@@ -152,6 +152,18 @@ ligint numbered.pdb CAU --fingerprint csv --gpcrdb-positions 3x32,3x33,3x36     
 <p>With a structure and <code>--fingerprint</code> the pocket is used at once; with no structure the file is written. A position that this structure does not have (a residue that is missing or not numbered) is listed as a warning and left out, so the same list works for
 a series of structures; if none is there it is an error. <code>--pocket</code> and <code>--klifs-*</code> cannot be given with <code>--gpcrdb-*</code>.</p>
 <p>For a <strong>matrix</strong> of several receptors write the pocket of each structure with the same list of positions and name it in the <code>pocket</code> column of the <a href="matrix.html#the-list-of-ligands">list of ligands</a>: the columns are the generic numbers.</p>
+<h2 id="graphical-interface"><a name="graphical-interface"></a>Graphical interface</h2>
+<p>In the <strong>Pocket definition (fingerprint)</strong> group of the window, <strong>Generate from GPCRdb...</strong> asks, one after the other:</p>
+<ol>
+<li><strong>where the numbers are</strong>: the open structure (if GPCRdb annotated it), another structure annotated by GPCRdb, or a table of generic numbers (TSV or CSV);</li>
+<li><strong>the positions of the pocket</strong>: generic numbers separated by blanks, commas or lines (<code>3x32 3x33 6x48</code>), or the path of a file with them; the last list is remembered;</li>
+<li><strong>the chain</strong> of the receptor (empty: the only chain that has numbers);</li>
+<li><strong>where to save</strong> the pocket definition.</li>
+</ol>
+<p>It works in the background, saves the file, <strong>loads it</strong> as the pocket definition of the fingerprint, writes in the <strong>Log</strong> the positions that the structure does not have (as warnings) and the
+<code>ligint</code> command that makes the same pocket. If the structure is not annotated, a number is not valid or the file cannot be read, the message says so and nothing is loaded. The
+<a href="fingerprint.html">fingerprint</a> and its command line (<strong>File &gt; Copy fingerprint command line</strong>) then use that file. A <a href="matrix.html">matrix</a> with a different pocket for each structure takes them from
+the <code>pocket</code> column of its list: make them with the command line or one by one with this button.</p>
 <h2 id="example-carazolol-in-the-beta-2-adrenergic-receptor"><a name="example-carazolol-in-the-beta-2-adrenergic-receptor"></a>Example: carazolol in the beta-2 adrenergic receptor</h2>
 <p><code>docs/examples/b2ar-positions.txt</code> has 18 GPCRdb positions around the site of the beta blockers (an illustration, not a curated definition). With the structure 2RH1 and a copy of the receptor annotated by GPCRdb:</p>
 <pre><code class="language-text">ligint 2RH1.pdb CAU --fingerprint csv --gpcrdb-pdb numbered.pdb --gpcrdb-positions docs/examples/b2ar-positions.txt
@@ -164,10 +176,11 @@ Asn312 (<code>7x38</code>) and Tyr316 (<code>7x42</code>), and an aromatic edge-
   (2x55 and 5x46 appear twice, so 2x551 and 5x461) and the known residues (Asp113 is <code>3x32</code>, Trp286 <code>6x48</code>, the DRY of <code>3x50</code>). With that file and 2RH1 the fingerprint of carazolol has the contacts above. The original 2RH1, without numbers, is refused.</li>
 <li><strong>Checked only on files that I built from the description of the tool</strong>: the BW numbers in the N atoms, the negative B-factors of the bulges, the table in its various forms, several chains. The real file that I had
   did <strong>not</strong> have the BW numbers (the N atoms were <code>1.00</code>) and had no negative values, because it had been rewritten by another program: the output of the GPCRdb tool itself, as it is, has not been tried.</li>
-<li><strong>Not done</strong>: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), the interface (the <strong>Matrix</strong> and the pocket group of the window do not have a <em>Generate from GPCRdb</em> yet),
-  classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as <code>N.NN</code> in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).</li>
+<li><strong>Checked by the automated test of the window</strong> (with numbers that I wrote on the residues of another structure, not with a real receptor): the numbers of the open structure and of another one, the table, the
+  background thread, the errors, and that the command line of the log makes the same pocket as the window.</li>
+<li><strong>Not done</strong>: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as <code>N.NN</code> in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="klifs.html">KLIFS kinase pockets</a> &middot; <a href="rcsb.html">Downloading from the RCSB</a> &raquo;</p>
-<p class="foot">ligint 0.10.0 manual</p>
+<p class="foot">ligint 0.10.1 manual</p>
 </body>
 </html>

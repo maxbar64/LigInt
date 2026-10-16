@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ligint/gpcrdb.hpp"
 #include "ligint/klifs.hpp"
 #include "ligint/rcsb.hpp"
 #include <QStandardPaths>
@@ -235,13 +236,19 @@ void MainWindow::buildUi() {
     auto* pkLoad = new QPushButton(tr("Load definition…"));
     auto* pkClear = new QPushButton(tr("Clear"));
     auto* pkKlifs = new QPushButton(tr("Generate from KLIFS…"));
+    pkKlifs->setToolTip(tr("Kinases: the 85 positions of the KLIFS pocket"));
     connect(pkKlifs, &QPushButton::clicked, this, &MainWindow::onGenerateKlifsPocket);
+    auto* pkGpcr = new QPushButton(tr("Generate from GPCRdb…"));
+    pkGpcr->setObjectName("pocket_gpcrdb");
+    pkGpcr->setToolTip(tr("GPCRs: the positions that you choose, by generic residue number (3x32...), read from a structure annotated by GPCRdb or from a table"));
+    connect(pkGpcr, &QPushButton::clicked, this, &MainWindow::onGenerateGpcrdbPocket);
     connect(pkLoad, &QPushButton::clicked, this, &MainWindow::onLoadPocket);
     connect(pkClear, &QPushButton::clicked, this, [this] { clearPocket(); });
     pkRow->addWidget(pkLoad);
     pkRow->addWidget(pkClear);
     pkv->addLayout(pkRow);
     pkv->addWidget(pkKlifs);
+    pkv->addWidget(pkGpcr);
     pkv->addWidget(pocketLabel_);
     lv->addWidget(gPocket);
 
@@ -1001,15 +1008,106 @@ void MainWindow::applyTask(const TaskOutcome& o) {
             }
             return;
         }
-        showError(taskKind_ == QLatin1String("rcsb") ? tr("RCSB download failed") : tr("KLIFS generation failed"), o.error);
+        showError(taskKind_ == QLatin1String("rcsb")     ? tr("RCSB download failed")
+                  : taskKind_ == QLatin1String("gpcrdb") ? tr("GPCRdb generation failed")
+                                                         : tr("KLIFS generation failed"),
+                  o.error);
         return;
     }
     if (taskKind_ == QLatin1String("rcsb")) {
         log(tr("RCSB: structure %1 saved to %2").arg(taskLabel_, o.path));
         if (openStructure(o.path)) statusBar()->showMessage(tr("Loaded %1 from RCSB; select a ligand to analyze.").arg(taskLabel_), 10000);
+    } else if (taskKind_ == QLatin1String("gpcrdb")) {
+        for (const QString& w : o.warnings) log(tr("Warning: ") + w);
+        if (loadPocket(o.path)) {
+            log(tr("GPCRdb: generated %1 positions").arg(o.positions));
+            log(tr("Command line: ") + lastGpcrdbCommand_);
+        }
     } else {
         if (loadPocket(o.path)) log(tr("KLIFS: generated %1 mapped residues").arg(o.positions));
     }
+}
+
+bool MainWindow::generateGpcrdbPocket(const QString& numberedStructure, const QString& mappingFile, const QString& chain, const QString& positions,
+                                      const QString& output, bool wait) {
+    if (output.isEmpty()) {
+        showError(tr("GPCRdb"), tr("No file to save the pocket definition in."));
+        return false;
+    }
+    ligint::GpcrdbOptions options;
+    try {
+        options.positions = ligint::parseGpcrdbPositions(positions.toStdString());          // reads the list (or the file) here: a mistake is reported at once
+    } catch (const std::exception& e) {
+        showError(tr("GPCRdb"), QString::fromUtf8(e.what()));
+        return false;
+    }
+    if (taskRunning()) return false;
+    QString numbered = numberedStructure;
+    if (numbered.isEmpty() && mappingFile.isEmpty()) numbered = path_;                        // the open structure
+    if (numbered.isEmpty() && mappingFile.isEmpty()) {
+        showError(tr("GPCRdb"), tr("Open a structure annotated by GPCRdb, choose one, or give a table of generic numbers."));
+        return false;
+    }
+    options.mappingFile = mappingFile.toStdString();
+    options.numberedStructure = numbered.toStdString();
+    options.chain = chain.trimmed().toStdString();
+    // the command that makes the same pocket
+    QStringList list, args;
+    for (const auto& p : options.positions) list << QString::fromStdString(p);
+    if (!mappingFile.isEmpty()) args << "--gpcrdb-mapping" << mappingFile;
+    else args << "--gpcrdb-pdb" << numbered;
+    if (!options.chain.empty()) args << "--gpcrdb-chain" << chain.trimmed();
+    args << "--gpcrdb-positions" << list.join(",") << "--gpcrdb-output" << output;
+    lastGpcrdbCommand_ = joinCommand("ligint", args);
+    const std::string out = output.toStdString();
+    startTask(QStringLiteral("gpcrdb"), QFileInfo(mappingFile.isEmpty() ? numbered : mappingFile).fileName(), tr("Reading the generic residue numbers…"), [options, out]() {
+        TaskOutcome o;
+        try {
+            const ligint::GpcrdbPocket g = ligint::generateGpcrdbPocket(options);
+            ligint::saveGpcrdbPocket(g.pocket, out);
+            o.path = QString::fromStdString(out);
+            o.positions = static_cast<int>(g.pocket.positions.size());
+            for (const auto& w : g.warnings) o.warnings << QString::fromStdString(w);
+            o.ok = true;
+        } catch (const std::exception& e) {
+            o.error = QString::fromUtf8(e.what());
+        }
+        return o;
+    }, wait);
+    return true;
+}
+
+void MainWindow::onGenerateGpcrdbPocket() {
+    QSettings s("ligint", "ligint-gui");
+    QStringList sources = {tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
+    if (path_.isEmpty()) sources.removeFirst();                                                // there is no open structure
+    bool ok = false;
+    const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("Where are the generic residue numbers of the receptor?"), sources, 0, false, &ok);
+    if (!ok) return;
+    QString numbered, mapping;
+    const QString folder = path_.isEmpty() ? s.value("lastDir").toString() : QFileInfo(path_).absolutePath();
+    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : 0);                      // 0 open structure, 1 another structure, 2 a table
+    if (index == 1) {
+        numbered = QFileDialog::getOpenFileName(this, tr("Structure annotated by GPCRdb"), folder, tr("Structures (*.pdb *.ent *.cif *.mmcif);;All files (*)"));
+        if (numbered.isEmpty()) return;
+    } else if (index == 2) {
+        mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
+        if (mapping.isEmpty()) return;
+    }
+    const QString positions = QInputDialog::getMultiLineText(
+        this, tr("GPCR pocket"),
+        tr("Generic residue numbers of the pocket, separated by blanks, commas or lines. GPCRdb scheme: 3x32 3x33 6x48. "
+           "Ballesteros-Weinstein numbers (3.32) only if the file has them. The path of a file with the numbers also works."),
+        s.value("gpcrdbPositions").toString(), &ok);
+    if (!ok || positions.trimmed().isEmpty()) return;
+    const QString chain = QInputDialog::getText(this, tr("GPCR pocket"), tr("Chain of the receptor (empty: the only chain that has numbers):"), QLineEdit::Normal, QString(), &ok);
+    if (!ok) return;
+    const QString from = !mapping.isEmpty() ? mapping : (!numbered.isEmpty() ? numbered : path_);
+    const QString output = QFileDialog::getSaveFileName(this, tr("Save GPCR pocket"), QFileInfo(from).absolutePath() + "/" + QFileInfo(from).completeBaseName() + "-gpcr-pocket.tsv",
+                                                        tr("TSV files (*.tsv)"));
+    if (output.isEmpty()) return;
+    s.setValue("gpcrdbPositions", positions);
+    generateGpcrdbPocket(numbered, mapping, chain, positions, output);
 }
 
 bool MainWindow::downloadRcsb(const QString& idIn, const QString& format, const QString& cacheDir, bool wait) {
