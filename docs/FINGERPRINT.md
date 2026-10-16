@@ -110,4 +110,6 @@ depend on Qt.
 
 - Mapping residues to pocket positions: the position of each residue in a reference pocket (as defined for kinases, for
   example) is not computed; it must come from the definition file.
-- Comparison of the fingerprint with those of other tools, and fingerprints of several structures in one matrix.
+- Comparison of the fingerprint with those of other tools.
+
+The fingerprints of several ligands on the same columns, one bit for each position and class, are in the [interaction matrix](MATRIX.md).

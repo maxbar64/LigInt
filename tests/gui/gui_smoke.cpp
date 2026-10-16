@@ -17,6 +17,9 @@
 #include <QTextBrowser>
 #include <QTreeWidget>
 #include <QImage>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSet>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -211,7 +214,7 @@ int main(int argc, char** argv) {
 
         // the copy action puts the last command in the clipboard
         for (QAction* a : w.findChildren<QAction*>())
-            if (a->text().contains("command line") && !a->text().contains("ingerprint")) { CHECK(a->isEnabled()); a->trigger(); }
+            if (a->text().contains("command line") && !a->text().contains("ingerprint") && !a->text().contains("matrix")) { CHECK(a->isEnabled()); a->trigger(); }
         CHECK(QApplication::clipboard()->text() == w.lastCommandLine());
 
         // fingerprint command: same figure as the window, with the pocket definition currently loaded
@@ -439,6 +442,99 @@ int main(int argc, char** argv) {
         const QString bgOut = dir.filePath("klifs_bg.tsv");
         CHECK(k.generateKlifsPocket("1AZM", "A", "", mapping, bgOut));                                          // in the background
         CHECK(waitFor(k, 10000) && QFile::exists(bgOut));
+    }
+
+    // ---- interaction matrix: a list of ligands, the matrix in a background thread, exports, and the command line that reproduces it
+    {
+        const QString dataDir = QFileInfo(argv[1]).absolutePath();
+        const QString root = QFileInfo(dataDir + "/../..").canonicalFilePath();
+        const QString pocketFile = root + "/docs/examples/hiv-protease-pocket.tsv";
+        CHECK(QFile::exists(pocketFile) && QFile::exists(dataDir + "/1HSG.pdb") && QFile::exists(dataDir + "/1HVR.pdb") && QFile::exists(dataDir + "/1HXB.pdb"));
+        auto writeFile = [](const QString& path, const QString& text) {
+            QFile f(path);
+            const bool ok = f.open(QIODevice::WriteOnly);
+            f.write(text.toUtf8());
+            return ok;
+        };
+        auto readFile = [](const QString& path) {
+            QFile f(path);
+            return f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.readAll()) : QString();
+        };
+        const QString list = dir.filePath("matrix_list.tsv");
+        CHECK(writeFile(list, QString("structure\tligand\tlabel\n%1/1HSG.pdb\tMK1\tindinavir\n%1/1HVR.pdb\tXK2\tXK263\n%1/1HXB.pdb\tROC\tsaquinavir\n").arg(dataDir)));
+        gui::MainWindow m;
+        m.setInteractive(false);
+        CHECK(!m.runMatrix(true) && m.logText().contains("Open a ligand list first"));                            // nothing to compute yet
+        CHECK(writeFile(dir.filePath("matrix_bad.tsv"), "ligand\tchain\nMK1\tA\n"));
+        CHECK(!m.loadMatrixList(dir.filePath("matrix_bad.tsv")) && m.logText().contains("'structure' column"));    // a list that is not valid is refused
+        CHECK(!m.loadMatrixList(dir.filePath("no_such_list.tsv")) && m.matrixTable()->rowCount() == 0);
+        CHECK(m.loadMatrixList(list));
+        QTabWidget* tabs = m.findChild<QTabWidget*>();
+        CHECK(tabs && tabs->tabText(tabs->currentIndex()) == "Matrix");
+        CHECK(m.matrixTable()->rowCount() == 3 && m.matrixTable()->item(0, 0)->text() == "indinavir" && m.matrixTable()->item(0, 3)->text() == QString::fromUtf8("—"));
+        CHECK(m.matrixCommandLine().isEmpty());                                                                    // before the first computation
+        CHECK(m.loadPocket(pocketFile));
+        CHECK(m.runMatrix(true));
+        CHECK(m.matrix().pocketMode && m.matrix().rows.size() == 3 && m.matrix().classes.size() == 7 && m.matrix().positions.size() > 20);
+        int total = 0;
+        for (const auto& row : m.matrix().rows) total += row.bitCount();
+        CHECK(total > 30);
+        CHECK(m.matrixTable()->rowCount() == 3 && m.matrixTable()->item(0, 3)->text().toInt() == m.matrix().rows[0].bitCount() && m.matrixTable()->item(2, 0)->text() == "saquinavir");
+        CHECK(m.logText().contains("Matrix: 3 ligands") && m.logText().contains("Command line: ligint --matrix"));
+        // the three exports
+        const QString csvFile = dir.filePath("matrix_gui.csv"), jsonFile = dir.filePath("matrix_gui.json"), svgFile = dir.filePath("matrix_gui.svg");
+        CHECK(m.exportMatrix(csvFile) && m.exportMatrix(jsonFile) && m.exportMatrix(svgFile) && !m.exportMatrix(dir.filePath("matrix_gui.txt")));
+        const QString csv = readFile(csvFile);
+        CHECK(csv.startsWith("label,structure,ligand,") && csv.split('\n', Qt::SkipEmptyParts).size() == 4 && csv.contains("indinavir,"));
+        const QJsonDocument json = QJsonDocument::fromJson(readFile(jsonFile).toUtf8());
+        CHECK(json.isObject() && json.object()["rows"].toArray().size() == 3 && json.object()["pocket"].toBool() &&
+              json.object()["rows"].toArray()[0].toObject()["bits"].toArray().size() == static_cast<int>(m.matrix().positions.size() * 7));
+        const QString svg = readFile(svgFile);
+        CHECK(svg.startsWith("<svg ") && svg.contains("indinavir") && svg.contains("matrix_list"));                // the title is the name of the list
+        CHECK(m.matrixCommandLine().contains(" --pocket ") && m.matrixCommandLine("svg").contains("--matrix-format svg --matrix-title matrix_list") && !m.matrixCommandLine("csv").contains("--matrix-format"));
+#ifndef Q_OS_WIN
+        auto matrixEquivalence = [&](const char* what) {
+            if (argc <= 2) return;
+            for (const char* fmt : {"csv", "json", "svg"}) {
+                const QString file = dir.filePath(QString("matrix_eq.") + fmt);
+                CHECK(m.exportMatrix(file));
+                bool ok = false;
+                const QString out = runShell(withBinary(m.matrixCommandLine(fmt), argv[2], ""), &ok);
+                if (!(ok && out == readFile(file))) std::cerr << "matrix command line differs from the window: " << what << " " << fmt << "\n";
+                CHECK(ok && out == readFile(file));
+            }
+        };
+        matrixEquivalence("defaults");
+#endif
+        // the options of the tab, and the analysis settings of the panel
+        m.findChild<QCheckBox*>("matrix_all")->setChecked(true);
+        CHECK(m.runMatrix(true) && m.matrix().classes.size() == 11 && m.matrixCommandLine().contains("--matrix-classes all"));
+        const std::size_t withEmpty = m.matrix().positions.size();
+        m.findChild<QCheckBox*>("matrix_hide")->setChecked(true);
+        CHECK(m.runMatrix(true) && m.matrix().positions.size() < withEmpty && m.matrixCommandLine().contains("--matrix-hide-empty"));
+        m.findChild<QCheckBox*>("opt_water")->setChecked(false);
+        m.findChild<QDoubleSpinBox*>("thr_hbMax")->setValue(3.2);
+        CHECK(m.runMatrix(true) && m.matrixCommandLine().contains("--no-water") && m.matrixCommandLine().contains("--hb-max 3.2"));
+#ifndef Q_OS_WIN
+        matrixEquivalence("all classes, no empty positions, no water, hb-max 3.2");
+#endif
+        m.findChild<QCheckBox*>("opt_water")->setChecked(true);
+        m.findChild<QDoubleSpinBox*>("thr_hbMax")->setValue(3.5);
+        m.findChild<QCheckBox*>("matrix_all")->setChecked(false);
+        m.findChild<QCheckBox*>("matrix_hide")->setChecked(false);
+        // in a background thread: the result arrives through the event loop
+        CHECK(m.runMatrix(false));
+        QElapsedTimer timer;
+        timer.start();
+        while (m.matrixRunning() && timer.elapsed() < 30000) QApplication::processEvents(QEventLoop::AllEvents, 20);
+        QApplication::processEvents();
+        CHECK(!m.matrixRunning() && m.matrix().rows.size() == 3 && m.matrix().classes.size() == 7);
+        // an entry with a ligand that the structure does not have: reported, and no matrix (nothing that a command could not reproduce)
+        CHECK(writeFile(dir.filePath("matrix_wrong.tsv"), QString("structure\tligand\tlabel\n%1/1HSG.pdb\tMK1\tok\n%1/1HVR.pdb\tZZZ\twrong\n").arg(dataDir)));
+        CHECK(m.loadMatrixList(dir.filePath("matrix_wrong.tsv")));
+        CHECK(m.runMatrix(true) && m.logText().contains("Matrix failed") && m.logText().contains("Entry 2") && m.matrix().rows.empty() && m.matrixCommandLine().isEmpty());
+        CHECK(!m.exportMatrix(dir.filePath("matrix_never.csv")) && !QFile::exists(dir.filePath("matrix_never.csv")));
+        CHECK(m.matrixTable()->rowCount() == 2 && m.matrixTable()->item(1, 1)->text() == "ZZZ");                   // back to the list of the entries
     }
 
     // a PDBx/mmCIF file gives the same interactions as the PDB file of the same entry

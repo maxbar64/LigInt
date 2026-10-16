@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/matrix.hpp"
 #include <QPointer>
 #include "ligint/ligint.hpp"
 
@@ -47,6 +48,13 @@ struct TaskOutcome {
     QList<int> candidateIds;
 };
 
+// Result of building the interaction matrix in the background.
+struct MatrixOutcome {
+    bool ok = false;
+    QString error;
+    ligint::InteractionMatrix matrix;
+};
+
 struct KlifsRequest {      // the last KLIFS generation asked, to repeat it with a structure that the user chooses
     QString pdb, chain, model, mapping, output;
 };
@@ -71,6 +79,19 @@ public:
     bool generateKlifsPocket(const QString& pdb, const QString& chain, const QString& model, const QString& mappingFile,
                              const QString& output, bool wait = false, int structureId = 0);
     bool taskRunning() const;                     // a download or a KLIFS generation is in progress
+
+    // Interaction matrix: the fingerprints of the ligands of a list file on the same columns (docs/MATRIX.md).
+    // loadMatrixList reads the list (and shows the Matrix tab); runMatrix builds the matrix in a background thread with the
+    // analysis settings of the panel and the pocket definition that is loaded (wait = true: waits for it, for the tests);
+    // exportMatrix writes .svg, .csv or .json. False if the request is refused; the details are in the log.
+    bool loadMatrixList(const QString& path);
+    bool runMatrix(bool wait = false);
+    bool exportMatrix(const QString& path);
+    bool matrixRunning() const;
+    const ligint::InteractionMatrix& matrix() const { return matrix_; }
+    QTableWidget* matrixTable() const { return matrixTable_; }
+    // The `ligint --matrix` command that reproduces the last matrix (format: csv, json or svg).
+    QString matrixCommandLine(const QString& format = QStringLiteral("csv")) const;
     int ligandCount() const;
     void selectLigand(int index);
     void analyze(bool wait = false);              // wait = true: waits for the result (tests)
@@ -117,6 +138,9 @@ private slots:
     void onHelp();
     void onCopyCommand();
     void onCopyFingerprintCommand();
+    void onOpenMatrixList();
+    void onExportMatrix();
+    void onCopyMatrixCommand();
     void onPresetToggled(bool on);
     void onTypeFilterChanged();
     void onRowChanged();
@@ -131,6 +155,9 @@ private:
     void fillTypeList();
     void updateFingerprint();
     QStringList currentArgs() const;
+    QStringList optionArgs() const;               // the options that differ from the defaults (without structure and ligand)
+    void applyMatrix(const MatrixOutcome& o);
+    void fillMatrixTable();
     void log(const QString& line);
     void showError(const QString& title, const QString& text);
 
@@ -164,6 +191,19 @@ private:
     HitsFilterProxy* proxy_ = nullptr;
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
     QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
+    QFutureWatcher<MatrixOutcome>* matrixWatcher_ = nullptr;
+    QString matrixListPath_;
+    std::vector<ligint::MatrixEntry> matrixEntries_;
+    ligint::InteractionMatrix matrix_;
+    bool haveMatrix_ = false;
+    QStringList lastMatrixArgs_;
+    QWidget* matrixTab_ = nullptr;
+    QLabel *matrixInfo_ = nullptr, *matrixNote_ = nullptr;
+    QPushButton *matrixOpenButton_ = nullptr, *matrixRunButton_ = nullptr;
+    QCheckBox *matrixAllClasses_ = nullptr, *matrixHide_ = nullptr;
+    QTableWidget* matrixTable_ = nullptr;
+    SvgView* matrixFigure_ = nullptr;
+    QAction *matrixExportAct_ = nullptr, *matrixCmdAct_ = nullptr;
     QString taskKind_;                            // "rcsb" or "klifs" while a task runs
     QString taskLabel_;                           // PDB ID of the running task, for the messages
     KlifsRequest lastKlifs_;

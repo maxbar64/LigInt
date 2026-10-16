@@ -222,6 +222,11 @@ of interaction it makes. It is a quick way to see which residues matter most.</p
 <p>The <strong>Fingerprint</strong> tab shows the <a href="fingerprint.html">interaction fingerprint</a> of the ligand: a figure with one cell per residue (grouped by
 region when a pocket definition is loaded) and, below, the table of counts per class. The figure needs the Qt Svg module; without it the tab
 shows the table only. <strong>File &gt; Export fingerprint...</strong> saves it as SVG, CSV or JSON, according to the extension you type.</p>
+<h2 id="the-matrix-tab"><a name="the-matrix-tab"></a>The matrix tab</h2>
+<p>The <strong>Matrix</strong> tab compares several ligands at once: <strong>Open list...</strong> (or <strong>File &gt; Open ligand list for the matrix...</strong>) reads a list file, <strong>Compute matrix</strong> builds the
+<a href="matrix.html">interaction matrix</a> in the background, and the tab shows a heat map (with Qt Svg) and a table with the number of interactions and of positions of each ligand.
+<strong>All interaction classes</strong> and <strong>Hide positions without interactions</strong> change what the matrix contains. <strong>File &gt; Export matrix...</strong> saves it as SVG, CSV or JSON, by extension, and
+<strong>File &gt; Copy matrix command line</strong> copies the <code>ligint --matrix</code> command that reproduces it. The analysis settings of the left panel and the pocket definition that is loaded are used.</p>
 <h2 id="the-log"><a name="the-log"></a>The log</h2>
 <p>The <strong>Log</strong> tab records what happened: the file that was opened, how the ligand chemistry was obtained (template or geometry), the mean
 B-factor of the ligand with a warning if it is poorly defined, warnings about the input, the coordination sphere of the metals, and the
@@ -246,6 +251,10 @@ B-factor of the ligand with a warning if it is poorly defined, warnings about th
 <tr>
 <td><strong>File &gt; Export fingerprint...</strong></td>
 <td>the fingerprint as SVG (figure), CSV or JSON, by extension</td>
+</tr>
+<tr>
+<td><strong>File &gt; Export matrix...</strong></td>
+<td>the <a href="matrix.html">interaction matrix</a> as SVG (heat map), CSV or JSON, by extension</td>
 </tr>
 </tbody>
 </table>
@@ -289,6 +298,6 @@ The toolbar has <strong>Back</strong> and <strong>Forward</strong> (<code>Alt+Le
 HTML files of the manual are installed on this computer, <strong>Open in browser</strong>. <code>Ctrl+F</code> searches the current page. Links to web sites open
 in your browser.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="quickstart.html">Quick start</a> &middot; <a href="cli.html">Command-line reference</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

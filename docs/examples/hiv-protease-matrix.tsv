@@ -1,0 +1,6 @@
+# Interaction matrix of three HIV-1 protease inhibitors on the pocket of docs/examples/hiv-protease-pocket.tsv
+# Paths are relative to this file. Run:  ligint --matrix docs/examples/hiv-protease-matrix.tsv --pocket docs/examples/hiv-protease-pocket.tsv
+structure	ligand	label
+../../tests/data/1HSG.pdb	MK1	indinavir (1HSG)
+../../tests/data/1HVR.pdb	XK2	XK263 (1HVR)
+../../tests/data/1HXB.pdb	ROC	saquinavir (1HXB)

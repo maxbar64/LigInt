@@ -38,6 +38,11 @@
       "src": "docs/FINGERPRINT.md"
     },
     {
+      "id": "matrix",
+      "title": "Interaction matrix",
+      "src": "docs/MATRIX.md"
+    },
+    {
       "id": "klifs",
       "title": "KLIFS kinase pockets",
       "src": "docs/KLIFS.md"

@@ -21,6 +21,19 @@ a { color: #1c7ed6; }
 <body>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
+<h2 id="090"><a name="090"></a>0.9.0</h2>
+<ul>
+<li><strong>Interaction matrix</strong>: the fingerprints of several ligands on the same columns, one bit for each pocket position and interaction class (with the 85 positions of a KLIFS pocket and
+  the 7 classes of the KLIFS IFP, 595 bits for each ligand). The ligands come from a TSV or CSV list (<code>structure</code>, <code>ligand</code>, optional <code>chain</code>, <code>resseq</code>, <code>label</code>, <code>pocket</code>, <code>altloc</code>;
+  relative paths are relative to the list). Output as CSV, JSON or an SVG heat map. Command line: <code>--matrix LIST</code>, <code>--matrix-format csv|json|svg</code>, <code>--matrix-classes klifs|all|NAMES</code>,
+  <code>--matrix-hide-empty</code>, <code>--matrix-title</code>, <code>--pocket</code> (the common pocket definition). Library: <code>ligint/matrix.hpp</code>. GUI: the <strong>Matrix</strong> tab (background computation, heat map, table,
+  <em>File &gt; Open ligand list for the matrix...</em>, <em>Export matrix...</em>, <em>Copy matrix command line</em>).</li>
+<li>Either every ligand of a matrix has a pocket definition or none does; different definitions are merged keeping the order of the positions (a residue that is missing in some structures
+  does not move the others); contacts outside the definition are reported; each row must identify one ligand, and the errors name the entry and the line.</li>
+<li>Tests: the list, the classes and the matrix in C++; ten tests of the command line (the JSON bits equal the CSV cells, every row agrees with the fingerprint of the same ligand, also on three
+  real HIV protease complexes, errors, corrupted lists, 150 rows); the Matrix tab of the GUI, whose command line is run and compared with the window for the three formats.</li>
+<li>Not covered: a comparison with the interaction fingerprint that KLIFS publishes (the definitions of the interactions differ) and similarity measures between the rows.</li>
+</ul>
 <h2 id="082"><a name="082"></a>0.8.2</h2>
 <ul>
 <li><strong>KLIFS: the pocket is a MOL2 file.</strong> The second real run showed that the request for the pocket answers with a <code>pocket.mol2</code> (the residues of the pocket, not a table), which the
@@ -186,6 +199,6 @@ output and is not compatible with 0.1.0:</strong></p>
 <li>Tests: C++ (<code>core_unit</code>), Python, GUI smoke test (offscreen), comparison and benchmark against PLIP.</li>
 </ul>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="developers.html">For developers</a> &middot; <a href="about.html">About</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

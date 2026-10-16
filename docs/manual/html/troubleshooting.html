@@ -89,6 +89,15 @@ others (<code>--klifs-sequence</code>, <code>_</code> marks a missing residue). 
 (<code>--klifs-mapping</code>); the online path of the native client is not verified (<a href="klifs.html#the-klifs-service-partly-verified">KLIFS kinase pockets</a>).</p>
 <p><strong>The pocket is built but the figure has fewer than 85 cells.</strong> The residues that are missing in the crystal (<code>_</code> in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.</p>
+<h2 id="the-interaction-matrix"><a name="the-interaction-matrix"></a>The interaction matrix</h2>
+<p><strong><code>Matrix: Line N: the list needs a header line with a 'structure' column</code>.</strong> The first line of the list (after comments) must name the columns, at least <code>structure</code> and <code>ligand</code>
+(<a href="matrix.html#the-list-of-ligands">the list of ligands</a>).</p>
+<p><strong><code>Matrix: Entry N (...): the ligand is required; the structure has: ...</code>, <code>ligand 'X' not found</code>, <code>'X' matches 2 ligands (...)</code>.</strong> Each line must identify one ligand: give the residue
+name, and the chain and residue number if the structure has several with that name. The message lists what the structure has.</p>
+<p><strong><code>... has no pocket definition while others have one</code>.</strong> Either every line has a pocket definition (the <code>pocket</code> column or <code>--pocket</code>), or none does.</p>
+<p><strong><code>Warning: ...: N residue(s) in contact are not in the pocket definition and are not in the matrix</code>.</strong> The matrix has only the positions of the pocket definition: those residues
+make interactions that are not in it. Complete the definition, or use none to see the residues in contact.</p>
+<p><strong><code>... the label '...' is used by another entry</code>.</strong> Each row needs its own <code>label</code>; without one the label is the file name and the ligand.</p>
 <h2 id="the-graphical-interface"><a name="the-graphical-interface"></a>The graphical interface</h2>
 <p><strong>It does not start on Linux, with a message about the Qt platform plugin.</strong> Install the Qt platform plugins (<code>qt6-qpa-plugins</code> on Debian and
 Ubuntu); if the message mentions <code>xcb-cursor</code>, install <code>libxcb-cursor0</code>. To start the program only for tests, without a screen, use
@@ -103,6 +112,6 @@ SVG export still produces the figure.</p>
 the GUI, copy it with <strong>File &gt; Copy command line</strong>), what you expected and what happened, and, if you can share it, the structure file (or its PDB code).
 For the graphical interface add the contents of the <strong>Log</strong> tab.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="install.html">Installation</a> &middot; <a href="developers.html">For developers</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

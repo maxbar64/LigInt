@@ -92,6 +92,21 @@ others (`--klifs-sequence`, `_` marks a missing residue). The KLIFS service give
 **The pocket is built but the figure has fewer than 85 cells.** The residues that are missing in the crystal (`_` in the mapping) are left out of the pocket. Check also that the chain and the residue numbers
 of the mapping are the ones of the structure you analyze: a position whose residue is not in the structure is drawn as an empty cell.
 
+## The interaction matrix
+
+**`Matrix: Line N: the list needs a header line with a 'structure' column`.** The first line of the list (after comments) must name the columns, at least `structure` and `ligand`
+([the list of ligands](matrix.md#the-list-of-ligands)).
+
+**`Matrix: Entry N (...): the ligand is required; the structure has: ...`, `ligand 'X' not found`, `'X' matches 2 ligands (...)`.** Each line must identify one ligand: give the residue
+name, and the chain and residue number if the structure has several with that name. The message lists what the structure has.
+
+**`... has no pocket definition while others have one`.** Either every line has a pocket definition (the `pocket` column or `--pocket`), or none does.
+
+**`Warning: ...: N residue(s) in contact are not in the pocket definition and are not in the matrix`.** The matrix has only the positions of the pocket definition: those residues
+make interactions that are not in it. Complete the definition, or use none to see the residues in contact.
+
+**`... the label '...' is used by another entry`.** Each row needs its own `label`; without one the label is the file name and the ligand.
+
 ## The graphical interface
 
 **It does not start on Linux, with a message about the Qt platform plugin.** Install the Qt platform plugins (`qt6-qpa-plugins` on Debian and

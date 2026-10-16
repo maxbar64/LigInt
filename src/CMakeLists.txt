@@ -5,6 +5,7 @@ add_library(ligint_core
     core/mmcif.cpp
     core/pdb.cpp
     core/fingerprint.cpp
+    core/matrix.cpp
     core/report.cpp
     core/svg.cpp
     core/templates.cpp

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0
+
+- **Interaction matrix**: the fingerprints of several ligands on the same columns, one bit for each pocket position and interaction class (with the 85 positions of a KLIFS pocket and
+  the 7 classes of the KLIFS IFP, 595 bits for each ligand). The ligands come from a TSV or CSV list (`structure`, `ligand`, optional `chain`, `resseq`, `label`, `pocket`, `altloc`;
+  relative paths are relative to the list). Output as CSV, JSON or an SVG heat map. Command line: `--matrix LIST`, `--matrix-format csv|json|svg`, `--matrix-classes klifs|all|NAMES`,
+  `--matrix-hide-empty`, `--matrix-title`, `--pocket` (the common pocket definition). Library: `ligint/matrix.hpp`. GUI: the **Matrix** tab (background computation, heat map, table,
+  *File > Open ligand list for the matrix...*, *Export matrix...*, *Copy matrix command line*).
+- Either every ligand of a matrix has a pocket definition or none does; different definitions are merged keeping the order of the positions (a residue that is missing in some structures
+  does not move the others); contacts outside the definition are reported; each row must identify one ligand, and the errors name the entry and the line.
+- Tests: the list, the classes and the matrix in C++; ten tests of the command line (the JSON bits equal the CSV cells, every row agrees with the fingerprint of the same ligand, also on three
+  real HIV protease complexes, errors, corrupted lists, 150 rows); the Matrix tab of the GUI, whose command line is run and compared with the window for the three formats.
+- Not covered: a comparison with the interaction fingerprint that KLIFS publishes (the definitions of the interactions differ) and similarity measures between the rows.
+
 ## 0.8.2
 
 - **KLIFS: the pocket is a MOL2 file.** The second real run showed that the request for the pocket answers with a `pocket.mol2` (the residues of the pocket, not a table), which the

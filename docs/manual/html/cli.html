@@ -108,6 +108,10 @@ check the output, not only the exit code, in scripts.</p>
 <td>download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. <code>--download-format pdb\|cif</code>, <code>--download-output FILE</code>, <code>--download-cache DIR</code>, <code>--download-refresh</code> and <code>--download-only</code> (stop after the download and print the path; it requires <code>--download-pdb</code>) complete it (<a href="rcsb.html">Downloading from the RCSB</a>)</td>
 </tr>
 <tr>
+<td><code>--matrix LIST</code></td>
+<td>the <a href="matrix.html">interaction matrix</a> of the ligands of a list file instead of a structure: one row for each ligand, one column for each pocket position and class. <code>--matrix-format csv\|json\|svg</code> (default <code>csv</code>), <code>--matrix-classes klifs\|all\|NAMES</code>, <code>--matrix-hide-empty</code>, <code>--matrix-title TEXT</code> and <code>--pocket FILE</code> (the common pocket definition) complete it</td>
+</tr>
+<tr>
 <td><code>--klifs-pdb ID</code>, <code>--klifs-chain C</code>, <code>--klifs-mapping FILE</code>, <code>--klifs-sequence S</code>, <code>--klifs-output FILE</code>, <code>--klifs-model M</code>, <code>--klifs-id N</code></td>
 <td>build a pocket definition from a KLIFS mapping, to use with <code>--fingerprint</code> or to save (<a href="klifs.html">KLIFS kinase pockets</a>)</td>
 </tr>
@@ -345,6 +349,7 @@ ligint 1abc.pdb LIG --sdf lig.sdf                     exact chemistry from an SD
 ligint 3eyg.cif LIG A 1 --altloc B --fingerprint svg --pocket pocket.tsv &gt; figure.svg
 ligint --download-pdb 3EYG STI --csv                  download from the RCSB and analyze the ligand in one command
 ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output 3eyg-pocket.tsv     a KLIFS pocket definition from a mapping
+ligint --matrix ligands.tsv --pocket pocket.tsv --matrix-format svg &gt; matrix.svg     the interaction matrix of the ligands of a list
 </code></pre>
 <p>Analyze many structures that contain the same ligand name, in a POSIX shell:</p>
 <pre><code class="language-text">for f in complexes/*.pdb; do ligint &quot;$f&quot; LIG --csv &gt; &quot;${f%.pdb}.csv&quot;; done
@@ -353,6 +358,6 @@ ligint --klifs-pdb 3EYG --klifs-chain A --klifs-mapping map.tsv --klifs-output 3
 <p>To repeat an analysis made in the <a href="gui.html#reproducing-an-analysis-on-the-command-line">graphical interface</a>, copy the command line that it
 writes in its log.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="gui.html">The graphical interface</a> &middot; <a href="interactions.html">Interactions and assumptions</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

@@ -45,7 +45,7 @@ a { color: #1c7ed6; }
 </ul>
 <h2 id="verification"><a name="verification"></a>Verification</h2>
 <pre><code>ctest --test-dir build --output-on-failure           core_unit + python_suite + gui_smoke
-python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     96 Python tests (chemical rules, SDF/MOL2,
+python3 tests/run_tests.py [--bin build/src/ligint] [--sanitize]     106 Python tests (chemical rules, SDF/MOL2,
                                                      parsing, malformed input, real complexes in tests/data)
 python3 tests/compare_plip.py *.pdb                  ligint against PLIP (pip install plip openbabel-wheel)
 python3 tests/benchmark.py folder/ --groups g.txt    full pipeline with report and CSV of the disagreements
@@ -111,6 +111,6 @@ run</strong>: the commands are the ones tried here locally on Linux (including <
 run on GitHub may need adjustments. The GUI was tried in offscreen mode: interactive use with mouse and dialog boxes
 was not tried by hand.</p>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="rcsb.html">Downloading from the RCSB</a> &middot; <a href="benchmark.html">Comparison with PLIP</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

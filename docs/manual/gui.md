@@ -138,6 +138,13 @@ The **Fingerprint** tab shows the [interaction fingerprint](fingerprint.md) of t
 region when a pocket definition is loaded) and, below, the table of counts per class. The figure needs the Qt Svg module; without it the tab
 shows the table only. **File > Export fingerprint...** saves it as SVG, CSV or JSON, according to the extension you type.
 
+## The matrix tab
+
+The **Matrix** tab compares several ligands at once: **Open list...** (or **File > Open ligand list for the matrix...**) reads a list file, **Compute matrix** builds the
+[interaction matrix](matrix.md) in the background, and the tab shows a heat map (with Qt Svg) and a table with the number of interactions and of positions of each ligand.
+**All interaction classes** and **Hide positions without interactions** change what the matrix contains. **File > Export matrix...** saves it as SVG, CSV or JSON, by extension, and
+**File > Copy matrix command line** copies the `ligint --matrix` command that reproduces it. The analysis settings of the left panel and the pocket definition that is loaded are used.
+
 ## The log
 
 The **Log** tab records what happened: the file that was opened, how the ligand chemistry was obtained (template or geometry), the mean
@@ -151,6 +158,7 @@ B-factor of the ligand with a warning if it is poorly defined, warnings about th
 | **File > Export interactions (CSV)...** | all the interactions of the analysis (also those hidden by the type list) as CSV, the same table that `ligint --csv` writes |
 | **File > Save image...** | the 3D view as a PNG image |
 | **File > Export fingerprint...** | the fingerprint as SVG (figure), CSV or JSON, by extension |
+| **File > Export matrix...** | the [interaction matrix](matrix.md) as SVG (heat map), CSV or JSON, by extension |
 
 ## Reproducing an analysis on the command line
 

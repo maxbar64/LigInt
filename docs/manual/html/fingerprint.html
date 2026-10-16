@@ -19,7 +19,7 @@ a { color: #1c7ed6; }
 </style>
 </head>
 <body>
-<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="klifs.html">KLIFS kinase pockets</a> &raquo;</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="matrix.html">Interaction matrix</a> &raquo;</p>
 <h1 id="interaction-fingerprints"><a name="interaction-fingerprints"></a>Interaction fingerprints</h1>
 <p>A fingerprint summarizes the interactions of one ligand as a table with <strong>one row per protein residue and one column
 per interaction class</strong>. It can be exported to CSV and JSON, drawn as an SVG figure (residues grouped by pocket region,
@@ -163,9 +163,10 @@ depend on Qt.</p>
 <ul>
 <li>Mapping residues to pocket positions: the position of each residue in a reference pocket (as defined for kinases, for
   example) is not computed; it must come from the definition file.</li>
-<li>Comparison of the fingerprint with those of other tools, and fingerprints of several structures in one matrix.</li>
+<li>Comparison of the fingerprint with those of other tools.</li>
 </ul>
-<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="klifs.html">KLIFS kinase pockets</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p>The fingerprints of several ligands on the same columns, one bit for each position and class, are in the <a href="matrix.html">interaction matrix</a>.</p>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="formats.html">Input formats</a> &middot; <a href="matrix.html">Interaction matrix</a> &raquo;</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>

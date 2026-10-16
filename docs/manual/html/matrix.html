@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Interaction matrix - ligint manual</title>
+<style>
+body { margin: 12px 18px; }
+h1 { font-size: 26px; margin-top: 6px; }
+h2 { font-size: 20px; margin-top: 22px; border-bottom: 1px solid #adb5bd; }
+h3 { font-size: 16px; margin-top: 16px; }
+h4 { font-size: 14px; }
+pre { background-color: #f1f3f5; color: #212529; padding: 6px; }
+code { font-family: monospace; }
+th { background-color: #dee2e6; color: #212529; }
+blockquote { margin-left: 18px; }
+p.nav { background-color: #e9ecef; color: #212529; padding: 4px; }
+p.foot { font-size: 11px; color: #868e96; margin-top: 24px; }
+a { color: #1c7ed6; }
+</style>
+</head>
+<body>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="klifs.html">KLIFS kinase pockets</a> &raquo;</p>
+<h1 id="interaction-matrix"><a name="interaction-matrix"></a>Interaction matrix</h1>
+<p>The <a href="fingerprint.html">fingerprint</a> of a ligand describes one ligand. The <strong>interaction matrix</strong> puts the fingerprints of several ligands, of the same
+structure or of different ones, side by side on the <strong>same columns</strong>, so that they can be compared, clustered or given to a program: one row for each
+ligand, one column for each pocket position and interaction class, a cell that is <strong>1</strong> if the residue at that position makes at least one favorable
+interaction of that class with the ligand and <strong>0</strong> otherwise.</p>
+<p>With the 85 positions of a KLIFS pocket and the 7 classes of the KLIFS interaction fingerprint this is a 595-bit fingerprint for each ligand,
+comparable across structures because the columns are the pocket positions and not residue numbers. The matrix is written as CSV, JSON or as a heat map in SVG,
+on the command line and in the graphical interface.</p>
+<h2 id="the-list-of-ligands"><a name="the-list-of-ligands"></a>The list of ligands</h2>
+<p>The ligands come from a <strong>list file</strong>: a TSV or CSV file with a header line and one line for each ligand.</p>
+<pre><code class="language-text"># Interaction matrix of three HIV-1 protease inhibitors
+structure   ligand  label
+../../tests/data/1HSG.pdb   MK1 indinavir (1HSG)
+../../tests/data/1HVR.pdb   XK2 XK263 (1HVR)
+../../tests/data/1HXB.pdb   ROC saquinavir (1HXB)
+</code></pre>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure</code></td>
+<td><strong>required</strong>: the PDB or mmCIF file (also called <code>file</code>, <code>path</code>, <code>structure_file</code> or <code>pdb</code>)</td>
+</tr>
+<tr>
+<td><code>ligand</code></td>
+<td><strong>required</strong>: the residue name of the ligand (<code>lig</code>, <code>resname</code>, <code>ligand_name</code>)</td>
+</tr>
+<tr>
+<td><code>chain</code></td>
+<td>the chain of the ligand, to choose among several with the same name</td>
+</tr>
+<tr>
+<td><code>resseq</code></td>
+<td>the residue number, as on the command line: <code>201</code> (any insertion code), <code>201A</code> (code A) or <code>201-</code> (no code) (<code>resi</code>, <code>residue</code>, <code>resnum</code>, <code>number</code>)</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>the name of the row (<code>name</code>, <code>id</code>, <code>entry</code>); by default the file name and the ligand, for example <code>1HSG MK1 902B</code></td>
+</tr>
+<tr>
+<td><code>pocket</code></td>
+<td>the <a href="fingerprint.html#pocket-definition-file">pocket definition</a> of this structure (<code>pocket_file</code>, <code>definition</code>)</td>
+</tr>
+<tr>
+<td><code>altloc</code></td>
+<td>the alternate conformation to use for this structure (<code>alt</code>, <code>conformation</code>)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>The columns can be in any order; other columns are ignored. The separator (a tab or a comma) is recognized from the header line; quoted values
+  (<code>"a, b"</code>), a byte order mark and Windows line ends are accepted. Blank lines and lines that start with <code>#</code> are skipped.</li>
+<li><strong>Relative paths are relative to the folder of the list</strong>, for the structures and for the pocket definitions.</li>
+<li>Each line must identify <strong>exactly one ligand</strong>. If the name matches several (two copies in different chains), the message lists them and tells to add the
+  chain and the residue number. The labels must be different.</li>
+</ul>
+<h2 id="pocket-definitions-all-or-none"><a name="pocket-definitions-all-or-none"></a>Pocket definitions: all or none</h2>
+<ul>
+<li><strong>With a pocket definition</strong> the columns are the positions of the definition, identified by their label (<code>46</code>, <code>hinge.46</code>...). Give a definition to
+  the whole list with <code>--pocket FILE</code>, or to each line with the <code>pocket</code> column; a line without one uses the common one. <strong>Either every line has a pocket
+  definition, or none does</strong>: otherwise the columns would not mean the same thing for every row, and the program says which line is the problem.</li>
+<li><strong>Different definitions</strong> are merged: the columns are the union of their positions, in the order of the definitions; a position that only some of them have (for
+  KLIFS, a residue that is missing in the crystal in the other structures) goes right after the one that precedes it in its own definition, so that the numeric order
+  of the KLIFS positions is kept. A position that is in two definitions with different regions is reported and the first region is used.</li>
+<li><strong>Without a pocket definition</strong> the columns are the residues that are in contact with some ligand (<code>ASN 10A</code>, <code>LYS 30A</code>...). This is only meaningful if all the
+  structures have the same numbering, for example several ligands of the same protein; for different proteins use a pocket definition.</li>
+<li>A residue in contact with a ligand that is <strong>not in the definition</strong> is not a column. It is reported, with the first residues, as a warning, so that an
+  incomplete definition does not go unnoticed.</li>
+</ul>
+<p>For kinases the pocket definition of each structure can be made with <a href="klifs.html">KLIFS kinase pockets</a>: one <code>--klifs-*</code> command for each structure, and its output in the
+<code>pocket</code> column. Then position 20 is the same position in every row, whatever the residue number of the kinase.</p>
+<h2 id="classes"><a name="classes"></a>Classes</h2>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Option</th>
+<th>Columns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--matrix-classes klifs</code> (default)</td>
+<td>the 7 classes of the KLIFS interaction fingerprint: <code>hydrophobic</code>, <code>face_to_face</code>, <code>edge_to_face</code>, <code>hbond_donor</code>, <code>hbond_acceptor</code>, <code>ionic_positive</code>, <code>ionic_negative</code></td>
+</tr>
+<tr>
+<td><code>--matrix-classes all</code></td>
+<td>all the classes of the <a href="fingerprint.html#classes">fingerprint</a>: also <code>cation_pi</code>, <code>halogen</code>, <code>metal</code> and <code>water_bridge</code></td>
+</tr>
+<tr>
+<td><code>--matrix-classes hydrophobic,hbond_donor</code></td>
+<td>the classes that you name, always in the order above</td>
+</tr>
+</tbody>
+</table>
+<p><code>hbond_donor</code> and <code>hbond_acceptor</code> are named from the point of view of the <strong>protein residue</strong>: the residue donates, or accepts, the hydrogen. Only favorable interactions
+count: clashes, repulsions and possible covalent bonds are ignored, as in the fingerprint. A cell is a bit: the number of contacts is not kept, the
+<a href="fingerprint.html">fingerprint</a> has it.</p>
+<p><code>--matrix-hide-empty</code> leaves out the positions where no ligand has any interaction (all the classes of the position).</p>
+<h2 id="output"><a name="output"></a>Output</h2>
+<p><strong>CSV</strong> (<code>--matrix-format csv</code>, the default): the columns <code>label</code>, <code>structure</code>, <code>ligand</code> and then one column <code>&lt;position&gt;:&lt;class&gt;</code> for each position and class, in the order of the
+positions and, in each one, of the classes; one line for each ligand, with <code>0</code> and <code>1</code>. Values with a comma are quoted.</p>
+<p><strong>JSON</strong> (<code>--matrix-format json</code>):</p>
+<pre><code class="language-json">{&quot;classes&quot;: [&quot;hydrophobic&quot;, &quot;...&quot;], &quot;pocket&quot;: true,
+ &quot;positions&quot;: [{&quot;position&quot;: &quot;1&quot;, &quot;region&quot;: &quot;hinge&quot;}, ...],
+ &quot;rows&quot;: [{&quot;label&quot;: &quot;...&quot;, &quot;structure&quot;: &quot;...&quot;, &quot;ligand&quot;: &quot;MK1 902B&quot;, &quot;residues&quot;: [&quot;ASN 10A&quot;, ...], &quot;bits&quot;: [0, 1, ...]}],
+ &quot;warnings&quot;: [&quot;...&quot;]}
+</code></pre>
+<p><code>bits</code> is in the order of the CSV columns (the cell of position <code>p</code> and class <code>c</code> is <code>bits[p * len(classes) + c]</code>). <code>residues</code> has one entry for each position: the residue that the pocket
+definition of that line names there (or the one in contact), and an empty text if its definition has no such position (with a KLIFS definition: a residue that is missing in the
+crystal).</p>
+<p><strong>SVG</strong> (<code>--matrix-format svg</code>, with <code>--matrix-title TEXT</code> for a title): a heat map with one row for each ligand and, for each position, a block of one thin stripe for each class,
+colored when the bit is set (the legend gives the colors). The regions of the pocket definition are drawn above the positions, with the colors of its <code>@color</code> lines. Hovering over a stripe
+shows the ligand, the position, the class and the residue. The figure is self-contained (no external resources) and has a white background.</p>
+<h2 id="command-line"><a name="command-line"></a>Command line</h2>
+<pre><code class="language-text">ligint --matrix LIST [--matrix-format csv|json|svg] [--matrix-classes klifs|all|NAMES] [--matrix-hide-empty] [--matrix-title TEXT] [--pocket FILE]
+</code></pre>
+<pre><code class="language-text">ligint --matrix docs/examples/hiv-protease-matrix.tsv --pocket docs/examples/hiv-protease-pocket.tsv &gt; matrix.csv
+ligint --matrix docs/examples/hiv-protease-matrix.tsv --pocket docs/examples/hiv-protease-pocket.tsv --matrix-format svg --matrix-title &quot;HIV-1 protease inhibitors&quot; &gt; matrix.svg
+</code></pre>
+<p>The matrix is written to the standard output; the warnings go to the standard error. The thresholds and the options of the analysis (<code>--hb-max</code>, <code>--plip-like</code>, <code>--no-water</code>, <code>--altloc</code>, <code>--format</code>, <code>--sdf</code>...) apply to
+every row. <code>--matrix</code> takes no structure on the command line, and it cannot be combined with <code>--fingerprint</code>, <code>--csv</code>, <code>--download-pdb</code> or <code>--klifs-*</code>. An error in the list or in an entry
+stops the program with exit code 1 and the message <code>Matrix: Entry N (line L, label): ...</code>; nothing is written to the standard output.</p>
+<h2 id="graphical-interface"><a name="graphical-interface"></a>Graphical interface</h2>
+<p>The <strong>Matrix</strong> tab (and <strong>File &gt; Open ligand list for the matrix...</strong>) opens a list, <strong>Compute matrix</strong> builds it in the background with the settings of the left panel and the pocket
+definition that is loaded (it is the common one: put the others in the <code>pocket</code> column), and shows the heat map (with Qt Svg) and a table with the interactions and positions of each row. <strong>All
+interaction classes</strong> and <strong>Hide positions without interactions</strong> are the options <code>--matrix-classes all</code> and <code>--matrix-hide-empty</code>. <strong>File &gt; Export matrix...</strong> writes SVG, CSV or JSON by extension, and <strong>File &gt; Copy matrix command line</strong> gives the <code>ligint --matrix ...</code> command that reproduces it.</p>
+<h2 id="library"><a name="library"></a>Library</h2>
+<pre><code class="language-cpp">#include &lt;ligint/matrix.hpp&gt;
+
+auto entries = ligint::readMatrixList(&quot;ligands.tsv&quot;);
+ligint::MatrixOptions opt;
+opt.pocket = &quot;pocket.tsv&quot;;                         // optional: the common pocket definition
+ligint::InteractionMatrix m = ligint::makeMatrix(entries, opt);
+bool set = m.bit(row, position, cls);              // one cell
+ligint::writeMatrixCsv(std::cout, m);              // or writeMatrixJson, matrixSvg
+</code></pre>
+<h2 id="checked-and-not-covered"><a name="checked-and-not-covered"></a>Checked and not covered</h2>
+<p>The tests check, without a network: the list (formats, aliases, quoting, paths, every error with its line), the classes, the matrix with and without pocket definitions, the merge of
+different definitions in either order, the selection of one ligand, the warnings, the three outputs (the JSON bits equal the CSV cells; the SVG is well-formed and has one stripe for each bit set),
+that each row <strong>agrees with the fingerprint of the same ligand</strong> computed separately (also on the three HIV protease complexes), and corrupted lists.</p>
+<ul>
+<li>The bits are the interactions that ligint computes. <strong>They have not been compared with the interaction fingerprint that KLIFS publishes</strong>: the definitions of the interactions differ, so
+  the two can disagree on some cells, and measuring how much is a separate piece of work.</li>
+<li>There is no similarity measure between the rows (Tanimoto and the like): the matrix is the input for them.</li>
+</ul>
+<p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="fingerprint.html">Interaction fingerprints</a> &middot; <a href="klifs.html">KLIFS kinase pockets</a> &raquo;</p>
+<p class="foot">ligint 0.9.0 manual</p>
+</body>
+</html>

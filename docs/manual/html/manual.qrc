@@ -17,6 +17,7 @@
         <file alias="install.html">install.html</file>
         <file alias="interactions.html">interactions.html</file>
         <file alias="klifs.html">klifs.html</file>
+        <file alias="matrix.html">matrix.html</file>
         <file alias="quickstart.html">quickstart.html</file>
         <file alias="rcsb.html">rcsb.html</file>
         <file alias="toc.json">toc.json</file>

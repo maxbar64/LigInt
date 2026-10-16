@@ -85,6 +85,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     proxy_->setSourceModel(model_);
     taskWatcher_ = new QFutureWatcher<TaskOutcome>(this);
     connect(taskWatcher_, &QFutureWatcher<TaskOutcome>::finished, this, [this] { applyTask(taskWatcher_->result()); });
+    matrixWatcher_ = new QFutureWatcher<MatrixOutcome>(this);
+    connect(matrixWatcher_, &QFutureWatcher<MatrixOutcome>::finished, this, [this] { applyMatrix(matrixWatcher_->result()); });
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
@@ -95,6 +97,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 MainWindow::~MainWindow() {
     if (watcher_ && watcher_->isRunning()) watcher_->waitForFinished();
     if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
+    if (matrixWatcher_ && matrixWatcher_->isRunning()) matrixWatcher_->waitForFinished();
 }
 
 void MainWindow::buildUi() {
@@ -118,6 +121,12 @@ void MainWindow::buildUi() {
     cmdAct_->setToolTip(tr("The ligint command that reproduces the last analysis outside the GUI"));
     cmdAct_->setEnabled(false);
     fpCmdAct_->setEnabled(false);
+    file->addSeparator();
+    makeAction(file, tr("Open ligand &list for the matrix…"), &MainWindow::onOpenMatrixList);
+    matrixExportAct_ = makeAction(file, tr("Export &matrix…"), &MainWindow::onExportMatrix);
+    matrixCmdAct_ = makeAction(file, tr("Copy matrix command line"), &MainWindow::onCopyMatrixCommand);
+    matrixExportAct_->setEnabled(false);
+    matrixCmdAct_->setEnabled(false);
     file->addSeparator();
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(false);
@@ -301,6 +310,58 @@ void MainWindow::buildUi() {
     fpTab->setStretchFactor(0, 3);
     fpTab->setStretchFactor(1, 2);
     tabs_->addTab(fpTab, tr("Fingerprint"));
+
+    // matrix tab: controls, the heat map (if Qt Svg is available) and a table with a row for each ligand
+    matrixTab_ = new QWidget;
+    {
+        auto* box = new QVBoxLayout(matrixTab_);
+        auto* bar = new QHBoxLayout;
+        matrixOpenButton_ = new QPushButton(tr("Open list…"));
+        matrixOpenButton_->setObjectName("matrix_open");
+        matrixOpenButton_->setToolTip(tr("A TSV or CSV file with one line for each ligand: structure, ligand, label, pocket… (see the manual)"));
+        matrixRunButton_ = new QPushButton(tr("Compute matrix"));
+        matrixRunButton_->setObjectName("matrix_run");
+        matrixRunButton_->setEnabled(false);
+        matrixAllClasses_ = new QCheckBox(tr("All interaction classes"));
+        matrixAllClasses_->setObjectName("matrix_all");
+        matrixAllClasses_->setToolTip(tr("Unchecked: the 7 classes of the KLIFS interaction fingerprint. Checked: also cation-π, halogen, metal and water bridge."));
+        matrixHide_ = new QCheckBox(tr("Hide positions without interactions"));
+        matrixHide_->setObjectName("matrix_hide");
+        matrixInfo_ = new QLabel(tr("No list: File → Open ligand list for the matrix…"));
+        bar->addWidget(matrixOpenButton_);
+        bar->addWidget(matrixRunButton_);
+        bar->addWidget(matrixAllClasses_);
+        bar->addWidget(matrixHide_);
+        bar->addWidget(matrixInfo_, 1);
+        box->addLayout(bar);
+        auto* split = new QSplitter(Qt::Vertical);
+        matrixFigure_ = new SvgView;
+        if (SvgView::available()) {
+            auto* scroll = new QScrollArea;
+            scroll->setWidget(matrixFigure_);
+            scroll->setWidgetResizable(false);
+            scroll->setBackgroundRole(QPalette::Base);
+            split->addWidget(scroll);
+        } else {
+            matrixNote_ = new QLabel(tr("The heat map needs Qt Svg: this build shows the matrix as a table only."));
+            matrixNote_->setAlignment(Qt::AlignCenter);
+            split->addWidget(matrixNote_);
+            matrixFigure_->hide();
+        }
+        matrixTable_ = new QTableWidget(0, 5);
+        matrixTable_->setHorizontalHeaderLabels({tr("Label"), tr("Ligand"), tr("Structure"), tr("Interactions"), tr("Positions")});
+        matrixTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        matrixTable_->verticalHeader()->setVisible(false);
+        matrixTable_->setAlternatingRowColors(true);
+        matrixTable_->horizontalHeader()->setStretchLastSection(true);
+        split->addWidget(matrixTable_);
+        split->setStretchFactor(0, 3);
+        split->setStretchFactor(1, 2);
+        box->addWidget(split, 1);
+        connect(matrixOpenButton_, &QPushButton::clicked, this, &MainWindow::onOpenMatrixList);
+        connect(matrixRunButton_, &QPushButton::clicked, this, [this] { runMatrix(); });
+    }
+    tabs_->addTab(matrixTab_, tr("Matrix"));
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
@@ -619,6 +680,12 @@ QStringList MainWindow::currentArgs() const {
         if (ambiguous) number += l.icode == ' ' ? QStringLiteral("-") : QString(QChar(l.icode));
         a << number;
     }
+    a << optionArgs();
+    return a;
+}
+
+QStringList MainWindow::optionArgs() const {
+    QStringList a;
     // only the settings that differ from the program defaults
     const ligint::Params d;
     auto thr = [&](const char* name, double value, double def) {
@@ -664,6 +731,208 @@ void MainWindow::onCopyFingerprintCommand() {
     if (c.isEmpty()) return;
     QApplication::clipboard()->setText(c);
     statusBar()->showMessage(tr("Fingerprint command line copied"), 4000);
+}
+
+// ------------------------------------------------------------------------------------------------
+// interaction matrix
+// ------------------------------------------------------------------------------------------------
+bool MainWindow::matrixRunning() const { return matrixWatcher_ && matrixWatcher_->isRunning(); }
+
+bool MainWindow::loadMatrixList(const QString& path) {
+    if (matrixRunning()) return false;
+    std::vector<ligint::MatrixEntry> entries;
+    try {
+        entries = ligint::readMatrixList(path.toStdString());
+    } catch (const std::exception& e) {
+        showError(tr("Matrix list"), QString::fromUtf8(e.what()));
+        return false;
+    }
+    matrixEntries_ = std::move(entries);
+    matrixListPath_ = path;
+    haveMatrix_ = false;
+    matrix_ = ligint::InteractionMatrix();
+    lastMatrixArgs_.clear();
+    matrixExportAct_->setEnabled(false);
+    matrixCmdAct_->setEnabled(false);
+    matrixRunButton_->setEnabled(true);
+    matrixInfo_->setText(tr("%1: %2 ligands").arg(QFileInfo(path).fileName()).arg(matrixEntries_.size()));
+    if (SvgView::available()) matrixFigure_->load(QByteArray());
+    fillMatrixTable();
+    log(tr("Matrix list %1: %2 ligands").arg(path).arg(matrixEntries_.size()));
+    tabs_->setCurrentWidget(matrixTab_);
+    return true;
+}
+
+void MainWindow::fillMatrixTable() {
+    matrixTable_->setRowCount(0);
+    auto cell = [&](int row, int col, const QString& text) { matrixTable_->setItem(row, col, new QTableWidgetItem(text)); };
+    if (haveMatrix_) {
+        matrixTable_->setRowCount(static_cast<int>(matrix_.rows.size()));
+        const std::size_t nc = matrix_.classes.size();
+        for (std::size_t r = 0; r < matrix_.rows.size(); ++r) {
+            const auto& row = matrix_.rows[r];
+            int positions = 0;
+            for (std::size_t p = 0; p < matrix_.positions.size(); ++p) {
+                bool any = false;
+                for (std::size_t c = 0; c < nc; ++c) any = any || row.bits[p * nc + c] != 0;
+                positions += any;
+            }
+            const int i = static_cast<int>(r);
+            cell(i, 0, QString::fromStdString(row.label));
+            cell(i, 1, QString::fromStdString(row.ligandId));
+            cell(i, 2, QFileInfo(QString::fromStdString(row.structure)).fileName());
+            cell(i, 3, QString::number(row.bitCount()));
+            cell(i, 4, QString::number(positions));
+        }
+    } else {
+        matrixTable_->setRowCount(static_cast<int>(matrixEntries_.size()));
+        for (std::size_t r = 0; r < matrixEntries_.size(); ++r) {
+            const auto& e = matrixEntries_[r];
+            const int i = static_cast<int>(r);
+            cell(i, 0, QString::fromStdString(e.label));
+            cell(i, 1, QString::fromStdString(e.ligand));
+            cell(i, 2, QFileInfo(QString::fromStdString(e.structure)).fileName());
+            cell(i, 3, QStringLiteral("—"));
+            cell(i, 4, QStringLiteral("—"));
+        }
+    }
+    matrixTable_->resizeColumnsToContents();
+}
+
+bool MainWindow::runMatrix(bool wait) {
+    if (matrixEntries_.empty()) {
+        showError(tr("Matrix"), tr("Open a ligand list first (File → Open ligand list for the matrix…)."));
+        return false;
+    }
+    if (matrixRunning()) return false;
+    ligint::MatrixOptions options;
+    options.analysis = buildOptions();                              // the ligand of each row comes from the list
+    if (havePocket_ && !pocketPath_.isEmpty()) options.pocket = pocketPath_.toStdString();
+    options.hideEmptyPositions = matrixHide_->isChecked();
+    if (matrixAllClasses_->isChecked()) {
+        std::string error;
+        ligint::parseMatrixClasses("all", options.classes, error);
+    }
+    // the command line of this run
+    QStringList args;
+    args << "--matrix" << QFileInfo(matrixListPath_).absoluteFilePath();
+    if (havePocket_ && !pocketPath_.isEmpty()) args << "--pocket" << pocketPath_;
+    if (matrixAllClasses_->isChecked()) args << "--matrix-classes" << "all";
+    if (matrixHide_->isChecked()) args << "--matrix-hide-empty";
+    args << optionArgs();
+    lastMatrixArgs_ = args;
+    const std::vector<ligint::MatrixEntry> entries = matrixEntries_;
+    auto job = [entries, options]() {
+        MatrixOutcome o;
+        try {
+            o.matrix = ligint::makeMatrix(entries, options);
+            o.ok = true;
+        } catch (const std::exception& e) {
+            o.error = QString::fromUtf8(e.what());
+        }
+        return o;
+    };
+    statusBar()->showMessage(tr("Computing the matrix…"));
+    matrixRunButton_->setEnabled(false);
+    if (wait) {
+        applyMatrix(job());
+        return true;
+    }
+    QApplication::setOverrideCursor(Qt::BusyCursor);
+    matrixWatcher_->setFuture(QtConcurrent::run(job));
+    return true;
+}
+
+void MainWindow::applyMatrix(const MatrixOutcome& o) {
+    while (QApplication::overrideCursor()) QApplication::restoreOverrideCursor();
+    statusBar()->clearMessage();
+    matrixRunButton_->setEnabled(!matrixEntries_.empty());
+    if (!o.ok) {
+        // no matrix is better than one that no command reproduces: go back to the list of the entries
+        lastMatrixArgs_.clear();
+        haveMatrix_ = false;
+        matrix_ = ligint::InteractionMatrix();
+        matrixExportAct_->setEnabled(false);
+        matrixCmdAct_->setEnabled(false);
+        if (SvgView::available()) matrixFigure_->load(QByteArray());
+        fillMatrixTable();
+        showError(tr("Matrix failed"), o.error);
+        return;
+    }
+    matrix_ = o.matrix;
+    haveMatrix_ = true;
+    for (const auto& w : matrix_.warnings) log(tr("Warning: ") + QString::fromStdString(w));
+    int bits = 0;
+    for (const auto& row : matrix_.rows) bits += row.bitCount();
+    log(tr("Matrix: %1 ligands, %2 %3, %4 classes, %5 interactions")
+            .arg(matrix_.rows.size())
+            .arg(matrix_.positions.size())
+            .arg(matrix_.pocketMode ? tr("pocket positions") : tr("residues"))
+            .arg(matrix_.classes.size())
+            .arg(bits));
+    fillMatrixTable();
+    if (SvgView::available()) {
+        ligint::MatrixSvgOptions so;
+        so.title = QFileInfo(matrixListPath_).completeBaseName().toStdString();
+        if (!matrixFigure_->load(QByteArray::fromStdString(ligint::matrixSvg(matrix_, so)))) log(tr("The matrix figure could not be drawn"));
+    }
+    matrixExportAct_->setEnabled(true);
+    matrixCmdAct_->setEnabled(true);
+    log(tr("Command line: ") + matrixCommandLine());
+    matrixInfo_->setText(tr("%1: %2 ligands, %3 interactions").arg(QFileInfo(matrixListPath_).fileName()).arg(matrix_.rows.size()).arg(bits));
+}
+
+bool MainWindow::exportMatrix(const QString& path) {
+    if (!haveMatrix_) return false;
+    const QString suffix = QFileInfo(path).suffix().toLower();
+    std::ofstream file(path.toStdString(), std::ios::binary);
+    if (!file) return false;
+    if (suffix == "svg") {
+        ligint::MatrixSvgOptions so;
+        so.title = QFileInfo(matrixListPath_).completeBaseName().toStdString();
+        file << ligint::matrixSvg(matrix_, so);
+    } else if (suffix == "csv") ligint::writeMatrixCsv(file, matrix_);
+    else if (suffix == "json") ligint::writeMatrixJson(file, matrix_);
+    else return false;
+    file.flush();
+    return static_cast<bool>(file);
+}
+
+QString MainWindow::matrixCommandLine(const QString& format) const {
+    if (lastMatrixArgs_.isEmpty()) return QString();
+    QStringList a = lastMatrixArgs_;
+    if (format != QLatin1String("csv")) a << "--matrix-format" << format;
+    // the figure of the window has the name of the list as its title
+    if (format == QLatin1String("svg")) a << "--matrix-title" << QFileInfo(matrixListPath_).completeBaseName();
+    return joinCommand("ligint", a);
+}
+
+void MainWindow::onOpenMatrixList() {
+    QSettings s("ligint", "ligint-gui");
+    const QString f = QFileDialog::getOpenFileName(this, tr("Open ligand list for the matrix"), s.value("lastDir").toString(),
+                                                   tr("Ligand lists (*.tsv *.csv *.txt);;All files (*)"));
+    if (f.isEmpty()) return;
+    s.setValue("lastDir", QFileInfo(f).absolutePath());
+    loadMatrixList(f);
+}
+
+void MainWindow::onExportMatrix() {
+    if (!haveMatrix_) return;
+    QSettings s("ligint", "ligint-gui");
+    QString selected;
+    QString f = QFileDialog::getSaveFileName(this, tr("Export matrix"), s.value("lastDir").toString() + "/matrix.svg",
+                                             tr("SVG heat map (*.svg);;CSV table (*.csv);;JSON (*.json)"), &selected);
+    if (f.isEmpty()) return;
+    if (QFileInfo(f).suffix().isEmpty()) f += selected.contains("CSV") ? ".csv" : selected.contains("JSON") ? ".json" : ".svg";
+    if (!exportMatrix(f)) showError(tr("Export failed"), f);
+    else statusBar()->showMessage(tr("Exported %1").arg(f), 5000);
+}
+
+void MainWindow::onCopyMatrixCommand() {
+    const QString c = matrixCommandLine();
+    if (c.isEmpty()) return;
+    QApplication::clipboard()->setText(c);
+    statusBar()->showMessage(tr("Matrix command line copied"), 4000);
 }
 
 // ------------------------------------------------------------------------------------------------

@@ -8,7 +8,9 @@
 
 #include "ligint/fingerprint.hpp"
 #include "ligint/klifs.hpp"
+#include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
+#include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
 
@@ -554,6 +556,172 @@ static std::string pocketMol2(const std::vector<std::pair<std::string, std::stri
     return t;
 }
 
+static void writeTextFile(const std::string& path, const std::string& text) {
+    std::ofstream f(path, std::ios::binary);
+    f << text;
+}
+
+static void testMatrixList() {
+    // header in any order, aliases, comments, quotes, a BOM and Windows line ends
+    std::istringstream in("\xEF\xBB\xBF# a list\r\nlabel,Ligand,FILE,chain,resi,altloc,pocket\r\n"
+                          "\"first, one\",STI,\"dir/a.pdb\",A,201,B,p.tsv\r\n\r\n"
+                          "second,ATP,/abs/b.cif,,501A,,\r\nthird,ZN,c.pdb,B,12-,,\r\n");
+    auto e = ligint::parseMatrixList(in, "base");
+    CHECK(e.size() == 3);
+    CHECK(e[0].label == "first, one" && e[0].ligand == "STI" && e[0].chain == "A" && e[0].resi == 201 && e[0].icode == 0 && e[0].altloc == 'B');
+    CHECK(e[0].structure == (std::filesystem::path("base") / "dir/a.pdb").string() && e[0].pocket == (std::filesystem::path("base") / "p.tsv").string());
+    CHECK(e[1].structure == "/abs/b.cif" && e[1].resi == 501 && e[1].icode == 'A' && e[1].pocket.empty() && e[1].altloc == 0 && e[1].line == 5);
+    CHECK(e[2].resi == 12 && e[2].icode == ' ' && e[2].chain == "B");
+    // tab-separated, with only the required column
+    std::istringstream tsv("structure\nx.pdb\n");
+    CHECK(ligint::parseMatrixList(tsv, "")[0].structure == "x.pdb");
+    // errors name the line
+    auto message = [](const std::string& text) {
+        std::istringstream i(text);
+        try { ligint::parseMatrixList(i, ""); } catch (const std::runtime_error& ex) { return std::string(ex.what()); }
+        return std::string("(no exception)");
+    };
+    CHECK(message("").find("empty") != std::string::npos);
+    CHECK(message("# only a comment\n").find("empty") != std::string::npos);
+    CHECK(message("structure\tligand\n").find("no entries") != std::string::npos);
+    std::istringstream alias("file\tligand\nx.pdb\tSTI\n");                                                       // 'file' is an alias of structure
+    CHECK(ligint::parseMatrixList(alias, "")[0].ligand == "STI");
+    CHECK(message("ligand\tchain\nSTI\tA\n").find("Line 1") != std::string::npos && message("ligand\tchain\nSTI\tA\n").find("'structure' column") != std::string::npos);
+    CHECK(message("structure\tligand\n\tSTI\n").find("Line 2: the structure is empty") != std::string::npos);
+    CHECK(message("structure\tresseq\na.pdb\t12AB\n").find("Line 2: invalid residue number '12AB'") != std::string::npos);
+    CHECK(message("structure\tresseq\na.pdb\tx\n").find("invalid residue number") != std::string::npos);
+    CHECK(message("structure\taltloc\na.pdb\tAB\n").find("altloc expects a single character") != std::string::npos);
+    // residue numbers as the command line writes them
+    int resi = 0;
+    char icode = 9;
+    CHECK(ligint::parseLigandResidueNumber("501", resi, icode) && resi == 501 && icode == 0);
+    CHECK(ligint::parseLigandResidueNumber("501A", resi, icode) && icode == 'A');
+    CHECK(ligint::parseLigandResidueNumber("501-", resi, icode) && icode == ' ');
+    CHECK(ligint::parseLigandResidueNumber("-5", resi, icode) && resi == -5);
+    CHECK(!ligint::parseLigandResidueNumber("", resi, icode) && !ligint::parseLigandResidueNumber("A", resi, icode) && !ligint::parseLigandResidueNumber("12AB", resi, icode) &&
+          !ligint::parseLigandResidueNumber("1234567", resi, icode));
+    // missing file
+    bool thrown = false;
+    try { ligint::readMatrixList("this_list_does_not_exist.tsv"); } catch (const std::runtime_error&) { thrown = true; }
+    CHECK(thrown);
+    // classes
+    std::vector<int> c;
+    std::string err;
+    CHECK(ligint::parseMatrixClasses("klifs", c, err) && c == ligint::defaultMatrixClasses() && c.size() == 7);
+    CHECK(ligint::parseMatrixClasses("ALL", c, err) && c.size() == static_cast<std::size_t>(ligint::FpClassCount));
+    CHECK(ligint::parseMatrixClasses("hbond_donor, hydrophobic,hbond_donor", c, err) && c.size() == 2 && c[0] == ligint::FpHydrophobic && c[1] == ligint::FpHBondDonor);
+    CHECK(!ligint::parseMatrixClasses("hydrophobic,nonsense", c, err) && err.find("nonsense") != std::string::npos);
+    CHECK(!ligint::parseMatrixClasses(" , ", c, err) && !err.empty());
+}
+
+static void testMatrixBuild() {
+    namespace fs = std::filesystem;
+    writeTextFile("lm_a.pdb", methanolSystem(true));              // ligand LIG L1; ASN A10 accepts a hydrogen bond
+    writeTextFile("lm_b.pdb", carboxylateLysSystem());           // ligand LIG L1; LYS A30: ionic positive and H-bond donor
+    writeTextFile("lm_none.pdb", methanolSystem(false));         // a ligand and no protein
+    writeTextFile("lm_two.pdb", methanolSystem(false).substr(0, methanolSystem(false).find("END")) +
+                                    atomLine("HETATM", 8, "C1", "LIG", 'M', 2, 20, 0, 0, "C") + "\n" + atomLine("HETATM", 9, "O1", "LIG", 'M', 2, 21.43, 0, 0, "O") + "\nEND\n");
+    writeTextFile("lm_pocket.tsv", "@name test\n@color R #ff0000\nA\t10\t1\thinge\tASN\nA\t30\t2\tR\tLYS\nA\t40\t3\tR\tGLY\n");
+    writeTextFile("lm_pocket1.tsv", "A\t10\t1\thinge\tASN\nA\t30\t2\tR\tLYS\nA\t99\t4\tR\tGLY\n");
+    writeTextFile("lm_pocket2.tsv", "A\t10\t1\thinge\tASN\nA\t30\t2\tR\tLYS\nA\t50\t3\tR\tALA\nA\t99\t4\tR\tGLY\n");
+    auto entry = [](const std::string& file, const std::string& label, const std::string& pocket = std::string()) {
+        ligint::MatrixEntry e;
+        e.structure = file;
+        e.ligand = "LIG";
+        e.label = label;
+        e.pocket = pocket;
+        return e;
+    };
+    auto failure = [](const std::vector<ligint::MatrixEntry>& entries, const ligint::MatrixOptions& o = ligint::MatrixOptions()) {
+        try { ligint::makeMatrix(entries, o); } catch (const std::runtime_error& ex) { return std::string(ex.what()); }
+        return std::string("(no exception)");
+    };
+    // without a pocket definition the columns are the residues in contact
+    auto m = ligint::makeMatrix({entry("lm_a.pdb", "a"), entry("lm_b.pdb", "b")});
+    CHECK(!m.pocketMode && m.rows.size() == 2 && m.positions.size() == 2 && m.classes.size() == 7);
+    CHECK(m.positions[0].label == "ASN 10A" && m.positions[1].label == "LYS 30A" && m.positions[0].region.empty());
+    CHECK(m.bit(0, 0, 4) && m.rows[0].bitCount() == 1 && !m.bit(0, 1, 3));                                      // a: ASN accepts (class 4)
+    CHECK(m.bit(1, 1, 3) && m.bit(1, 1, 5) && m.rows[1].bitCount() == 2 && m.rows[1].residues[0].empty() && m.rows[1].residues[1] == "LYS 30A");
+    CHECK(m.rows[0].ligandId == "LIG 1L" && m.rows[0].label == "a" && m.warnings.empty());
+    // the same with a pocket definition: every position is a column, also those without contacts
+    ligint::MatrixOptions po;
+    po.pocket = "lm_pocket.tsv";
+    m = ligint::makeMatrix({entry("lm_a.pdb", "a"), entry("lm_b.pdb", "b")}, po);
+    CHECK(m.pocketMode && m.positions.size() == 3 && m.positions[0].label == "1" && m.positions[0].region == "hinge" && m.positions[2].region == "R");
+    CHECK(m.regionColors.size() == 1 && m.regionColors[0].first == "R");
+    CHECK(m.bit(0, 0, 4) && m.bit(1, 1, 3) && m.bit(1, 1, 5) && m.rows[0].bitCount() == 1 && m.rows[1].bitCount() == 2);
+    po.hideEmptyPositions = true;                                                                                // position 3 has no contact
+    m = ligint::makeMatrix({entry("lm_a.pdb", "a"), entry("lm_b.pdb", "b")}, po);
+    CHECK(m.positions.size() == 2 && m.positions[1].label == "2" && m.rows[1].bits.size() == 14 && m.rows[1].residues.size() == 2 && m.bit(1, 1, 5));
+    // a selection of classes
+    po.hideEmptyPositions = false;
+    po.classes = {ligint::FpHBondDonor, ligint::FpIonicPositive};
+    m = ligint::makeMatrix({entry("lm_b.pdb", "b")}, po);
+    CHECK(m.classes.size() == 2 && m.rows[0].bits.size() == 6 && m.bit(0, 1, 0) && m.bit(0, 1, 1) && m.rows[0].bitCount() == 2);
+    // pockets that differ per entry: a position that only one pocket has goes where it belongs
+    m = ligint::makeMatrix({entry("lm_a.pdb", "a", "lm_pocket1.tsv"), entry("lm_b.pdb", "b", "lm_pocket2.tsv")});
+    CHECK(m.positions.size() == 4 && m.positions[0].label == "1" && m.positions[1].label == "2" && m.positions[2].label == "3" && m.positions[3].label == "4");
+    m = ligint::makeMatrix({entry("lm_b.pdb", "b", "lm_pocket2.tsv"), entry("lm_a.pdb", "a", "lm_pocket1.tsv")});                  // the same in the other order
+    CHECK(m.positions.size() == 4 && m.positions[2].label == "3" && m.positions[3].label == "4");
+    // a contact that is outside the pocket definition is reported and is not a column
+    writeTextFile("lm_small.tsv", "A\t30\t2\tR\tLYS\n");
+    po = ligint::MatrixOptions();
+    po.pocket = "lm_small.tsv";
+    m = ligint::makeMatrix({entry("lm_a.pdb", "a")}, po);
+    CHECK(m.positions.size() == 1 && m.rows[0].bitCount() == 0 && m.warnings.size() == 1 && m.warnings[0].find("not in the pocket definition") != std::string::npos &&
+          m.warnings[0].find("ASN 10A") != std::string::npos);
+    // errors name the entry
+    auto noLigand = entry("lm_a.pdb", "x");
+    noLigand.ligand.clear();
+    CHECK(failure({noLigand}).find("the ligand is required; the structure has: LIG(1)") != std::string::npos);
+    auto missing = entry("lm_a.pdb", "x");
+    missing.ligand = "XYZ";
+    CHECK(failure({entry("lm_a.pdb", "a"), missing}).find("Entry 2") != std::string::npos && failure({missing}).find("ligand 'XYZ' not found") != std::string::npos);
+    CHECK(failure({entry("lm_two.pdb", "two")}).find("matches 2 ligands") != std::string::npos);
+    auto chosen = entry("lm_two.pdb", "two");
+    chosen.chain = "M";
+    CHECK(ligint::makeMatrix({chosen}).rows[0].ligandId == "LIG 2M");
+    CHECK(failure({entry("no_such_file.pdb", "n")}).find("Entry 1") != std::string::npos);
+    CHECK(failure({entry("lm_a.pdb", "same"), entry("lm_b.pdb", "same")}).find("used by another entry") != std::string::npos);
+    CHECK(failure({entry("lm_a.pdb", "a", "lm_pocket.tsv"), entry("lm_b.pdb", "b")}).find("Entry 2") != std::string::npos &&
+          failure({entry("lm_a.pdb", "a", "lm_pocket.tsv"), entry("lm_b.pdb", "b")}).find("has no pocket definition while others have one") != std::string::npos);
+    CHECK(failure({entry("lm_a.pdb", "a", "no_such_pocket.tsv")}).find("cannot open the pocket definition") != std::string::npos);
+    CHECK(failure({}).find("no entries") != std::string::npos);
+    ligint::MatrixOptions bad;
+    bad.classes = {99};
+    CHECK(failure({entry("lm_a.pdb", "a")}, bad).find("Invalid interaction class") != std::string::npos);
+    // a default label from the file and the ligand
+    auto unnamed = entry("lm_a.pdb", "");
+    CHECK(ligint::makeMatrix({unnamed}).rows[0].label == "lm_a LIG 1L");
+    // the outputs
+    po = ligint::MatrixOptions();
+    po.pocket = "lm_pocket.tsv";
+    m = ligint::makeMatrix({entry("lm_a.pdb", "a, with comma"), entry("lm_b.pdb", "b")}, po);
+    std::ostringstream csv;
+    ligint::writeMatrixCsv(csv, m);
+    std::istringstream rows(csv.str());
+    std::string header, row1, row2;
+    std::getline(rows, header);
+    std::getline(rows, row1);
+    std::getline(rows, row2);
+    CHECK(header.rfind("label,structure,ligand,1:hydrophobic,1:face_to_face", 0) == 0 && header.find("3:ionic_negative") != std::string::npos);
+    CHECK(row1.rfind("\"a, with comma\",lm_a.pdb,LIG 1L,", 0) == 0 && row2.rfind("b,lm_b.pdb,LIG 1L,", 0) == 0);
+    CHECK(std::count(header.begin(), header.end(), ',') == 3 + 21 - 1 && std::count(row2.begin(), row2.end(), '1') >= 2);
+    std::ostringstream json;
+    ligint::writeMatrixJson(json, m);
+    CHECK(json.str().find("\"classes\": [\"hydrophobic\"") != std::string::npos && json.str().find("\"pocket\": true") != std::string::npos &&
+          json.str().find("\"label\": \"a, with comma\"") != std::string::npos && json.str().find("\"region\": \"hinge\"") != std::string::npos);
+    const std::string svg = ligint::matrixSvg(m);
+    CHECK(svg.rfind("<svg ", 0) == 0 && svg.find("</svg>") != std::string::npos && svg.find("hinge") != std::string::npos && svg.find("Hydrophobic") != std::string::npos &&
+          svg.find("a, with comma") != std::string::npos);
+    ligint::MatrixSvgOptions so;
+    so.title = "T & <x>";
+    so.showLegend = false;
+    const std::string svg2 = ligint::matrixSvg(m, so);
+    CHECK(svg2.find("T &amp; &lt;x&gt;") != std::string::npos && svg2.find("Hydrophobic") == std::string::npos);
+    for (const char* f : {"lm_a.pdb", "lm_b.pdb", "lm_none.pdb", "lm_two.pdb", "lm_pocket.tsv", "lm_pocket1.tsv", "lm_pocket2.tsv", "lm_small.tsv"}) std::remove(f);
+}
+
 static void testKlifsPocketMol2() {
     namespace fs = std::filesystem;
     const std::string aa3[] = {"ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS", "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"};
@@ -862,6 +1030,8 @@ int main() {
     testRcsbCacheAndValidation();
     testKlifsStructureSelection();
     testKlifsPocketMol2();
+    testMatrixList();
+    testMatrixBuild();
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();

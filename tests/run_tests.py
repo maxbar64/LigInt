@@ -18,6 +18,7 @@ Groups:
     cif    PDBx/mmCIF input (same results as the PDB, long chain ids, malformed files)
     manual the HTML manual (up to date, links resolve, agrees with the program)
     net    KLIFS pocket definitions and RCSB downloads (no real network traffic)
+    matrix the interaction matrix of several ligands (--matrix)
     robust malformed / anomalous input: the program must not crash nor print nan
     golden real complexes: list of interactions already verified by hand against diagrams (REGRESSION
            tests, not validation tests)
@@ -1577,6 +1578,333 @@ def klifs_command_line_rules():
     check(r.rc == 1 and r.err.startswith("KLIFS: ") and ("unavailable" in r.err or "request failed" in r.err), "KLIFS service not reachable: rc=%d %s" % (r.rc, r.err[:200]))
     r = run_raw(["--klifs-pdb", "3E/G", "--klifs-chain", "A", "--klifs-output", os.path.join(CFG["tmp"], "z.tsv")], env=NO_NETWORK)
     check(r.rc == 1 and "four-character PDB ID" in r.err, "invalid PDB ID: " + r.err)
+
+
+# ----------------------------------------------------------------------------------------------
+# GROUP matrix: the interaction matrix of several ligands (--matrix LIST)
+# ----------------------------------------------------------------------------------------------
+MATRIX_POCKET = "@name test\n@color gk #ffcc00\nA\t10\t1\thinge\tASN\nA\t30\t2\tgk\tLYS\nA\t77\t3\tgk\tGLY\n"
+CLASSES7 = ["hydrophobic", "face_to_face", "edge_to_face", "hbond_donor", "hbond_acceptor", "ionic_positive", "ionic_negative"]
+
+
+def matrix_structures():
+    """Two structures with one ligand each: ASN 10 accepts a hydrogen bond (A); a carboxylate and LYS 30, which is positive and donates (B)."""
+    a = fp_system()
+    b = Sys().ligand(carboxylate()).prot("LYS", "NZ", at((0.62, 1.07, 0), (0.5, 0.866, 0), 2.8), resi=30)
+    return tmpfile(a.text()), tmpfile(b.text())
+
+
+def matrix_list_file(pa, pb, extra_header="", extra_a="", extra_b="", relative=True):
+    na, nb = (os.path.basename(pa), os.path.basename(pb)) if relative else (pa, pb)
+    return tmpfile("structure\tligand\tlabel%s\n%s\tLIG\talpha%s\n%s\tLIG\tbeta%s\n" % (extra_header, na, extra_a, nb, extra_b), ".tsv")
+
+
+def matrix_csv(out):
+    lines = out.strip().splitlines()
+    head = lines[0].split(",")
+    rows = {}
+    for l in lines[1:]:
+        cells = l.split(",")
+        rows[cells[0]] = dict(zip(head, cells))
+    return head, rows
+
+
+def bits_of(row):
+    return {k: v for k, v in row.items() if ":" in k and v == "1"}
+
+
+@test("matrix")
+def matrix_csv_json_svg_are_consistent():
+    pa, pb = matrix_structures()
+    lst = matrix_list_file(pa, pb)                                 # relative paths: resolved against the folder of the list
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    r = run_raw(["--matrix", lst, "--pocket", pocket])
+    check(r.rc == 0 and not r.err.strip(), "csv rc=%d %s" % (r.rc, r.err[:200]))
+    head, rows = matrix_csv(r.out)
+    check(head == ["label", "structure", "ligand"] + ["%s:%s" % (p, c) for p in ("1", "2", "3") for c in CLASSES7], "header: " + ",".join(head[:8]))
+    check(list(rows) == ["alpha", "beta"] and os.path.normpath(rows["alpha"]["structure"]) == os.path.normpath(pa), "rows: %s %s" % (list(rows), rows["alpha"]["structure"]))
+    check(set(bits_of(rows["alpha"])) == {"1:hbond_acceptor"}, "alpha: " + str(bits_of(rows["alpha"])))
+    check(set(bits_of(rows["beta"])) == {"2:hbond_donor", "2:ionic_positive"}, "beta: " + str(bits_of(rows["beta"])))
+    check(rows["alpha"]["ligand"] == "LIG 1L" and rows["beta"]["ligand"] == "LIG 1L", "ligand ids")
+    j = run_raw(["--matrix", lst, "--pocket", pocket, "--matrix-format", "json"])
+    check(j.rc == 0, "json rc=%d" % j.rc)
+    d = json.loads(j.out)
+    check(d["classes"] == CLASSES7 and d["pocket"] is True and [p["position"] for p in d["positions"]] == ["1", "2", "3"] and
+          [p["region"] for p in d["positions"]] == ["hinge", "gk", "gk"], "json structure")
+    check([x["label"] for x in d["rows"]] == ["alpha", "beta"] and all(len(x["bits"]) == 21 and len(x["residues"]) == 3 for x in d["rows"]), "json rows")
+    for x in d["rows"]:                                           # the bits of the JSON are the cells of the CSV, in the same order
+        csv_bits = [int(rows[x["label"]]["%s:%s" % (p, c)]) for p in ("1", "2", "3") for c in CLASSES7]
+        check(x["bits"] == csv_bits, "json bits = csv cells for " + x["label"])
+    check(d["rows"][0]["residues"][0] == "ASN 10A" and d["rows"][1]["residues"][1] == "LYS 30A", "residues in the json: " + str([x["residues"] for x in d["rows"]]))
+    v = run_raw(["--matrix", lst, "--pocket", pocket, "--matrix-format", "svg", "--matrix-title", "A & B <test>"])
+    check(v.rc == 0, "svg rc=%d" % v.rc)
+    root = ET.fromstring(v.out.encode("utf-8"))                     # well-formed XML
+    check(root.tag == SVG_NS + "svg" and root.get("width") and root.get("viewBox"), "svg root")
+    for text in ("alpha", "beta", "hinge", "A &amp; B &lt;test&gt;", "H-bond acceptor", "Ionic positive"):
+        check(text in v.out, "svg must contain " + text)
+    stripes = [e for e in root.iter(SVG_NS + "rect") if e.find(SVG_NS + "title") is not None]
+    check(len(stripes) == 3, "one stripe for each bit that is set (3), got %d" % len(stripes))
+    check("#ffcc00" in v.out, "the @color of the pocket definition is used for its region")
+    # the same matrix, whatever the way it is asked for
+    check(run_raw(["--matrix", lst, "--matrix-format", "csv", "--pocket", pocket]).out == r.out, "the default format is csv")
+
+
+@test("matrix")
+def matrix_without_pocket_uses_the_residues_in_contact():
+    pa, pb = matrix_structures()
+    lst = matrix_list_file(pa, pb)
+    r = run_raw(["--matrix", lst])
+    check(r.rc == 0 and not r.err.strip(), "rc=%d %s" % (r.rc, r.err[:200]))
+    head, rows = matrix_csv(r.out)
+    check(head[3:] == ["%s:%s" % (p, c) for p in ("ASN 10A", "LYS 30A") for c in CLASSES7], "the columns are the residues in contact: " + ",".join(head[3:6]))
+    check(set(bits_of(rows["alpha"])) == {"ASN 10A:hbond_acceptor"} and set(bits_of(rows["beta"])) == {"LYS 30A:hbond_donor", "LYS 30A:ionic_positive"}, "bits")
+    j = json.loads(run_raw(["--matrix", lst, "--matrix-format", "json"]).out)
+    check(j["pocket"] is False and all(p["region"] == "" for p in j["positions"]), "no regions without a pocket")
+    svg = run_raw(["--matrix", lst, "--matrix-format", "svg"])
+    ET.fromstring(svg.out.encode("utf-8"))
+    # the classes
+    r = run_raw(["--matrix", lst, "--matrix-classes", "all"])
+    head, rows = matrix_csv(r.out)
+    check(len(head) == 3 + 2 * 11 and head[3 + 7] == "ASN 10A:cation_pi" and head[3 + 10] == "ASN 10A:water_bridge", "all the classes: " + ",".join(head[3:5]))
+    r = run_raw(["--matrix", lst, "--matrix-classes", "hbond_acceptor, hbond_donor"])
+    head, rows = matrix_csv(r.out)
+    check(head[3:] == ["ASN 10A:hbond_donor", "ASN 10A:hbond_acceptor", "LYS 30A:hbond_donor", "LYS 30A:hbond_acceptor"], "a selection, in the order of the classes: " + str(head[3:]))
+    r = run_raw(["--matrix", lst, "--matrix-classes", "klifs"])
+    check(matrix_csv(r.out)[0][3:10] == ["ASN 10A:" + c for c in CLASSES7], "klifs = the 7 classes")
+    r = run_raw(["--matrix", lst, "--matrix-classes", "hydrophobic,nonsense"])
+    check(r.rc == 1 and "--matrix-classes: unknown interaction class 'nonsense'" in r.err and not r.out, "unknown class: " + r.err)
+    r = run_raw(["--matrix", lst, "--matrix-classes", ","])
+    check(r.rc == 1 and "no interaction class" in r.err, "empty selection")
+
+
+@test("matrix")
+def matrix_pockets_per_entry_and_hiding_empty_positions():
+    pa, pb = matrix_structures()
+    p1 = tmpfile("A\t10\t1\thinge\tASN\nA\t30\t2\tgk\tLYS\nA\t99\t4\tgk\tGLY\n", ".tsv")
+    p2 = tmpfile("A\t10\t1\thinge\tASN\nA\t30\t2\tgk\tLYS\nA\t50\t3\tgk\tALA\nA\t99\t4\tgk\tGLY\n", ".tsv")
+    for first, second in ((p1, p2), (p2, p1)):                          # the position that only one pocket has goes between 2 and 4, in either order
+        lst = matrix_list_file(pa, pb, extra_header="\tpocket", extra_a="\t" + os.path.basename(first), extra_b="\t" + os.path.basename(second))
+        r = run_raw(["--matrix", lst])
+        check(r.rc == 0, "rc=%d %s" % (r.rc, r.err[:200]))
+        head, rows = matrix_csv(r.out)
+        positions = [h.split(":")[0] for h in head[3::7]]
+        check(positions == ["1", "2", "3", "4"], "the order of the merged positions: %s (%s first)" % (positions, os.path.basename(first)))
+        check(set(bits_of(rows["alpha"])) == {"1:hbond_acceptor"} and set(bits_of(rows["beta"])) == {"2:hbond_donor", "2:ionic_positive"}, "bits")
+    # the common pocket of --pocket is used by the entries that do not name one
+    lst = matrix_list_file(pa, pb, extra_header="\tpocket", extra_a="\t" + os.path.basename(p1), extra_b="")
+    r = run_raw(["--matrix", lst, "--pocket", p2])
+    check(r.rc == 0 and [h.split(":")[0] for h in matrix_csv(r.out)[0][3::7]] == ["1", "2", "3", "4"], "mixed: " + r.err[:200])
+    # positions without any interaction can be left out
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    lst = matrix_list_file(pa, pb)
+    full = matrix_csv(run_raw(["--matrix", lst, "--pocket", pocket]).out)[0]
+    small = run_raw(["--matrix", lst, "--pocket", pocket, "--matrix-hide-empty"])
+    check(small.rc == 0, "hide-empty rc")
+    head, rows = matrix_csv(small.out)
+    check([h.split(":")[0] for h in head[3::7]] == ["1", "2"] and len(full) == 3 + 21 and len(head) == 3 + 14, "position 3 has no interaction and is left out")
+    check(set(bits_of(rows["beta"])) == {"2:hbond_donor", "2:ionic_positive"}, "the bits are the same")
+    d = json.loads(run_raw(["--matrix", lst, "--pocket", pocket, "--matrix-hide-empty", "--matrix-format", "json"]).out)
+    check([p["position"] for p in d["positions"]] == ["1", "2"] and all(len(x["bits"]) == 14 and len(x["residues"]) == 2 for x in d["rows"]), "json with hide-empty")
+    ET.fromstring(run_raw(["--matrix", lst, "--pocket", pocket, "--matrix-hide-empty", "--matrix-format", "svg"]).out.encode("utf-8"))
+
+
+@test("matrix")
+def matrix_list_file_variants_and_ligand_selection():
+    pa, pb = matrix_structures()
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    na, nb = os.path.basename(pa), os.path.basename(pb)
+    base = run_raw(["--matrix", matrix_list_file(pa, pb), "--pocket", pocket]).out
+    # CSV, other column names and order, quotes, comments, blank lines, a byte order mark and Windows line ends: the same matrix
+    text = ('# a list of ligands\r\n\r\nName,File,Ligand\r\n"alpha",%s,LIG\r\n  # another comment\r\nbeta,"%s",LIG\r\n' % (na, nb))
+    for name, content, suffix in (("csv", text, ".csv"), ("bom", "\ufeff" + text, ".csv")):
+        r = run_raw(["--matrix", tmpfile(content, suffix), "--pocket", pocket])
+        check(r.rc == 0 and r.out == base, "%s: rc=%d %s" % (name, r.rc, r.err[:200]))
+    r = run_raw(["--matrix", tmpfile(text.replace(",", "\t"), ".tsv"), "--pocket", pocket])
+    check(r.rc == 0 and r.out == base, "tsv with other columns: " + r.err[:200])
+    # the entries can name a label that has a comma (quoted)
+    r = run_raw(["--matrix", tmpfile('structure,ligand,label\n%s,LIG,"one, two"\n' % na, ".csv"), "--pocket", pocket])
+    check(r.rc == 0 and r.out.splitlines()[1].startswith('"one, two",'), "label with a comma is quoted in the csv: " + r.out[-120:])
+    # a default label from the file and the ligand
+    r = run_raw(["--matrix", tmpfile("structure\tligand\n%s\tLIG\n" % na, ".tsv"), "--pocket", pocket])
+    check(r.rc == 0 and r.out.splitlines()[1].startswith(os.path.splitext(na)[0] + " LIG 1L,"), "default label: " + r.out.splitlines()[1][:60])
+    # a structure with two ligands of the same name: the chain and the residue number choose
+    m = methanol()
+    s2 = Sys().ligand(m, chain="L", resi=1)
+    s2.atom("HETATM", "C1", "LIG", "M", 2, (30.0, 0.0, 0.0), "C")              # a second methanol, far from the first (close ligands would be merged into one)
+    s2.atom("HETATM", "O1", "LIG", "M", 2, (31.43, 0.0, 0.0), "O")
+    two = tmpfile(s2.prot("ASN", "OD1", at(m.atoms[1][2], (0.5, 0.866, 0), 2.8)).text())
+    n2 = os.path.basename(two)
+    r = run_raw(["--matrix", tmpfile("structure\tligand\n%s\tLIG\n" % n2, ".tsv")])
+    check(r.rc == 1 and "matches 2 ligands" in r.err and "LIG 1L" in r.err and "LIG 2M" in r.err and not r.out, "ambiguous: " + r.err)
+    for extra, wanted in (("chain\tresseq\nM\t\n", "LIG 2M"), ("chain\tresseq\nL\t1\n", "LIG 1L"), ("chain\tresseq\n\t2\n", "LIG 2M"), ("chain\tresseq\n\t2-\n", "LIG 2M"), ("chain\tresseq\n\t1A\n", None)):
+        head, body = extra.split("\n")[0], extra.split("\n")[1]
+        r = run_raw(["--matrix", tmpfile("structure\tligand\t%s\n%s\tLIG\t%s\n" % (head, n2, body), ".tsv")])
+        if wanted:
+            check(r.rc == 0 and r.out.splitlines()[1].split(",")[2] == wanted, "%r: %s %s" % (body, r.out[-60:], r.err[:150]))
+        else:
+            check(r.rc == 1, "a residue number that does not exist: rc=%d" % r.rc)
+    # a column that is not known is ignored
+    r = run_raw(["--matrix", tmpfile("structure\tligand\tcomment\n%s\tLIG\twhatever\n" % na, ".tsv")])
+    check(r.rc == 0, "unknown column")
+
+
+@test("matrix")
+def matrix_errors_name_the_entry_and_write_nothing():
+    pa, pb = matrix_structures()
+    na, nb = os.path.basename(pa), os.path.basename(pb)
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    cases = {
+        "missing structure file": ("structure\tligand\n%s\tLIG\nnothing_here.pdb\tLIG\n" % na, ["Entry 2 (line 3, nothing_here.pdb)"]),
+        "ligand not found": ("structure\tligand\n%s\tXYZ\n" % na, ["ligand 'XYZ' not found", "LIG(1)"]),
+        "ligand missing": ("structure\tligand\n%s\t\n" % na, ["the ligand is required", "LIG(1)"]),
+        "duplicate label": ("structure\tligand\tlabel\n%s\tLIG\tx\n%s\tLIG\tx\n" % (na, nb), ["used by another entry"]),
+        "no header": ("ligand\tchain\nLIG\tA\n", ["Line 1", "'structure' column"]),
+        "empty structure": ("structure\tligand\n\tLIG\n", ["Line 2: the structure is empty"]),
+        "bad residue number": ("structure\tligand\tresseq\n%s\tLIG\t12AB\n" % na, ["Line 2: invalid residue number '12AB'"]),
+        "bad altloc": ("structure\tligand\taltloc\n%s\tLIG\tAB\n" % na, ["altloc expects a single character"]),
+        "header only": ("structure\tligand\n", ["no entries"]),
+        "only comments": ("# nothing\n", ["empty"]),
+        "pocket does not exist": ("structure\tligand\tpocket\n%s\tLIG\tno_such_pocket.tsv\n" % na, ["cannot open the pocket definition"]),
+        "pocket for some entries only": ("structure\tligand\tpocket\n%s\tLIG\t%s\n%s\tLIG\t\n" % (na, os.path.basename(pocket), nb), ["Entry 2", "has no pocket definition while others have one"]),
+    }
+    for name, (text, wanted) in cases.items():
+        r = run_raw(["--matrix", tmpfile(text, ".tsv")])
+        check(r.rc == 1 and r.err.startswith("Matrix: ") and not r.out, "%s: rc=%d out=%r err=%s" % (name, r.rc, r.out[:40], r.err[:200]))
+        for w in wanted:
+            check(w in r.err, "%s: the message must contain %r: %s" % (name, w, r.err[:300]))
+    r = run_raw(["--matrix", os.path.join(CFG["tmp"], "no_such_list.tsv")])
+    check(r.rc == 1 and "Cannot open the matrix list" in r.err, "missing list: " + r.err)
+    # the mixed case is also an error when the common pocket is given for some entries only (through the list)
+    r = run_raw(["--matrix", tmpfile("structure\tligand\n%s\tLIG\n" % na, ".tsv"), "--pocket", os.path.join(CFG["tmp"], "no_such_pocket.tsv")])
+    check(r.rc == 1 and "cannot open the pocket definition" in r.err, "common pocket that does not exist: " + r.err)
+
+
+@test("matrix")
+def matrix_command_line_rules():
+    pa, pb = matrix_structures()
+    lst = matrix_list_file(pa, pb)
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    r = run_raw(["--matrix", lst, pa])
+    check(r.rc == 1 and "takes no structure argument" in r.err, "positional argument: " + r.err)
+    for other in (["--fingerprint", "csv"], ["--csv"], ["--klifs-pdb", "3EYG", "--klifs-chain", "A", "--klifs-mapping", pocket], ["--download-pdb", "1AZM"]):
+        r = run_raw(["--matrix", lst] + other)
+        check(r.rc == 1 and "--matrix cannot be combined" in r.err and not r.out, "%s: %s" % (other[0], r.err[:150]))
+    for opt, value in (("--matrix-format", "csv"), ("--matrix-classes", "klifs"), ("--matrix-title", "t")):
+        r = run_raw([opt, value])
+        check(r.rc == 1 and "require --matrix LIST" in r.err, "%s without --matrix: %s" % (opt, r.err[:150]))
+    r = run_raw(["--matrix-hide-empty"])
+    check(r.rc == 1 and "require --matrix LIST" in r.err, "--matrix-hide-empty without --matrix")
+    r = run_raw(["--matrix", lst, "--matrix-format", "xml"])
+    check(r.rc == 1 and "expects csv, json or svg" in r.err, "format: " + r.err)
+    for opt in ("--matrix", "--matrix-format", "--matrix-classes", "--matrix-title"):
+        r = run_raw([opt])
+        check(r.rc == 1 and "requires a value" in r.err, "%s without a value" % opt)
+    # the thresholds of the analysis apply to every row
+    base = matrix_csv(run_raw(["--matrix", lst, "--pocket", pocket]).out)[1]
+    check(len(bits_of(base["alpha"])) == 1, "alpha has a hydrogen bond")
+    none = run_raw(["--matrix", lst, "--pocket", pocket, "--hb-max", "2.0"])
+    rows = matrix_csv(none.out)[1] if none.rc == 0 else {}
+    check(none.rc == 0 and len(bits_of(rows["alpha"])) == 0 and set(bits_of(rows["beta"])) == {"2:ionic_positive"},
+          "--hb-max 2.0 removes the hydrogen bonds, not the salt bridge: %s %s" % (bits_of(rows.get("alpha", {})), bits_of(rows.get("beta", {}))))
+    ok = run_raw(["--matrix", lst, "--pocket", pocket, "--plip-like"])
+    check(ok.rc == 0, "--plip-like")
+    r = run_raw(["--matrix", lst, "--no-water", "--metal-donors", "--backbone-hyd", "--no-merge", "--altloc", "B", "--format", "pdb"])
+    check(r.rc == 0, "the other options: " + r.err[:150])
+
+
+@test("matrix")
+def matrix_reports_contacts_outside_the_pocket():
+    pa, pb = matrix_structures()
+    small = tmpfile("A\t10\t1\thinge\tASN\n", ".tsv")                     # no position for LYS 30
+    r = run_raw(["--matrix", matrix_list_file(pa, pb), "--pocket", small])
+    check(r.rc == 0, "rc=%d" % r.rc)
+    check("Warning: beta: 1 residue(s) in contact are not in the pocket definition and are not in the matrix: LYS 30A" in r.err, "warning: " + r.err)
+    head, rows = matrix_csv(r.out)
+    check(len(head) == 3 + 7 and len(bits_of(rows["beta"])) == 0 and len(bits_of(rows["alpha"])) == 1, "the contact is not a column")
+    # an entry in the list whose pocket warns about a line
+    bad = tmpfile("A\t10\t1\thinge\tASN\nthis line is not valid\n", ".tsv")
+    r = run_raw(["--matrix", matrix_list_file(pa, pb), "--pocket", bad])
+    check(r.rc == 0 and r.err.count("Warning:") >= 1 and os.path.basename(bad) in r.err, "a malformed pocket line is reported once: " + r.err[:200])
+
+
+@test("matrix")
+def matrix_agrees_with_the_single_fingerprints():
+    pa, pb = matrix_structures()
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    head, rows = matrix_csv(run_raw(["--matrix", matrix_list_file(pa, pb), "--pocket", pocket]).out)
+    for label, path in (("alpha", pa), ("beta", pb)):
+        fp = run_raw([path, "LIG", "--fingerprint", "csv", "--pocket", pocket])
+        lines = fp.out.strip().splitlines()
+        fhead = lines[0].split(",")
+        for l in lines[1:]:
+            c = dict(zip(fhead, l.split(",")))
+            if not c["position"]:
+                continue
+            for cls in CLASSES7:
+                check(rows[label]["%s:%s" % (c["position"], cls)] == ("1" if int(c[cls]) > 0 else "0"), "%s %s %s" % (label, c["position"], cls))
+
+
+@test("matrix")
+def matrix_on_real_complexes_agrees_with_the_single_fingerprints():
+    names = (("1HSG", "MK1"), ("1HVR", "XK2"), ("1HXB", "ROC"))
+    root = os.path.abspath(os.path.join(CFG["real_dir"], "..", ".."))
+    pocket = os.path.join(root, "docs", "examples", "hiv-protease-pocket.tsv")
+    if not all(os.path.exists(os.path.join(CFG["real_dir"], n + ".pdb")) for n, _ in names) or not os.path.exists(pocket):
+        raise Skip("the HIV protease complexes or their pocket definition are not in " + root)
+    lst = tmpfile("structure\tligand\tlabel\n" + "".join("%s\t%s\t%s\n" % (os.path.join(CFG["real_dir"], n + ".pdb"), lig, n) for n, lig in names), ".tsv")
+    head, rows = matrix_csv(run_raw(["--matrix", lst, "--pocket", pocket]).out)
+    check(list(rows) == [n for n, _ in names] and len(head) == 3 + 7 * ((len(head) - 3) // 7) and (len(head) - 3) // 7 > 20, "rows and columns: %d" % len(head))
+    total = 0
+    for n, lig in names:
+        fp = run_raw([os.path.join(CFG["real_dir"], n + ".pdb"), lig, "--fingerprint", "csv", "--pocket", pocket])
+        fl = fp.out.strip().splitlines()
+        fhead = fl[0].split(",")
+        expected = {}
+        for l in fl[1:]:
+            c = dict(zip(fhead, l.split(",")))
+            if c["position"]:
+                for cls in CLASSES7:
+                    expected["%s:%s" % (c["position"], cls)] = "1" if int(c[cls]) > 0 else "0"
+        for col, v in expected.items():
+            check(rows[n][col] == v, "%s %s: matrix %s, fingerprint %s" % (n, col, rows[n][col], v))
+        total += len(bits_of(rows[n]))
+    check(total > 30, "the three inhibitors make many contacts: %d" % total)
+    check(any(rows[n]["A25:hbond_acceptor"] == "1" for n, _ in names), "the catalytic Asp25 accepts a hydrogen bond in at least one complex")
+    # the example list of the documentation gives the same matrix
+    example = os.path.join(root, "docs", "examples", "hiv-protease-matrix.tsv")
+    if os.path.exists(example):
+        r = run_raw(["--matrix", example, "--pocket", pocket])
+        check(r.rc == 0 and len(matrix_csv(r.out)[1]) == 3, "the example of the documentation runs: " + r.err[:200])
+
+
+@test("matrix")
+def matrix_robustness():
+    pa, pb = matrix_structures()
+    pocket = tmpfile(MATRIX_POCKET, ".tsv")
+    good = open(matrix_list_file(pa, pb), encoding="utf-8").read()
+    rnd = random.Random(33)
+    for i in range(60):
+        t = list(good)
+        for _ in range(6):
+            k = rnd.randrange(len(t))
+            t[k] = rnd.choice("\t,\"\n#\r \x00\u00e9a1-")
+        r = run_raw(["--matrix", tmpfile("".join(t), ".tsv"), "--pocket", pocket])
+        no_crash(r)
+        check(r.rc in (0, 1), "corrupted list %d: rc=%d" % (i, r.rc))
+        check(r.rc == 1 or r.out.startswith("label,structure,ligand"), "a list that is accepted gives a matrix: %d" % i)
+    garbage = bytes(random.Random(4).getrandbits(8) for _ in range(4000))
+    r = run_raw(["--matrix", tmpfile(garbage, ".tsv", binary=True)])
+    no_crash(r)
+    check(r.rc == 1, "binary garbage: rc=%d" % r.rc)
+    r = run_raw(["--matrix", tmpfile("structure\tligand\tlabel\n%s\tLIG\t%s\n" % (os.path.basename(pa), "x" * 30000), ".tsv")])
+    no_crash(r)
+    check(r.rc == 0 and ET.fromstring(run_raw(["--matrix", tmpfile("structure\tligand\tlabel\n%s\tLIG\t%s\n" % (os.path.basename(pa), "x" * 30000), ".tsv"), "--matrix-format", "svg"]).out.encode("utf-8")) is not None,
+          "a very long label")
+    # many entries
+    many = "structure\tligand\tlabel\n" + "".join("%s\tLIG\tr%d\n" % (os.path.basename(pa if i % 2 else pb), i) for i in range(150))
+    r = run_raw(["--matrix", tmpfile(many, ".tsv"), "--pocket", pocket], timeout=120)
+    check(r.rc == 0 and len(r.out.strip().splitlines()) == 151, "150 rows: rc=%d %.1f s" % (r.rc, CFG["last_time"]))
+    check(CFG["last_time"] < 60, "150 rows in a reasonable time: %.1f s" % CFG["last_time"])
 
 
 def mol2_pocket(residues, eol="\n"):

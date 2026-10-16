@@ -2,6 +2,7 @@
 #include "ligint/fingerprint.hpp"
 #include "ligint/ligint.hpp"
 #include "ligint/klifs.hpp"
+#include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
 
 #include <cctype>
@@ -20,6 +21,7 @@ static void usage(const char* prog, const Params& p) {
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
+         << "Matrix: --matrix LIST [--matrix-format csv|json|svg] [--matrix-classes klifs|all|NAMES] [--matrix-hide-empty] [--matrix-title TEXT] [--pocket FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
          << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
          << " --salt-max " << p.saltMax << " --rep-max " << p.repMax << "\n  --hal-max " << p.halMax
@@ -36,6 +38,7 @@ int main(int argc, char** argv) {
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
+    string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
     string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
         string s = argv[i];
@@ -61,6 +64,20 @@ int main(int argc, char** argv) {
             if (v.size() != 1 || v[0] == ' ') { cerr << "--altloc expects a single character, e.g. A or B\n"; return 1; }
             opt.altloc = v[0];
         }
+        else if (s == "--matrix" || s == "--matrix-format" || s == "--matrix-classes" || s == "--matrix-title") {
+            if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
+            const string v = argv[++i];
+            if (s == "--matrix") matrixPath = v;
+            else {
+                matrixOptionGiven = true;
+                if (s == "--matrix-format") {
+                    if (v != "csv" && v != "json" && v != "svg") { cerr << "--matrix-format expects csv, json or svg\n"; return 1; }
+                    matrixFormat = v;
+                } else if (s == "--matrix-classes") matrixClasses = v;
+                else matrixTitle = v;
+            }
+        }
+        else if (s == "--matrix-hide-empty") { matrixHide = true; matrixOptionGiven = true; }
         else if (s == "--klifs-pdb" || s == "--klifs-chain" || s == "--klifs-model" || s == "--klifs-mapping" || s == "--klifs-output" || s == "--klifs-id" || s == "--klifs-sequence") {
             if (i + 1 >= argc) { cerr << s << " requires a value\n"; return 1; }
             string v=argv[++i];useKlifs=true;
@@ -108,6 +125,32 @@ int main(int argc, char** argv) {
             }
             i++;
         } else pa.push_back(s);
+    }
+    if (matrixPath.empty() && matrixOptionGiven) { cerr << "--matrix-format, --matrix-classes, --matrix-title and --matrix-hide-empty require --matrix LIST\n"; return 1; }
+    if (!matrixPath.empty()) {
+        // the matrix: one row for each ligand of the list, the structures are in the list
+        if (!pa.empty()) { cerr << "--matrix takes no structure argument: the structures are in the list\n"; return 1; }
+        if (useRcsb || useKlifs || !fpFormat.empty() || csv) { cerr << "--matrix cannot be combined with --download-pdb, --klifs-*, --fingerprint or --csv\n"; return 1; }
+        for (auto& w : P.clampToGrid()) cerr << w << "\n";
+        try {
+            MatrixOptions mo;
+            mo.analysis = opt;
+            mo.pocket = pocketPath;                       // the pocket of the entries that do not name one
+            mo.hideEmptyPositions = matrixHide;
+            if (!matrixClasses.empty()) {
+                string err;
+                if (!parseMatrixClasses(matrixClasses, mo.classes, err)) { cerr << "--matrix-classes: " << err << "\n"; return 1; }
+            }
+            const InteractionMatrix m = makeMatrix(readMatrixList(matrixPath), mo);
+            for (auto& w : m.warnings) cerr << "Warning: " << w << "\n";
+            if (matrixFormat == "csv") writeMatrixCsv(cout, m);
+            else if (matrixFormat == "json") writeMatrixJson(cout, m);
+            else { MatrixSvgOptions so; so.title = matrixTitle; cout << matrixSvg(m, so); }
+        } catch (const exception& e) {
+            cerr << "Matrix: " << e.what() << "\n";
+            return 1;
+        }
+        return 0;
     }
     if(downloadOnly && !useRcsb){cerr<<"--download-only requires --download-pdb\n";return 1;}
     // with --download-pdb the positional arguments are the ligand: RESNAME [chain [resseq]] (the structure is the downloaded file)

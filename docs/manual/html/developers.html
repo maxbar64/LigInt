@@ -28,6 +28,7 @@ src/core/
   analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
   pdb.cpp, mmcif.cpp        readers of the PDB and PDBx/mmCIF formats: both produce RawAtom (internal.hpp), nothing else differs
   rcsb.cpp                  RCSB download into a cache (ligint/rcsb.hpp); libcurl is optional (LIGINT_RCSB_ONLINE)
+  matrix.cpp                interaction matrix of several ligands on the same columns (ligint/matrix.hpp): list file, columns, CSV/JSON/SVG
 src/klifs/klifs.cpp         KLIFS mapping -&gt; PocketDefinition (ligint/klifs.hpp); the service client needs libcurl and json-c (LIGINT_KLIFS_ONLINE)
   chemistry.cpp             rings and chemical roles (donor, acceptor, charge) of protein and ligand
   templates.cpp             SDF/MOL2 reading and matching to the ligand by coordinates
@@ -114,6 +115,6 @@ images and in the tests.</p>
 </tbody>
 </table>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="troubleshooting.html">Troubleshooting</a> &middot; <a href="changelog.html">Changelog</a> &raquo;</p>
-<p class="foot">ligint 0.8.2 manual</p>
+<p class="foot">ligint 0.9.0 manual</p>
 </body>
 </html>
