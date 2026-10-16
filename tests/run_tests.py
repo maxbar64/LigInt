@@ -2606,6 +2606,7 @@ def main():
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--real-dir", default=os.path.join(HERE, "data"))
     ap.add_argument("-v", action="store_true", help="show the message also for passed/skipped tests")
+    ap.add_argument("--keep", action="store_true", help="keep the temporary files (they are removed when all the tests pass; with failures they are kept)")
     a = ap.parse_args()
     if a.list:
         for g, n, _ in TESTS:
@@ -2617,6 +2618,7 @@ def main():
     if a.bin:
         CFG["bin"] = os.path.abspath(a.bin)
         if not os.path.exists(CFG["bin"]):
+            shutil.rmtree(tmp, ignore_errors=True)
             sys.exit("binary not found: " + CFG["bin"])
         print("binary: %s (prebuilt)" % CFG["bin"])
     else:
@@ -2646,6 +2648,10 @@ def main():
             failures.append((g, n, "error in the test: %r" % e))
             print("  ERROR %-7s %s\n          -> %r" % (g, n, e))
     print("\nresult: %d passed, %d failed, %d skipped" % (ok, fail, skip))
+    if fail or a.keep:
+        print("temporary files kept in: " + tmp)
+    else:
+        shutil.rmtree(tmp, ignore_errors=True)       # the files of the tests are large (hundreds of MB): do not leave them in the temporary folder
     return 1 if fail else 0
 
 

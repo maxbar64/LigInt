@@ -135,6 +135,129 @@ jobs:
             build/ligint-dev_*_amd64.deb
             build/ligint-*-linux-*.tar.gz
 
+  linux-ubuntu22:
+    name: Ubuntu 22.04 packages (.deb)
+    runs-on: ubuntu-24.04
+    # Built in an Ubuntu 22.04 container, not on the runner image "ubuntu-22.04" (GitHub is retiring that label in 2027): the container
+    # has the libraries of 22.04 (Qt 6.2, libcurl 7.81, glibc 2.35), so the package depends on them and installs on 22.04.
+    container:
+      image: ubuntu:22.04
+    steps:
+      - name: Prepare
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cmake ninja-build g++ make pkg-config libcurl4-openssl-dev libjson-c-dev \
+            qt6-base-dev libqt6svg6-dev libgl1-mesa-dev fonts-dejavu-core python3 python3-pip lintian desktop-file-utils dpkg-dev file
+      - name: The HTML manual is up to date with its sources
+        run: |
+          pip3 install -r tools/requirements-manual.txt
+          python3 tools/build_manual.py --check
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+          PYTHONIOENCODING: utf-8
+      - name: Package
+        run: cd build && cpack -G DEB
+      - name: Check the packages (lintian)
+        run: lintian --fail-on error build/ligint_*_amd64.deb build/ligint-dev_*_amd64.deb
+      - name: Install, run, remove
+        run: |
+          apt-get install -y ./build/ligint_*_amd64.deb ./build/ligint-dev_*_amd64.deb
+          ligint --version
+          ligint tests/data/1AZM.pdb AZM --csv | head -3
+          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
+          desktop-file-validate /usr/share/applications/ligint-gui.desktop
+          # a program built against the installed development package
+          mkdir consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.16)
+          project(consumer CXX)
+          set(CMAKE_CXX_STANDARD 17)
+          find_package(ligint REQUIRED)
+          add_executable(consumer main.cpp)
+          target_link_libraries(consumer PRIVATE ligint::core)
+          EOF
+          cat > consumer/main.cpp <<'EOF'
+          #include <iostream>
+          #include <ligint/ligint.hpp>
+          int main(int, char** argv) {
+              ligint::Options opt;
+              opt.ligName = argv[2];
+              auto r = ligint::analyzeFile(argv[1], opt);
+              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
+          }
+          EOF
+          cmake -S consumer -B consumer/build
+          cmake --build consumer/build
+          consumer/build/consumer tests/data/1AZM.pdb AZM
+          apt-get remove -y ligint ligint-dev
+          hash -r                       # forget the cached path of the removed program
+          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
+      - name: Name the packages for Ubuntu 22.04
+        # the same package name and version as the one for Ubuntu 24.04: the release collects all the files in one folder, so they need different names
+        run: |
+          cd build
+          for f in ligint_*_amd64.deb ligint-dev_*_amd64.deb; do mv "$f" "${f%_amd64.deb}_ubuntu22.04_amd64.deb"; done
+          ls -l ligint*_ubuntu22.04_amd64.deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-ubuntu22-packages
+          path: |
+            build/ligint_*_ubuntu22.04_amd64.deb
+            build/ligint-dev_*_ubuntu22.04_amd64.deb
+
+  deb-clean-install:
+    name: Install the .deb on a clean ${{ matrix.name }}
+    # The jobs that build the packages install them in an environment that already has the development tools. A user does not: this installs the .deb
+    # as a user does (with the recommended packages) on a system with nothing else, so that a missing dependency shows.
+    needs: [linux-packages, linux-ubuntu22]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 22.04
+            image: "ubuntu:22.04"
+            artifact: linux-ubuntu22-packages
+          - name: Ubuntu 24.04
+            image: "ubuntu:24.04"
+            artifact: linux-packages
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Prepare
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: debs
+      - name: Install
+        run: |
+          ls -l debs
+          DEBIAN_FRONTEND=noninteractive apt-get install -y ./debs/ligint_*_amd64.deb
+      - name: Run
+        run: |
+          ligint --version
+          ligint tests/data/1AZM.pdb AZM --csv | head -3
+          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
+      - name: Remove
+        run: |
+          apt-get remove -y ligint
+          hash -r
+          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
+
   windows:
     name: Windows (MSVC, Qt 6) installer
     runs-on: windows-2022
@@ -323,7 +446,7 @@ jobs:
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-packages, windows, rpm-alma9]
+    needs: [linux-packages, linux-ubuntu22, deb-clean-install, windows, rpm-alma9]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

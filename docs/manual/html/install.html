@@ -43,6 +43,11 @@ a { color: #1c7ed6; }
 <td>headers, static library and CMake package, for programs that use the library</td>
 </tr>
 <tr>
+<td>Linux (Ubuntu 22.04)</td>
+<td><code>ligint_&lt;version&gt;_ubuntu22.04_amd64.deb</code>, <code>ligint-dev_&lt;version&gt;_ubuntu22.04_amd64.deb</code></td>
+<td>the same two packages, built for Ubuntu 22.04 (Qt 6.2)</td>
+</tr>
+<tr>
 <td>Linux</td>
 <td><code>ligint-&lt;version&gt;-linux-x86_64.tar.gz</code></td>
 <td>portable archive, no installation needed</td>
@@ -77,8 +82,10 @@ man ligint
 sudo apt remove ligint                             # uninstall
 </code></pre>
 <ul>
-<li>The <code>.deb</code> files are built on Ubuntu 24.04 (Qt 6.4) and depend on the Qt 6 packages of that release. On a distribution
-  with different Qt packages build from source (see the README) or use <code>cpack</code> as shown below.</li>
+<li>The <code>.deb</code> files without a release name are built on Ubuntu 24.04 (Qt 6.4) and depend on the libraries of that release (glibc 2.38, Qt 6.4): they do <strong>not</strong> install on Ubuntu 22.04.
+  The files with <code>ubuntu22.04</code> in the name are built in an Ubuntu 22.04 container (glibc 2.35, Qt 6.2) and install on it:
+  <code>sudo apt install ./ligint_&lt;version&gt;_ubuntu22.04_amd64.deb</code>. On another distribution build from source (see the README) or use <code>cpack</code> as shown below.</li>
+<li>The CI installs each package on a clean system (an Ubuntu container with nothing else) as a user does, with the recommended packages (<code>qt6-qpa-plugins</code>, which the window needs), and starts the program.</li>
 <li><code>ligint-gui</code> is associated with PDB files (MIME type <code>chemical/x-pdb</code>): <em>Open with</em> shows it.</li>
 <li>The portable archive is extracted anywhere (<code>bin/ligint</code>, <code>bin/ligint-gui</code>); the Qt 6 libraries must be installed
   (<code>libqt6widgets6</code>, <code>libqt6svg6</code>, <code>qt6-qpa-plugins</code> on Debian/Ubuntu).</li>

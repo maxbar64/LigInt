@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **Package for Ubuntu 22.04**: the CI builds `ligint` and `ligint-dev` in an `ubuntu:22.04` container (Qt 6.2, GCC 11, libcurl 7.81) and names the files `..._ubuntu22.04_amd64.deb`, so that the release can
+  have both packages. The container is used instead of the runner label `ubuntu-22.04`, which GitHub is retiring in 2027. The `.deb` of Ubuntu 24.04 needs glibc 2.38 and Qt 6.4 and does not install on 22.04.
+  Checked by running the steps of the job in an Ubuntu 22.04 system: build with `-Werror`, all the tests, `lintian`, installation, the window, a program built on the installed library.
+- **The CI installs the packages on a clean system** (Ubuntu 22.04 and 24.04 containers with nothing else), as a user does, and starts the program; before, the packages were installed where the development tools were.
+- The test runner (`tests/run_tests.py`) left its temporary files (hundreds of MB) in the temporary folder at every run: it removes them when all the tests pass (`--keep` keeps them; with failures they are kept and the path is printed).
+
 ## 0.10.1
 
 - **GUI: Generate from GPCRdb...** in the pocket group: the positions of the pocket (generic residue numbers) and where the numbers are (the open structure, another structure annotated by GPCRdb, or a

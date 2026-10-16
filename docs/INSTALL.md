@@ -7,6 +7,7 @@ Ready-made installers are built by the CI workflow (`.github/workflows/ci.yml`):
 |---|---|---|
 | Linux (Debian, Ubuntu) | `ligint_<version>_amd64.deb` | programs, manual pages, menu entry and icon |
 | Linux (Debian, Ubuntu) | `ligint-dev_<version>_amd64.deb` | headers, static library and CMake package, for programs that use the library |
+| Linux (Ubuntu 22.04) | `ligint_<version>_ubuntu22.04_amd64.deb`, `ligint-dev_<version>_ubuntu22.04_amd64.deb` | the same two packages, built for Ubuntu 22.04 (Qt 6.2) |
 | Linux | `ligint-<version>-linux-x86_64.tar.gz` | portable archive, no installation needed |
 | Rocky Linux, AlmaLinux, RHEL 9 | `ligint-<version>-1.x86_64.rpm` | programs, manual pages, menu entry and icon |
 | Rocky Linux, AlmaLinux, RHEL 9 | `ligint-devel-<version>-1.x86_64.rpm` | headers, static library and CMake package |
@@ -23,8 +24,10 @@ man ligint
 sudo apt remove ligint                             # uninstall
 ```
 
-- The `.deb` files are built on Ubuntu 24.04 (Qt 6.4) and depend on the Qt 6 packages of that release. On a distribution
-  with different Qt packages build from source (see the README) or use `cpack` as shown below.
+- The `.deb` files without a release name are built on Ubuntu 24.04 (Qt 6.4) and depend on the libraries of that release (glibc 2.38, Qt 6.4): they do **not** install on Ubuntu 22.04.
+  The files with `ubuntu22.04` in the name are built in an Ubuntu 22.04 container (glibc 2.35, Qt 6.2) and install on it:
+  `sudo apt install ./ligint_<version>_ubuntu22.04_amd64.deb`. On another distribution build from source (see the README) or use `cpack` as shown below.
+- The CI installs each package on a clean system (an Ubuntu container with nothing else) as a user does, with the recommended packages (`qt6-qpa-plugins`, which the window needs), and starts the program.
 - `ligint-gui` is associated with PDB files (MIME type `chemical/x-pdb`): *Open with* shows it.
 - The portable archive is extracted anywhere (`bin/ligint`, `bin/ligint-gui`); the Qt 6 libraries must be installed
   (`libqt6widgets6`, `libqt6svg6`, `qt6-qpa-plugins` on Debian/Ubuntu).
