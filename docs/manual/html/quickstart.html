@@ -35,6 +35,7 @@ download from the <a href="https://www.rcsb.org/structure/1AZM">RCSB Protein Dat
 <li>Drag in the view to rotate, use the wheel to zoom, click a row of the table to highlight that interaction.</li>
 <li><strong>File &gt; Export interactions (CSV)...</strong> saves the table, <strong>File &gt; Save image...</strong> saves the view as a PNG, and
    <strong>File &gt; Copy command line</strong> copies the <code>ligint</code> command that reproduces the analysis.</li>
+<li>To compare <strong>several ligands</strong> at once, open the <strong>Matrix</strong> tab and load a list of them: see <a href="#several-ligands-at-once">Several ligands at once</a>.</li>
 </ol>
 <p><img width="760" alt="The graphical interface on 1HSG" src="img/gui-1HSG-window.png" /></p>
 <p>The full description of the window is in <a href="gui.html">The graphical interface</a>.</p>
@@ -86,8 +87,18 @@ ligint 1AZM.pdb AZM A 262                             only chain A, residue 262 
 ligint 1AZM.pdb AZM --no-water                        ignore water molecules (no water bridges)
 ligint 1AZM.pdb AZM --fingerprint svg &gt; figure.svg    the interaction fingerprint as a figure
 ligint 1AZM.cif AZM                                   the same analysis from the mmCIF file
+ligint --matrix ligands.tsv --pocket pocket.tsv       the interaction matrix of several ligands (next section)
 </code></pre>
 <p>All the options are in the <a href="cli.html">Command-line reference</a>.</p>
+<h2 id="several-ligands-at-once"><a name="several-ligands-at-once"></a>Several ligands at once</h2>
+<p>To compare the interactions of several ligands, list them in a file, one line for each (the structure and the ligand; see <a href="matrix.html">Interaction matrix</a>), and ask for the <strong>matrix</strong>:
+one row for each ligand, one column for each position of the pocket and interaction class, a bit that says whether that residue interacts. The example below uses the list
+<code>docs/examples/hiv-protease-matrix.tsv</code> and the pocket definition <code>docs/examples/hiv-protease-pocket.tsv</code> of the source archive, three inhibitors of the HIV-1 protease:</p>
+<pre><code class="language-text">$ ligint --matrix docs/examples/hiv-protease-matrix.tsv --pocket docs/examples/hiv-protease-pocket.tsv --matrix-format svg &gt; matrix.svg
+</code></pre>
+<p><img width="760" alt="The interaction matrix of three HIV-1 protease inhibitors" src="img/matrix-hiv-protease.png" /></p>
+<p>Each stripe is an interaction (the legend gives the classes); the regions of the pocket are above the positions. Use <code>--matrix-format csv</code> for a table that a spreadsheet or a script can read,
+and <code>json</code> for the same with the residues. In the graphical interface the <strong>Matrix</strong> tab does the same, with <strong>Open list...</strong> and <strong>Compute matrix</strong>.</p>
 <h2 id="where-to-get-structures"><a name="where-to-get-structures"></a>Where to get structures</h2>
 <p>Search by name or code at <a href="https://www.rcsb.org">rcsb.org</a> and download the <strong>PDB</strong> or <strong>PDBx/mmCIF</strong> file. Files from the archive
 are often compressed (<code>.gz</code>): decompress them first (<code>gunzip 1abc.cif.gz</code>). New entries of the Protein Data Bank will only be

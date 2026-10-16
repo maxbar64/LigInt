@@ -85,6 +85,8 @@ positions and, in each one, of the classes; one line for each ligand, with `0` a
 definition of that line names there (or the one in contact), and an empty text if its definition has no such position (with a KLIFS definition: a residue that is missing in the
 crystal).
 
+![The matrix of three HIV-1 protease inhibitors](img/matrix-hiv-protease.png)
+
 **SVG** (`--matrix-format svg`, with `--matrix-title TEXT` for a title): a heat map with one row for each ligand and, for each position, a block of one thin stripe for each class,
 colored when the bit is set (the legend gives the colors). The regions of the pocket definition are drawn above the positions, with the colors of its `@color` lines. Hovering over a stripe
 shows the ligand, the position, the class and the residue. The figure is self-contained (no external resources) and has a white background.

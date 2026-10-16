@@ -15,6 +15,7 @@ download from the [RCSB Protein Data Bank](https://www.rcsb.org/structure/1AZM) 
 5. Drag in the view to rotate, use the wheel to zoom, click a row of the table to highlight that interaction.
 6. **File > Export interactions (CSV)...** saves the table, **File > Save image...** saves the view as a PNG, and
    **File > Copy command line** copies the `ligint` command that reproduces the analysis.
+7. To compare **several ligands** at once, open the **Matrix** tab and load a list of them: see [Several ligands at once](#several-ligands-at-once).
 
 ![The graphical interface on 1HSG](img/gui-1HSG-window.png)
 
@@ -77,9 +78,25 @@ ligint 1AZM.pdb AZM A 262                             only chain A, residue 262 
 ligint 1AZM.pdb AZM --no-water                        ignore water molecules (no water bridges)
 ligint 1AZM.pdb AZM --fingerprint svg > figure.svg    the interaction fingerprint as a figure
 ligint 1AZM.cif AZM                                   the same analysis from the mmCIF file
+ligint --matrix ligands.tsv --pocket pocket.tsv       the interaction matrix of several ligands (next section)
 ```
 
 All the options are in the [Command-line reference](cli.md).
+
+## Several ligands at once
+
+To compare the interactions of several ligands, list them in a file, one line for each (the structure and the ligand; see [Interaction matrix](matrix.md)), and ask for the **matrix**:
+one row for each ligand, one column for each position of the pocket and interaction class, a bit that says whether that residue interacts. The example below uses the list
+`docs/examples/hiv-protease-matrix.tsv` and the pocket definition `docs/examples/hiv-protease-pocket.tsv` of the source archive, three inhibitors of the HIV-1 protease:
+
+```text
+$ ligint --matrix docs/examples/hiv-protease-matrix.tsv --pocket docs/examples/hiv-protease-pocket.tsv --matrix-format svg > matrix.svg
+```
+
+![The interaction matrix of three HIV-1 protease inhibitors](img/matrix-hiv-protease.png)
+
+Each stripe is an interaction (the legend gives the classes); the regions of the pocket are above the positions. Use `--matrix-format csv` for a table that a spreadsheet or a script can read,
+and `json` for the same with the residues. In the graphical interface the **Matrix** tab does the same, with **Open list...** and **Compute matrix**.
 
 ## Where to get structures
 
