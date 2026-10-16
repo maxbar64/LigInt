@@ -11,7 +11,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 - The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
 - The **3D view** is at the top right, with a toolbar (**Labels**, **Residues**, **Distances**, **Legend**, **Reset view**).
-- The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint** and **Log**.
+- The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
 - The status bar shows short messages (what was opened, how many interactions were found, what was exported).
 
 Press `F1` at any moment to open this manual at the page of the tab you are looking at.
@@ -139,6 +139,8 @@ region when a pocket definition is loaded) and, below, the table of counts per c
 shows the table only. **File > Export fingerprint...** saves it as SVG, CSV or JSON, according to the extension you type.
 
 ## The matrix tab
+
+![The matrix tab](img/gui-matrix-tab.png)
 
 The **Matrix** tab compares several ligands at once: **Open list...** (or **File > Open ligand list for the matrix...**) reads a list file, **Compute matrix** builds the
 [interaction matrix](matrix.md) in the background, and the tab shows a heat map (with Qt Svg) and a table with the number of interactions and of positions of each ligand.

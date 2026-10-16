@@ -13,6 +13,7 @@
         <file alias="img/gui-1HSG-fingerprint.png">img/gui-1HSG-fingerprint.png</file>
         <file alias="img/gui-1HSG-window.png">img/gui-1HSG-window.png</file>
         <file alias="img/gui-4IKF-viewer.png">img/gui-4IKF-viewer.png</file>
+        <file alias="img/gui-matrix-tab.png">img/gui-matrix-tab.png</file>
         <file alias="index.html">index.html</file>
         <file alias="install.html">install.html</file>
         <file alias="interactions.html">interactions.html</file>

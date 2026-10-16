@@ -30,7 +30,7 @@ reproduces it (<a href="#reproducing-an-analysis-on-the-command-line">see below<
 <li>The <strong>control panel</strong> on the left has the groups <strong>Structure</strong>, <strong>Options</strong>, <strong>Thresholds</strong>, <strong>Chemical templates</strong> and
   <strong>Pocket definition (fingerprint)</strong>, the <strong>Analyze</strong> button and the list of <strong>Interaction types</strong>. It scrolls when the window is too small.</li>
 <li>The <strong>3D view</strong> is at the top right, with a toolbar (<strong>Labels</strong>, <strong>Residues</strong>, <strong>Distances</strong>, <strong>Legend</strong>, <strong>Reset view</strong>).</li>
-<li>The tabs below the view show the results: <strong>Interactions</strong>, <strong>Residues</strong>, <strong>Fingerprint</strong> and <strong>Log</strong>.</li>
+<li>The tabs below the view show the results: <strong>Interactions</strong>, <strong>Residues</strong>, <strong>Fingerprint</strong>, <strong>Matrix</strong> (several ligands at once) and <strong>Log</strong>.</li>
 <li>The status bar shows short messages (what was opened, how many interactions were found, what was exported).</li>
 </ul>
 <p>Press <code>F1</code> at any moment to open this manual at the page of the tab you are looking at.</p>
@@ -223,6 +223,7 @@ of interaction it makes. It is a quick way to see which residues matter most.</p
 region when a pocket definition is loaded) and, below, the table of counts per class. The figure needs the Qt Svg module; without it the tab
 shows the table only. <strong>File &gt; Export fingerprint...</strong> saves it as SVG, CSV or JSON, according to the extension you type.</p>
 <h2 id="the-matrix-tab"><a name="the-matrix-tab"></a>The matrix tab</h2>
+<p><img width="760" alt="The matrix tab" src="img/gui-matrix-tab.png" /></p>
 <p>The <strong>Matrix</strong> tab compares several ligands at once: <strong>Open list...</strong> (or <strong>File &gt; Open ligand list for the matrix...</strong>) reads a list file, <strong>Compute matrix</strong> builds the
 <a href="matrix.html">interaction matrix</a> in the background, and the tab shows a heat map (with Qt Svg) and a table with the number of interactions and of positions of each ligand.
 <strong>All interaction classes</strong> and <strong>Hide positions without interactions</strong> change what the matrix contains. <strong>File &gt; Export matrix...</strong> saves it as SVG, CSV or JSON, by extension, and
