@@ -609,7 +609,7 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     log(tr("Command line: ") + lastCommandLine());
     if (!lig.metalSphere.empty()) log(tr("Coordination sphere of the metals:\n") + QString::fromStdString(lig.metalSphere));
     model_->setHits(lig.hits);
-    viewer_->setLigand(lig);
+    viewer_->setLigand(lig, result_.proteinBackboneAtoms, result_.proteinBackboneBonds);
     fillTypeList();
     fillResidueTable();
     updateFingerprint();
