@@ -1,26 +1,117 @@
 name: CI
 
+# What runs when
+#   - every pull request and every push to main: the quick jobs (Linux GCC with GUI, Linux Clang, sanitizers, macOS CLI);
+#   - a pull request that touches gui/ or a CMakeLists.txt: also the Qt WebEngine / WebGL viewer build;
+#   - main, version tags (v*) and a manual run with "full" ticked: also the slow jobs (Windows, Ubuntu 22.04, RPM, packages).
+# A push to a branch that has no pull request does not start anything: open a pull request, or use "Run workflow".
+#
+# Switching an operating system off without editing this file: Settings > Secrets and variables > Actions > Variables, then
+# create CI_MACOS, CI_WINDOWS, CI_UBUNTU22 or CI_RPM with the value "off". Note: the release job waits for those jobs, so a
+# tag does not publish a release while one of them is switched off.
+
 on:
   push:
+    branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:        # also from the Actions page ("Run workflow")
+    inputs:
+      full:
+        description: "Run also the slow jobs (Windows, Ubuntu 22.04, RPM, packages)"
+        type: boolean
+        default: false
+
+# A new push supersedes the run in progress on the same branch; the run of a release tag is never cancelled.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
+  # Decides which optional jobs run. It is a few seconds long and only the optional jobs wait for it.
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    outputs:
+      full: ${{ steps.p.outputs.full }}
+      webgl: ${{ steps.p.outputs.webgl }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: p
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BASE: ${{ github.base_ref }}
+          FULL_INPUT: ${{ inputs.full }}
+        run: |
+          full=false
+          if [[ "$REF" == refs/tags/v* || "$REF" == refs/heads/main || "$FULL_INPUT" == "true" ]]; then full=true; fi
+          webgl=$full
+          if [[ "$webgl" != true && "$EVENT" == pull_request ]]; then
+            if git diff --name-only "origin/$BASE...HEAD" | grep -qE '^(gui/|CMakeLists\.txt$|.*/CMakeLists\.txt$)'; then webgl=true; fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "webgl=$webgl" >> "$GITHUB_OUTPUT"
+          echo "full=$full webgl=$webgl"
+
   linux-gui:
     name: Linux (GCC, GUI Qt6)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      # qt6-svg-dev: the same configuration as the packages (fingerprint figure included).
       - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core
+      # The module that builds the manual: without it the test "manual up to date" is skipped, and a stale manual would
+      # only be noticed by the (slow) package jobs.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tools/requirements-manual.txt
+      - name: Python module of the manual
+        run: pip install -r tools/requirements-manual.txt
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-gcc-gui
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -j4
         env:
           QT_QPA_PLATFORM: offscreen
+
+  # The optional WebGL viewer (Qt WebEngine + 3Dmol.js) is not built by the other jobs, which only have qt6-base-dev.
+  linux-webengine:
+    name: Linux (GUI with the WebGL viewer, Qt WebEngine)
+    needs: plan
+    if: needs.plan.outputs.webgl == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev qt6-svg-dev qt6-webengine-dev libgl1-mesa-dev fonts-dejavu-core
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-gcc-webengine
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON -DLIGINT_GUI_WITH_3DMOL=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache 2>&1 | tee configure.log
+          # find_package is QUIET: fail here if WebEngine was not found, or this job would silently test nothing new
+          grep -q "advanced 3D viewer enabled" configure.log
+      - name: Build
+        run: cmake --build build
+      # no sandbox and no GPU: the runner has neither user namespaces for Chromium nor an OpenGL device
+      - name: Test (core and GUI smoke; the Python suite runs in the other jobs)
+        run: ctest --test-dir build --output-on-failure -R "core_unit|gui_smoke"
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QTWEBENGINE_CHROMIUM_FLAGS: "--no-sandbox --disable-gpu"
 
   linux-clang:
     name: Linux (Clang, GUI Qt6)
@@ -29,12 +120,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: linux-clang-gui
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DLIGINT_WARNINGS_AS_ERRORS=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DLIGINT_WARNINGS_AS_ERRORS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build
       - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure -j4
         env:
           QT_QPA_PLATFORM: offscreen
 
@@ -54,6 +148,7 @@ jobs:
 
   macos-cli:
     name: macOS (library and CLI only)
+    if: vars.CI_MACOS != 'off'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,26 +165,21 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   linux-packages:
     name: Linux packages (.deb, .tar.gz)
+    needs: plan
+    if: needs.plan.outputs.full == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
-      - uses: actions/setup-python@v5
+      - uses: hendrikmuhs/ccache-action@v1.2
         with:
-          python-version: "3.12"
-      - name: The HTML manual is up to date with its sources
-        run: |
-          pip install -r tools/requirements-manual.txt
-          python3 tools/build_manual.py --check
+          key: linux-packages
+      # No tests and no manual check here: the job "Linux (GCC, GUI Qt6)" runs them on the same configuration, and the release waits for it.
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
         run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-        env:
-          QT_QPA_PLATFORM: offscreen
       - name: Package
         run: cd build && cpack -G "DEB;TGZ"
       - name: Check the packages (lintian)
@@ -137,6 +227,8 @@ jobs:
 
   linux-ubuntu22:
     name: Ubuntu 22.04 packages (.deb)
+    needs: plan
+    if: needs.plan.outputs.full == 'true' && vars.CI_UBUNTU22 != 'off'
     runs-on: ubuntu-24.04
     # Built in an Ubuntu 22.04 container, not on the runner image "ubuntu-22.04" (GitHub is retiring that label in 2027): the container
     # has the libraries of 22.04 (Qt 6.2, libcurl 7.81, glibc 2.35), so the package depends on them and installs on 22.04.
@@ -260,6 +352,8 @@ jobs:
 
   windows:
     name: Windows (MSVC, Qt 6) installer
+    needs: plan
+    if: needs.plan.outputs.full == 'true' && vars.CI_WINDOWS != 'off'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -318,6 +412,8 @@ jobs:
   # user would do it. Qt 6 comes from EPEL: if it is not available the job builds the command line only.
   rpm-rocky9:
     name: RPM (built in Rocky Linux 9)
+    needs: plan
+    if: needs.plan.outputs.full == 'true' && vars.CI_RPM != 'off'
     runs-on: ubuntu-24.04
     container:
       image: rockylinux:9
@@ -446,7 +542,7 @@ jobs:
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-packages, linux-ubuntu22, deb-clean-install, windows, rpm-alma9]
+    needs: [linux-gui, linux-clang, sanitizers, macos-cli, linux-packages, linux-ubuntu22, deb-clean-install, windows, rpm-alma9]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
