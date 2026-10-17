@@ -122,6 +122,9 @@ int main(int argc, char** argv) {
     auto* showDistances = w.findChild<QCheckBox*>("graphics_show_distances");
     auto* showLegend = w.findChild<QCheckBox*>("graphics_show_legend");
     auto* resetView = w.findChild<QPushButton*>("graphics_reset_view");
+    auto* focusLigand = w.findChild<QPushButton*>("graphics_focus_ligand");
+    auto* fitProtein = w.findChild<QPushButton*>("graphics_fit_protein");
+    auto* proteinStyle = w.findChild<QComboBox*>("graphics_protein_style");
     CHECK(graphics && graphics->isVisible());
     CHECK(showLigand && showLigand->isChecked());
     CHECK(showProtein && !showProtein->isChecked());
@@ -130,12 +133,30 @@ int main(int argc, char** argv) {
     CHECK(showDistances && showDistances->isChecked());
     CHECK(showLegend && showLegend->isChecked());
     CHECK(resetView && resetView->isVisible());
+    CHECK(focusLigand && focusLigand->isVisible());
+    CHECK(fitProtein && fitProtein->isVisible());
+    CHECK(proteinStyle && proteinStyle->currentIndex() == 0);
     if (showLabels) { showLabels->setChecked(false); CHECK(!showLabels->isChecked()); showLabels->setChecked(true); }
     if (showProtein) {
         QImage local = w.viewer()->renderImage(QSize(420, 320));
         showProtein->setChecked(true);
         CHECK(showProtein->isChecked());
         CHECK(w.viewer()->renderImage(QSize(420, 320)) != local);
+        if (proteinStyle) {
+            QImage trace = w.viewer()->renderImage(QSize(420, 320));
+            proteinStyle->setCurrentIndex(1);
+            CHECK(w.viewer()->renderImage(QSize(420, 320)) != trace);
+            proteinStyle->setCurrentIndex(2);
+            CHECK(w.viewer()->renderImage(QSize(420, 320)) != trace);
+            proteinStyle->setCurrentIndex(0);
+        }
+        if (focusLigand && fitProtein) {
+            focusLigand->click();
+            QImage pocketFrame = w.viewer()->renderImage(QSize(420, 320));
+            fitProtein->click();
+            CHECK(showProtein->isChecked());
+            CHECK(w.viewer()->renderImage(QSize(420, 320)) != pocketFrame);
+        }
         showProtein->setChecked(false);
     }
     if (showLigand) { showLigand->setChecked(false); CHECK(!showLigand->isChecked()); showLigand->setChecked(true); }
