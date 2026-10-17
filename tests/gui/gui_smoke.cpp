@@ -115,18 +115,30 @@ int main(int argc, char** argv) {
 
     // Graphics options are centralized in a visible panel and remain independently controllable.
     auto* graphics = w.findChild<QWidget*>("graphicsOptionsWidget");
+    auto* showLigand = w.findChild<QCheckBox*>("graphics_show_ligand");
+    auto* showProtein = w.findChild<QCheckBox*>("graphics_show_protein");
     auto* showResidues = w.findChild<QCheckBox*>("graphics_show_residues");
     auto* showLabels = w.findChild<QCheckBox*>("graphics_show_labels");
     auto* showDistances = w.findChild<QCheckBox*>("graphics_show_distances");
     auto* showLegend = w.findChild<QCheckBox*>("graphics_show_legend");
     auto* resetView = w.findChild<QPushButton*>("graphics_reset_view");
     CHECK(graphics && graphics->isVisible());
+    CHECK(showLigand && showLigand->isChecked());
+    CHECK(showProtein && !showProtein->isChecked());
     CHECK(showResidues && showResidues->isChecked());
     CHECK(showLabels && showLabels->isChecked());
     CHECK(showDistances && showDistances->isChecked());
     CHECK(showLegend && showLegend->isChecked());
     CHECK(resetView && resetView->isVisible());
     if (showLabels) { showLabels->setChecked(false); CHECK(!showLabels->isChecked()); showLabels->setChecked(true); }
+    if (showProtein) {
+        QImage local = w.viewer()->renderImage(QSize(420, 320));
+        showProtein->setChecked(true);
+        CHECK(showProtein->isChecked());
+        CHECK(w.viewer()->renderImage(QSize(420, 320)) != local);
+        showProtein->setChecked(false);
+    }
+    if (showLigand) { showLigand->setChecked(false); CHECK(!showLigand->isChecked()); showLigand->setChecked(true); }
 
     // the type filter acts on the table
     w.hitsProxy()->setVisibleTypes(QSet<QString>());
