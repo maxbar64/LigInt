@@ -199,6 +199,22 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         return res;
     }
 
+    // Lightweight C-alpha trace, shared by the optional whole-protein graphics layer.
+    int previousCa = -1;
+    for (const Atom& atom : prot) {
+        if (atom.het || atom.name != "CA" || atom.el != "C") continue;
+        const int current = static_cast<int>(res.proteinBackboneAtoms.size());
+        res.proteinBackboneAtoms.push_back(toRecord(atom));
+        if (previousCa >= 0) {
+            const auto& prev = res.proteinBackboneAtoms[previousCa];
+            const double dx = atom.x - prev.pos[0], dy = atom.y - prev.pos[1], dz = atom.z - prev.pos[2];
+            const double d = std::sqrt(dx * dx + dy * dy + dz * dz);
+            if (prev.chain == atom.chain && d >= 2.5 && d <= 4.5)
+                res.proteinBackboneBonds.push_back({previousCa, current, 1});
+        }
+        previousCa = current;
+    }
+
     Grid grid; grid.build(prot);
     vector<int> tmp;
 
