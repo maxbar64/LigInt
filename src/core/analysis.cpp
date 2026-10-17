@@ -199,6 +199,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         return res;
     }
 
+    if (opt.protein3d) buildProteinScene(prot, res);   // backbone, secondary structure and atoms for the 3D graphics
+
     Grid grid; grid.build(prot);
     vector<int> tmp;
 

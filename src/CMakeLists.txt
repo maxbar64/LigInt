@@ -1,6 +1,9 @@
 # Library with the analysis (no dependencies beyond the C++17 standard library)
 add_library(ligint_core
     core/analysis.cpp
+    core/secondary.cpp
+    core/cartoon.cpp
+    core/surface.cpp
     core/chemistry.cpp
     core/mmcif.cpp
     core/pdb.cpp

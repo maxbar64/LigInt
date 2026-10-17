@@ -103,6 +103,7 @@ struct Options {
     bool metalDonors = false;       // O/N coordinated to a metal remain possible donors
     bool backboneHyd = false;       // apolar contacts with backbone CA/C
     bool mergeLinked = true;        // merge covalently linked HETATM residues into one ligand
+    bool protein3d = false;         // also return the backbone and the atoms of the protein for the 3D graphics (see scene3d.hpp)
     std::vector<Tmpl> templates;    // chemical annotation of the ligands (matched by coordinates)
 };
 
@@ -159,6 +160,27 @@ struct LigandId {                           // a HETATM residue present in the f
     int atoms = 0;
 };
 
+// Protein description for the 3D graphics (filled when Options::protein3d is set; geometry in scene3d.hpp).
+struct BackboneResidue {
+    std::string res, chain;
+    int resi = 0;
+    char icode = ' ';
+    V3 n{0, 0, 0}, ca{0, 0, 0}, c{0, 0, 0}, o{0, 0, 0};
+    bool hasN = false, hasC = false, hasO = false;   // the C-alpha is always present
+    bool linkedToPrevious = false;                   // peptide bond with the previous residue of the vector
+    char ss = 'C';                                   // secondary structure: 'H' helix, 'E' strand, 'C' coil
+    int chainIndex = 0;                              // 0, 1, 2... in order of appearance
+    double bfactor = 0;                              // of the C-alpha
+};
+// Heavy atom of the protein, for the surfaces (the radius is the van der Waals radius).
+struct ProteinAtom {
+    V3 pos{0, 0, 0};
+    float radius = 1.7f;
+    char element[3] = {'C', 0, 0};
+    int residue = -1;                                // index in Result::backbone, -1 if the residue has no backbone
+    bool hetero = false;                             // HETATM record (ions, cofactors, modified residues)
+};
+
 struct Result {
     bool listingOnly = false;               // no ligand requested or found: only the listing
     std::map<std::string, int> hetCounts;   // name -> number of residues (only if listingOnly)
@@ -169,6 +191,8 @@ struct Result {
     std::vector<std::string> warnings;      // warnings (invalid coordinates, limited thresholds...)
     std::vector<std::string> info;          // global information (protein hydrogens, templates loaded)
     std::vector<LigandResult> ligands;
+    std::vector<BackboneResidue> backbone;  // only with Options::protein3d: protein residues in file order, with secondary structure
+    std::vector<ProteinAtom> proteinAtoms;  // only with Options::protein3d: heavy atoms of the protein (without the analyzed ligand)
 };
 
 // Analyze a structure file (PDB or PDBx/mmCIF). Throws std::runtime_error if the file cannot be opened

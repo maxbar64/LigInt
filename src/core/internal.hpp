@@ -160,6 +160,8 @@ struct Grid {
 };
 
 // ---------- functions shared between source files ----------
+// secondary.cpp: backbone, secondary structure and atoms of the protein for the 3D graphics (Options::protein3d)
+void buildProteinScene(const vector<Atom>& prot, Result& res);
 // templates.cpp
 bool applyTemplate(const Tmpl& t, vector<Atom>& L, string& info, bool& hasH);
 // chemistry.cpp
