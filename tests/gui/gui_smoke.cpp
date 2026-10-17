@@ -113,6 +113,21 @@ int main(int argc, char** argv) {
     CHECK(w.viewer()->hasData());
     CHECK(w.logText().contains("Ligand annotation"));
 
+    // Graphics options are centralized in a visible panel and remain independently controllable.
+    auto* graphics = w.findChild<QWidget*>("graphicsOptionsWidget");
+    auto* showResidues = w.findChild<QCheckBox*>("graphics_show_residues");
+    auto* showLabels = w.findChild<QCheckBox*>("graphics_show_labels");
+    auto* showDistances = w.findChild<QCheckBox*>("graphics_show_distances");
+    auto* showLegend = w.findChild<QCheckBox*>("graphics_show_legend");
+    auto* resetView = w.findChild<QPushButton*>("graphics_reset_view");
+    CHECK(graphics && graphics->isVisible());
+    CHECK(showResidues && showResidues->isChecked());
+    CHECK(showLabels && showLabels->isChecked());
+    CHECK(showDistances && showDistances->isChecked());
+    CHECK(showLegend && showLegend->isChecked());
+    CHECK(resetView && resetView->isVisible());
+    if (showLabels) { showLabels->setChecked(false); CHECK(!showLabels->isChecked()); showLabels->setChecked(true); }
+
     // the type filter acts on the table
     w.hitsProxy()->setVisibleTypes(QSet<QString>());
     CHECK(w.hitsProxy()->rowCount() == 0);
