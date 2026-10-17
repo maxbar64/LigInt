@@ -10,7 +10,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 
 - The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
-- The **3D view** is at the top right, next to the **Graphics options** panel, which groups scene, interaction-overlay and camera controls.
+- The **3D view** is at the top right, next to the **Graphics options** panel, which groups scene, interaction and camera controls.
 - The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
 - The status bar shows short messages (what was opened, how many interactions were found, what was exported).
 
