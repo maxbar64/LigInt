@@ -1,7 +1,9 @@
 #include "ViewerOptionsWidget.h"
 
 #include <QCheckBox>
+#include <QComboBox>
 #include <QGroupBox>
+#include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
@@ -40,6 +42,16 @@ ViewerOptionsWidget::ViewerOptionsWidget(ViewerWidget* viewer, QWidget* parent) 
     addToggle(scene, tr("Show contact residues"), "graphics_show_residues", true, &ViewerWidget::setShowResidues);
     auto* protein = addToggle(scene, tr("Show full protein (C-alpha trace)"), "graphics_show_protein", false, &ViewerWidget::setShowProtein);
     protein->setToolTip(tr("Show the protein backbone as a separate C-alpha trace layer."));
+    auto* styleLabel = new QLabel(tr("Protein representation"), this);
+    scene->addWidget(styleLabel);
+    auto* proteinStyle = new QComboBox(this);
+    proteinStyle->setObjectName("graphics_protein_style");
+    proteinStyle->addItem(tr("C-alpha trace"));
+    proteinStyle->addItem(tr("Thick tube"));
+    proteinStyle->addItem(tr("C-alpha beads"));
+    proteinStyle->setToolTip(tr("Choose how the full-protein backbone is drawn."));
+    scene->addWidget(proteinStyle);
+    connect(proteinStyle, qOverload<int>(&QComboBox::currentIndexChanged), viewer, &ViewerWidget::setProteinStyle);
 
     auto* overlays = addGroup(tr("Interactions"));
     addToggle(overlays, tr("Residue labels"), "graphics_show_labels", true, &ViewerWidget::setShowLabels);
@@ -52,6 +64,19 @@ ViewerOptionsWidget::ViewerOptionsWidget(ViewerWidget* viewer, QWidget* parent) 
     reset->setToolTip(tr("Restore the initial orientation, zoom and pan"));
     camera->addWidget(reset);
     connect(reset, &QPushButton::clicked, viewer, &ViewerWidget::resetView);
+    auto* focus = new QPushButton(tr("Focus ligand/pocket"), this);
+    focus->setObjectName("graphics_focus_ligand");
+    focus->setToolTip(tr("Frame the ligand and its interaction pocket; the protein layer stays visible."));
+    camera->addWidget(focus);
+    connect(focus, &QPushButton::clicked, viewer, &ViewerWidget::focusLigand);
+    auto* fitProtein = new QPushButton(tr("Fit full protein"), this);
+    fitProtein->setObjectName("graphics_fit_protein");
+    fitProtein->setToolTip(tr("Show and frame the full protein trace."));
+    camera->addWidget(fitProtein);
+    connect(fitProtein, &QPushButton::clicked, [viewer, protein]() {
+        protein->setChecked(true);
+        viewer->fitProtein();
+    });
 
     layout->addStretch(1);
 }
