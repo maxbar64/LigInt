@@ -27,7 +27,7 @@ No correctness regression was demonstrated by this review. Findings 1 and 2 are 
 
 ## Branch implementation
 
-The first branch increment adds a dedicated **Graphics options** panel next to the viewer. It groups the existing residue, label, distance and legend toggles under **Structure** and **Interactions**, and puts **Reset view** under **Camera**. The previous toolbar controls have been moved into this panel. The GUI smoke test checks that the panel and controls are present and enabled. The manual source and generated HTML describe the new location.
+The first branch increment adds a dedicated **Graphics options** panel next to the viewer. It groups the existing residue, label, distance and legend toggles under **Structure** and **Interactions**, and puts **Reset view** under **Camera**. The previous toolbar controls have been moved into this panel. The GUI smoke test checks that the panel is visible, the controls start in the expected state, and a toggle can be changed. The manual source and generated HTML describe the new location.
 
 ## Suggested implementation sequence
 
