@@ -26,22 +26,25 @@ ViewerOptionsWidget::ViewerOptionsWidget(ViewerWidget* viewer, QWidget* parent) 
         layout->addWidget(group);
         return groupLayout;
     };
-    auto addToggle = [&](QVBoxLayout* groupLayout, const QString& title, const QString& objectName, auto setter) {
+    auto addToggle = [&](QVBoxLayout* groupLayout, const QString& title, const QString& objectName, bool checked, auto setter) {
         auto* check = new QCheckBox(title, this);
         check->setObjectName(objectName);
-        check->setChecked(true);
+        check->setChecked(checked);
         groupLayout->addWidget(check);
         connect(check, &QCheckBox::toggled, viewer, setter);
         return check;
     };
 
     auto* scene = addGroup(tr("Structure"));
-    addToggle(scene, tr("Show contact residues"), "graphics_show_residues", &ViewerWidget::setShowResidues);
+    addToggle(scene, tr("Show ligand"), "graphics_show_ligand", true, &ViewerWidget::setShowLigand);
+    addToggle(scene, tr("Show contact residues"), "graphics_show_residues", true, &ViewerWidget::setShowResidues);
+    auto* protein = addToggle(scene, tr("Show full protein (C-alpha trace)"), "graphics_show_protein", false, &ViewerWidget::setShowProtein);
+    protein->setToolTip(tr("Show the protein backbone as a separate C-alpha trace layer."));
 
     auto* overlays = addGroup(tr("Interactions"));
-    addToggle(overlays, tr("Residue labels"), "graphics_show_labels", &ViewerWidget::setShowLabels);
-    addToggle(overlays, tr("Distances"), "graphics_show_distances", &ViewerWidget::setShowDistances);
-    addToggle(overlays, tr("Legend"), "graphics_show_legend", &ViewerWidget::setShowLegend);
+    addToggle(overlays, tr("Residue labels"), "graphics_show_labels", true, &ViewerWidget::setShowLabels);
+    addToggle(overlays, tr("Distances"), "graphics_show_distances", true, &ViewerWidget::setShowDistances);
+    addToggle(overlays, tr("Legend"), "graphics_show_legend", true, &ViewerWidget::setShowLegend);
 
     auto* camera = addGroup(tr("Camera"));
     auto* reset = new QPushButton(tr("Reset view"), this);
