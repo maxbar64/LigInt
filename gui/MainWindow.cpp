@@ -52,6 +52,7 @@
 #include "Style.h"
 #include "SvgView.h"
 #include "ViewerWidget.h"
+#include "ViewerOptionsWidget.h"
 
 namespace gui {
 namespace {
@@ -268,6 +269,15 @@ void MainWindow::buildUi() {
 
     // ---- view and tables (right)
     viewer_ = new ViewerWidget;
+    auto* graphicsOptions = new ViewerOptionsWidget(viewer_);
+    auto* graphicsScroll = new QScrollArea;
+    graphicsScroll->setObjectName("graphicsOptionsScroll");
+    graphicsScroll->setWidgetResizable(true);
+    graphicsScroll->setFrameShape(QFrame::NoFrame);
+    graphicsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    graphicsScroll->setMinimumWidth(205);
+    graphicsScroll->setMaximumWidth(255);
+    graphicsScroll->setWidget(graphicsOptions);
     tabs_ = new QTabWidget;
     table_ = new QTableView;
     table_->setModel(proxy_);
@@ -371,8 +381,15 @@ void MainWindow::buildUi() {
     tabs_->addTab(matrixTab_, tr("Matrix"));
     tabs_->addTab(log_, tr("Log"));
 
+    auto* viewerArea = new QWidget;
+    auto* viewerLayout = new QHBoxLayout(viewerArea);
+    viewerLayout->setContentsMargins(0, 0, 0, 0);
+    viewerLayout->setSpacing(4);
+    viewerLayout->addWidget(viewer_, 1);
+    viewerLayout->addWidget(graphicsScroll);
+
     auto* right = new QSplitter(Qt::Vertical);
-    right->addWidget(viewer_);
+    right->addWidget(viewerArea);
     right->addWidget(tabs_);
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
@@ -405,23 +422,8 @@ void MainWindow::buildUi() {
     hydMax_->setObjectName("thr_hydMax");
     piAngle_->setObjectName("thr_piAngle");
 
-    // ---- view toolbar
-    auto* tb = addToolBar(tr("View"));
-    tb->setMovable(false);
-    auto addToggle = [&](const QString& text, bool on, auto setter) {
-        QAction* a = tb->addAction(text);
-        a->setCheckable(true);
-        a->setChecked(on);
-        connect(a, &QAction::toggled, viewer_, setter);
-        return a;
-    };
-    addToggle(tr("Labels"), true, &ViewerWidget::setShowLabels);
-    addToggle(tr("Residues"), true, &ViewerWidget::setShowResidues);
-    addToggle(tr("Distances"), true, &ViewerWidget::setShowDistances);
-    addToggle(tr("Legend"), true, &ViewerWidget::setShowLegend);
-    tb->addSeparator();
-    QAction* reset = tb->addAction(tr("Reset view"));
-    connect(reset, &QAction::triggered, viewer_, &ViewerWidget::resetView);
+    // Graphics controls live beside the viewer so future rendering options have a dedicated home.
+
 }
 
 // ------------------------------------------------------------------------------------------------
