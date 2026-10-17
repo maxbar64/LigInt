@@ -4,6 +4,7 @@
 
 ```
 include/ligint/ligint.hpp   public API: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv, ligint::type
+include/ligint/scene3d.hpp  geometry for the 3D views: secondary structure, cartoon and molecular-surface meshes (no Qt, no OpenGL)
 src/core/
   internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
   analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
@@ -17,8 +18,12 @@ src/klifs/klifs.cpp         KLIFS mapping -> PocketDefinition (ligint/klifs.hpp)
   report.cpp                text reports (table and CSV)
   fingerprint.cpp           pocket definition, per-residue classification, CSV/JSON fingerprint output (ligint/fingerprint.hpp)
   svg.cpp                   SVG figure of a fingerprint
+  secondary.cpp             protein backbone and atoms for the graphics (Options::protein3d), secondary structure (DSSP)
+  cartoon.cpp               cartoon mesh: Catmull-Rom spline, ribbon oriented by the C=O, arrow heads; Mesh helpers
+  surface.cpp               SAS/SES on a grid: distance field, cavity removal, distance transform, marching tetrahedra, Taubin smoothing
 src/cli/main.cpp            command line: arguments -> Options -> analyzeFile -> printText/printCsv
-gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
+gui/                        Qt: MainWindow, ViewerWidget (3D view) with Raster (software rasterizer), SceneBuilder (meshes and colors),
+                            ViewerOptionsWidget (Graphics panel), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
 ```
 
 The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
@@ -68,9 +73,14 @@ are listed and in which order. The SVG and the GUI table are views of the same `
 
 `MainWindow` owns a `HitsModel` (table) with a `HitsFilterProxy` (filter by type, numeric sorting), a `ViewerWidget` and
 the tables of residues and log. The analysis runs with `QtConcurrent::run` and `QFutureWatcher`; `analyze(true)` runs it
-synchronously (used by the tests). `ViewerWidget` renders in software with `QPainter` (orthographic projection, depth
-sorting, initial orientation along the principal axes) and can draw on a `QImage` (`renderImage`), used to save the
-images and in the tests.
+synchronously (used by the tests). The analysis returns the backbone, the secondary structure and the atoms of the protein
+when `Options::protein3d` is set (only the GUI does); `ligint::buildCartoon` and `ligint::buildSurface` turn them into triangle
+meshes. `ViewerWidget` draws them with `gui::raster::Renderer` (`Raster.h`), a software rasterizer without Qt: z-buffer,
+perspective-correct interpolation, per-pixel lighting, depth cue, analytic spheres, sorted transparency, a clipping plane, and
+bands of rows on several threads. While the mouse moves the view is drawn with one sample per pixel; a timer starts a refined
+render (2x2 samples) on a worker thread, and the surface is built on another one (`QFutureWatcher`, results are shared immutable
+pieces). The interactions, labels and legend are drawn by `QPainter` over the image and hidden where the depth buffer says that
+the protein is in front. `renderImage` draws on a `QImage` at three samples per pixel (images and tests).
 
 ## Tests
 

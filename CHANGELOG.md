@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **New 3D view**, drawn by the program itself (software rasterizer; no OpenGL, no web engine): **cartoon** of the protein (helices, strands with arrows, loops; secondary structure by DSSP), **molecular surface** (solvent-excluded or solvent-accessible, of the pocket or of the whole protein, transparent or opaque, colored neutral, by atom, by hydrophobicity or like the protein), perspective camera, depth cue, **clipping of the protein in front of the ligand**, interactions hidden where the protein is in front, a **Graphics** panel instead of the toolbar (**Focus ligand** and **Fit protein** added), and interactive rendering that is refined when the mouse stops.
+- Library: `ligint/scene3d.hpp` (`assignSecondaryStructure`, `buildCartoon`, `buildSurface`, `clipMeshNear`); `Options::protein3d` makes `Result` carry the backbone (`BackboneResidue`) and the atoms (`ProteinAtom`) of the protein. The command line does not ask for them.
+- Tests: secondary structure against the `HELIX`/`SHEET` records of three real structures, cartoon consistency, areas of the surfaces (single atom, convergence on a protein, a closed shell without its cavity), and the new view and panel in the window test.
+
 - **Package for Ubuntu 22.04**: the CI builds `ligint` and `ligint-dev` in an `ubuntu:22.04` container (Qt 6.2, GCC 11, libcurl 7.81) and names the files `..._ubuntu22.04_amd64.deb`, so that the release can
   have both packages. The container is used instead of the runner label `ubuntu-22.04`, which GitHub is retiring in 2027. The `.deb` of Ubuntu 24.04 needs glibc 2.38 and Qt 6.4 and does not install on 22.04.
   Checked by running the steps of the job in an Ubuntu 22.04 system: build with `-Werror`, all the tests, `lintian`, installation, the window, a program built on the installed library.

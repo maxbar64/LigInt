@@ -23,6 +23,7 @@ a { color: #1c7ed6; }
 <h1 id="architecture"><a name="architecture"></a>Architecture</h1>
 <h2 id="layers"><a name="layers"></a>Layers</h2>
 <pre><code>include/ligint/ligint.hpp   public API: Params, Options, Result, loadSdf/loadMol2, analyzeFile/analyzeStream, printText/printCsv, ligint::type
+include/ligint/scene3d.hpp  geometry for the 3D views: secondary structure, cartoon and molecular-surface meshes (no Qt, no OpenGL)
 src/core/
   internal.hpp              internal types (Atom, Role, Hit, Ring, Grid) and functions shared between the files
   analysis.cpp              Params and the analysis (analyzeStream): applies the rules to the atoms that the readers produce
@@ -36,8 +37,12 @@ src/klifs/klifs.cpp         KLIFS mapping -&gt; PocketDefinition (ligint/klifs.h
   report.cpp                text reports (table and CSV)
   fingerprint.cpp           pocket definition, per-residue classification, CSV/JSON fingerprint output (ligint/fingerprint.hpp)
   svg.cpp                   SVG figure of a fingerprint
+  secondary.cpp             protein backbone and atoms for the graphics (Options::protein3d), secondary structure (DSSP)
+  cartoon.cpp               cartoon mesh: Catmull-Rom spline, ribbon oriented by the C=O, arrow heads; Mesh helpers
+  surface.cpp               SAS/SES on a grid: distance field, cavity removal, distance transform, marching tetrahedra, Taubin smoothing
 src/cli/main.cpp            command line: arguments -&gt; Options -&gt; analyzeFile -&gt; printText/printCsv
-gui/                        Qt: MainWindow, ViewerWidget (3D view), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
+gui/                        Qt: MainWindow, ViewerWidget (3D view) with Raster (software rasterizer), SceneBuilder (meshes and colors),
+                            ViewerOptionsWidget (Graphics panel), SvgView (figure), HelpWindow (manual), HitsModel/HitsFilterProxy, Style
 </code></pre>
 <p>The library does not depend on Qt and does not print: everything the program communicates (warnings, information,
 results) is in <code>Result</code>. The GUI and the CLI are two clients of the same API.</p>
@@ -80,9 +85,14 @@ are listed and in which order. The SVG and the GUI table are views of the same <
 <h2 id="gui"><a name="gui"></a>GUI</h2>
 <p><code>MainWindow</code> owns a <code>HitsModel</code> (table) with a <code>HitsFilterProxy</code> (filter by type, numeric sorting), a <code>ViewerWidget</code> and
 the tables of residues and log. The analysis runs with <code>QtConcurrent::run</code> and <code>QFutureWatcher</code>; <code>analyze(true)</code> runs it
-synchronously (used by the tests). <code>ViewerWidget</code> renders in software with <code>QPainter</code> (orthographic projection, depth
-sorting, initial orientation along the principal axes) and can draw on a <code>QImage</code> (<code>renderImage</code>), used to save the
-images and in the tests.</p>
+synchronously (used by the tests). The analysis returns the backbone, the secondary structure and the atoms of the protein
+when <code>Options::protein3d</code> is set (only the GUI does); <code>ligint::buildCartoon</code> and <code>ligint::buildSurface</code> turn them into triangle
+meshes. <code>ViewerWidget</code> draws them with <code>gui::raster::Renderer</code> (<code>Raster.h</code>), a software rasterizer without Qt: z-buffer,
+perspective-correct interpolation, per-pixel lighting, depth cue, analytic spheres, sorted transparency, a clipping plane, and
+bands of rows on several threads. While the mouse moves the view is drawn with one sample per pixel; a timer starts a refined
+render (2x2 samples) on a worker thread, and the surface is built on another one (<code>QFutureWatcher</code>, results are shared immutable
+pieces). The interactions, labels and legend are drawn by <code>QPainter</code> over the image and hidden where the depth buffer says that
+the protein is in front. <code>renderImage</code> draws on a <code>QImage</code> at three samples per pixel (images and tests).</p>
 <h2 id="tests"><a name="tests"></a>Tests</h2>
 <table border="1" cellspacing="0" cellpadding="5" width="100%">
 <thead>

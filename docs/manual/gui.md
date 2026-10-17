@@ -10,7 +10,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 
 - The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
-- The **3D view** is at the top right, with a toolbar (**Labels**, **Residues**, **Distances**, **Legend**, **Reset view**).
+- The **3D view** is at the top right, with the **Graphics** panel on its side (protein, surface, ligand, interactions, camera).
 - The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
 - The status bar shows short messages (what was opened, how many interactions were found, what was exported).
 
@@ -95,8 +95,11 @@ tables and the **Interaction types** list are filled. Change an option or a thre
 
 ![The 3D view](img/gui-4IKF-viewer.png)
 
-The ligand is drawn with thick bonds, the residues in contact with thinner ones, ions as larger spheres and waters as light blue spheres.
-Colors follow the element; the carbons of the ligand are pink. Interactions are dashed lines colored by type, with their distance.
+The view shows the ligand in its protein. The protein is a **cartoon** (helices and strands as ribbons, strands ending with an arrow, loops as tubes);
+the ligand is drawn with thick bonds, the residues in contact with thinner ones, ions as larger spheres and waters as light blue spheres.
+Colors follow the element; the carbons of the ligand are pink. Interactions are dashed lines colored by type, with their distance; the parts
+of a line that are behind the protein are hidden. The picture is drawn by the program itself (no graphics card or web engine is needed): it is
+simple while you move the mouse and is refined when you stop.
 
 | Action | Effect |
 |---|---|
@@ -105,9 +108,26 @@ Colors follow the element; the carbons of the ligand are pink. Interactions are 
 | Mouse wheel | zoom |
 | Double click | reset the view |
 
-The toolbar toggles **Labels** (residue names), **Residues** (the residues around the ligand), **Distances** (the numbers on the
-interaction lines) and **Legend** (the key of the interaction types), and **Reset view** restores the initial orientation, which shows the
-ligand with its widest extent. **File > Save image...** writes the current view as a PNG.
+The **Graphics** panel next to the view has these groups:
+
+| Group | Choices |
+|---|---|
+| **Protein** | representation (**Cartoon**, **Tube**, **Backbone trace**, hidden) and color (secondary structure, chain, rainbow from N to C, B-factor, single color) |
+| **Surface** | **Pocket around the ligand** or **Whole protein**; **Solvent-excluded** or **Solvent-accessible**; color (neutral, by atom, hydrophobicity, like the protein); opacity |
+| **Ligand and residues** | show the ligand (ball and stick, sticks, spheres), the residues in contact and the waters of the bridges |
+| **Interactions** | residue labels, distances, legend |
+| **View** | perspective, depth cue (fog), background, and **Clip in front of the ligand** |
+| **Camera** | **Reset view** (the initial orientation, which shows the ligand with its widest extent), **Focus ligand**, **Fit protein** |
+
+The protein is cut away in front of the ligand, so that it does not hide it: **Clip in front of the ligand** sets how much of it is kept
+(3 Å by default; 0 shows everything). The ligand and its residues are never cut. The surface of the whole protein takes a few seconds on a large
+protein; it is computed in the background and the view says so. The protein, the surface and the clip need the protein of the analysis: they are
+disabled when the view shows only a ligand. **File > Save image...** writes the current view as a PNG (with three samples per pixel for smooth edges).
+
+The secondary structure is computed by the method of Kabsch and Sander (DSSP) from the backbone, so it does not depend on the `HELIX` and `SHEET`
+records of the file (on test structures it agrees with them for 82 to 97 % of the residues). The surface is a solvent-excluded surface with a probe of 1.4 Å
+(the cavities that the solvent cannot reach are removed) or the surface of the centre of the probe (solvent-accessible); on a grid of 0.5 to 1.3 Å,
+finer for the pocket.
 
 ## The interactions table
 

@@ -28,7 +28,7 @@ struct ViewStyle {
     bool showLabels = true, showDistances = true, showLegend = true;
     bool perspective = true;
     bool depthCue = true;
-    double clipMargin = 8.0;               // Angstrom of protein kept in front of the ligand; 0 = no clipping
+    double clipMargin = 3.0;               // Angstrom of protein kept in front of the ligand; 0 = no clipping
     Background background = Background::White;
 };
 

@@ -1,5 +1,6 @@
 // Library tests (no external dependencies): API, thresholds, reports, templates, composite ligands.
 #include <cmath>
+#include <map>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -11,6 +12,7 @@
 #include "ligint/klifs.hpp"
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
+#include "ligint/scene3d.hpp"
 #include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
@@ -1165,6 +1167,138 @@ static void testFingerprintOutputs() {
     CHECK(headers == 5);
 }
 
+
+// ---- 3D scene: backbone, secondary structure, cartoon, surfaces ------------------------------------
+#ifdef LIGINT_TEST_DATA_DIR
+// fraction of the residues whose DSSP-like assignment agrees with the HELIX/SHEET records of the file
+static double ssAgreement(const std::string& file, const std::string& lig, int* nHelix = nullptr, int* nStrand = nullptr) {
+    ligint::Options o;
+    o.ligName = lig;
+    o.protein3d = true;
+    const ligint::Result r = ligint::analyzeFile(std::string(LIGINT_TEST_DATA_DIR) + "/" + file, o);
+    std::map<std::pair<std::string, int>, char> ref;
+    std::ifstream in(std::string(LIGINT_TEST_DATA_DIR) + "/" + file);
+    std::string l;
+    auto range = [&](char kind, const std::string& chain, int a, int b) { for (int i = a; i <= b; i++) ref[{chain, i}] = kind; };
+    while (std::getline(in, l)) {
+        if (l.compare(0, 5, "HELIX") == 0 && l.size() > 37) range('H', std::string(1, l[19]), std::stoi(l.substr(21, 4)), std::stoi(l.substr(33, 4)));
+        if (l.compare(0, 5, "SHEET") == 0 && l.size() > 37) range('E', std::string(1, l[21]), std::stoi(l.substr(22, 4)), std::stoi(l.substr(33, 4)));
+    }
+    int agree = 0, h = 0, e = 0;
+    for (const auto& b : r.backbone) {
+        auto it = ref.find({b.chain, b.resi});
+        agree += (it == ref.end() ? 'C' : it->second) == b.ss;
+        h += b.ss == 'H';
+        e += b.ss == 'E';
+    }
+    if (nHelix) *nHelix = h;
+    if (nStrand) *nStrand = e;
+    return r.backbone.empty() ? 0.0 : static_cast<double>(agree) / r.backbone.size();
+}
+#endif
+
+static double radiusOf(const ligint::V3f& p) { return std::sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]); }
+
+static void testScene3d() {
+    // the protein description is returned only on request (the command line does not need it)
+    {
+        ligint::Options plain;
+        plain.ligName = "LIG";
+        const std::string pdb = methanolSystem();
+        std::istringstream a(pdb), b(pdb);
+        CHECK(ligint::analyzeStream(a, plain).backbone.empty());
+        ligint::Options with = plain;
+        with.protein3d = true;
+        CHECK(!ligint::analyzeStream(b, with).proteinAtoms.empty());
+    }
+#ifdef LIGINT_TEST_DATA_DIR
+    int h = 0, e = 0;
+    CHECK(ssAgreement("1ATP.pdb", "ATP", &h, &e) > 0.90);       // measured 97 %: a kinase (helices and strands)
+    CHECK(h > 100 && e > 30);
+    CHECK(ssAgreement("1AZM.pdb", "AZM") > 0.90);               // carbonic anhydrase: mostly strands
+    CHECK(ssAgreement("1HSG.pdb", "MK1", &h, &e) > 0.90);       // HIV protease: strands
+    CHECK(e > 60 && h < 40);
+
+    // cartoon of a real protein: finite, consistent mesh with unit normals and tags inside the chain
+    {
+        ligint::Options o;
+        o.ligName = "ATP";
+        o.protein3d = true;
+        const ligint::Result r = ligint::analyzeFile(std::string(LIGINT_TEST_DATA_DIR) + "/1ATP.pdb", o);
+        const ligint::Mesh m = ligint::buildCartoon(r.backbone);
+        CHECK(m.tri.size() > 50000 && m.pos.size() == m.nrm.size() && m.pos.size() == m.tag.size());
+        bool ok = true;
+        for (size_t i = 0; i < m.pos.size(); i++) {
+            for (float c : m.pos[i]) ok = ok && std::isfinite(c);
+            ok = ok && std::fabs(radiusOf(m.nrm[i]) - 1.0) < 1e-3 && m.tag[i] >= 0 && m.tag[i] <= r.backbone.size() - 1;
+        }
+        for (const auto& t : m.tri) for (int k : t) ok = ok && k >= 0 && k < static_cast<int>(m.pos.size());
+        CHECK(ok);
+        ligint::CartoonOptions tube;
+        tube.tubeOnly = true;
+        CHECK(!ligint::buildCartoon(r.backbone, tube).empty());
+        CHECK(ligint::buildCartoon(std::vector<ligint::BackboneResidue>()).empty());
+    }
+
+    // surface: converges when the grid is refined, and the pocket clip keeps a part of it
+    {
+        ligint::Options o;
+        o.ligName = "BNZ";
+        o.protein3d = true;
+        const ligint::Result r = ligint::analyzeFile(std::string(LIGINT_TEST_DATA_DIR) + "/181L.pdb", o);
+        std::vector<ligint::ProteinAtom> atoms;
+        for (const auto& a : r.proteinAtoms) if (!a.hetero) atoms.push_back(a);
+        ligint::SurfaceOptions coarse, fine;
+        coarse.spacing = 0.5;
+        fine.spacing = 0.3;
+        const ligint::Mesh mc = ligint::buildSurface(atoms, coarse), mf = ligint::buildSurface(atoms, fine);
+        const double ac = ligint::meshArea(mc), af = ligint::meshArea(mf);
+        CHECK(af > 5000 && af < 9000);                           // a 164-residue protein: roughly 7000 A^2
+        CHECK(std::fabs(ac - af) / af < 0.06);
+        CHECK(mc.tag.size() == mc.pos.size());
+        std::vector<ligint::V3> pocket{r.ligands.at(0).atoms.at(0).pos};
+        const ligint::Mesh part = ligint::clipMeshNear(mc, pocket, 8.0);
+        CHECK(!part.empty() && part.tri.size() < mc.tri.size() / 2);
+    }
+#endif
+    // a single atom: the exact areas are known (SAS: sphere of radius r + probe; SES: sphere of radius r)
+    {
+        std::vector<ligint::ProteinAtom> one(1);
+        one[0].radius = 1.7f;
+        ligint::SurfaceOptions sas;
+        sas.kind = ligint::SurfaceKind::SolventAccessible;
+        sas.spacing = 0.4;
+        const ligint::Mesh ms = ligint::buildSurface(one, sas);
+        const double exactSas = 4 * M_PI * 3.1 * 3.1;
+        CHECK(std::fabs(ligint::meshArea(ms) / exactSas - 1.0) < 0.03);
+        int outward = 0;
+        for (size_t i = 0; i < ms.pos.size(); i++) outward += ms.nrm[i][0] * ms.pos[i][0] + ms.nrm[i][1] * ms.pos[i][1] + ms.nrm[i][2] * ms.pos[i][2] > 0;
+        CHECK(outward == static_cast<int>(ms.pos.size()));       // the normals point to the solvent
+        ligint::SurfaceOptions ses;
+        ses.spacing = 0.3;
+        const double exactSes = 4 * M_PI * 1.7 * 1.7;
+        CHECK(std::fabs(ligint::meshArea(ligint::buildSurface(one, ses)) / exactSes - 1.0) < 0.05);
+    }
+    // a closed shell of atoms encloses a cavity that the solvent cannot reach: only the outer surface is built
+    {
+        std::vector<ligint::ProteinAtom> shell;
+        const int n = 500;
+        for (int i = 0; i < n; i++) {                             // Fibonacci sphere of radius 8 A
+            const double y = 1 - 2.0 * (i + 0.5) / n, rr = std::sqrt(1 - y * y), phi = i * 2.399963229728653;
+            ligint::ProteinAtom a;
+            a.pos = {8 * rr * std::cos(phi), 8 * y, 8 * rr * std::sin(phi)};
+            a.radius = 1.7f;
+            shell.push_back(a);
+        }
+        ligint::SurfaceOptions o;
+        o.spacing = 0.5;
+        const ligint::Mesh m = ligint::buildSurface(shell, o);
+        double rmin = 1e9;
+        for (const auto& p : m.pos) rmin = std::min(rmin, radiusOf(p));
+        CHECK(!m.empty() && rmin > 9.0);                          // the cavity surface would be at about 6 A
+    }
+}
+
 int main() {
     testListing();
     testHydrogenBondAndPositions();
@@ -1193,6 +1327,7 @@ int main() {
     testPocketDefinition();
     testFingerprintWithPocket();
     testFingerprintOutputs();
+    testScene3d();
     if (failures) {
         std::cerr << failures << " checks failed\n";
         return 1;

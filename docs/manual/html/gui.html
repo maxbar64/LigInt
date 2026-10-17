@@ -29,7 +29,7 @@ reproduces it (<a href="#reproducing-an-analysis-on-the-command-line">see below<
 <ul>
 <li>The <strong>control panel</strong> on the left has the groups <strong>Structure</strong>, <strong>Options</strong>, <strong>Thresholds</strong>, <strong>Chemical templates</strong> and
   <strong>Pocket definition (fingerprint)</strong>, the <strong>Analyze</strong> button and the list of <strong>Interaction types</strong>. It scrolls when the window is too small.</li>
-<li>The <strong>3D view</strong> is at the top right, with a toolbar (<strong>Labels</strong>, <strong>Residues</strong>, <strong>Distances</strong>, <strong>Legend</strong>, <strong>Reset view</strong>).</li>
+<li>The <strong>3D view</strong> is at the top right, with the <strong>Graphics</strong> panel on its side (protein, surface, ligand, interactions, camera).</li>
 <li>The tabs below the view show the results: <strong>Interactions</strong>, <strong>Residues</strong>, <strong>Fingerprint</strong>, <strong>Matrix</strong> (several ligands at once) and <strong>Log</strong>.</li>
 <li>The status bar shows short messages (what was opened, how many interactions were found, what was exported).</li>
 </ul>
@@ -149,8 +149,11 @@ KLIFS service in builds that have network support), where to save the file, work
 tables and the <strong>Interaction types</strong> list are filled. Change an option or a threshold and press <strong>Analyze</strong> again: the results are replaced.</p>
 <h2 id="the-3d-view"><a name="the-3d-view"></a>The 3D view</h2>
 <p><img width="760" alt="The 3D view" src="img/gui-4IKF-viewer.png" /></p>
-<p>The ligand is drawn with thick bonds, the residues in contact with thinner ones, ions as larger spheres and waters as light blue spheres.
-Colors follow the element; the carbons of the ligand are pink. Interactions are dashed lines colored by type, with their distance.</p>
+<p>The view shows the ligand in its protein. The protein is a <strong>cartoon</strong> (helices and strands as ribbons, strands ending with an arrow, loops as tubes);
+the ligand is drawn with thick bonds, the residues in contact with thinner ones, ions as larger spheres and waters as light blue spheres.
+Colors follow the element; the carbons of the ligand are pink. Interactions are dashed lines colored by type, with their distance; the parts
+of a line that are behind the protein are hidden. The picture is drawn by the program itself (no graphics card or web engine is needed): it is
+simple while you move the mouse and is refined when you stop.</p>
 <table border="1" cellspacing="0" cellpadding="5" width="100%">
 <thead>
 <tr>
@@ -177,9 +180,49 @@ Colors follow the element; the carbons of the ligand are pink. Interactions are 
 </tr>
 </tbody>
 </table>
-<p>The toolbar toggles <strong>Labels</strong> (residue names), <strong>Residues</strong> (the residues around the ligand), <strong>Distances</strong> (the numbers on the
-interaction lines) and <strong>Legend</strong> (the key of the interaction types), and <strong>Reset view</strong> restores the initial orientation, which shows the
-ligand with its widest extent. <strong>File &gt; Save image...</strong> writes the current view as a PNG.</p>
+<p>The <strong>Graphics</strong> panel next to the view has these groups:</p>
+<table border="1" cellspacing="0" cellpadding="5" width="100%">
+<thead>
+<tr>
+<th>Group</th>
+<th>Choices</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Protein</strong></td>
+<td>representation (<strong>Cartoon</strong>, <strong>Tube</strong>, <strong>Backbone trace</strong>, hidden) and color (secondary structure, chain, rainbow from N to C, B-factor, single color)</td>
+</tr>
+<tr>
+<td><strong>Surface</strong></td>
+<td><strong>Pocket around the ligand</strong> or <strong>Whole protein</strong>; <strong>Solvent-excluded</strong> or <strong>Solvent-accessible</strong>; color (neutral, by atom, hydrophobicity, like the protein); opacity</td>
+</tr>
+<tr>
+<td><strong>Ligand and residues</strong></td>
+<td>show the ligand (ball and stick, sticks, spheres), the residues in contact and the waters of the bridges</td>
+</tr>
+<tr>
+<td><strong>Interactions</strong></td>
+<td>residue labels, distances, legend</td>
+</tr>
+<tr>
+<td><strong>View</strong></td>
+<td>perspective, depth cue (fog), background, and <strong>Clip in front of the ligand</strong></td>
+</tr>
+<tr>
+<td><strong>Camera</strong></td>
+<td><strong>Reset view</strong> (the initial orientation, which shows the ligand with its widest extent), <strong>Focus ligand</strong>, <strong>Fit protein</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The protein is cut away in front of the ligand, so that it does not hide it: <strong>Clip in front of the ligand</strong> sets how much of it is kept
+(3 Å by default; 0 shows everything). The ligand and its residues are never cut. The surface of the whole protein takes a few seconds on a large
+protein; it is computed in the background and the view says so. The protein, the surface and the clip need the protein of the analysis: they are
+disabled when the view shows only a ligand. <strong>File &gt; Save image...</strong> writes the current view as a PNG (with three samples per pixel for smooth edges).</p>
+<p>The secondary structure is computed by the method of Kabsch and Sander (DSSP) from the backbone, so it does not depend on the <code>HELIX</code> and <code>SHEET</code>
+records of the file (on test structures it agrees with them for 82 to 97 % of the residues). The surface is a solvent-excluded surface with a probe of 1.4 Å
+(the cavities that the solvent cannot reach are removed) or the surface of the centre of the probe (solvent-accessible); on a grid of 0.5 to 1.3 Å,
+finer for the pocket.</p>
 <h2 id="the-interactions-table"><a name="the-interactions-table"></a>The interactions table</h2>
 <p>The <strong>Interactions</strong> tab lists one row per interaction:</p>
 <table border="1" cellspacing="0" cellpadding="5" width="100%">

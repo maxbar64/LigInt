@@ -24,10 +24,12 @@
 #include <QSet>
 #include <QTableWidget>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <cstdio>
 #include <iostream>
 
 #include "CommandLine.h"
+#include "ViewerOptionsWidget.h"
 #include "HelpWindow.h"
 #include "HitsModel.h"
 #include "MainWindow.h"
@@ -131,6 +133,61 @@ int main(int argc, char** argv) {
     QImage window = w.grab().toImage();
     CHECK(!window.isNull() && window.width() > 600);
     window.save("ligint_gui_window.png");
+
+    // 3D view: the protein layers come with the analysis, the surface is computed in the background
+    {
+        gui::ViewerWidget* v = w.viewer();
+        CHECK(v->hasProtein());
+        CHECK(v->cartoonTriangles() > 10000);
+        auto waitSurface = [&]() {
+            if (!v->surfaceBusy()) return;
+            QEventLoop loop;
+            QObject::connect(v, &gui::ViewerWidget::busyChanged, &loop, [&](bool busy) { if (!busy) loop.quit(); });
+            QTimer::singleShot(60000, &loop, &QEventLoop::quit);
+            loop.exec();
+        };
+        auto distinctColors = [](const QImage& im) {
+            QSet<QRgb> c;
+            for (int y = 0; y < im.height(); y += 4)
+                for (int x = 0; x < im.width(); x += 4) c.insert(im.pixel(x, y));
+            return c.size();
+        };
+        gui::ViewStyle st = v->style();
+        CHECK(v->surfaceTriangles() == 0);
+        st.surface = gui::SurfaceMode::Pocket;
+        v->setStyle(st);
+        waitSurface();
+        CHECK(!v->surfaceBusy() && v->surfaceTriangles() > 1000);
+        const QImage withSurface = v->renderImage(QSize(700, 520));
+        CHECK(distinctColors(withSurface) > 40);
+        st.surface = gui::SurfaceMode::Off;
+        st.protein = gui::ProteinStyle::Off;
+        v->setStyle(st);
+        CHECK(v->surfaceTriangles() == 0 && v->cartoonTriangles() == 0);
+        const QImage ligandOnly = v->renderImage(QSize(700, 520));
+        CHECK(ligandOnly != withSurface);                        // the layers change the picture
+        st.background = gui::Background::Dark;
+        v->setStyle(st);
+        CHECK(qGray(v->renderImage(QSize(300, 220)).pixel(299, 219)) < 80);   // dark background (bottom right: no legend there)
+        st = gui::ViewStyle();
+        v->setStyle(st);
+        CHECK(v->cartoonTriangles() > 10000);
+
+        // the Graphics panel drives the view
+        auto* protein = w.findChild<QComboBox*>("graphics_protein_style");
+        auto* surfaceMode = w.findChild<QComboBox*>("graphics_surface_mode");
+        CHECK(protein && surfaceMode && w.findChild<QWidget*>("graphics_reset_view") && w.findChild<QWidget*>("graphics_fit_protein"));
+        if (protein) {
+            protein->setCurrentIndex(3);                         // hidden
+            CHECK(v->style().protein == gui::ProteinStyle::Off && v->cartoonTriangles() == 0);
+            protein->setCurrentIndex(0);
+            CHECK(v->style().protein == gui::ProteinStyle::Cartoon && v->cartoonTriangles() > 0);
+        }
+        v->fitProtein();
+        v->focusLigand();
+        v->resetView();
+        CHECK(v->hasData());
+    }
 
     // fingerprint: table, pocket definition and exports
     CHECK(!w.fingerprint().entries.empty());

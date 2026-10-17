@@ -23,9 +23,16 @@ a { color: #1c7ed6; }
 <h1 id="changelog"><a name="changelog"></a>Changelog</h1>
 <h2 id="unreleased"><a name="unreleased"></a>Unreleased</h2>
 <ul>
-<li><strong>Package for Ubuntu 22.04</strong>: the CI builds <code>ligint</code> and <code>ligint-dev</code> in an <code>ubuntu:22.04</code> container (Qt 6.2, GCC 11, libcurl 7.81) and names the files <code>..._ubuntu22.04_amd64.deb</code>, so that the release can
+<li><strong>New 3D view</strong>, drawn by the program itself (software rasterizer; no OpenGL, no web engine): <strong>cartoon</strong> of the protein (helices, strands with arrows, loops; secondary structure by DSSP), <strong>molecular surface</strong> (solvent-excluded or solvent-accessible, of the pocket or of the whole protein, transparent or opaque, colored neutral, by atom, by hydrophobicity or like the protein), perspective camera, depth cue, <strong>clipping of the protein in front of the ligand</strong>, interactions hidden where the protein is in front, a <strong>Graphics</strong> panel instead of the toolbar (<strong>Focus ligand</strong> and <strong>Fit protein</strong> added), and interactive rendering that is refined when the mouse stops.</li>
+<li>Library: <code>ligint/scene3d.hpp</code> (<code>assignSecondaryStructure</code>, <code>buildCartoon</code>, <code>buildSurface</code>, <code>clipMeshNear</code>); <code>Options::protein3d</code> makes <code>Result</code> carry the backbone (<code>BackboneResidue</code>) and the atoms (<code>ProteinAtom</code>) of the protein. The command line does not ask for them.</li>
+<li>
+<p>Tests: secondary structure against the <code>HELIX</code>/<code>SHEET</code> records of three real structures, cartoon consistency, areas of the surfaces (single atom, convergence on a protein, a closed shell without its cavity), and the new view and panel in the window test.</p>
+</li>
+<li>
+<p><strong>Package for Ubuntu 22.04</strong>: the CI builds <code>ligint</code> and <code>ligint-dev</code> in an <code>ubuntu:22.04</code> container (Qt 6.2, GCC 11, libcurl 7.81) and names the files <code>..._ubuntu22.04_amd64.deb</code>, so that the release can
   have both packages. The container is used instead of the runner label <code>ubuntu-22.04</code>, which GitHub is retiring in 2027. The <code>.deb</code> of Ubuntu 24.04 needs glibc 2.38 and Qt 6.4 and does not install on 22.04.
-  Checked by running the steps of the job in an Ubuntu 22.04 system: build with <code>-Werror</code>, all the tests, <code>lintian</code>, installation, the window, a program built on the installed library.</li>
+  Checked by running the steps of the job in an Ubuntu 22.04 system: build with <code>-Werror</code>, all the tests, <code>lintian</code>, installation, the window, a program built on the installed library.</p>
+</li>
 <li><strong>The CI installs the packages on a clean system</strong> (Ubuntu 22.04 and 24.04 containers with nothing else), as a user does, and starts the program; before, the packages were installed where the development tools were.</li>
 <li>The test runner (<code>tests/run_tests.py</code>) left its temporary files (hundreds of MB) in the temporary folder at every run: it removes them when all the tests pass (<code>--keep</code> keeps them; with failures they are kept and the path is printed).</li>
 </ul>

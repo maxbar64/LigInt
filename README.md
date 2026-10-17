@@ -110,8 +110,9 @@ ligint-gui [structure.pdb|structure.cif]
 ```
 
 Open a PDB (menu, drag and drop or argument), choose the ligand, adjust options and thresholds, press **Analyze**.
-The 3D view (drag: rotate; right or middle button: pan; wheel: zoom; double click: reset) shows the ligand, the
-residues in contact, ions and waters, with the interactions colored by type, distances, labels and a legend.
+The 3D view (drag: rotate; right or middle button: pan; wheel: zoom; double click: reset) shows the ligand in its protein
+(cartoon, optional molecular surface), the residues in contact, ions and waters, with the interactions colored by type,
+distances, labels and a legend. It is drawn by the program itself, without a graphics card or a web engine.
 Selecting a row of the table highlights the interaction in the view. You can filter the types, add SDF/MOL2
 templates, export the interactions to CSV and save the image as PNG. The **Fingerprint** tab shows the figure and the
 table (pocket definition loaded from the control panel; export to SVG, CSV or JSON). The analysis runs in a separate thread.

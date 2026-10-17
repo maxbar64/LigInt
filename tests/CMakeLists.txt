@@ -1,6 +1,7 @@
 # ---- C++ tests of the library (no external dependencies)
 add_executable(ligint_core_tests unit/test_core.cpp)
 target_link_libraries(ligint_core_tests PRIVATE ligint::core ligint_options)
+target_compile_definitions(ligint_core_tests PRIVATE LIGINT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME core_unit COMMAND ligint_core_tests)
 
 # ---- Python suite (chemical rules, SDF/MOL2, parsing, malformed input, real complexes in tests/data)
