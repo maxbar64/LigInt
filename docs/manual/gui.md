@@ -105,8 +105,7 @@ Colors follow the element; the carbons of the ligand are pink. Interactions are 
 | Mouse wheel | zoom |
 | Double click | reset the view |
 
-The **Graphics options** panel beside the view groups controls by purpose. **Structure** independently toggles the ligand, the interacting residues and the whole protein. The whole protein is shown as a lightweight C-alpha backbone trace, in its own layer; the ligand and contact residues remain independently visible. Enabling the full-protein trace reframes the camera to include it. **Interactions**
-toggles residue labels, distances and the legend independently. **Camera > Reset view** restores the initial orientation and resets zoom and pan. **File > Save image...** writes the current view as a PNG.
+The **Graphics options** panel beside the view groups controls by purpose. **Structure** independently toggles the ligand, the interacting residues and the whole protein. The whole protein is shown as a lightweight C-alpha backbone trace, in its own layer; the ligand and contact residues remain independently visible. Enabling the full-protein trace reframes the camera to include it. **Protein representation** offers a thin C-alpha trace, a thicker tube-like backbone, or linked C-alpha beads. **Camera > Focus ligand/pocket** keeps the protein visible while framing the interaction site; **Fit full protein** shows and frames the entire trace. **Reset view** restores the initial orientation and resets zoom and pan. **Interactions** toggles residue labels, distances and the legend independently. **File > Save image...** writes the current view as a PNG.
 
 ## The interactions table
 
