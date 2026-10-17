@@ -31,6 +31,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QStackedWidget>
 #include <QSettings>
 #include <QSplitter>
 #include <QStatusBar>
