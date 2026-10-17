@@ -19,7 +19,8 @@ class ViewerWidget : public QWidget {
 public:
     explicit ViewerWidget(QWidget* parent = nullptr);
 
-    void setLigand(const ligint::LigandResult& r);   // copies the data and orients the view
+    void setLigand(const ligint::LigandResult& r, const std::vector<ligint::AtomRecord>& proteinAtoms = {},
+                   const std::vector<ligint::BondRecord>& proteinBonds = {}); // copies layers and orients the view
     void clear();
     bool hasData() const { return hasData_; }
 
@@ -27,6 +28,8 @@ public:
     void setHighlight(int hitIndex);                 // index in LigandResult::hits, -1 = none
     void setShowLabels(bool on);
     void setShowResidues(bool on);
+    void setShowLigand(bool on);
+    void setShowProtein(bool on);
     void setShowDistances(bool on);
     void setShowLegend(bool on);
 
@@ -56,6 +59,8 @@ private:
     bool typeVisible(const std::string& type) const;
 
     ligint::LigandResult data_;
+    std::vector<ligint::AtomRecord> proteinAtoms_;
+    std::vector<ligint::BondRecord> proteinBonds_;
     bool hasData_ = false;
     ligint::V3 center_{0, 0, 0};
     double radius_ = 5;
@@ -69,6 +74,7 @@ private:
     bool allVisible_ = true;
     int highlight_ = -1;
     bool showLabels_ = true, showResidues_ = true, showDistances_ = true, showLegend_ = true;
+    bool showLigand_ = true, showProtein_ = false;
 };
 
 }  // namespace gui
