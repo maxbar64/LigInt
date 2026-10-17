@@ -36,7 +36,6 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QTableWidget>
-#include <QToolBar>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
