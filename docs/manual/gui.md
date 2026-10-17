@@ -10,7 +10,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 
 - The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
-- The **3D view** is at the top right, with a toolbar (**Labels**, **Residues**, **Distances**, **Legend**, **Reset view**).
+- The **3D view** is at the top right, next to the **Graphics options** panel, which groups scene, interaction-overlay and camera controls.
 - The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
 - The status bar shows short messages (what was opened, how many interactions were found, what was exported).
 
@@ -105,9 +105,9 @@ Colors follow the element; the carbons of the ligand are pink. Interactions are 
 | Mouse wheel | zoom |
 | Double click | reset the view |
 
-The toolbar toggles **Labels** (residue names), **Residues** (the residues around the ligand), **Distances** (the numbers on the
-interaction lines) and **Legend** (the key of the interaction types), and **Reset view** restores the initial orientation, which shows the
-ligand with its widest extent. **File > Save image...** writes the current view as a PNG.
+The **Graphics options** panel beside the view groups controls by purpose. **Structure** toggles the contact residues. **Interactions**
+toggles residue labels, distances and the legend independently. **Camera > Reset view** restores the initial orientation and resets zoom and pan.
+The panel can host additional graphics controls as the viewer grows. **File > Save image...** writes the current view as a PNG.
 
 ## The interactions table
 
