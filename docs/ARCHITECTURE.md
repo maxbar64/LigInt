@@ -37,7 +37,7 @@ results) is in `Result`. The GUI and the CLI are two clients of the same API.
    hydrophobic, halogens, metals, clashes); salt bridges by centroids (optional); rings (π-stacking, cation-π);
    water bridges.
 5. **Result:** sorted interactions, with coordinates (for the graphics), ligand atoms and bonds, atoms of the residues in
-   contact and the coordination sphere of the metals.
+   contact and the coordination sphere of the metals. A structure-level C-alpha trace is also returned for optional whole-protein graphics.
 
 ## The manual
 
