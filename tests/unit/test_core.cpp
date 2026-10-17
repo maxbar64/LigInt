@@ -84,6 +84,25 @@ static void testHydrogenBondAndPositions() {
     CHECK(!l.contactAtoms.empty());                                       // atoms of the residue in contact
 }
 
+static void testProteinBackboneTrace() {
+    std::ostringstream pdb;
+    pdb << atomLine("HETATM", 1, "C1", "LIG", 'L', 1, 0, 0, 0, "C") << "\n";
+    pdb << atomLine("ATOM", 2, "CA", "ALA", 'A', 1, 4, 0, 0, "C") << "\n";
+    pdb << atomLine("ATOM", 3, "CA", "GLY", 'A', 2, 7.8, 0, 0, "C") << "\n";
+    pdb << atomLine("ATOM", 4, "CA", "SER", 'A', 3, 11.6, 0, 0, "C") << "\n";
+    pdb << atomLine("ATOM", 5, "CA", "ALA", 'B', 1, 15.4, 0, 0, "C") << "\n";
+    pdb << atomLine("HETATM", 6, "CA", "CAL", 'A', 9, 19.2, 0, 0, "Ca") << "\nEND\n";
+    ligint::Options opt;
+    opt.ligName = "LIG";
+    const auto r = run(pdb.str(), opt);
+    CHECK(r.proteinBackboneAtoms.size() == 4);
+    CHECK(r.proteinBackboneBonds.size() == 2);
+    if (r.proteinBackboneBonds.size() == 2) {
+        CHECK(r.proteinBackboneBonds[0].a == 0 && r.proteinBackboneBonds[0].b == 1);
+        CHECK(r.proteinBackboneBonds[1].a == 1 && r.proteinBackboneBonds[1].b == 2);
+    }
+}
+
 static void testParams() {
     ligint::Params p;
     CHECK(p.set("hb-max", 3.8) && p.hbMax == 3.8);
@@ -1168,6 +1187,7 @@ static void testFingerprintOutputs() {
 int main() {
     testListing();
     testHydrogenBondAndPositions();
+    testProteinBackboneTrace();
     testParams();
     testThresholdsChangeResult();
     testReports();
