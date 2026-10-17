@@ -40,6 +40,9 @@ public:
 
 public slots:
     void resetView();
+    void focusLigand();
+    void fitProtein();
+    void setProteinStyle(int style);
 
 protected:
     void paintEvent(QPaintEvent* e) override;
@@ -55,7 +58,7 @@ private:
     void render(QPainter& p, const QRectF& rect) const;
     Proj project(const ligint::V3& v, const QRectF& rect) const;
     double fitScale(const QRectF& rect) const;
-    void orient();
+    void orient(bool includeProtein = true);
     bool typeVisible(const std::string& type) const;
 
     ligint::LigandResult data_;
@@ -75,6 +78,7 @@ private:
     int highlight_ = -1;
     bool showLabels_ = true, showResidues_ = true, showDistances_ = true, showLegend_ = true;
     bool showLigand_ = true, showProtein_ = false;
+    int proteinStyle_ = 0; // 0 = trace, 1 = tube, 2 = C-alpha beads
 };
 
 }  // namespace gui
