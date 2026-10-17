@@ -233,6 +233,7 @@ private:
     QString pocketPath_;
     QStringList templatePaths_;
     QStringList pendingArgs_, lastArgs_;
+    QString pendingPath_;                    // structure file of the analysis in progress (read by the WebGL viewer)
     QAction *cmdAct_ = nullptr, *fpCmdAct_ = nullptr;
     bool havePocket_ = false;
     ligint::Fingerprint fp_;

@@ -30,14 +30,14 @@ html,body,#viewport{width:100%;height:100%;margin:0;overflow:hidden;background:#
 #status{position:absolute;z-index:2;left:14px;top:12px;padding:7px 10px;background:#172331cc;border-radius:6px;max-width:80%}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.5.5/3Dmol-min.js"
-        onerror="document.getElementById('status').textContent='3Dmol.js non raggiungibile: controllare la connessione Internet.'"></script>
+        onerror="document.getElementById('status').textContent='3Dmol.js is unreachable: check the Internet connection.'"></script>
 </head>
 <body>
-<div id="viewport"></div><div id="status">Caricamento del renderer WebGL…</div>
+<div id="viewport"></div><div id="status">Loading the WebGL renderer…</div>
 <script>
 (function(){
   const status = document.getElementById('status');
-  let viewer = null, model = null, ligandSelection = null, currentData = null;
+  let viewer = null, model = null, ligandSelection = null, currentData = null, ligandFound = false;
   let styleIndex = 0, showContacts = true, showSurface = false;
 
   function statusText(text){ status.textContent = text; }
@@ -49,8 +49,10 @@ html,body,#viewport{width:100%;height:100%;margin:0;overflow:hidden;background:#
     if (t.includes('pi-stacking')) return '#ffc857';
     return '#62d98b';
   }
-  function draw() {
-    if (!viewer || !model || !currentData) return;
+  // Redraws styles, contacts and surface. The camera is only moved when `zoom` is true,
+  // so toggling an option does not throw away the user's current zoom and pan.
+  function draw(zoom) {
+    if (!viewer || !model || !currentData || !ligandFound) return;
     viewer.removeAllSurfaces();
     viewer.removeAllShapes();
     const proteinStyle = styleIndex === 1
@@ -78,42 +80,55 @@ html,body,#viewport{width:100%;height:100%;margin:0;overflow:hidden;background:#
         opacity:0.62, color:'#58a6d8'
       }, {within:{distance:5,sel:ligandSelection},hetflag:false}, {hetflag:false}, ligandSelection);
     }
-    viewer.zoomTo(ligandSelection);
+    if (zoom) viewer.zoomTo(ligandSelection);
     viewer.render();
   }
 
-  window.setLigIntStyle = function(index){ styleIndex = Number(index) || 0; draw(); };
-  window.setLigIntContacts = function(enabled){ showContacts = !!enabled; draw(); };
-  window.setLigIntSurface = function(enabled){ showSurface = !!enabled; draw(); };
-  window.fitLigIntView = function(){ if(viewer && ligandSelection) { viewer.zoomTo(ligandSelection); viewer.render(); } };
-  window.fitLigIntProtein = function(){ if(viewer) { viewer.zoomTo(); viewer.render(); } };
+  window.setLigIntStyle = function(index){ styleIndex = Number(index) || 0; draw(false); };
+  window.setLigIntContacts = function(enabled){ showContacts = !!enabled; draw(false); };
+  window.setLigIntSurface = function(enabled){ showSurface = !!enabled; draw(false); };
+  window.fitLigIntView = function(){ if(viewer && ligandFound) { viewer.zoomTo(ligandSelection); viewer.render(); } };
+  window.fitLigIntProtein = function(){ if(viewer && model) { viewer.zoomTo(); viewer.render(); } };
+  window.clearLigInt = function(){
+    model = null; currentData = null; ligandFound = false;
+    if (viewer) { viewer.clear(); viewer.render(); }
+    statusText('No structure loaded.');
+  };
   window.renderLigInt = function(data) {
     if (!window.$3Dmol) {
-      statusText('3Dmol.js non è stato caricato. Verificare la connessione Internet.');
+      statusText('3Dmol.js could not be loaded. Check the Internet connection.');
       return;
     }
     currentData = data;
-    const element = document.getElementById('viewport');
-    viewer = $3Dmol.createViewer(element, {backgroundColor:'#101720', antialias:true});
+    const opts = data.options || {};
+    styleIndex = Number(opts.style) || 0;
+    showContacts = opts.contacts !== false;
+    showSurface = !!opts.surface;
+    // One viewer for the lifetime of the page: creating a new one on every call would leak
+    // a canvas and a WebGL context each time a different ligand is analyzed.
+    if (!viewer) viewer = $3Dmol.createViewer(document.getElementById('viewport'), {backgroundColor:'#101720', antialias:true});
+    else viewer.clear();
     model = viewer.addModel(data.structure, data.format);
     const lig = data.ligand || {};
     ligandSelection = {resn:lig.name, resi:Number(lig.resi)};
     if (lig.chain) ligandSelection.chain = lig.chain;
     if (lig.icode && lig.icode.trim()) ligandSelection.icode = lig.icode;
-    if (model.selectedAtoms(ligandSelection).length === 0) {
+    ligandFound = model.selectedAtoms(ligandSelection).length > 0;
+    if (!ligandFound) {
       const relaxed = {resn:lig.name};
       if (lig.chain) relaxed.chain = lig.chain;
       ligandSelection = relaxed;
+      ligandFound = model.selectedAtoms(ligandSelection).length > 0;
     }
-    if (model.selectedAtoms(ligandSelection).length === 0) {
-      statusText('Proteina caricata, ma non è stato possibile localizzare il ligando selezionato.');
+    if (!ligandFound) {
+      statusText('Protein loaded, but the selected ligand could not be located.');
       viewer.setStyle({hetflag:false},{cartoon:{color:'spectrum'}});
       viewer.zoomTo();
       viewer.render();
       return;
     }
-    statusText('Proteina completa · ligando ball-and-stick · contatti dell’analisi');
-    draw();
+    statusText('Whole protein · ligand ball-and-stick · analysis contacts');
+    draw(true);
     setTimeout(function(){ if(viewer) viewer.resize(); }, 100);
   };
   window.addEventListener('resize', function(){ if(viewer) viewer.resize(); });
@@ -185,7 +200,9 @@ void Molecular3DWidget::setStructure(const QString& data, const QString& format,
     ligand.insert(QStringLiteral("name"), ligandName);
     ligand.insert(QStringLiteral("chain"), chain);
     ligand.insert(QStringLiteral("resi"), residueNumber);
-    ligand.insert(QStringLiteral("icode"), QString(QChar::fromLatin1(insertionCode)));
+    // A blank or NUL insertion code means "none": sending it would make the JS selection match nothing.
+    ligand.insert(QStringLiteral("icode"),
+                  (insertionCode == ' ' || insertionCode == '\0') ? QString() : QString(QChar::fromLatin1(insertionCode)));
     payload_.insert(QStringLiteral("structure"), data);
     payload_.insert(QStringLiteral("format"), format);
     payload_.insert(QStringLiteral("ligand"), ligand);
@@ -205,13 +222,23 @@ void Molecular3DWidget::setStructure(const QString& data, const QString& format,
     sendPayload();
 }
 
+void Molecular3DWidget::clear() {
+    payload_ = QJsonObject();
+    runViewerCommand(QStringLiteral("clearLigInt()"));
+}
+
 void Molecular3DWidget::sendPayload() {
     if (!pageReady_ || payload_.isEmpty()) return;
-    const QString json = QString::fromUtf8(QJsonDocument(payload_).toJson(QJsonDocument::Compact));
+    // The current control state travels with the payload, so the page draws the scene once
+    // instead of once per option.
+    QJsonObject options;
+    options.insert(QStringLiteral("style"), styleCombo_->currentIndex());
+    options.insert(QStringLiteral("contacts"), contactsCheck_->isChecked());
+    options.insert(QStringLiteral("surface"), surfaceCheck_->isChecked());
+    QJsonObject payload = payload_;
+    payload.insert(QStringLiteral("options"), options);
+    const QString json = QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
     webView_->page()->runJavaScript(QStringLiteral("window.renderLigInt(%1);").arg(json));
-    runViewerCommand(QStringLiteral("setLigIntStyle(%1)").arg(styleCombo_->currentIndex()));
-    runViewerCommand(QStringLiteral("setLigIntContacts(%1)").arg(contactsCheck_->isChecked() ? "true" : "false"));
-    runViewerCommand(QStringLiteral("setLigIntSurface(%1)").arg(surfaceCheck_->isChecked() ? "true" : "false"));
 }
 
 void Molecular3DWidget::runViewerCommand(const QString& command) {

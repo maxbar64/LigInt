@@ -7,6 +7,10 @@
 #include "ligint/ligint.hpp"
 
 int main(int argc, char** argv) {
+#ifdef LIGINT_GUI_HAS_3DMOL
+    // Qt WebEngine needs shared OpenGL contexts; the attribute must be set before the QApplication exists.
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
     QApplication app(argc, argv);
     QApplication::setOrganizationName("ligint");
     QApplication::setApplicationName("ligint-gui");

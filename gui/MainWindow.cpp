@@ -453,7 +453,6 @@ void MainWindow::buildUi() {
     piAngle_->setObjectName("thr_piAngle");
 
     // Graphics controls live beside the viewer so future rendering options have a dedicated home.
-
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -491,6 +490,9 @@ bool MainWindow::openStructure(const QString& path) {
     result_ = ligint::Result();
     model_->setHits({});
     viewer_->clear();
+#ifdef LIGINT_GUI_HAS_3DMOL
+    if (molecular3dViewer_) molecular3dViewer_->clear();    // do not keep showing the previous structure
+#endif
     residueTable_->setRowCount(0);
     typeList_->clear();
     fp_ = ligint::Fingerprint();
@@ -606,6 +608,7 @@ void MainWindow::analyze(bool wait) {
     const ligint::Options opt = buildOptions();
     pendingArgs_ = currentArgs();
     const QString path = path_;
+    pendingPath_ = path;
     runButton_->setEnabled(false);
     statusBar()->showMessage(tr("Analysis in progress…"));
     if (wait) {
@@ -630,6 +633,9 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     if (result_.ligands.empty()) {
         model_->setHits({});
         viewer_->clear();
+#ifdef LIGINT_GUI_HAS_3DMOL
+        if (molecular3dViewer_) molecular3dViewer_->clear();
+#endif
         statusBar()->showMessage(tr("No ligand analyzed"));
         emit analysisFinished(false);
         return;
@@ -643,7 +649,7 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     viewer_->setLigand(lig, result_.proteinBackboneAtoms, result_.proteinBackboneBonds);
 #ifdef LIGINT_GUI_HAS_3DMOL
     if (molecular3dViewer_) {
-        QFile structureFile(path_);
+        QFile structureFile(pendingPath_);   // the file that was analyzed, even if another was opened meanwhile
         if (structureFile.open(QIODevice::ReadOnly)) {
             molecular3dViewer_->setStructure(QString::fromUtf8(structureFile.readAll()),
                 result_.format == ligint::StructureFormat::Mmcif ? QStringLiteral("cif") : QStringLiteral("pdb"),

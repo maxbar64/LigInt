@@ -161,6 +161,21 @@ int main(int argc, char** argv) {
     }
     if (showLigand) { showLigand->setChecked(false); CHECK(!showLigand->isChecked()); showLigand->setChecked(true); }
 
+#ifdef LIGINT_GUI_HAS_3DMOL
+    // The advanced renderer is an alternative page of the same area: switching must not break the standard one.
+    auto* renderer = w.findChild<QComboBox*>("graphics_renderer");
+    auto* webView = w.findChild<QWidget*>("advanced3d_view");
+    auto* optionsScroll = w.findChild<QWidget*>("graphicsOptionsScroll");
+    CHECK(renderer && webView && optionsScroll);
+    if (renderer && webView && optionsScroll) {
+        CHECK(renderer->currentIndex() == 0 && !webView->isVisible() && optionsScroll->isEnabled());
+        renderer->setCurrentIndex(1);
+        CHECK(webView->isVisible() && !optionsScroll->isEnabled());
+        renderer->setCurrentIndex(0);
+        CHECK(!webView->isVisible() && optionsScroll->isEnabled() && w.viewer()->hasData());
+    }
+#endif
+
     // the type filter acts on the table
     w.hitsProxy()->setVisibleTypes(QSet<QString>());
     CHECK(w.hitsProxy()->rowCount() == 0);

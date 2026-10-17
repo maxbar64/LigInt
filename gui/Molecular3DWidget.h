@@ -21,6 +21,7 @@ public:
                       const QString& ligandName, const QString& chain,
                       int residueNumber, char insertionCode,
                       const std::vector<ligint::HitRecord>& hits);
+    void clear();   // empties the scene (no structure loaded)
 
 private:
     void sendPayload();

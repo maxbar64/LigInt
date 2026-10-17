@@ -48,6 +48,8 @@ The result now carries a structure-level C-alpha trace, shared across all ligand
 The camera now has explicit **Focus ligand/pocket** and **Fit full protein** presets. Focusing the pocket changes the frame without changing which scene layers are visible. The whole-protein C-alpha trace can be rendered as a fine trace, a thicker tube-like line or linked C-alpha beads. GUI smoke checks cover the style changes and both framing presets.
 
 
-## Prototipo WebGL opzionale
+## Optional WebGL prototype
 
-Se Qt WebEngineWidgets è disponibile, la GUI offre un renderer 3Dmol.js separato. Visualizza il complesso PDB/mmCIF, il ligando selezionato ball-and-stick, i segmenti di contatto derivati dall’analisi e una superficie SAS della tasca. Cartoon, linea e ribbon soffice sono selezionabili. Il bundle 3Dmol.js 2.5.5 viene caricato da cdnjs a runtime; la modalità WebGL richiede quindi una connessione Internet. Il renderer QPainter resta disponibile come fallback e può essere usato anche senza WebEngine. Per la distribuzione offline sarà necessario includere localmente il bundle JavaScript.
+If Qt WebEngineWidgets is available, the GUI offers a separate 3Dmol.js renderer. It shows the PDB/mmCIF complex, the selected ligand as ball-and-stick, the contact segments derived from the analysis and a SAS surface of the pocket. Cartoon, line and soft ribbon styles can be selected. The 3Dmol.js 2.5.5 bundle is loaded from cdnjs at runtime, so the WebGL mode needs an Internet connection. The QPainter renderer remains available as a fallback and is the only one built without WebEngine. For offline distribution the JavaScript bundle must be shipped locally.
+
+Known limits of the prototype: the WebGL view does not follow the interaction-table selection, ignores the *Graphics options* panel (which is disabled while it is active), and renders the file as loaded by 3Dmol.js rather than the altloc/model selection used by the analysis. The GUI smoke test only checks that the renderer selector switches views; the JavaScript side is not covered by automated tests.
