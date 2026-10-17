@@ -56,7 +56,7 @@ html,body,#viewport{width:100%;height:100%;margin:0;overflow:hidden;background:#
     const proteinStyle = styleIndex === 1
       ? {line:{color:'#b7c4d4'}}
       : styleIndex === 2
-        ? {cartoon:{color:'#c4d0df',style:'oval',thickness:0.5}}
+        ? {cartoon:{color:'#c4d0df',ribbon:true,thickness:0.5}}
         : {cartoon:{color:'spectrum'}};
     viewer.setStyle({hetflag:false}, proteinStyle);
     viewer.setStyle(ligandSelection, {
