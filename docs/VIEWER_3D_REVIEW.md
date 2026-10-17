@@ -42,3 +42,7 @@ Potential first increments are perspective projection, viewport selection of int
 ## Whole-protein scene layer
 
 The result now carries a structure-level C-alpha trace, shared across all ligand results. The GUI exposes separate visibility controls for the ligand, interacting residues and the full-protein trace. The trace is drawn as a subdued blue backbone line and the camera refits when it is enabled. The core test checks chain boundaries and excludes a calcium ion; the GUI smoke test checks defaults, toggle independence and visible rendering change.
+
+## Camera framing and protein styles
+
+The camera now has explicit **Focus ligand/pocket** and **Fit full protein** presets. Focusing the pocket changes the frame without changing which scene layers are visible. The whole-protein C-alpha trace can be rendered as a fine trace, a thicker tube-like line or linked C-alpha beads. GUI smoke checks cover the style changes and both framing presets.
