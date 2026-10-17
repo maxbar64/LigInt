@@ -110,10 +110,10 @@ void ViewerWidget::clear() {
     update();
 }
 
-void ViewerWidget::orient() {
+void ViewerWidget::orient(bool includeProtein) {
     std::vector<V3> pts;
     if (showLigand_) for (auto& a : data_.atoms) pts.push_back(a.pos);
-    if (showProtein_) for (auto& a : proteinAtoms_) pts.push_back(a.pos);
+    if (includeProtein && showProtein_) for (auto& a : proteinAtoms_) pts.push_back(a.pos);
     for (auto& h : data_.hits) { pts.push_back(h.ligandPos); pts.push_back(h.proteinPos); }
     if (pts.empty()) return;
     V3 lo = pts[0], hi = pts[0];
@@ -138,7 +138,23 @@ void ViewerWidget::orient() {
 }
 
 void ViewerWidget::resetView() {
-    if (hasData_) orient();
+    if (hasData_) orient(showProtein_);
+    update();
+}
+
+void ViewerWidget::focusLigand() {
+    if (hasData_) orient(false);
+    update();
+}
+
+void ViewerWidget::fitProtein() {
+    showProtein_ = true;
+    if (hasData_) orient(true);
+    update();
+}
+
+void ViewerWidget::setProteinStyle(int style) {
+    proteinStyle_ = std::clamp(style, 0, 2);
     update();
 }
 
@@ -151,7 +167,7 @@ void ViewerWidget::setHighlight(int i) { highlight_ = i; update(); }
 void ViewerWidget::setShowLabels(bool on) { showLabels_ = on; update(); }
 void ViewerWidget::setShowResidues(bool on) { showResidues_ = on; update(); }
 void ViewerWidget::setShowLigand(bool on) { showLigand_ = on; update(); }
-void ViewerWidget::setShowProtein(bool on) { showProtein_ = on; if (hasData_) orient(); update(); }
+void ViewerWidget::setShowProtein(bool on) { showProtein_ = on; if (hasData_) orient(showProtein_); update(); }
 void ViewerWidget::setShowDistances(bool on) { showDistances_ = on; update(); }
 void ViewerWidget::setShowLegend(bool on) { showLegend_ = on; update(); }
 
@@ -190,7 +206,7 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
     if (zmax - zmin < 1e-6) zmax = zmin + 1;
     auto depthAlpha = [&](double z) { return 0.55 + 0.45 * (z - zmin) / (zmax - zmin); };
 
-    struct Item { double z; int kind; int a, b; bool lig; };   // kind 0 = bond, 1 = atom, 2 = protein trace
+    struct Item { double z; int kind; int a, b; bool lig; };   // kind 0 = bond, 1 = atom, 2/3 = protein bond/CA
     std::vector<Item> items;
     auto zOf = [&](const ligint::AtomRecord& a) { return project(a.pos, rect).z; };
     if (showLigand_) for (size_t i = 0; i < data_.bonds.size(); i++) {
@@ -202,6 +218,8 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
         const auto& b = proteinBonds_[i];
         items.push_back({(zOf(proteinAtoms_[b.a]) + zOf(proteinAtoms_[b.b])) / 2, 2, (int)i, 0, false});
     }
+    if (showProtein_ && proteinStyle_ == 2)
+        for (size_t i = 0; i < proteinAtoms_.size(); i++) items.push_back({zOf(proteinAtoms_[i]), 3, (int)i, 0, false});
     if (showResidues_) {
         for (size_t i = 0; i < data_.contactBonds.size(); i++) {
             const auto& b = data_.contactBonds[i];
@@ -216,9 +234,18 @@ void ViewerWidget::render(QPainter& p, const QRectF& rect) const {
         if (it.kind == 2) {
             const auto& bd = proteinBonds_[it.a];
             const Proj p1 = project(proteinAtoms_[bd.a].pos, rect), p2 = project(proteinAtoms_[bd.b].pos, rect);
-            p.setOpacity(0.48 * depthAlpha(it.z));
-            p.setPen(QPen(QColor("#4dabf7"), std::clamp(0.055 * s, 0.7, 1.8), Qt::SolidLine, Qt::RoundCap));
+            const double alpha = proteinStyle_ == 1 ? 0.72 : 0.60;
+            const double width = proteinStyle_ == 1 ? std::clamp(0.18 * s, 3.0, 7.0) : std::clamp(0.07 * s, 0.9, 2.0);
+            p.setOpacity(alpha * depthAlpha(it.z));
+            p.setPen(QPen(QColor("#1971c2"), width, Qt::SolidLine, Qt::RoundCap));
             p.drawLine(p1.pt, p2.pt);
+        } else if (it.kind == 3) {
+            const Proj pr = project(proteinAtoms_[it.a].pos, rect);
+            const double rad = std::clamp(0.16 * s, 1.5, 4.0);
+            p.setOpacity(0.78 * depthAlpha(it.z));
+            p.setPen(QPen(QColor("#1864ab"), 0.8));
+            p.setBrush(QColor("#74c0fc"));
+            p.drawEllipse(pr.pt, rad, rad);
         } else if (it.kind == 0) {
             const auto& A = it.lig ? data_.atoms : data_.contactAtoms;
             const auto& B = it.lig ? data_.bonds : data_.contactBonds;
