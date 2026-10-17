@@ -168,6 +168,8 @@ struct Result {
     std::vector<char> altlocs;              // alternate-conformation identifiers found in the first model (sorted)
     std::vector<std::string> warnings;      // warnings (invalid coordinates, limited thresholds...)
     std::vector<std::string> info;          // global information (protein hydrogens, templates loaded)
+    std::vector<AtomRecord> proteinBackboneAtoms; // C-alpha trace for whole-protein graphics
+    std::vector<BondRecord> proteinBackboneBonds;
     std::vector<LigandResult> ligands;
 };
 
