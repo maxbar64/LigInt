@@ -46,3 +46,8 @@ The result now carries a structure-level C-alpha trace, shared across all ligand
 ## Camera framing and protein styles
 
 The camera now has explicit **Focus ligand/pocket** and **Fit full protein** presets. Focusing the pocket changes the frame without changing which scene layers are visible. The whole-protein C-alpha trace can be rendered as a fine trace, a thicker tube-like line or linked C-alpha beads. GUI smoke checks cover the style changes and both framing presets.
+
+
+## Prototipo WebGL opzionale
+
+Se Qt WebEngineWidgets è disponibile, la GUI offre un renderer 3Dmol.js separato. Visualizza il complesso PDB/mmCIF, il ligando selezionato ball-and-stick, i segmenti di contatto derivati dall’analisi e una superficie SAS della tasca. Cartoon, linea e ribbon soffice sono selezionabili. Il bundle 3Dmol.js 2.5.5 viene caricato da cdnjs a runtime; la modalità WebGL richiede quindi una connessione Internet. Il renderer QPainter resta disponibile come fallback e può essere usato anche senza WebEngine. Per la distribuzione offline sarà necessario includere localmente il bundle JavaScript.

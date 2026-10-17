@@ -16,6 +16,7 @@
 #include <QDesktopServices>
 #include <QDropEvent>
 #include <QFileDialog>
+#include <QFile>
 #include <QFileInfo>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -52,6 +53,9 @@
 #include "SvgView.h"
 #include "ViewerWidget.h"
 #include "ViewerOptionsWidget.h"
+#ifdef LIGINT_GUI_HAS_3DMOL
+#include "Molecular3DWidget.h"
+#endif
 
 namespace gui {
 namespace {
@@ -384,7 +388,33 @@ void MainWindow::buildUi() {
     auto* viewerLayout = new QHBoxLayout(viewerArea);
     viewerLayout->setContentsMargins(0, 0, 0, 0);
     viewerLayout->setSpacing(4);
-    viewerLayout->addWidget(viewer_, 1);
+    auto* graphicsPane = new QWidget(viewerArea);
+    auto* graphicsLayout = new QVBoxLayout(graphicsPane);
+    graphicsLayout->setContentsMargins(0, 0, 0, 0);
+    graphicsLayout->setSpacing(4);
+#ifdef LIGINT_GUI_HAS_3DMOL
+    auto* rendererBar = new QHBoxLayout;
+    rendererBar->addWidget(new QLabel(tr("3D renderer:"), graphicsPane));
+    auto* rendererMode = new QComboBox(graphicsPane);
+    rendererMode->setObjectName("graphics_renderer");
+    rendererMode->addItem(tr("Standard"));
+    rendererMode->addItem(tr("Advanced (WebGL)"));
+    rendererBar->addWidget(rendererMode, 1);
+    graphicsLayout->addLayout(rendererBar);
+#endif
+    viewerStack_ = new QStackedWidget(graphicsPane);
+    viewerStack_->addWidget(viewer_);
+#ifdef LIGINT_GUI_HAS_3DMOL
+    molecular3dViewer_ = new Molecular3DWidget(graphicsPane);
+    viewerStack_->addWidget(molecular3dViewer_);
+    connect(rendererMode, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this, graphicsScroll](int index) {
+                viewerStack_->setCurrentIndex(index);
+                graphicsScroll->setEnabled(index == 0);
+            });
+#endif
+    graphicsLayout->addWidget(viewerStack_, 1);
+    viewerLayout->addWidget(graphicsPane, 1);
     viewerLayout->addWidget(graphicsScroll);
 
     auto* right = new QSplitter(Qt::Vertical);
@@ -610,6 +640,17 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     if (!lig.metalSphere.empty()) log(tr("Coordination sphere of the metals:\n") + QString::fromStdString(lig.metalSphere));
     model_->setHits(lig.hits);
     viewer_->setLigand(lig, result_.proteinBackboneAtoms, result_.proteinBackboneBonds);
+#ifdef LIGINT_GUI_HAS_3DMOL
+    if (molecular3dViewer_) {
+        QFile structureFile(path_);
+        if (structureFile.open(QIODevice::ReadOnly)) {
+            molecular3dViewer_->setStructure(QString::fromUtf8(structureFile.readAll()),
+                result_.format == ligint::StructureFormat::Mmcif ? QStringLiteral("cif") : QStringLiteral("pdb"),
+                QString::fromStdString(lig.resName), QString::fromStdString(lig.chain),
+                lig.resi, lig.icode, lig.hits);
+        }
+    }
+#endif
     fillTypeList();
     fillResidueTable();
     updateFingerprint();

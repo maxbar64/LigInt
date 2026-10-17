@@ -25,6 +25,7 @@ class QTableView;
 class QTableWidget;
 class QTabWidget;
 class QScrollArea;
+class QStackedWidget;
 
 namespace gui {
 
@@ -33,6 +34,9 @@ class HitsFilterProxy;
 class HitsModel;
 class SvgView;
 class ViewerWidget;
+#ifdef LIGINT_GUI_HAS_3DMOL
+class Molecular3DWidget;
+#endif
 
 struct AnalysisOutcome {
     ligint::Result result;
@@ -192,6 +196,10 @@ private:
 
     // results
     ViewerWidget* viewer_ = nullptr;
+    QStackedWidget* viewerStack_ = nullptr;
+#ifdef LIGINT_GUI_HAS_3DMOL
+    Molecular3DWidget* molecular3dViewer_ = nullptr;
+#endif
     QTabWidget* tabs_ = nullptr;
     QTableView* table_ = nullptr;
     QTableWidget* residueTable_ = nullptr;

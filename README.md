@@ -69,10 +69,13 @@ With CMake ≥ 3.21 you can use the presets: `cmake --preset release && cmake --
 | `LIGINT_BUILD_CLI` | ON | `ligint` executable |
 | `LIGINT_BUILD_GUI` | ON | `ligint-gui` (requires Qt; if missing, a warning and the build continues) |
 | `LIGINT_GUI_WITH_SVG` | ON | fingerprint figure in the GUI (needs the Qt Svg module; without it the GUI shows the table only) |
+| `LIGINT_GUI_WITH_3DMOL` | ON | advanced WebGL molecular viewer when Qt WebEngineWidgets is installed; 3Dmol.js is loaded from cdnjs at runtime |
 | `LIGINT_BUILD_TESTS` | ON | tests registered in CTest |
 | `LIGINT_SANITIZE` | OFF | AddressSanitizer + UBSan (GCC/Clang; better without the GUI) |
 | `LIGINT_WARNINGS_AS_ERRORS` | OFF | compiler warnings as errors |
 | `LIGINT_BUILD_SCREENSHOT_TOOL` | OFF | `ligint-screenshot`, for the documentation images |
+
+The GUI keeps its standard renderer available. When Qt WebEngineWidgets is installed, the renderer selector also offers an advanced WebGL view with protein cartoon/line/ribbon styles, a ligand ball-and-stick model, interaction contacts and an optional pocket surface. The viewer loads the pinned 3Dmol.js 2.5.5 bundle from jsDelivr, so this optional renderer requires an Internet connection; without Qt WebEngineWidgets the regular GUI build is unchanged. Set `-DLIGINT_GUI_WITH_3DMOL=OFF` to disable it.
 
 ## Usage
 
