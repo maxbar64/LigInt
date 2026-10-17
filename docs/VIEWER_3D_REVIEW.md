@@ -38,3 +38,7 @@ The first branch increment adds a dedicated **Graphics options** panel next to t
 5. Revisit caching or a GPU renderer only if profiling shows the expanded scene needs it.
 
 Potential first increments are perspective projection, viewport selection of interactions/atoms, or a selectable pocket/residue context. These have different interaction and rendering consequences, so this branch leaves that choice open.
+
+## Whole-protein scene layer
+
+The result now carries a structure-level C-alpha trace, shared across all ligand results. The GUI exposes separate visibility controls for the ligand, interacting residues and the full-protein trace. The trace is drawn as a subdued blue backbone line and the camera refits when it is enabled. The core test checks chain boundaries and excludes a calcium ion; the GUI smoke test checks defaults, toggle independence and visible rendering change.
