@@ -9,7 +9,8 @@ add_library(ligint_gui_lib STATIC
     SvgView.cpp SvgView.h
     HelpWindow.cpp HelpWindow.h
     ${PROJECT_SOURCE_DIR}/docs/manual/html/manual.qrc
-    ViewerWidget.cpp ViewerWidget.h)
+    ViewerWidget.cpp ViewerWidget.h
+    ViewerOptionsWidget.cpp ViewerOptionsWidget.h)
 # the manual (HTML pages and images) is embedded in the library as Qt resources
 set_target_properties(ligint_gui_lib PROPERTIES AUTORCC ON)
 target_include_directories(ligint_gui_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
