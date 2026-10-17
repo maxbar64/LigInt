@@ -36,7 +36,6 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QTableWidget>
-#include <QToolBar>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
@@ -51,6 +50,7 @@
 #include "HitsModel.h"
 #include "Style.h"
 #include "SvgView.h"
+#include "ViewerOptionsWidget.h"
 #include "ViewerWidget.h"
 
 namespace gui {
@@ -268,6 +268,21 @@ void MainWindow::buildUi() {
 
     // ---- view and tables (right)
     viewer_ = new ViewerWidget;
+    graphicsOptions_ = new ViewerOptionsWidget(viewer_);
+    auto* graphicsScroll = new QScrollArea;
+    graphicsScroll->setObjectName("graphicsOptionsScroll");
+    graphicsScroll->setWidgetResizable(true);
+    graphicsScroll->setFrameShape(QFrame::NoFrame);
+    graphicsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    graphicsScroll->setMinimumWidth(225);
+    graphicsScroll->setMaximumWidth(280);
+    graphicsScroll->setWidget(graphicsOptions_);
+    auto* viewerArea = new QWidget;
+    auto* viewerLayout = new QHBoxLayout(viewerArea);
+    viewerLayout->setContentsMargins(0, 0, 0, 0);
+    viewerLayout->setSpacing(4);
+    viewerLayout->addWidget(viewer_, 1);
+    viewerLayout->addWidget(graphicsScroll);
     tabs_ = new QTabWidget;
     table_ = new QTableView;
     table_->setModel(proxy_);
@@ -372,7 +387,7 @@ void MainWindow::buildUi() {
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
-    right->addWidget(viewer_);
+    right->addWidget(viewerArea);
     right->addWidget(tabs_);
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
@@ -404,24 +419,6 @@ void MainWindow::buildUi() {
     saltCentroid_->setObjectName("thr_saltCentroid");
     hydMax_->setObjectName("thr_hydMax");
     piAngle_->setObjectName("thr_piAngle");
-
-    // ---- view toolbar
-    auto* tb = addToolBar(tr("View"));
-    tb->setMovable(false);
-    auto addToggle = [&](const QString& text, bool on, auto setter) {
-        QAction* a = tb->addAction(text);
-        a->setCheckable(true);
-        a->setChecked(on);
-        connect(a, &QAction::toggled, viewer_, setter);
-        return a;
-    };
-    addToggle(tr("Labels"), true, &ViewerWidget::setShowLabels);
-    addToggle(tr("Residues"), true, &ViewerWidget::setShowResidues);
-    addToggle(tr("Distances"), true, &ViewerWidget::setShowDistances);
-    addToggle(tr("Legend"), true, &ViewerWidget::setShowLegend);
-    tb->addSeparator();
-    QAction* reset = tb->addAction(tr("Reset view"));
-    connect(reset, &QAction::triggered, viewer_, &ViewerWidget::resetView);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -571,7 +568,8 @@ ligint::Options MainWindow::buildOptions() const {
 void MainWindow::analyze(bool wait) {
     if (path_.isEmpty() || ligandCombo_->currentIndex() < 0) return;
     if (watcher_->isRunning()) return;
-    const ligint::Options opt = buildOptions();
+    ligint::Options opt = buildOptions();
+    opt.protein3d = true;                   // backbone and atoms for the cartoon and the surfaces (not part of the command line)
     pendingArgs_ = currentArgs();
     const QString path = path_;
     runButton_->setEnabled(false);
@@ -608,7 +606,8 @@ void MainWindow::applyOutcome(const AnalysisOutcome& o) {
     log(tr("Command line: ") + lastCommandLine());
     if (!lig.metalSphere.empty()) log(tr("Coordination sphere of the metals:\n") + QString::fromStdString(lig.metalSphere));
     model_->setHits(lig.hits);
-    viewer_->setLigand(lig);
+    viewer_->setStructure(result_, 0);
+    graphicsOptions_->updateAvailability();
     fillTypeList();
     fillResidueTable();
     updateFingerprint();

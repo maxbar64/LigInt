@@ -1,5 +1,6 @@
 # Qt GUI: library with the widgets (also used by the smoke test) + ligint-gui executable
 set(CMAKE_AUTOMOC ON)
+find_package(Threads REQUIRED)    # the 3D rasterizer uses std::thread
 
 add_library(ligint_gui_lib STATIC
     CommandLine.cpp CommandLine.h
@@ -9,12 +10,15 @@ add_library(ligint_gui_lib STATIC
     SvgView.cpp SvgView.h
     HelpWindow.cpp HelpWindow.h
     ${PROJECT_SOURCE_DIR}/docs/manual/html/manual.qrc
-    ViewerWidget.cpp ViewerWidget.h)
+    ViewerWidget.cpp ViewerWidget.h
+    ViewerOptionsWidget.cpp ViewerOptionsWidget.h
+    Raster.cpp Raster.h
+    SceneBuilder.cpp SceneBuilder.h ViewStyle.h)
 # the manual (HTML pages and images) is embedded in the library as Qt resources
 set_target_properties(ligint_gui_lib PROPERTIES AUTORCC ON)
 target_include_directories(ligint_gui_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(ligint_gui_lib
-    PUBLIC ligint::core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent
+    PUBLIC ligint::core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent Threads::Threads
     PRIVATE ligint_options)
 
 # Optional: the SVG preview of the fingerprint needs the Qt Svg module (without it the fingerprint is shown as a table)

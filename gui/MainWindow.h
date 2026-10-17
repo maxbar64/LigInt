@@ -32,6 +32,7 @@ class HelpWindow;
 class HitsFilterProxy;
 class HitsModel;
 class SvgView;
+class ViewerOptionsWidget;
 class ViewerWidget;
 
 struct AnalysisOutcome {
@@ -192,6 +193,7 @@ private:
 
     // results
     ViewerWidget* viewer_ = nullptr;
+    ViewerOptionsWidget* graphicsOptions_ = nullptr;
     QTabWidget* tabs_ = nullptr;
     QTableView* table_ = nullptr;
     QTableWidget* residueTable_ = nullptr;
