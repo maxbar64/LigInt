@@ -25,6 +25,10 @@ This is a compact, portable baseline for an interaction-focused view. The curren
 
 No correctness regression was demonstrated by this review. Findings 1 and 2 are current design constraints that should guide the feature design and tests.
 
+## Branch implementation
+
+The first branch increment adds a dedicated **Graphics options** panel next to the viewer. It groups the existing residue, label, distance and legend toggles under **Structure** and **Interactions**, and puts **Reset view** under **Camera**. The previous toolbar controls have been moved into this panel. The GUI smoke test checks that the panel and controls are present and enabled. The manual source and generated HTML describe the new location.
+
 ## Suggested implementation sequence
 
 1. Agree on the first user-visible capability and its default behavior.
