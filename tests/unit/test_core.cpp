@@ -1317,6 +1317,18 @@ static void testBuriednessPockets() {
     CHECK(found.selectedAtoms==shell.size());
     CHECK(found.sampledPoints>0);
     CHECK(!found.pockets.empty());
+    // The reader must work without any ligand-selection workflow.
+    const auto temp = std::filesystem::temp_directory_path() / "ligint_pocket_input_test.pdb";
+    {
+        std::ofstream f(temp);
+        f << atomLine("ATOM", 1, "CA", "ALA", 'A', 1, 0, 0, 0, "C") << "\n";
+        f << atomLine("ATOM", 2, "CA", "GLY", 'B', 2, 4, 0, 0, "C") << "\n";
+        f << atomLine("HETATM", 3, "O", "HOH", 'A', 3, 8, 0, 0, "O") << "\nEND\n";
+    }
+    const auto loaded=ligint::readPocketAtoms(temp.string());
+    CHECK(loaded.size()==2);
+    CHECK(loaded.size()<2 || (loaded[0].chain=="A" && loaded[1].chain=="B"));
+    std::filesystem::remove(temp);
     ligint::PocketOptions filtered=o;
     filtered.chains={"B"};
     CHECK(ligint::findPockets(shell,filtered).selectedAtoms==0);
