@@ -20,7 +20,7 @@ chain IDs are accepted.
 3. Cast uniformly distributed rays and compute the fraction that intersect protein volume
    within the ray cutoff: `B = blocked_directions / directions`.
 4. Retain points with `B >= min_buriedness`; group connected points using 6-neighbor adjacency.
-5. By default, smooth the buriedness over grid neighbors for seed detection, select separated high-buriedness maxima, and perform a seeded, connectivity-preserving 3D watershed split of each connected region. The original buriedness values remain in the exported voxels.\n6. Rank candidates by voxel-count volume, with peak buriedness as the tie breaker.
+5. By default, smooth the buriedness over grid neighbors for seed detection, select separated high-buriedness maxima, and perform a seeded, connectivity-preserving 3D watershed split of each connected region. The original buriedness values remain in the exported voxels.\n6. Before exporting, merge adjacent watershed basins whose highest shared buriedness saddle is within `--merge-saddle-drop` of the weaker peak.\n7. Rank candidates by voxel-count volume, with peak buriedness as the tie breaker.
 
 **Caveats:** voxel volume is approximate and grid-dependent; a connected cluster may contain
 multiple nearby pockets; the initial watershed segmentation is heuristic and can also over-split broad regions. Small basins below `--min-points` are currently discarded, so segmented voxel totals may be smaller than unsegmented totals. Closed internal cavities are not yet distinguished from accessible
@@ -38,7 +38,7 @@ as validated binding-site predictions.
 | `--min-buriedness` | 0.5 | minimum fraction of blocked directions |
 | `--surface-distance` | 5 Å | candidate distance from nearest atomic surface |
 | `--min-points` | 30 | minimum connected voxel count |
-| `--top` | all | maximum number of candidate clusters exported |\n| `--no-segmentation` | off | revert to original 6-connected components |\n| `--seed-spacing` | 6 Å | minimum separation of watershed seeds |\n| `--seed-prominence` | 0.10 | minimum smoothed buriedness above the cutoff for a seed |\n| `--max-seeds` | 64 | maximum seed count in one connected region |
+| `--top` | all | maximum number of candidate clusters exported |\n| `--no-segmentation` | off | revert to original 6-connected components |\n| `--seed-spacing` | 6 Å | minimum separation of watershed seeds |\n| `--seed-prominence` | 0.10 | minimum smoothed buriedness above the cutoff for a seed |\n| `--max-seeds` | 64 | maximum seed count in one connected region |\n| `--merge-saddle-drop` | 0.08 | maximum buriedness drop from weaker peak to inter-basin saddle for merging |\n| `--no-basin-merge` | off | preserve all watershed basins |
 | `--pdb` | omitted | PDB pseudoatoms for buried voxels; B-factor = buriedness × 100 |
 | `--output` | stdout | JSON summary |
 | `--points` | omitted | voxel CSV for external 3D inspection |
@@ -60,3 +60,5 @@ ligint-pocket 1HSG.pdb --no-segmentation --output pockets_connected.json --pdb p
 ```
 
 The separation parameters have **not** been calibrated yet against known binding sites. Do not equate the number of watershed basins with the number of experimentally established pockets.
+
+The merging stage uses adjacency of 6-connected voxels and the strongest shared buriedness saddle. Results are heuristic; vary `--merge-saddle-drop` (e.g. 0.04, 0.08, 0.12) and compare pocket sizes and experimental ligand coverage. The merged candidate's reported buriedness and original voxel values are preserved.
