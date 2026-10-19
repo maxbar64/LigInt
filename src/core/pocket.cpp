@@ -131,7 +131,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             if(hit)blocked++;
         }
         float b=static_cast<float>(blocked)/static_cast<float>(dirs.size());
-        if(b>=o.minBuriedness)score[id]=b;
+        score[id]=b; // retain computed scalar for threshold-aware closing
     }
     // Optional binary morphology, keeping original score values untouched.
     // The mask, not the buriedness field, is changed for region connectivity.
@@ -161,15 +161,18 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             return dst;
         };
         std::vector<std::uint8_t> mask(count,0);
-        for(std::size_t id=0;id<count;id++)if(score[id]>=0)mask[id]=1;
+        for(std::size_t id=0;id<count;id++)if(score[id]>=o.minBuriedness)mask[id]=1;
         if(o.morphology=="opening"||o.morphology=="open-close")
             mask=transform(transform(mask,false),true);
         if(o.morphology=="closing"||o.morphology=="open-close")
             mask=transform(transform(mask,true),false);
-        // Preserve only measured voxels: added closing voxels have no original
-        // buriedness and must not be assigned artificial values.
+        // Closing can recover sampled below-threshold voxels with actual measured B.
+        // Unsampled voxels remain invalid and are never assigned synthetic B.
         for(std::size_t id=0;id<count;id++)
-            if(score[id]>=0 && !mask[id])score[id]=-1;
+            if(!mask[id] || score[id]<0)score[id]=-1;
+    }
+    else {
+        for(auto& b:score)if(b<o.minBuriedness)b=-1;
     }
     if(o.neckClearance>0) {
         // Remove narrow free-space centers (van der Waals clearance below threshold).
