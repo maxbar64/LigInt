@@ -1,6 +1,8 @@
 #include "PocketWorkspace.h"
 #include "ligint/pocket_interfaces.hpp"
 #include <QComboBox>
+#include <QStringList>
+#include <QPen>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QListWidget>
@@ -48,10 +50,21 @@ protected:
         double extent=1;
         for(const auto& a:points)for(int k=0;k<3;k++)extent=std::max(extent,std::fabs(a.pos[k]-center[k]));
         const double scale=0.43*std::min(width(),height())*zoom_/extent;
-        struct Dot {double depth;QPointF screen;QColor color;};
+        struct Dot {double depth;QPointF screen;QColor color;bool protein=false;};
         std::vector<Dot> dots;dots.reserve(points.size());
         static const QColor palette[]={QColor(40,185,230),QColor(255,160,60),QColor(120,220,130),QColor(214,100,236)};
         const double cy=std::cos(yaw_),sy=std::sin(yaw_),cp=std::cos(pitch_),sp=std::sin(pitch_);
+        // Faint receptor context: local protein atoms, subsampled to keep painting responsive.
+        for(std::size_t i=0;i<owner_->atoms_.size();i+=2){
+            const auto& atom=owner_->atoms_[i];
+            double r2=0;for(int k=0;k<3;k++)r2+=std::pow(atom.pos[k]-center[k],2);
+            if(r2>400)continue;
+            const double x=atom.pos[0]-center[0],y=atom.pos[1]-center[1],z=atom.pos[2]-center[2];
+            const double rx=cy*x+sy*z,rz=-sy*x+cy*z;
+            dots.push_back({sp*y+cp*rz,
+                QPointF(width()/2.0+rx*scale,height()/2.0-(cp*y-sp*rz)*scale),
+                QColor(148,159,171,75),true});
+        }
         for(std::size_t m=0;m<members.size();m++){
             const auto id=members[m];if(id>=owner_->result_.pockets.size())continue;
             for(const auto& voxel:owner_->result_.pockets[id].points){
@@ -65,7 +78,7 @@ protected:
         }
         std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
         p.setPen(Qt::NoPen);
-        for(const auto& d:dots){p.setBrush(d.color);p.drawEllipse(d.screen,2.5,2.5);}
+        for(const auto& d:dots){p.setBrush(d.color);p.drawEllipse(d.screen,d.protein?1.3:2.5,d.protein?1.3:2.5);}
         p.setPen(QColor(230,238,248));
         p.drawText(QRect(10,8,width()-20,24),Qt::AlignLeft,
             QString("Pocket voxels: %1  |  drag: rotate  wheel: zoom").arg(points.size()));
@@ -131,6 +144,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             PocketGuiOutcome out;
             try{
                 auto atoms=ligint::readPocketAtoms(path.toStdString());
+                out.atoms=atoms;
                 out.result=ligint::findPockets(atoms,o);
                 std::stable_sort(out.result.pockets.begin(),out.result.pockets.end(),
                     [](const auto&a,const auto&b){return a.heuristicScore>b.heuristicScore;});
@@ -144,6 +158,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         auto out=watcher_.result();run_->setEnabled(true);
         if(!out.error.isEmpty()){status_->setText("Error: "+out.error);return;}
         result_=std::move(out.result);groups_=std::move(out.groups);
+        atoms_=std::move(out.atoms);
         status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
             .arg(result_.pockets.size()).arg(groups_.size()).arg(result_.selectedAtoms));
         display_->setCurrentIndex(1);display_->setCurrentIndex(0);
@@ -154,7 +169,7 @@ PocketWorkspace::~PocketWorkspace(){if(watcher_.isRunning())watcher_.waitForFini
 void PocketWorkspace::setStructurePath(const QString& path){
     path_=path;run_->setEnabled(!path.isEmpty());
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
-    result_={};groups_.clear();entries_->clear();canvas_->update();
+    result_={};groups_.clear();atoms_.clear();entries_->clear();canvas_->update();
 }
 std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
     const int row=entries_->currentRow();
