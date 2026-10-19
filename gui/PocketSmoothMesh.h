@@ -47,6 +47,17 @@ inline std::vector<SmoothTriangle> makeSmoothPocketMesh(
         const double t=std::clamp(double(iso-fa)/double(fb-fa),0.0,1.0);
         ligint::V3 v;for(int k=0;k<3;k++)v[k]=a[k]+t*(b[k]-a[k]);return v;
     };
+    // Orient every triangle toward decreasing occupancy. Inconsistent tetrahedron
+    // winding previously made accumulated vertex normals cancel across seams.
+    auto emit=[&](ligint::V3 a,ligint::V3 b,ligint::V3 c,const ligint::V3& outward){
+        const ligint::V3 u={b[0]-a[0],b[1]-a[1],b[2]-a[2]};
+        const ligint::V3 v={c[0]-a[0],c[1]-a[1],c[2]-a[2]};
+        const ligint::V3 cross={u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],
+                               u[0]*v[1]-u[1]*v[0]};
+        const double dot=cross[0]*outward[0]+cross[1]*outward[1]+cross[2]*outward[2];
+        if(dot<0)std::swap(b,c);
+        triangles.push_back({{{a,b,c}}});
+    };
     for(int z=0;z<n[2]-1;z++)for(int y=0;y<n[1]-1;y++)for(int x=0;x<n[0]-1;x++){
         ligint::V3 v[8];float f[8];bool anyIn=false,anyOut=false;
         for(int c=0;c<8;c++){
@@ -59,18 +70,21 @@ inline std::vector<SmoothTriangle> makeSmoothPocketMesh(
             int in[4],out[4],ni=0,no=0;
             for(int j=0;j<4;j++)(f[t[j]]>=iso?in[ni++]:out[no++])=t[j];
             if(ni==0||ni==4)continue;
+            ligint::V3 outward{0,0,0};
+            for(int j=0;j<no;j++)for(int k=0;k<3;k++)outward[k]+=v[out[j]][k]/no;
+            for(int j=0;j<ni;j++)for(int k=0;k<3;k++)outward[k]-=v[in[j]][k]/ni;
             if(ni==1||ni==3){
                 const int single=ni==1?in[0]:out[0];
                 const int* other=ni==1?out:in;
-                triangles.push_back({{{interp(v[single],v[other[0]],f[single],f[other[0]]),
-                                       interp(v[single],v[other[1]],f[single],f[other[1]]),
-                                       interp(v[single],v[other[2]],f[single],f[other[2]])}}});
+                emit(interp(v[single],v[other[0]],f[single],f[other[0]]),
+                     interp(v[single],v[other[1]],f[single],f[other[1]]),
+                     interp(v[single],v[other[2]],f[single],f[other[2]]),outward);
             }else{
                 const auto a=interp(v[in[0]],v[out[0]],f[in[0]],f[out[0]]);
                 const auto b=interp(v[in[0]],v[out[1]],f[in[0]],f[out[1]]);
                 const auto c=interp(v[in[1]],v[out[0]],f[in[1]],f[out[0]]);
                 const auto d=interp(v[in[1]],v[out[1]],f[in[1]],f[out[1]]);
-                triangles.push_back({{{a,b,c}}});triangles.push_back({{{b,d,c}}});
+                emit(a,b,c,outward);emit(b,d,c,outward);
             }
         }
     }
