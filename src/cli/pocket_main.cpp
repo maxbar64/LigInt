@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -39,6 +40,7 @@ static void help(){
         <<"  --merge-min-contact A2 minimum shared voxel-face area (default 8 A2)\n"
         <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
         <<"  --diverse-groups FILE  export diversified site candidates as JSON\n"
+        <<"  --group-audit FILE  report singleton candidate ranks and selection status\n"
         <<"  --groups FILE       export beam-search groups as JSON\n"
         <<"  --interfaces FILE   write experimental interface geometry JSON\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
@@ -61,7 +63,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points,pdb,interfaces,groups,diverseGroups,rankBy="volume";
+        std::string file,output,points,pdb,interfaces,groups,diverseGroups,groupAudit,rankBy="volume";
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -118,6 +120,7 @@ int main(int argc,char** argv){
             else if(a=="--interfaces")interfaces=v;
             else if(a=="--groups")groups=v;
             else if(a=="--diverse-groups")diverseGroups=v;
+            else if(a=="--group-audit")groupAudit=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
             else if(a=="--format"){
@@ -175,7 +178,7 @@ int main(int argc,char** argv){
             if(!dst)throw std::runtime_error("Cannot write: "+diverseGroups);
             const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
             const auto pool=rankPocketGroups(r.pockets,edges,32,250);
-            const auto diverse=diversifyPocketGroups(pool,r.pockets,10,0.35);
+            const auto diverse=diversifyPocketGroups(pool,r.pockets,10,0.35,2);
             dst<<std::setprecision(8)<<"{\n  \"pocket_count\": "<<r.pockets.size()
                <<",\n  \"pool_size\": "<<pool.size()<<",\n  \"groups\": [\n";
             for(std::size_t i=0;i<diverse.size();i++){
@@ -190,6 +193,39 @@ int main(int argc,char** argv){
                    <<(i+1<diverse.size()?",":"")<<"\n";
             }
             dst<<"  ]\n}\n";
+        }
+        if(!groupAudit.empty()){
+            std::ofstream audit(groupAudit);
+            if(!audit)throw std::runtime_error("Cannot write: "+groupAudit);
+            const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
+            const auto full=rankPocketGroups(r.pockets,edges,32,
+                std::numeric_limits<std::size_t>::max());
+            const auto pool=rankPocketGroups(r.pockets,edges,32,250);
+            const auto diverse=diversifyPocketGroups(pool,r.pockets,10,0.35,2);
+            audit<<std::setprecision(8)<<"{\n  \"pocket_count\": "<<r.pockets.size()
+                 <<",\n  \"candidate_count\": "<<full.size()
+                 <<",\n  \"selection_pool_size\": "<<pool.size()
+                 <<",\n  \"reserved_singletons\": 2,\n  \"singletons\": [\n";
+            for(std::size_t id=0;id<r.pockets.size();++id){
+                std::size_t rank=0,diverseRank=0;
+                double value=0;
+                for(std::size_t j=0;j<full.size();++j)
+                    if(full[j].members.size()==1 && full[j].members[0]==id){
+                        rank=j+1;value=full[j].score;break;
+                    }
+                for(std::size_t j=0;j<diverse.size();++j)
+                    if(diverse[j].group.members.size()==1 &&
+                       diverse[j].group.members[0]==id){diverseRank=j+1;break;}
+                audit<<"    {\"id\": "<<id+1
+                     <<", \"volume_a3\": "<<r.pockets[id].volume
+                     <<", \"score\": "<<value
+                     <<", \"raw_rank_full\": "<<rank
+                     <<", \"in_raw_top30\": "<<(rank>0 && rank<=30?"true":"false")
+                     <<", \"in_diverse_pool\": "<<(rank>0 && rank<=pool.size()?"true":"false")
+                     <<", \"diverse_rank\": "<<diverseRank<<"}"
+                     <<(id+1<r.pockets.size()?",":"")<<"\n";
+            }
+            audit<<"  ]\n}\n";
         }
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
