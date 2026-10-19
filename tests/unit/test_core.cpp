@@ -1327,6 +1327,17 @@ static void testBuriednessPockets() {
     for(const auto& p:found.pockets)splitCount+=p.pointCount;
     CHECK(splitCount<=rawCount);
     CHECK(found.pockets.size()>=unsegmented.pockets.size());
+    ligint::PocketOptions noMerge=o;
+    noMerge.mergeBasins=false;
+    const auto unmerged=ligint::findPockets(shell,noMerge);
+    CHECK(found.pockets.size()<=unmerged.pockets.size());
+    ligint::PocketOptions invalidDrop=o;
+    invalidDrop.mergeSaddleDrop=1.1;
+    bool rejectedDrop=false;
+    try {(void)ligint::findPockets(shell,invalidDrop);}
+    catch(const std::invalid_argument&){rejectedDrop=true;}
+    CHECK(rejectedDrop);
+
     ligint::PocketOptions invalid=o;
     invalid.seedSpacing=0;
     bool rejectedSeed=false;
