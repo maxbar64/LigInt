@@ -49,7 +49,7 @@ inline std::vector<SmoothTriangle> makeSmoothPocketMesh(
     };
     // Orient every triangle toward decreasing occupancy. Inconsistent tetrahedron
     // winding previously made accumulated vertex normals cancel across seams.
-    auto emit=[&](ligint::V3 a,ligint::V3 b,ligint::V3 c,const ligint::V3& outward){
+    auto appendTriangle=[&](ligint::V3 a,ligint::V3 b,ligint::V3 c,const ligint::V3& outward){
         const ligint::V3 u={b[0]-a[0],b[1]-a[1],b[2]-a[2]};
         const ligint::V3 v={c[0]-a[0],c[1]-a[1],c[2]-a[2]};
         const ligint::V3 cross={u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],
@@ -76,7 +76,7 @@ inline std::vector<SmoothTriangle> makeSmoothPocketMesh(
             if(ni==1||ni==3){
                 const int single=ni==1?in[0]:out[0];
                 const int* other=ni==1?out:in;
-                emit(interp(v[single],v[other[0]],f[single],f[other[0]]),
+                appendTriangle(interp(v[single],v[other[0]],f[single],f[other[0]]),
                      interp(v[single],v[other[1]],f[single],f[other[1]]),
                      interp(v[single],v[other[2]],f[single],f[other[2]]),outward);
             }else{
@@ -84,7 +84,7 @@ inline std::vector<SmoothTriangle> makeSmoothPocketMesh(
                 const auto b=interp(v[in[0]],v[out[1]],f[in[0]],f[out[1]]);
                 const auto c=interp(v[in[1]],v[out[0]],f[in[1]],f[out[0]]);
                 const auto d=interp(v[in[1]],v[out[1]],f[in[1]],f[out[1]]);
-                emit(a,b,c,outward);emit(b,d,c,outward);
+                appendTriangle(a,b,c,outward);appendTriangle(b,d,c,outward);
             }
         }
     }
