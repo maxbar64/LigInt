@@ -99,4 +99,52 @@ inline std::vector<PocketGroup> rankPocketGroups(
     if(all.size()>topK)all.resize(topK);
     return all;
 }
+
+struct DiversePocketGroup {
+    PocketGroup group;
+    double maxOverlap=0;
+    double selectionScore=0;
+};
+inline std::vector<DiversePocketGroup> diversifyPocketGroups(
+    const std::vector<PocketGroup>& ranked,
+    const std::vector<PocketCandidate>& pockets,
+    std::size_t topK=10,double overlapPenalty=0.35) {
+    if(!std::isfinite(overlapPenalty)||overlapPenalty<0)
+        throw std::invalid_argument("Invalid overlap penalty");
+    std::vector<DiversePocketGroup> result;
+    std::vector<bool> selected(ranked.size(),false);
+    while(result.size()<topK && result.size()<ranked.size()){
+        std::size_t best=ranked.size();
+        double bestScore=-std::numeric_limits<double>::infinity(),bestOverlap=0;
+        for(std::size_t i=0;i<ranked.size();++i){
+            if(selected[i])continue;
+            double overlap=0;
+            for(const auto& chosen:result){
+                // Subpocket voxel sets are disjoint; weighted Jaccard on member IDs
+                // is therefore the exact voxel Jaccard of their unions.
+                std::size_t a=0,b=0;
+                double intersection=0;
+                const auto& x=ranked[i].members;
+                const auto& y=chosen.group.members;
+                while(a<x.size() && b<y.size()){
+                    if(x[a]==y[b]){
+                        if(x[a]>=pockets.size())throw std::invalid_argument("Invalid group index");
+                        intersection+=pockets[x[a]].volume;++a;++b;
+                    }else if(x[a]<y[b])++a;else ++b;
+                }
+                const double unionVolume=ranked[i].volume+chosen.group.volume-intersection;
+                if(unionVolume>0)overlap=std::max(overlap,intersection/unionVolume);
+            }
+            const double adjusted=ranked[i].score-overlapPenalty*overlap;
+            if(adjusted>bestScore || (adjusted==bestScore && (best==ranked.size() ||
+                  ranked[i].members<ranked[best].members))){
+                best=i;bestScore=adjusted;bestOverlap=overlap;
+            }
+        }
+        if(best==ranked.size())break;
+        selected[best]=true;
+        result.push_back({ranked[best],bestOverlap,bestScore});
+    }
+    return result;
+}
 } // namespace ligint
