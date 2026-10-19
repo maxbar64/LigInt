@@ -18,6 +18,8 @@ public:
     explicit PocketWorkspace(QWidget* parent=nullptr);
     ~PocketWorkspace() override;
     void setStructurePath(const QString& path);
+signals:
+    void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing);
 private:
     QWidget* canvas_=nullptr;
     QComboBox *renderMode_=nullptr,*ligand_=nullptr;
@@ -36,6 +38,7 @@ private:
     std::vector<ligint::PocketGroup> groups_;
     QFutureWatcher<PocketGuiOutcome> watcher_;
     std::vector<std::size_t> visibleMembers() const;
+    void publishSelection();
     friend class PocketCanvas;
 };
 } // namespace gui
