@@ -8,6 +8,9 @@
 
 namespace ligint {
 using namespace geom;
+namespace {
+constexpr double kPi = 3.14159265358979323846;
+}
 
 void Mesh::append(const Mesh& o) {
     const int base = static_cast<int>(pos.size());
@@ -191,7 +194,7 @@ Mesh buildCartoon(const std::vector<BackboneResidue>& res, const CartoonOptions&
                 const Profile pf = profileAt(u, k, s);
                 const double tag = start + u;
                 for (int j = 0; j < sides; j++) {
-                    const double th = 2.0 * M_PI * j / sides;
+                    const double th = 2.0 * kPi * j / sides;
                     const double cs = std::cos(th), sn = std::sin(th);
                     const double ex = 2.0 / pf.e;
                     const double x = pf.a * (cs < 0 ? -1 : 1) * std::pow(std::fabs(cs), ex);
