@@ -1,4 +1,6 @@
 #include "ViewerWidget.h"
+#include "PocketSmoothMesh.h"
+#include <map>
 
 #include <QFontMetricsF>
 #include <QMouseEvent>
@@ -146,10 +148,60 @@ void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
     invalidate(false);
 }
 
+void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& points,
+                                    double spacing,int smoothing) {
+    pocketPoints_=points;
+    pocketSpacing_=spacing;
+    pocketSmoothing_=smoothing;
+    pieces_.pocket.reset();
+    if(!points.empty()){
+        const auto triangles=makeSmoothPocketMesh(points,spacing,smoothing);
+        auto piece=std::make_shared<MeshPiece>();
+        auto& mesh=piece->mesh;
+        // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
+        using Key=std::array<long long,3>;
+        std::map<Key,int> vertices;
+        for(const auto& tri:triangles){
+            ligint::Tri indices{};
+            for(int j=0;j<3;j++){
+                const auto& v=tri.vertices[j];
+                Key key={std::llround(v[0]*100000),std::llround(v[1]*100000),
+                         std::llround(v[2]*100000)};
+                auto it=vertices.find(key);
+                if(it==vertices.end()){
+                    const int id=static_cast<int>(mesh.pos.size());
+                    vertices.emplace(key,id);
+                    mesh.pos.push_back({static_cast<float>(v[0]),static_cast<float>(v[1]),
+                                        static_cast<float>(v[2])});
+                    mesh.nrm.push_back({0,0,0});
+                    indices[j]=id;
+                }else indices[j]=it->second;
+            }
+            const auto& a=mesh.pos[indices[0]];
+            const auto& b=mesh.pos[indices[1]];
+            const auto& d=mesh.pos[indices[2]];
+            const float ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2];
+            const float vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+            const ligint::V3f normal={uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx};
+            for(int id:indices)for(int k=0;k<3;k++)mesh.nrm[id][k]+=normal[k];
+            mesh.tri.push_back(indices);
+        }
+        for(auto& n:mesh.nrm){
+            const float norm=std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+            if(norm>1e-8f)for(auto& x:n)x/=norm;
+            else n={0,0,1};
+        }
+        piece->colors.assign(mesh.pos.size(),0x40c4df);
+        pieces_.pocket=std::move(piece);
+    }
+    invalidate(false);
+}
+
 void ViewerWidget::clear() {
     data_ = ligint::LigandResult();
     protein_.reset();
     pieces_ = Pieces();
+    pocketPoints_.clear();
     hasData_ = false;
     highlight_ = -1;
     surfaceWatcher_->setFuture(QFuture<std::shared_ptr<const MeshPiece>>());
@@ -315,6 +367,7 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
         mv.colors = &pieces.cartoon->colors;
         ren->drawMesh(mv);
     }
+    if (pieces.pocket) n += pieces.pocket->mesh.tri.size();
     if (pieces.surface) {
         raster::MeshView mv;
         mv.mesh = &pieces.surface->mesh;
@@ -324,7 +377,20 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
         mv.specular = 0.18f;
         ren->drawMesh(mv);
     }
-    ren->setCamera(full);                          // ...but the ligand and its residues never are
+    // The pocket shares the protein's world coordinates, camera and z-buffer.
+    // Render with the full camera to preserve the selected cavity.
+    ren->setCamera(full);
+    if(pieces.pocket){
+        raster::MeshView pv;
+        pv.mesh=&pieces.pocket->mesh;
+        pv.colors=&pieces.pocket->colors;
+        pv.alpha=0.48f;
+        pv.cullBack=false;
+        pv.specular=0.30f;
+        ren->drawMesh(pv);
+    }
+    // ...ligand and residues remain in the same depth-buffered composition.
+
     for (const auto& piece : {pieces.residues, pieces.ligand, pieces.water}) {
         if (!piece) continue;
         if (!piece->sticks.empty()) {
