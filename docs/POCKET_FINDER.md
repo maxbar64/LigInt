@@ -286,3 +286,11 @@ This is an initial diagnostic viewer, **not yet an iso-surface / triangulated po
 The experimental GUI now exposes a **protein chain selector** populated from the opened structure; select a chain before **Find pockets** to restrict the search (or leave **All chains**). The subpocket/group list supports extended selection (Ctrl-click, Shift-click) and overlays the union of selected subpocket voxels, avoiding double drawing shared members. The lightweight software renderer also supports cool/warm palettes, opacity (10–100%), and point diameter (2–12 pixels). These are display-only controls; they do not change the geometry or ranking. The camera supports mouse drag rotation and wheel zoom. Opening a different structure clears stale results.
 
 Limitations: voxels are rendered as depth-ordered splats rather than a true isosurface mesh; full surface triangulation, ligand overlays, advanced segmentation settings and export from the GUI are future work. The GUI is still experimental and should be validated on Linux/Windows builds.
+
+## GUI pocket surface shell and advanced controls (phase 3)
+
+Pocket Finder 3D offers **Voxels**, **Surface**, and **Surface + Voxels**. The surface is made from exposed faces of the existing voxel grid and is rendered by the same Qt QPainter software projection, depth sorted with alpha blending; it is deliberately **not** a smoothed marching-cubes mesh. Surface appearance depends on grid spacing; lower spacing gives a more detailed stepped envelope at additional cost. Existing palette and opacity controls apply to the shell.
+
+The **Ligand overlay** selector reads HETATM residues from the currently opened local **PDB** file and draws their heavy-atom coordinates in yellow. It is strictly a visual diagnostic; ligands are never passed into pocket discovery, grouping or scoring. mmCIF structures continue to work for pocket discovery but do not yet have a ligand overlay in this phase.
+
+The GUI also exposes seed separation, prominence, maximum seeds, basin merge distance and saddle drop, passed to the existing native core `PocketOptions` fields. The original CLI benchmark settings are not changed. Visual shell rendering and interactive controls are experimental; test with medium-sized structures before using large structures or small grid spacing, as projected voxel faces can be expensive.
