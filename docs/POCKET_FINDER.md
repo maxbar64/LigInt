@@ -238,3 +238,7 @@ python3 tools/pocket_group_benchmark.py \
 ```
 
 The benchmark uses the ligand **only after prediction**, computes atomwise proximity to the union of group voxel sites, and records first full-coverage rank and individual group coverage. Run equivalent independent benchmarks for 1STP and 1IEP before any score calibration.
+
+## External validation: 1STP and 1IEP
+
+Run `python3 tools/pocket_external_benchmark.py --binary ./build-pocket/src/ligint-pocket --output-dir pocket_external_results` on Linux or Windows (provide the relevant executable). The script downloads `1STP.pdb` and `1IEP.pdb` from RCSB if absent, discovers every heavy-atom BTN or STI ligand instance directly from fixed-width PDB records, and performs *independent* protein-chain-specific runs for each instance. It retains the 1HSG baseline settings (`opening`, radius 1, heuristic rank, 3 Å post-hoc coverage) and produces per-instance raw and diversified group reports plus `pocket_external_results/external_summary.json`. Ligands are read only by the evaluation script, never passed to the predictor. Choosing a single protein chain rather than the entire biological assembly can alter accessible regions; interpret this as a chain-local benchmark and record possible assembly effects. If the PDB source format or chain mapping differs, inspect its records rather than silently selecting an arbitrary ligand. Do not tune weights on these validation structures.
