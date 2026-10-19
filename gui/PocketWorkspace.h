@@ -22,7 +22,7 @@ private:
     QWidget* canvas_=nullptr;
     QComboBox *renderMode_=nullptr,*ligand_=nullptr;
     QDoubleSpinBox *seedSpacing_=nullptr,*seedProminence_=nullptr,*mergeDistance_=nullptr,*mergeDrop_=nullptr;
-    QSpinBox *maxSeeds_=nullptr,*noiseNeighbors_=nullptr,*noiseComponent_=nullptr,*smoothSteps_=nullptr;
+    QSpinBox *maxSeeds_=nullptr,*noiseNeighbors_=nullptr,*noiseComponent_=nullptr,*smoothSteps_=nullptr,*lightStrength_=nullptr,*shine_=nullptr;
     std::vector<ligint::V3> ligandCoords_;
     QComboBox *morph_=nullptr,*display_=nullptr,*chain_=nullptr,*palette_=nullptr;
     QDoubleSpinBox *spacing_=nullptr,*buried_=nullptr,*ray_=nullptr,*surface_=nullptr,*probe_=nullptr;
