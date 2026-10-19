@@ -38,7 +38,8 @@ as validated binding-site predictions.
 | `--min-buriedness` | 0.5 | minimum fraction of blocked directions |
 | `--surface-distance` | 5 Å | candidate distance from nearest atomic surface |
 | `--min-points` | 30 | minimum connected voxel count |
-| `--top` | all | maximum number of candidate clusters exported |\n| `--no-segmentation` | off | revert to original 6-connected components |\n| `--seed-spacing` | 6 Å | minimum separation of watershed seeds |\n| `--seed-prominence` | 0.10 | minimum smoothed buriedness above the cutoff for a seed |\n| `--max-seeds` | 64 | maximum seed count in one connected region |\n| `--merge-saddle-drop` | 0.08 | maximum buriedness drop from weaker peak to inter-basin saddle for merging |\n| `--merge-max-distance` | 10 Å | maximum span between any two member seeds in a merged basin |\n| `--merge-min-contact` | 8 Å² | minimum shared voxel-face area for an eligible merge |\n| `--no-basin-merge` | off | preserve all watershed basins |
+| `--top` | all | maximum number of candidate clusters exported |
+| `--rank-by` | volume | `volume` (legacy) or `heuristic` (experimental score) |\n| `--no-segmentation` | off | revert to original 6-connected components |\n| `--seed-spacing` | 6 Å | minimum separation of watershed seeds |\n| `--seed-prominence` | 0.10 | minimum smoothed buriedness above the cutoff for a seed |\n| `--max-seeds` | 64 | maximum seed count in one connected region |\n| `--merge-saddle-drop` | 0.08 | maximum buriedness drop from weaker peak to inter-basin saddle for merging |\n| `--merge-max-distance` | 10 Å | maximum span between any two member seeds in a merged basin |\n| `--merge-min-contact` | 8 Å² | minimum shared voxel-face area for an eligible merge |\n| `--no-basin-merge` | off | preserve all watershed basins |
 | `--pdb` | omitted | PDB pseudoatoms for buried voxels; B-factor = buriedness × 100 |
 | `--output` | stdout | JSON summary |
 | `--points` | omitted | voxel CSV for external 3D inspection |
@@ -77,6 +78,6 @@ The JSON summary now includes for each retained region:
 - `mean_surface_distance_a`: mean nearest atomic van der Waals surface distance, clipped at zero. This is **not** solvent-accessible depth and should not be presented as such.
 - `heuristic_score`: **unvalidated** composite using volume saturation, mean buriedness, highly buried fraction and compactness. Not an affinity, druggability or probability estimate.
 
-The pocket IDs remain sorted by **volume**, as in earlier revisions; users can separately sort the JSON by `heuristic_score`. No ligand coordinates or experimentally annotated binding sites enter the score.
+The default pocket IDs remain sorted by **volume**, as in earlier revisions. Use `--rank-by heuristic` to sort JSON, CSV and PDB pocket IDs by decreasing `heuristic_score`. No ligand coordinates or experimentally annotated binding sites enter the score.
 
 To compare 1HSG with the earlier segmentation, run the same parameters on chain A, export JSON and compare `pockets[].heuristic_score` and geometric descriptors while keeping the original PDB/CSV voxel geometry unchanged.
