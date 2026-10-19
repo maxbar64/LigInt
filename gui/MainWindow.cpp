@@ -208,6 +208,10 @@ void MainWindow::buildUi() {
     saltCentroid_ = spin(0.0, 8.0, 0.0);
     saltCentroid_->setSpecialValueText(tr("off"));
     hydMax_ = spin(3.3, 6.0, 4.0);
+    piMax_ = spin(0.0, 12.0, 5.5);
+    piOffset_ = spin(0.0, 12.0, 3.5);
+    piMax_->setSuffix(QStringLiteral(" Å"));
+    piOffset_->setSuffix(QStringLiteral(" Å"));
     piAngle_ = spin(10.0, 60.0, 30.0, 1.0, 0);
     piAngle_->setSuffix(QStringLiteral("°"));
     form->addRow(tr("H-bond, D···A max"), hbMax_);
@@ -215,6 +219,8 @@ void MainWindow::buildUi() {
     form->addRow(tr("Salt bridge (atoms)"), saltMax_);
     form->addRow(tr("Salt bridge (centroids)"), saltCentroid_);
     form->addRow(tr("Hydrophobic max"), hydMax_);
+    form->addRow(tr("π-stacking, max distance"), piMax_);
+    form->addRow(tr("π-stacking, max offset"), piOffset_);
     form->addRow(tr("π-stacking, max angle"), piAngle_);
     lv->addWidget(gThr);
 
@@ -418,6 +424,8 @@ void MainWindow::buildUi() {
     saltMax_->setObjectName("thr_saltMax");
     saltCentroid_->setObjectName("thr_saltCentroid");
     hydMax_->setObjectName("thr_hydMax");
+    piMax_->setObjectName("thr_piMax");
+    piOffset_->setObjectName("thr_piOffset");
     piAngle_->setObjectName("thr_piAngle");
 }
 
@@ -557,6 +565,8 @@ ligint::Options MainWindow::buildOptions() const {
     p.saltMax = saltMax_->value();
     p.saltCentroid = saltCentroid_->value();
     p.hydMax = hydMax_->value();
+    p.piMax = piMax_->value();
+    p.piOffset = piOffset_->value();
     p.piAngle = piAngle_->value();
     if (plipLike_->isChecked()) p.halMax = 4.0;
     return opt;
@@ -707,6 +717,8 @@ QStringList MainWindow::optionArgs() const {
     thr("salt-max", saltMax_->value(), d.saltMax);
     thr("salt-centroid", saltCentroid_->value(), d.saltCentroid);
     thr("hyd-max", hydMax_->value(), d.hydMax);
+    thr("pi-max", piMax_->value(), d.piMax);
+    thr("pi-offset", piOffset_->value(), d.piOffset);
     thr("pi-angle", piAngle_->value(), d.piAngle);
     if (plipLike_->isChecked()) thr("hal-max", 4.0, d.halMax);     // the preset also lowers the halogen distance
     for (const QString& t : templatePaths_) a << (t.endsWith(".mol2", Qt::CaseInsensitive) ? "--mol2" : "--sdf") << t;

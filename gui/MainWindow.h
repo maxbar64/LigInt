@@ -184,7 +184,7 @@ private:
     QCheckBox* showSmall_ = nullptr;
     QCheckBox *water_ = nullptr, *merge_ = nullptr, *plipLike_ = nullptr, *backbone_ = nullptr, *metalDonors_ = nullptr;
     QDoubleSpinBox *hbMax_ = nullptr, *hbLong_ = nullptr, *saltMax_ = nullptr, *saltCentroid_ = nullptr,
-                   *hydMax_ = nullptr, *piAngle_ = nullptr;
+                   *hydMax_ = nullptr, *piMax_ = nullptr, *piOffset_ = nullptr, *piAngle_ = nullptr;
     QLabel* templateLabel_ = nullptr;
     QLabel* pocketLabel_ = nullptr;
     QComboBox* altlocCombo_ = nullptr;
