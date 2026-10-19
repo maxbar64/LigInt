@@ -1,5 +1,6 @@
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_interfaces.hpp"
+#include "ligint/pocket_groups.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -37,6 +38,7 @@ static void help(){
         <<"  --merge-max-distance A maximum seed-group span (default 10 A)\n"
         <<"  --merge-min-contact A2 minimum shared voxel-face area (default 8 A2)\n"
         <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
+        <<"  --groups FILE       export beam-search groups as JSON\n"
         <<"  --interfaces FILE   write experimental interface geometry JSON\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
@@ -58,7 +60,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points,pdb,interfaces,rankBy="volume";
+        std::string file,output,points,pdb,interfaces,groups,rankBy="volume";
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -113,6 +115,7 @@ int main(int argc,char** argv){
             else if(a=="--merge-min-contact")o.mergeMinContactArea=number(v);
             else if(a=="--output")output=v;
             else if(a=="--interfaces")interfaces=v;
+            else if(a=="--groups")groups=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
             else if(a=="--format"){
@@ -146,6 +149,24 @@ int main(int argc,char** argv){
                        <<"}"<<(j+1<edges.size()?",":"")<<"\n";
             }
             edgeOut<<"  ]\n}\n";
+        }
+        if(!groups.empty()){
+            std::ofstream groupOut(groups);
+            if(!groupOut)throw std::runtime_error("Cannot write: "+groups);
+            const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
+            const auto candidates=rankPocketGroups(r.pockets,edges);
+            groupOut<<std::setprecision(8)<<"{\n  \"pocket_count\": "<<r.pockets.size()
+                    <<",\n  \"groups\": [\n";
+            for(std::size_t i=0;i<candidates.size();i++){
+                const auto& g=candidates[i];
+                groupOut<<"    {\"members\": [";
+                for(std::size_t j=0;j<g.members.size();j++)
+                    groupOut<<(j?", ":"")<<g.members[j]+1;
+                groupOut<<"], \"volume_a3\": "<<g.volume<<", \"score\": "<<g.score
+                        <<", \"weakest_throat_a\": "<<g.weakestThroat<<"}"
+                        <<(i+1<candidates.size()?",":"")<<"\n";
+            }
+            groupOut<<"  ]\n}\n";
         }
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
