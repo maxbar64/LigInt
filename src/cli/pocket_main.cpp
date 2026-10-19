@@ -25,6 +25,7 @@ static void help(){
         <<"  --morphology MODE   none|opening|closing|open-close (default none)\n"
         <<"  --morph-radius N    0..2 voxels (default 0; use 1 to enable)\n"
         <<"  --neck-clearance A  minimum VdW clearance in A (default 0 = off)\n"
+        <<"  --regrow-steps N     grow opening basins by 1..5 voxel layers (default 0)\n"
         <<"  --top N             output at most N pockets (default all)\n"
         <<"  --rank-by volume|heuristic  pocket ordering (default volume)\n"
         <<"  --no-segmentation   retain original connected components\n"
@@ -87,6 +88,11 @@ int main(int argc,char** argv){
             else if(a=="--surface-distance")o.maxSurfaceDistance=number(v);
             else if(a=="--min-points")o.minClusterPoints=nonnegativeInteger(v);
             else if(a=="--morphology")o.morphology=v;
+            else if(a=="--regrow-steps"){
+                const auto n=nonnegativeInteger(v);
+                if(n>5)throw std::invalid_argument("Regrowth steps must be 0..5");
+                o.regrowSteps=static_cast<int>(n);
+            }
             else if(a=="--morph-radius"){
                 const auto n=nonnegativeInteger(v);
                 if(n>2)throw std::invalid_argument("Morphology radius must be 0..2");
