@@ -26,6 +26,8 @@ static void help(){
         <<"  --seed-spacing A    minimum seed separation (default 6 A)\n"
         <<"  --seed-prominence B minimum seed buriedness over cutoff (default 0.10)\n"
         <<"  --max-seeds N       maximum seeds per connected region (default 64)\n"
+        <<"  --merge-saddle-drop B maximum buriedness peak-to-saddle drop (default 0.08)\n"
+        <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
         <<"  --pdb FILE          export pocket pseudoatoms (B = 100 * buriedness)\n"
@@ -57,6 +59,7 @@ int main(int argc,char** argv){
                 file=a;continue;
             }
             if(a=="--no-segmentation"){o.segment=false;continue;}
+            if(a=="--no-basin-merge"){o.mergeBasins=false;continue;}
             if(i+1>=argc)throw std::invalid_argument("Missing value for "+a);
             std::string v=argv[++i];
             if(a=="--chains"){
@@ -79,6 +82,7 @@ int main(int argc,char** argv){
             else if(a=="--seed-spacing")o.seedSpacing=number(v);
             else if(a=="--seed-prominence")o.seedProminence=number(v);
             else if(a=="--max-seeds")o.maxSeeds=nonnegativeInteger(v);
+            else if(a=="--merge-saddle-drop")o.mergeSaddleDrop=number(v);
             else if(a=="--output")output=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
