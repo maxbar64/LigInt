@@ -242,3 +242,17 @@ The benchmark uses the ligand **only after prediction**, computes atomwise proxi
 ## External validation: 1STP and 1IEP
 
 Run `python3 tools/pocket_external_benchmark.py --binary ./build-pocket/src/ligint-pocket --output-dir pocket_external_results` on Linux or Windows (provide the relevant executable). The script downloads `1STP.pdb` and `1IEP.pdb` from RCSB if absent, discovers every heavy-atom BTN or STI ligand instance directly from fixed-width PDB records, and performs *independent* protein-chain-specific runs for each instance. It retains the 1HSG baseline settings (`opening`, radius 1, heuristic rank, 3 Å post-hoc coverage) and produces per-instance raw and diversified group reports plus `pocket_external_results/external_summary.json`. Ligands are read only by the evaluation script, never passed to the predictor. Choosing a single protein chain rather than the entire biological assembly can alter accessible regions; interpret this as a chain-local benchmark and record possible assembly effects. If the PDB source format or chain mapping differs, inspect its records rather than silently selecting an arbitrary ligand. Do not tune weights on these validation structures.
+
+## 1IEP A/B oracle coverage diagnostic
+
+For a retrospective, ligand-informed **audit only**, run:
+
+```bash
+python3 tools/pocket_oracle_audit.py \\
+ --crystal pocket_external_results/1IEP.pdb \\
+ --pockets-a pocket_external_results/1IEP_A_201/opening.pdb \\
+ --pockets-b pocket_external_results/1IEP_B_202/opening.pdb \\
+ --output 1iep_oracle_audit.json
+```
+
+The report measures the coverage of the union of *all* original subpockets, missing ligand atom names, per-pocket contributions, and a greedy (not exact-minimum) set-cover diagnostic. This distinguishes insufficient initial voxel discovery from downstream grouping/ranking failures. Do **not** use the crystal ligand during prediction or to tune a score on the same validation structures. Note: an original subpocket larger than the 1,800 Å³ group cap is currently omitted from candidate generation entirely (observed 1IEP-A pocket #13, 2,090 Å³); treat this as a search-cap design issue, not evidence the pocket is irrelevant.
