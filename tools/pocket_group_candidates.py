@@ -7,7 +7,7 @@ from collections import defaultdict
 from pocket_contact_audit import read_pockets, grid_adjacency
 
 
-def candidates(pockets, spacing, min_faces=8, min_fraction=0.08,
+def candidates(pockets, spacing, min_faces=8, min_fraction=0.02,
                max_volume=1800, max_members=4):
     faces = grid_adjacency(pockets, spacing)
     sizes = {p: len(v) for p, v in pockets.items()}
@@ -59,7 +59,7 @@ def main():
     ap.add_argument("--pockets-pdb",required=True)
     ap.add_argument("--spacing",type=float,default=1)
     ap.add_argument("--min-contact-faces",type=int,default=8)
-    ap.add_argument("--min-contact-fraction",type=float,default=.08)
+    ap.add_argument("--min-contact-fraction",type=float,default=.02)
     ap.add_argument("--max-group-volume",type=float,default=1800)
     ap.add_argument("--max-group-members",type=int,default=4)
     ap.add_argument("--output",required=True)
