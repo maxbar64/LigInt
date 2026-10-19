@@ -170,3 +170,17 @@ python3 tools/pocket_contact_audit.py --crystal 1HSG.pdb --ligand MK1 \\
 ```
 
 On the 1HSG opening reference, four of 45 MK1 heavy atoms are outside the best single pocket's 3 Å coverage: C4, C5, C6, O2. All four lie close to *other* pockets. Contact alone is NOT sufficient grounds for merging two basins: a future ligand-independent merge criterion must also check saddle/buriedness continuity, neck width, and excessive global component sizes, and be validated on 1STP and 1IEP.
+
+## Ligand-blind hierarchical candidate groups (experimental)
+
+The stand-alone program `tools/pocket_group_candidates.py` reads an existing pseudoatom PDB and proposes **non-destructive** groups of face-adjacent pocket subregions. The original predicted regions, geometry and ranking remain unchanged. Edges are ordered by shared-face fraction `faces/(6*min(voxels_A, voxels_B))`; greedy grouping is constrained by a maximum group voxel-volume and a maximum number of subregions. All grouping parameters are experimental and need multi-crystal validation. This prototype does **not yet** implement saddle/buriedness continuity or a throat-radius check, and therefore is not a final merge classifier.
+
+```bash
+python3 tools/pocket_group_candidates.py --pockets-pdb opening.pdb \\
+  --spacing 1 --min-contact-faces 8 --min-contact-fraction 0.02 \\
+  --max-group-volume 1800 --max-group-members 4 \\
+  --output 1hsg_group_candidates.json
+python3 -m unittest discover -s tools -p 'test_pocket_group_candidates.py'
+```
+
+In the 1HSG opening reference (55 subpockets), initial contact+volume grouping produces ten multiregion candidate groups. One such group contains pockets 2, 3, 14 and 43 (about 1,374 Å³); it **does not** automatically select the crystal-evaluation pair 1+2. This negative result is valuable: do not tune the grouping to MK1 or interpret a contact heuristic as proof of a binding site. Validate ligand coverage and pocket precision post-hoc on independent 1STP and 1IEP complexes before modifying the core predictor.
