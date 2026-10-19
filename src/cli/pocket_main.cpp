@@ -22,6 +22,7 @@ static void help(){
         <<"  --surface-distance A maximum candidate distance to atoms, default 5.0\n"
         <<"  --min-points N      minimum cluster size, default 30\n"
         <<"  --top N             output at most N pockets (default all)\n"
+        <<"  --rank-by volume|heuristic  pocket ordering (default volume)\n"
         <<"  --no-segmentation   retain original connected components\n"
         <<"  --seed-spacing A    minimum seed separation (default 6 A)\n"
         <<"  --seed-prominence B minimum seed buriedness over cutoff (default 0.10)\n"
@@ -50,7 +51,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points,pdb;
+        std::string file,output,points,pdb,rankBy="volume";
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -81,6 +82,10 @@ int main(int argc,char** argv){
             else if(a=="--surface-distance")o.maxSurfaceDistance=number(v);
             else if(a=="--min-points")o.minClusterPoints=nonnegativeInteger(v);
             else if(a=="--top")top=nonnegativeInteger(v);
+            else if(a=="--rank-by"){
+                if(v!="volume" && v!="heuristic")throw std::invalid_argument("Invalid ranking: "+v);
+                rankBy=v;
+            }
             else if(a=="--seed-spacing")o.seedSpacing=number(v);
             else if(a=="--seed-prominence")o.seedProminence=number(v);
             else if(a=="--max-seeds")o.maxSeeds=nonnegativeInteger(v);
@@ -99,8 +104,10 @@ int main(int argc,char** argv){
         }
         if(file.empty())throw std::invalid_argument("Missing structure file");
         auto atoms=readPocketAtoms(file,format);
-        const auto r=findPockets(atoms,o);
+        auto r=findPockets(atoms,o);
         if(!o.chains.empty()&&r.selectedAtoms==0)throw std::runtime_error("Selected chains contain no protein atoms");
+        if(rankBy=="heuristic")std::stable_sort(r.pockets.begin(),r.pockets.end(),
+            [](const PocketCandidate& a,const PocketCandidate& b){return a.heuristicScore>b.heuristicScore;});
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
         if(!output.empty()){
