@@ -1317,6 +1317,22 @@ static void testBuriednessPockets() {
     CHECK(found.selectedAtoms==shell.size());
     CHECK(found.sampledPoints>0);
     CHECK(!found.pockets.empty());
+    // Disabling segmentation must reproduce the original connected components.
+    ligint::PocketOptions raw=o;
+    raw.segment=false;
+    const auto unsegmented=ligint::findPockets(shell,raw);
+    CHECK(!unsegmented.pockets.empty());
+    std::size_t rawCount=0, splitCount=0;
+    for(const auto& p:unsegmented.pockets)rawCount+=p.pointCount;
+    for(const auto& p:found.pockets)splitCount+=p.pointCount;
+    CHECK(splitCount<=rawCount);
+    CHECK(found.pockets.size()>=unsegmented.pockets.size());
+    ligint::PocketOptions invalid=o;
+    invalid.seedSpacing=0;
+    bool rejectedSeed=false;
+    try {(void)ligint::findPockets(shell,invalid);} catch(const std::invalid_argument&){rejectedSeed=true;}
+    CHECK(rejectedSeed);
+
     // The reader must work without any ligand-selection workflow.
     const auto temp = std::filesystem::temp_directory_path() / "ligint_pocket_input_test.pdb";
     {
