@@ -1,6 +1,7 @@
 #include "ligint/pocket.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -23,6 +24,7 @@ static void help(){
         <<"  --top N             output at most N pockets (default all)\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
+        <<"  --pdb FILE          export pocket pseudoatoms (B = 100 * buriedness)\n"
         <<"  --format auto|pdb|cif\n";
 }
 static double number(const std::string& value){
@@ -40,7 +42,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points;
+        std::string file,output,points,pdb;
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -71,6 +73,7 @@ int main(int argc,char** argv){
             else if(a=="--top")top=nonnegativeInteger(v);
             else if(a=="--output")output=v;
             else if(a=="--points")points=v;
+            else if(a=="--pdb")pdb=v;
             else if(a=="--format"){
                 if(v=="pdb")format=StructureFormat::Pdb;
                 else if(v=="cif"||v=="mmcif")format=StructureFormat::Mmcif;
@@ -82,7 +85,7 @@ int main(int argc,char** argv){
         auto atoms=readPocketAtoms(file,format);
         const auto r=findPockets(atoms,o);
         if(!o.chains.empty()&&r.selectedAtoms==0)throw std::runtime_error("Selected chains contain no protein atoms");
-        std::ofstream dest,pointDest;
+        std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
         if(!output.empty()){
             dest.open(output);
@@ -106,6 +109,37 @@ int main(int argc,char** argv){
             pointDest<<"pocket_id,x,y,z,buriedness\n"<<std::setprecision(8);
             for(std::size_t i=0;i<n;i++)for(const auto& p:r.pockets[i].points)
                 pointDest<<i+1<<","<<p.pos[0]<<","<<p.pos[1]<<","<<p.pos[2]<<","<<p.buriedness<<"\n";
+        }
+        if(!pdb.empty()){
+            std::size_t count=0;
+            for(std::size_t i=0;i<n;i++){
+                if(i>=9999)throw std::runtime_error("PDB supports at most 9999 pockets; use --top");
+                if(r.pockets[i].points.size()>99999-count)
+                    throw std::runtime_error("PDB exceeds 99999 pseudoatoms; increase --spacing or use --top");
+                count+=r.pockets[i].points.size();
+                for(const auto& pt:r.pockets[i].points)
+                    for(double x:pt.pos)if(x<=-1000.0 || x>=10000.0)
+                        throw std::runtime_error("Pocket coordinate is outside PDB 8.3 limits");
+            }
+            pdbDest.open(pdb);
+            if(!pdbDest)throw std::runtime_error("Cannot write: "+pdb);
+            pdbDest<<"REMARK 900 LIGINT POCKET BURIEDNESS PSEUDOATOMS\n"
+                   <<"REMARK 900 B FACTOR = 100 * BURIEDNESS (0..100)\n"
+                   <<"REMARK 900 RESNAME PKT CHAIN P RESSEQ = POCKET ID\n";
+            std::size_t serial=0;
+            for(std::size_t i=0;i<n;i++)for(const auto& pt:r.pockets[i].points){
+                char line[160];
+                const int written=std::snprintf(line,sizeof(line),
+                    "HETATM%5u  C   PKT P%4u    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s",
+                    static_cast<unsigned>(++serial),static_cast<unsigned>(i+1),
+                    pt.pos[0],pt.pos[1],pt.pos[2],1.0,
+                    100.0*static_cast<double>(pt.buriedness),"C");
+                if(written<0 || written>=static_cast<int>(sizeof(line)))
+                    throw std::runtime_error("Cannot format pocket PDB record");
+                pdbDest<<line<<"\n";
+            }
+            pdbDest<<"END\n";
+            if(!pdbDest)throw std::runtime_error("Failed writing PDB: "+pdb);
         }
     }catch(const std::exception& e){
         std::cerr<<"ligint-pocket: "<<e.what()<<"\n";return 1;
