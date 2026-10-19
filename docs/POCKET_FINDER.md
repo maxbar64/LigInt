@@ -260,3 +260,17 @@ The report measures the coverage of the union of *all* original subpockets, miss
 ## Oversized singleton correction (1IEP-A)
 
 Independent oracle audit showed 1IEP-A's existing singleton #13 (2,090 Å³) covers 37/37 STI heavy atoms within 3 Å, but had been removed by the 1,800 Å³ group limit. **All discovered singleton pockets are now retained**, regardless of their size. The `maxVolume` cap and volume-growth penalty still apply to *multi-pocket unions* only. The full ranking and diversified outputs continue to use the identical ligand-independent heuristic. Re-run the 1IEP external benchmark to measure whether the retained singleton reaches the final Top-K; coverage alone does not establish its ranking.
+
+## Candidate retention audit and singleton quota (experimental)
+
+The `--group-audit FILE` option exports all singleton pockets with their **full, untruncated geometric rank**, score, original volume, inclusion in the normal Top-30, inclusion in the 250-entry diversified pool, and final diversified position. This explicitly diagnoses search pruning without using a crystal ligand. The diversified Top-10 now reserves its first two choices for singleton pockets; the remaining eight follow the existing overlap-penalized ranking. The plain `--groups` ranking stays unchanged. This quota is a diagnostic policy, **not validated to improve Top-K coverage**; compare it against previous results before adopting as default.
+
+```bash
+ligint-pocket pocket_external_results/1IEP.pdb --chains A \\
+  --rank-by heuristic --morphology opening --morph-radius 1 \\
+  --output opening.json --pdb opening.pdb \\
+  --groups groups.json --diverse-groups diverse.json \\
+  --group-audit 1iep_a_group_audit.json
+```
+
+A pocket with `raw_rank_full > 30` was not removed at discovery; it was truncated from the report. The `in_diverse_pool` flag indicates membership of the score-ranked top 250, not actual diversified selection.
