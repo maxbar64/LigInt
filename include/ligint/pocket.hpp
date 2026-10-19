@@ -11,7 +11,8 @@ struct PocketAtom {
     std::string chain, residue;
 };
 struct PocketOptions {
-    double spacing = 1.0;          // Angstrom
+    double spacing = 1.0;
+    double solventProbeRadius = 1.4; // radius of rolling solvent probe, Angstrom          // Angstrom
     double rayLength = 10.0;       // Angstrom
     double maxSurfaceDistance = 5.0;
     double minBuriedness = 0.5;    // fraction of blocked directions
@@ -43,6 +44,9 @@ struct PocketCandidate {
     double compactness = 0;          // 36*pi*V^2 / A^3 (voxel approximation)
     double elongation = 0;           // bounding-box major/minor extent
     double meanAtomSurfaceDistance = 0; // nearest atom center minus van der Waals radius
+    double solventAccessibleFraction = 0; // fraction reachable by water-probe center
+    double meanSolventPathDepth = 0;  // shortest connected path to grid exterior, Angstrom
+    double maxSolventPathDepth = 0;
     double heuristicScore = 0;       // experimental ranking, not druggability
     std::vector<PocketPoint> points;
 };
