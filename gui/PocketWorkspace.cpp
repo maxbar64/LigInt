@@ -232,7 +232,16 @@ protected:
             }
         }
         if(mode==3){
-            const auto triangles=makeSmoothPocketMesh(points,spacing,owner_->smoothSteps_->value());
+            QString meshKey=QString::number(owner_->canvas_->property("pocketGeneration").toInt())+"|"+QString::number(spacing,'g',12)+"|"+
+                QString::number(owner_->smoothSteps_->value())+"|"+
+                QString::number(owner_->noiseNeighbors_->value())+"|"+
+                QString::number(owner_->noiseComponent_->value());
+            for(auto id:members)meshKey+=":"+QString::number(id);
+            if(meshKey!=meshKey_){
+                mesh_=makeSmoothPocketMesh(points,spacing,owner_->smoothSteps_->value());
+                meshKey_=meshKey;
+            }
+            const auto& triangles=mesh_;
             QColor shell=owner_->palette_->currentIndex()==0?QColor(64,196,224):QColor(237,160,95);
             shell.setAlphaF(owner_->opacity_->value()/100.0);
             faces.reserve(triangles.size());
@@ -263,6 +272,8 @@ protected:
     }
 private:
     PocketWorkspace* owner_;QPoint last_;double yaw_=0.5,pitch_=0.4,zoom_=1;
+    QString meshKey_;
+    std::vector<SmoothTriangle> mesh_;
 };
 
 PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
@@ -403,6 +414,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         auto out=watcher_.result();run_->setEnabled(true);
         if(!out.error.isEmpty()){status_->setText("Error: "+out.error);return;}
         result_=std::move(out.result);groups_=std::move(out.groups);
+        canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
         atoms_=std::move(out.atoms);
         status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
             .arg(result_.pockets.size()).arg(groups_.size()).arg(result_.selectedAtoms));
@@ -417,6 +429,7 @@ void PocketWorkspace::setStructurePath(const QString& path){
     path_=path;run_->setEnabled(!path.isEmpty());
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
     result_={};groups_.clear();atoms_.clear();entries_->clear();
+    canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
     chain_->clear();chain_->addItem("All chains",QString());
     ligand_->clear();ligand_->addItem("None",QString());ligandCoords_.clear();
     if(!path.isEmpty()){
