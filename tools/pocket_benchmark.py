@@ -4,7 +4,6 @@
 Standard library only. No ligand positions are supplied to pocket discovery.
 """
 import argparse
-import csv
 import json
 import math
 from pathlib import Path
@@ -63,7 +62,7 @@ def evaluate(crystal, ligand, pocket_pdb, pocket_json, ligand_chain, ligand_ress
     predicted = read_pdb(pocket_pdb, predictions=True)
     grouped = {}
     for pid, pos in predicted:
-        grouped.setdefault(int(pid), []).append((pid, pos))
+        grouped.setdefault(int(pid), []).append(pos)
     with open(pocket_json, encoding="utf-8") as stream:
         meta = json.load(stream)
     pockets = meta["pockets"]
