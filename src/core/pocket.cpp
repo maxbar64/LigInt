@@ -43,7 +43,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
          std::isfinite(o.minBuriedness) && o.minBuriedness>=0 && o.minBuriedness<=1 &&
          o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0 &&
          std::isfinite(o.seedSpacing) && o.seedSpacing>0 &&
-         std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0))
+         std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0 &&
+         std::isfinite(o.mergeSaddleDrop) && o.mergeSaddleDrop>=0 && o.mergeSaddleDrop<=1))
         throw std::invalid_argument("Invalid pocket search options");
     std::vector<PocketAtom> atoms;
     for(const auto& a:input) {
@@ -243,6 +244,67 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                         frontier.push({std::min(node.score,smooth[static_cast<std::size_t>(j)]),
                                        static_cast<std::size_t>(j),node.label});
                 }
+            }
+            // Measure the strongest shared saddle between adjacent watershed basins.
+            // Merge only when the saddle is near the weaker basin's maximum.
+            if(o.mergeBasins) {
+                const std::size_t ns=seeds.size();
+                std::vector<float> peak(ns,0.f);
+                std::vector<std::size_t> sizes(ns,0);
+                for(std::size_t i=0;i<labels.size();i++)if(labels[i]>=0){
+                    const auto k=static_cast<std::size_t>(labels[i]);
+                    peak[k]=std::max(peak[k],smooth[i]);
+                    ++sizes[k];
+                }
+                std::vector<float> saddle(ns*ns,-1.f);
+                for(std::size_t i=0;i<ids.size();i++){
+                    const int a=labels[i];
+                    if(a<0)continue;
+                    const auto id=ids[i];
+                    const int x=static_cast<int>(id%g.nx);
+                    const int y=static_cast<int>((id/g.nx)%g.ny);
+                    const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                    for(int k=0;k<6;k+=2){
+                        const int xx=x+dx[k],yy=y+dy[k],zz=z+dz[k];
+                        if(!g.inside(xx,yy,zz))continue;
+                        const int j=belongs[g.index(xx,yy,zz)];
+                        if(j<0)continue;
+                        const int b=labels[static_cast<std::size_t>(j)];
+                        if(b<0||a==b)continue;
+                        const float v=std::min(smooth[i],smooth[static_cast<std::size_t>(j)]);
+                        saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)]=
+                            std::max(saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)],v);
+                        saddle[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)]=
+                            std::max(saddle[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)],v);
+                    }
+                }
+                std::vector<std::size_t> parent(ns);
+                for(std::size_t i=0;i<ns;i++)parent[i]=i;
+                auto root=[&](std::size_t x){while(parent[x]!=x)x=parent[x]=parent[parent[x]];return x;};
+                struct Edge{std::size_t a,b;float level;};
+                std::vector<Edge> edges;
+                for(std::size_t a=0;a<ns;a++)for(std::size_t b=a+1;b<ns;b++){
+                    const float s=saddle[a*ns+b];
+                    if(s>=0)edges.push_back({a,b,s});
+                }
+                std::sort(edges.begin(),edges.end(),[](const Edge& a,const Edge& b){
+                    if(a.level!=b.level)return a.level>b.level;
+                    if(a.a!=b.a)return a.a<b.a;
+                    return a.b<b.b;
+                });
+                for(const auto& edge:edges) {
+                    auto a=root(edge.a),b=root(edge.b);
+                    if(a==b)continue;
+                    const float weaker=std::min(peak[a],peak[b]);
+                    if(weaker-edge.level>o.mergeSaddleDrop)continue;
+                    // The stronger maximum remains the representative seed.
+                    if(peak[a]<peak[b] || (peak[a]==peak[b]&&a>b))std::swap(a,b);
+                    parent[b]=a;
+                    sizes[a]+=sizes[b];
+                    peak[a]=std::max(peak[a],peak[b]);
+                }
+                for(auto& label:labels)if(label>=0)
+                    label=static_cast<int>(root(static_cast<std::size_t>(label)));
             }
             std::vector<PocketCandidate> basins(seeds.size());
             for(std::size_t i=0;i<ids.size();i++){
