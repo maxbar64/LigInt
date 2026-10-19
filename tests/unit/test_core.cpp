@@ -1322,6 +1322,14 @@ static void testBuriednessPockets() {
     opening.morphology="opening";
     opening.morphologyRadius=1;
     const auto opened=ligint::findPockets(shell,opening);
+    opening.regrowSteps=2;
+    const auto regrown=ligint::findPockets(shell,opening);
+    CHECK(regrown.selectedAtoms==opened.selectedAtoms);
+    std::size_t openPoints=0,grownPoints=0;
+    for(const auto& region:opened.pockets)openPoints+=region.pointCount;
+    for(const auto& region:regrown.pockets)grownPoints+=region.pointCount;
+    CHECK(grownPoints>=openPoints);
+    CHECK(regrown.pockets.size()==opened.pockets.size());
     for(const auto& region:opened.pockets)
         for(const auto& pt:region.points)
             CHECK(pt.buriedness>=0 && pt.buriedness<=1);
