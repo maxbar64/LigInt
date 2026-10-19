@@ -1,5 +1,6 @@
 #include "PocketWorkspace.h"
 #include "ligint/pocket_interfaces.hpp"
+#include "PocketSmoothMesh.h"
 #include <QComboBox>
 #include <QStringList>
 #include <QPen>
@@ -167,7 +168,7 @@ protected:
                 sp*y+cp*rz};
         };
         std::unordered_set<std::string> occupied;
-        if(mode!=0){
+        if(mode!=0 && mode!=3){
             occupied.reserve(points.size()*2);
             for(const auto& voxel:points)occupied.insert(key(voxel.pos));
         }
@@ -180,9 +181,9 @@ protected:
                 const double ry=cp*y-sp*rz,depth=sp*y+cp*rz;
                 QColor color=owner_->palette_->currentIndex()==0?palette[id%4]:warm[id%4];
                 color.setAlphaF(std::clamp((owner_->opacity_->value()/100.0)*(0.3+0.7*voxel.buriedness),0.0,1.0));
-                if(mode!=1)
+                if(mode!=1 && mode!=3)
                     dots.push_back({depth,QPointF(width()/2.0+rx*scale,height()/2.0-ry*scale),color});
-                if(mode!=0){
+                if(mode==1 || mode==2){
                     for(const auto& d:dirs){
                         ligint::V3 neighbor=voxel.pos;
                         for(int k=0;k<3;k++)neighbor[k]+=d[k]*spacing;
@@ -230,6 +231,20 @@ protected:
                 }
             }
         }
+        if(mode==3){
+            const auto triangles=makeSmoothPocketMesh(points,spacing,owner_->smoothSteps_->value());
+            QColor shell=owner_->palette_->currentIndex()==0?QColor(64,196,224):QColor(237,160,95);
+            shell.setAlphaF(owner_->opacity_->value()/100.0);
+            faces.reserve(triangles.size());
+            for(const auto& tri:triangles){
+                QPolygonF polygon;double depth=0;
+                for(const auto& vertex:tri.vertices){
+                    const auto projected=project(vertex);
+                    polygon<<projected.first;depth+=projected.second/3.0;
+                }
+                faces.push_back({depth,polygon,shell});
+            }
+        }
         std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
         std::sort(faces.begin(),faces.end(),[](const Face&a,const Face&b){return a.depth<b.depth;});
         p.setPen(Qt::NoPen);
@@ -273,7 +288,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Ray length (Å)",ray_);form->addRow("Surface distance (Å)",surface_);
     form->addRow("Solvent probe (Å)",probe_);form->addRow("Morphology",morph_);
     form->addRow("Morph radius",radius_);form->addRow("Min cluster voxels",minPts_);
-    renderMode_=new QComboBox;renderMode_->addItems({"Voxels","Surface","Surface + Voxels"});
+    renderMode_=new QComboBox;renderMode_->addItems({"Voxels","Voxel shell","Shell + Voxels","Smooth isosurface"});
     ligand_=new QComboBox;ligand_->addItem("None",QString());
     seedSpacing_=new QDoubleSpinBox;seedSpacing_->setRange(1,20);seedSpacing_->setValue(6);
     seedProminence_=new QDoubleSpinBox;seedProminence_->setRange(0,1);seedProminence_->setDecimals(2);seedProminence_->setValue(.10);
