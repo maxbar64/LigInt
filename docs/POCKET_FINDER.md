@@ -91,3 +91,32 @@ After pocket segmentation, a probe-center exclusion grid is computed by inflatin
 - `max_solvent_path_depth_a`: maximum such distance, in Å.
 
 These are grid-based accessibility/path proxies, **not** accurate pocket-mouth depth measures. They depend on grid size/pitch, probe radius, and whether a probe fits through narrow corridors. Pockets with no reachable center have accessible fraction zero and zero reported depth; interpret the pair jointly. The pre-existing heuristic score and volume-based default order are unchanged until benchmark validation.
+
+## Multi-probe accessibility (experimental)
+
+Three independent exterior-connected probe-center maps are now evaluated: 0.8 Å, the configurable `--solvent-probe` (default 1.4 Å), and 2.0 Å. The JSON includes `accessibility_probe_0_8`, `solvent_accessible_fraction`, and `accessibility_probe_2_0`. Fractions for larger probes cannot exceed those of smaller probes on the same grid (assuming the middle radius lies between the other two). A large difference is evidence of narrow accessible corridors, not by itself proof of a ligand-passable entrance. The pre-existing ranking is unchanged.
+
+## Multi-crystal ligand-independent benchmark
+
+Start with these experimentally determined RCSB entries, covering different binding environments:
+
+| PDB | Protein and ligand | Ligand residue name | Why useful |
+|---|---|---|---|
+| 1HSG | HIV-1 protease / L-735,524 | MK1 | Dimer-interface reference; include **both A and B protein chains** |
+| 1STP | Streptavidin / biotin | BTN | Deep high-affinity binding pocket |
+| 1IEP | ABL kinase / imatinib | STI | Large kinase inhibitor site |
+
+Retrieve structures from `https://files.rcsb.org/download/1HSG.pdb`, `1STP.pdb`, and `1IEP.pdb`. Confirm the desired ligand instance (auth chain and residue number) in each local PDB; the benchmark script deliberately refuses ambiguous ligand selections. Downloaded data are not stored in this repository.
+
+Run the pocket finder **without any ligand coordinates** (it loads protein ATOM records only), then score the resulting pockets against the crystal ligand **after prediction**. For 1HSG:
+
+```bash
+ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic \\
+  --output 1hsg_ab.json --pdb 1hsg_ab_pockets.pdb
+python3 tools/pocket_benchmark.py --crystal 1HSG.pdb --ligand MK1 \\
+  --ligand-chain B --ligand-resseq 902 \\
+  --pockets-pdb 1hsg_ab_pockets.pdb --pockets-json 1hsg_ab.json \\
+  --output 1hsg_ab_benchmark.json
+```
+
+For another complex, replace the crystal file and ligand code; specify its actual crystallographic chain and residue number. Use Top-1, Top-3, Top-5 and the best-pocket per-ligand heavy-atom coverage within 3 Å. **These metrics are voxel-proximity metrics, not a validated pocket-overlap or docking-success measure.** Record chain selection, crystallographic assembly, probe radii, grid parameters and ligand-instance identity for reproducibility. Do not tune ranking coefficients to the single 1HSG example.
