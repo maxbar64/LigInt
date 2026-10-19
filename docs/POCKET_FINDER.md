@@ -256,3 +256,7 @@ python3 tools/pocket_oracle_audit.py \\
 ```
 
 The report measures the coverage of the union of *all* original subpockets, missing ligand atom names, per-pocket contributions, and a greedy (not exact-minimum) set-cover diagnostic. This distinguishes insufficient initial voxel discovery from downstream grouping/ranking failures. Do **not** use the crystal ligand during prediction or to tune a score on the same validation structures. Note: an original subpocket larger than the 1,800 Å³ group cap is currently omitted from candidate generation entirely (observed 1IEP-A pocket #13, 2,090 Å³); treat this as a search-cap design issue, not evidence the pocket is irrelevant.
+
+## Oversized singleton correction (1IEP-A)
+
+Independent oracle audit showed 1IEP-A's existing singleton #13 (2,090 Å³) covers 37/37 STI heavy atoms within 3 Å, but had been removed by the 1,800 Å³ group limit. **All discovered singleton pockets are now retained**, regardless of their size. The `maxVolume` cap and volume-growth penalty still apply to *multi-pocket unions* only. The full ranking and diversified outputs continue to use the identical ligand-independent heuristic. Re-run the 1IEP external benchmark to measure whether the retained singleton reaches the final Top-K; coverage alone does not establish its ranking.
