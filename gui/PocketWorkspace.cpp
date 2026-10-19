@@ -381,8 +381,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         }
         if(entries_->count())entries_->setCurrentRow(0);
         canvas_->update();
+        publishSelection();
     });
     connect(entries_,&QListWidget::itemSelectionChanged,canvas_,QOverload<>::of(&QWidget::update));
+    connect(entries_,&QListWidget::itemSelectionChanged,this,&PocketWorkspace::publishSelection);
     connect(palette_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(renderMode_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(ligand_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
@@ -411,6 +413,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(noiseNeighbors_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseComponent_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this]{publishSelection();});
     connect(lightStrength_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(shine_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
@@ -484,6 +487,7 @@ void PocketWorkspace::setStructurePath(const QString& path){
         }catch(const std::exception& e){status_->setText(QString::fromUtf8(e.what()));}
     }
     canvas_->update();
+    publishSelection();
 }
 std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
     std::set<std::size_t> ids;
@@ -498,5 +502,13 @@ std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
         }
     }
     return {ids.begin(),ids.end()};
+}
+void PocketWorkspace::publishSelection(){
+    std::vector<ligint::PocketPoint> points;
+    for(const auto id:visibleMembers())if(id<result_.pockets.size()){
+        const auto& source=result_.pockets[id].points;
+        points.insert(points.end(),source.begin(),source.end());
+    }
+    emit pocketOverlayChanged(points,spacing_->value(),smoothSteps_->value());
 }
 } // namespace gui
