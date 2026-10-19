@@ -38,7 +38,8 @@ std::vector<V3> sphereDirections(int n) {
 }
 }
 PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const PocketOptions& o) {
-    if(!(std::isfinite(o.spacing) && o.spacing>0 && std::isfinite(o.rayLength) && o.rayLength>0 &&
+    if(!(std::isfinite(o.spacing) && o.spacing>0 &&
+         std::isfinite(o.solventProbeRadius) && o.solventProbeRadius>=0 && std::isfinite(o.rayLength) && o.rayLength>0 &&
          std::isfinite(o.maxSurfaceDistance) && o.maxSurfaceDistance>0 &&
          std::isfinite(o.minBuriedness) && o.minBuriedness>=0 && o.minBuriedness<=1 &&
          o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0 &&
@@ -346,12 +347,62 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         }
         out.pockets=std::move(separated);
     }
+    // Solvent-probe-center accessibility on the same grid. Inflate van der Waals
+    // radii by the probe radius, then flood from the exterior grid boundary.
+    // The geodesic distance is to the exterior grid, NOT to a molecular mouth;
+    // the quantity is reported explicitly as solvent path depth proxy.
+    std::vector<std::uint8_t> blocked(count,0);
+    for(const auto& a:atoms) {
+        const double radius=a.radius+o.solventProbeRadius;
+        int lower[3],upper[3];
+        for(int d=0;d<3;d++){
+            lower[d]=std::max(0,static_cast<int>(std::floor((a.pos[d]-radius-g.origin[d])/g.step)));
+            upper[d]=std::min(dims[d]-1,static_cast<int>(std::ceil((a.pos[d]+radius-g.origin[d])/g.step)));
+        }
+        for(int z=lower[2];z<=upper[2];z++)for(int y=lower[1];y<=upper[1];y++)
+            for(int x=lower[0];x<=upper[0];x++){
+                const V3 p=g.coord(x,y,z);
+                const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                if(dx*dx+dy*dy+dz*dz<=radius*radius)
+                    blocked[g.index(x,y,z)]=1;
+            }
+    }
+    std::vector<int> steps(count,-1);
+    std::deque<std::array<int,3>> flood;
+    auto seedBoundary=[&](int x,int y,int z){
+        const auto id=g.index(x,y,z);
+        if(!blocked[id] && steps[id]<0){
+            steps[id]=0;flood.push_back({x,y,z});
+        }
+    };
+    for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++){
+        seedBoundary(0,y,z);seedBoundary(g.nx-1,y,z);
+    }
+    for(int z=0;z<g.nz;z++)for(int x=0;x<g.nx;x++){
+        seedBoundary(x,0,z);seedBoundary(x,g.ny-1,z);
+    }
+    for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+        seedBoundary(x,y,0);seedBoundary(x,y,g.nz-1);
+    }
+    const int fx[6]={1,-1,0,0,0,0},fy[6]={0,0,1,-1,0,0},fz[6]={0,0,0,0,1,-1};
+    while(!flood.empty()){
+        const auto q=flood.front();flood.pop_front();
+        const int distance=steps[g.index(q[0],q[1],q[2])];
+        for(int k=0;k<6;k++){
+            const int x=q[0]+fx[k],y=q[1]+fy[k],z=q[2]+fz[k];
+            if(!g.inside(x,y,z))continue;
+            const auto id=g.index(x,y,z);
+            if(blocked[id]||steps[id]>=0)continue;
+            steps[id]=distance+1;flood.push_back({x,y,z});
+        }
+    }
     // Descriptors are evaluated after segmentation/merging so exported geometry
     // and point membership remain unchanged. No trained or ligand-informed score.
     for(auto& pocket:out.pockets) {
         if(pocket.points.empty())continue;
         V3 low=pocket.points.front().pos,high=low;
-        double sumB=0,highB=0,sumDepth=0;
+        double sumB=0,highB=0,sumDepth=0,solventSteps=0,maxSteps=0;
+        std::size_t solventCount=0;
         std::vector<std::uint8_t> inPocket(count,0);
         for(const auto& pt:pocket.points) {
             sumB+=pt.buriedness;
@@ -364,6 +415,12 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
             const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
             inPocket[g.index(x,y,z)]=1;
+            const int pathSteps=steps[g.index(x,y,z)];
+            if(pathSteps>=0) {
+                ++solventCount;
+                solventSteps+=pathSteps;
+                maxSteps=std::max(maxSteps,static_cast<double>(pathSteps));
+            }
             double nearest=std::numeric_limits<double>::infinity();
             for(const auto& atom:atoms) {
                 const double dx=pt.pos[0]-atom.pos[0],dy=pt.pos[1]-atom.pos[1],dz=pt.pos[2]-atom.pos[2];
@@ -373,6 +430,9 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         }
         const double n=static_cast<double>(pocket.points.size());
         pocket.meanBuriedness=sumB/n;
+        pocket.solventAccessibleFraction=static_cast<double>(solventCount)/n;
+        if(solventCount){pocket.meanSolventPathDepth=g.step*solventSteps/solventCount;
+            pocket.maxSolventPathDepth=g.step*maxSteps;}
         pocket.highBuriednessFraction=highB/n;
         pocket.meanAtomSurfaceDistance=sumDepth/n;
         double extent[3];
