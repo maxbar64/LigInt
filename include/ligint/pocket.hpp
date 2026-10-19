@@ -21,7 +21,9 @@ struct PocketOptions {
     bool segment = true;             // split large connected regions by buriedness maxima
     double seedSpacing = 6.0;        // minimum distance between distinct maxima, Angstrom
     double seedProminence = 0.10;    // minimum buriedness above the connectivity threshold
-    std::size_t maxSeeds = 64;       // maximum basin seeds per connected region
+    std::size_t maxSeeds = 64;
+    bool mergeBasins = true;
+    double mergeSaddleDrop = 0.08; // merge when saddle is within this of lower peak       // maximum basin seeds per connected region
     std::vector<std::string> chains; // empty: all; exact chain IDs
 };
 struct PocketPoint {
