@@ -38,6 +38,7 @@ static void help(){
         <<"  --merge-max-distance A maximum seed-group span (default 10 A)\n"
         <<"  --merge-min-contact A2 minimum shared voxel-face area (default 8 A2)\n"
         <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
+        <<"  --diverse-groups FILE  export diversified site candidates as JSON\n"
         <<"  --groups FILE       export beam-search groups as JSON\n"
         <<"  --interfaces FILE   write experimental interface geometry JSON\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
@@ -60,7 +61,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points,pdb,interfaces,groups,rankBy="volume";
+        std::string file,output,points,pdb,interfaces,groups,diverseGroups,rankBy="volume";
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -116,6 +117,7 @@ int main(int argc,char** argv){
             else if(a=="--output")output=v;
             else if(a=="--interfaces")interfaces=v;
             else if(a=="--groups")groups=v;
+            else if(a=="--diverse-groups")diverseGroups=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
             else if(a=="--format"){
@@ -167,6 +169,27 @@ int main(int argc,char** argv){
                         <<(i+1<candidates.size()?",":"")<<"\n";
             }
             groupOut<<"  ]\n}\n";
+        }
+        if(!diverseGroups.empty()){
+            std::ofstream dst(diverseGroups);
+            if(!dst)throw std::runtime_error("Cannot write: "+diverseGroups);
+            const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
+            const auto pool=rankPocketGroups(r.pockets,edges,32,250);
+            const auto diverse=diversifyPocketGroups(pool,r.pockets,10,0.35);
+            dst<<std::setprecision(8)<<"{\n  \"pocket_count\": "<<r.pockets.size()
+               <<",\n  \"pool_size\": "<<pool.size()<<",\n  \"groups\": [\n";
+            for(std::size_t i=0;i<diverse.size();i++){
+                const auto& s=diverse[i];
+                dst<<"    {\"members\": [";
+                for(std::size_t j=0;j<s.group.members.size();j++)
+                    dst<<(j?", ":"")<<s.group.members[j]+1;
+                dst<<"], \"volume_a3\": "<<s.group.volume
+                   <<", \"score\": "<<s.group.score
+                   <<", \"maximum_jaccard_to_selected\": "<<s.maxOverlap
+                   <<", \"selection_score\": "<<s.selectionScore<<"}"
+                   <<(i+1<diverse.size()?",":"")<<"\n";
+            }
+            dst<<"  ]\n}\n";
         }
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
