@@ -1,0 +1,41 @@
+// Experimental geometric pocket search by directional buriedness. Independent of Qt.
+#pragma once
+#include "ligint/ligint.hpp"
+#include <string>
+#include <vector>
+
+namespace ligint {
+struct PocketAtom {
+    V3 pos{0,0,0};
+    double radius = 1.7;
+    std::string chain, residue;
+};
+struct PocketOptions {
+    double spacing = 1.0;          // Angstrom
+    double rayLength = 10.0;       // Angstrom
+    double maxSurfaceDistance = 5.0;
+    double minBuriedness = 0.5;    // fraction of blocked directions
+    int directions = 42;
+    std::size_t maxGridPoints = 4000000;
+    std::size_t minClusterPoints = 30;
+    std::vector<std::string> chains; // empty: all; exact chain IDs
+};
+struct PocketPoint {
+    V3 pos{0,0,0};
+    float buriedness = 0;
+};
+struct PocketCandidate {
+    V3 center{0,0,0};
+    double volume = 0;             // voxel-count approximation, Angstrom^3
+    double peakBuriedness = 0;
+    std::size_t pointCount = 0;
+    std::vector<PocketPoint> points;
+};
+struct PocketSearchResult {
+    std::vector<PocketCandidate> pockets;
+    std::size_t sampledPoints = 0;
+    std::size_t selectedAtoms = 0;
+};
+PocketSearchResult findPockets(const std::vector<PocketAtom>& atoms,
+                               const PocketOptions& options = PocketOptions());
+} // namespace ligint
