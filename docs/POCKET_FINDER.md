@@ -32,7 +32,7 @@ as validated binding-site predictions.
 | Option | Default | Meaning |
 |---|---:|---|
 | `--chains A,B` | all | include only selected protein chains |
-| `--spacing` | 1.0 Å | grid pitch |
+| `--spacing` | 1.0 Å | grid pitch |\n| `--solvent-probe` | 1.4 Å | probe-center excluded volume radius |
 | `--ray-length` | 10 Å | maximum extent of rays |
 | `--directions` | 42 | approximately uniform Fibonacci directions |
 | `--min-buriedness` | 0.5 | minimum fraction of blocked directions |
@@ -81,3 +81,13 @@ The JSON summary now includes for each retained region:
 The default pocket IDs remain sorted by **volume**, as in earlier revisions. Use `--rank-by heuristic` to sort JSON, CSV and PDB pocket IDs by decreasing `heuristic_score`. No ligand coordinates or experimentally annotated binding sites enter the score.
 
 To compare 1HSG with the earlier segmentation, run the same parameters on chain A, export JSON and compare `pockets[].heuristic_score` and geometric descriptors while keeping the original PDB/CSV voxel geometry unchanged.
+
+## Solvent access and path-length proxies
+
+After pocket segmentation, a probe-center exclusion grid is computed by inflating each atom's van der Waals radius by `--solvent-probe` (default 1.4 Å). A 6-neighbor flood fill from the grid boundary identifies probe-center-accessible grid sites. For each pocket, JSON includes:
+
+- `solvent_accessible_fraction`: fraction of pocket voxel centers reachable by the probe center; voxels within inflated atoms count as inaccessible.
+- `mean_solvent_path_depth_a`: average shortest **6-neighbor grid path to the exterior boundary** for accessible pocket voxel centers, in Å; zero when none are reachable.
+- `max_solvent_path_depth_a`: maximum such distance, in Å.
+
+These are grid-based accessibility/path proxies, **not** accurate pocket-mouth depth measures. They depend on grid size/pitch, probe radius, and whether a probe fits through narrow corridors. Pockets with no reachable center have accessible fraction zero and zero reported depth; interpret the pair jointly. The pre-existing heuristic score and volume-based default order are unchanged until benchmark validation.
