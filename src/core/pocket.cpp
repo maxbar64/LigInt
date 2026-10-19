@@ -49,6 +49,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
          std::isfinite(o.mergeMaxSeedDistance) && o.mergeMaxSeedDistance>0 &&
          std::isfinite(o.mergeMinContactArea) && o.mergeMinContactArea>=0 &&
          o.morphologyRadius>=0 && o.morphologyRadius<=2 &&
+         o.regrowSteps>=0 && o.regrowSteps<=5 &&
+         (o.regrowSteps==0 || (o.morphologyRadius>0 && (o.morphology=="opening" || o.morphology=="open-close"))) &&
          (o.morphology=="none" || o.morphology=="opening" || o.morphology=="closing" || o.morphology=="open-close") &&
          std::isfinite(o.neckClearance) && o.neckClearance>=0))
         throw std::invalid_argument("Invalid pocket search options");
@@ -133,6 +135,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         float b=static_cast<float>(blocked)/static_cast<float>(dirs.size());
         score[id]=b; // retain computed scalar for threshold-aware closing
     }
+    const std::vector<float> originalScore = o.regrowSteps>0 ? score : std::vector<float>{};
     // Optional binary morphology, keeping original score values untouched.
     // The mask, not the buriedness field, is changed for region connectivity.
     if(o.morphology!="none" && o.morphologyRadius>0) {
@@ -406,6 +409,69 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             }
         }
         out.pockets=std::move(separated);
+    }
+    // Grow final, already-separated opening basins into measured original voxels.
+    // A shared FIFO assigns each eligible position to the nearest initial basin
+    // in 6-neighbor path steps. Equal-distance conflicts remain unassigned,
+    // avoiding first-pocket-wins bridges and order-dependent basin fusion.
+    if(o.regrowSteps>0 && !out.pockets.empty()) {
+        std::vector<int> owner(count,-1),distance(count,-1);
+        std::deque<std::size_t> frontier;
+        auto voxelId=[&](const V3& p){
+            const int x=static_cast<int>(std::llround((p[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((p[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((p[2]-g.origin[2])/g.step));
+            return g.index(x,y,z);
+        };
+        for(std::size_t i=0;i<out.pockets.size();i++)
+            for(const auto& pt:out.pockets[i].points){
+                const auto id=voxelId(pt.pos);
+                if(distance[id]<0){distance[id]=0;owner[id]=static_cast<int>(i);frontier.push_back(id);}
+            }
+        const int ddx[6]={1,-1,0,0,0,0},ddy[6]={0,0,1,-1,0,0},ddz[6]={0,0,0,0,1,-1};
+        // Resolve one layer at a time so competing basins reach a tie together.
+        while(!frontier.empty()){
+            const auto id=frontier.front();frontier.pop_front();
+            if(distance[id]>=o.regrowSteps)continue;
+            const int x=static_cast<int>(id%g.nx);
+            const int y=static_cast<int>((id/g.nx)%g.ny);
+            const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+            for(int k=0;k<6;k++){
+                const int xx=x+ddx[k],yy=y+ddy[k],zz=z+ddz[k];
+                if(!g.inside(xx,yy,zz))continue;
+                const auto neighbor=g.index(xx,yy,zz);
+                if(originalScore[neighbor]<o.minBuriedness)continue;
+                if(distance[neighbor]<0){
+                    distance[neighbor]=distance[id]+1;
+                    owner[neighbor]=owner[id];
+                    frontier.push_back(neighbor);
+                } else if(distance[neighbor]==distance[id]+1 &&
+                          owner[neighbor]!=owner[id]){
+                    owner[neighbor]=-2; // disputed watershed boundary
+                }
+            }
+        }
+        // A disputed position is never assigned to a pocket. Recompute
+        // geometry from the complete, unique point sets after growing.
+        for(std::size_t id=0;id<count;id++){
+            if(distance[id]<=0 || owner[id]<0)continue;
+            auto& pocket=out.pockets[static_cast<std::size_t>(owner[id])];
+            const int x=static_cast<int>(id%g.nx);
+            const int y=static_cast<int>((id/g.nx)%g.ny);
+            const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+            pocket.points.push_back({g.coord(x,y,z),originalScore[id]});
+        }
+        for(auto& pocket:out.pockets){
+            pocket.pointCount=pocket.points.size();
+            pocket.volume=static_cast<double>(pocket.pointCount)*g.step*g.step*g.step;
+            pocket.center={0,0,0};
+            pocket.peakBuriedness=0;
+            for(const auto& pt:pocket.points){
+                for(int d=0;d<3;d++)pocket.center[d]+=pt.pos[d];
+                pocket.peakBuriedness=std::max(pocket.peakBuriedness,static_cast<double>(pt.buriedness));
+            }
+            for(int d=0;d<3;d++)pocket.center[d]/=static_cast<double>(pocket.pointCount);
+        }
     }
     // Solvent-probe-center accessibility on the same grid. Inflate van der Waals
     // radii by the probe radius, then flood from the exterior grid boundary.
