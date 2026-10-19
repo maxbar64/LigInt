@@ -132,6 +132,8 @@ int main(int argc,char** argv){
                    <<", \"compactness\": "<<p.compactness
                    <<", \"elongation\": "<<p.elongation
                    <<", \"mean_surface_distance_a\": "<<p.meanAtomSurfaceDistance
+                   <<", \"accessibility_probe_0_8\": "<<p.accessibilityProbe08
+                   <<", \"accessibility_probe_2_0\": "<<p.accessibilityProbe20
                    <<", \"solvent_accessible_fraction\": "<<p.solventAccessibleFraction
                    <<", \"mean_solvent_path_depth_a\": "<<p.meanSolventPathDepth
                    <<", \"max_solvent_path_depth_a\": "<<p.maxSolventPathDepth
