@@ -1,0 +1,114 @@
+#include "ligint/pocket.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+using namespace ligint;
+
+static void help(){
+    std::cout<<"Usage: ligint-pocket structure.pdb|structure.cif [options]\n"
+        <<"  --chains A,B        selected protein chains (default all)\n"
+        <<"  --spacing A         voxel spacing, default 1.0\n"
+        <<"  --ray-length A      ray length, default 10.0\n"
+        <<"  --directions N      ray directions, default 42\n"
+        <<"  --min-buriedness B  threshold 0..1, default 0.5\n"
+        <<"  --surface-distance A maximum candidate distance to atoms, default 5.0\n"
+        <<"  --min-points N      minimum cluster size, default 30\n"
+        <<"  --top N             output at most N pockets (default all)\n"
+        <<"  --output FILE       write summary as JSON (default stdout)\n"
+        <<"  --points FILE       export selected buried voxels as CSV\n"
+        <<"  --format auto|pdb|cif\n";
+}
+static double number(const std::string& value){
+    std::size_t used=0;
+    double x=std::stod(value,&used);
+    if(used!=value.size()||!std::isfinite(x))throw std::invalid_argument("Invalid numeric value: "+value);
+    return x;
+}
+static std::size_t nonnegativeInteger(const std::string& value){
+    if(value.empty()||value.find_first_not_of("0123456789")!=std::string::npos)
+        throw std::invalid_argument("Invalid integer: "+value);
+    return static_cast<std::size_t>(std::stoull(value));
+}
+int main(int argc,char** argv){
+    try{
+        if(argc<2){help();return 1;}
+        PocketOptions o;
+        std::string file,output,points;
+        StructureFormat format=StructureFormat::Auto;
+        std::size_t top=0;
+        for(int i=1;i<argc;i++){
+            std::string a=argv[i];
+            if(a=="--help" || a=="-h"){help();return 0;}
+            if(a.substr(0,2)!="--"){
+                if(!file.empty())throw std::invalid_argument("Only one structure file is supported");
+                file=a;continue;
+            }
+            if(i+1>=argc)throw std::invalid_argument("Missing value for "+a);
+            std::string v=argv[++i];
+            if(a=="--chains"){
+                std::istringstream s(v);std::string chain;
+                while(std::getline(s,chain,',')){
+                    if(chain.empty())throw std::invalid_argument("Empty chain ID");
+                    o.chains.push_back(chain);
+                }
+                if(o.chains.empty())throw std::invalid_argument("Empty chain selection");
+            }else if(a=="--spacing")o.spacing=number(v);
+            else if(a=="--ray-length")o.rayLength=number(v);
+            else if(a=="--directions"){
+                auto n=nonnegativeInteger(v);
+                if(n>4096)throw std::invalid_argument("Too many ray directions");
+                o.directions=static_cast<int>(n);
+            }else if(a=="--min-buriedness")o.minBuriedness=number(v);
+            else if(a=="--surface-distance")o.maxSurfaceDistance=number(v);
+            else if(a=="--min-points")o.minClusterPoints=nonnegativeInteger(v);
+            else if(a=="--top")top=nonnegativeInteger(v);
+            else if(a=="--output")output=v;
+            else if(a=="--points")points=v;
+            else if(a=="--format"){
+                if(v=="pdb")format=StructureFormat::Pdb;
+                else if(v=="cif"||v=="mmcif")format=StructureFormat::Mmcif;
+                else if(v=="auto")format=StructureFormat::Auto;
+                else throw std::invalid_argument("Invalid structure format");
+            }else throw std::invalid_argument("Unknown option: "+a);
+        }
+        if(file.empty())throw std::invalid_argument("Missing structure file");
+        auto atoms=readPocketAtoms(file,format);
+        const auto r=findPockets(atoms,o);
+        if(!o.chains.empty()&&r.selectedAtoms==0)throw std::runtime_error("Selected chains contain no protein atoms");
+        std::ofstream dest,pointDest;
+        std::ostream* stream=&std::cout;
+        if(!output.empty()){
+            dest.open(output);
+            if(!dest)throw std::runtime_error("Cannot write: "+output);
+            stream=&dest;
+        }
+        const std::size_t n=top?std::min(top,r.pockets.size()):r.pockets.size();
+        *stream<<std::setprecision(7)<<"{\n  \"selected_atoms\": "<<r.selectedAtoms
+               <<",\n  \"sampled_points\": "<<r.sampledPoints
+               <<",\n  \"pocket_count\": "<<r.pockets.size()<<",\n  \"pockets\": [\n";
+        for(std::size_t i=0;i<n;i++){
+            const auto& p=r.pockets[i];
+            *stream<<"    {\"id\": "<<(i+1)<<", \"center\": ["<<p.center[0]<<", "<<p.center[1]<<", "<<p.center[2]
+                   <<"], \"volume_a3\": "<<p.volume<<", \"peak_buriedness\": "<<p.peakBuriedness
+                   <<", \"points\": "<<p.pointCount<<"}"<<(i+1<n?",":"")<<"\n";
+        }
+        *stream<<"  ]\n}\n";
+        if(!points.empty()){
+            pointDest.open(points);
+            if(!pointDest)throw std::runtime_error("Cannot write: "+points);
+            pointDest<<"pocket_id,x,y,z,buriedness\n"<<std::setprecision(8);
+            for(std::size_t i=0;i<n;i++)for(const auto& p:r.pockets[i].points)
+                pointDest<<i+1<<","<<p.pos[0]<<","<<p.pos[1]<<","<<p.pos[2]<<","<<p.buriedness<<"\n";
+        }
+    }catch(const std::exception& e){
+        std::cerr<<"ligint-pocket: "<<e.what()<<"\n";return 1;
+    }
+    return 0;
+}
