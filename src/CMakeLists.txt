@@ -4,6 +4,7 @@ add_library(ligint_core
     core/secondary.cpp
     core/cartoon.cpp
     core/surface.cpp
+    core/pocket.cpp
     core/chemistry.cpp
     core/mmcif.cpp
     core/pdb.cpp
