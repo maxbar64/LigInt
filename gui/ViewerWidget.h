@@ -18,6 +18,7 @@
 #include "SceneBuilder.h"
 #include "ViewStyle.h"
 #include "ligint/ligint.hpp"
+#include "ligint/pocket.hpp"
 
 namespace gui {
 
@@ -32,6 +33,8 @@ public:
     // ...or the ligand with the protein of the analysis (Result::backbone and Result::proteinAtoms, see Options::protein3d).
     void setStructure(const ligint::Result& result, int ligandIndex = 0);
     void clear();
+    // Overlay the raw pocket volume in the same depth-buffered scene as protein and ligand.
+    void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2);
     bool hasData() const { return hasData_; }
     bool hasProtein() const { return protein_ && !protein_->backbone.empty(); }
 
@@ -76,7 +79,7 @@ private:
     using Mat3 = std::array<double, 9>;
 
     struct Pieces {
-        std::shared_ptr<const MeshPiece> cartoon, surface;
+        std::shared_ptr<const MeshPiece> cartoon, surface, pocket;
         std::shared_ptr<const AtomsPiece> ligand, residues, water;
     };
     struct Frame {                                   // result of a render
@@ -109,6 +112,9 @@ private:
     bool hasData_ = false;
     ViewStyle style_;
     Pieces pieces_;
+    std::vector<ligint::PocketPoint> pocketPoints_;
+    double pocketSpacing_=1.0;
+    int pocketSmoothing_=2;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
