@@ -201,3 +201,17 @@ ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic \\
 ```
 
 The C++ interface JSON uses pocket indices matching the same invocation's sorted CLI pocket JSON and PDB; regenerate all three files together if flags change. A second run on 1STP and 1IEP with the same settings is necessary to assess whether the interface descriptors generalize. The present calculation finds neighbors only where exported voxel centers share faces; gaps erased by opening cannot be traversed until the full pre-opening buriedness field is exposed by a later revision. The current implementation is a prototype and computationally expensive on large pair sets; no performance or validation claims are made.
+
+## Optional overlapping pocket group beam search (prototype)
+
+The C++17 header `include/ligint/pocket_groups.hpp` adds ligand-blind, non-destructive beam search. Each input pocket remains available; overlapping candidate sets of up to four subpockets are enumerated from measured interface adjacency, subject to a 1,800 Å³ combined-volume limit and a 0.5 Å minimum throat clearance. All original subpockets are expanded before beam pruning; subsequent layers retain up to 32 candidate groups each. The top 30 scored entries, including singleton pockets, are exported using `--groups FILE`. The ranking uses a transparent, **uncalibrated experimental** combination of normalized face contact, boundary buriedness, mean interface clearance, widest-path bottleneck, singleton heuristics and volume penalty. Groups remain candidate *unions*, not physically validated cavities. No ligand positions are used for discovery or scoring. The `--groups` option does not modify the original result.
+
+```bash
+ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic \\
+  --morphology opening --morph-radius 1 \\
+  --output opening.json --pdb opening.pdb \\
+  --interfaces 1hsg_opening_interfaces.json \\
+  --groups 1hsg_opening_groups.json
+```
+
+Pocket IDs in these JSON reports correspond to the same sorted `opening.json` invocation. Re-run all outputs together when parameters change. Validate ranking independently with 1STP and 1IEP before choosing fixed weights or enabling group ranking by default.
