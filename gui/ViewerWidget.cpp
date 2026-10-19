@@ -271,6 +271,7 @@ std::size_t ViewerWidget::triangleCount() const {
     std::size_t n = 0;
     if (pieces_.cartoon) n += pieces_.cartoon->mesh.tri.size();
     if (pieces_.surface) n += pieces_.surface->mesh.tri.size();
+    if (pieces_.pocket) n += pieces_.pocket->mesh.tri.size();
     return n;
 }
 
@@ -367,7 +368,6 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
         mv.colors = &pieces.cartoon->colors;
         ren->drawMesh(mv);
     }
-    if (pieces.pocket) n += pieces.pocket->mesh.tri.size();
     if (pieces.surface) {
         raster::MeshView mv;
         mv.mesh = &pieces.surface->mesh;
