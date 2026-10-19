@@ -13,6 +13,7 @@
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
 #include "ligint/scene3d.hpp"
+#include "ligint/pocket.hpp"
 #include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
@@ -1299,6 +1300,33 @@ static void testScene3d() {
     }
 }
 
+
+static void testBuriednessPockets() {
+    // A shell surrounding an empty cavity should have high directional buriedness.
+    std::vector<ligint::PocketAtom> shell;
+    for(int i=0;i<150;i++) {
+        double y=1.0-2.0*(i+0.5)/150.0;
+        double r=std::sqrt(1-y*y), a=i*2.399963229728653;
+        shell.push_back({{5*r*std::cos(a),5*y,5*r*std::sin(a)},1.7,"A","SHELL"});
+    }
+    ligint::PocketOptions o;
+    o.minClusterPoints=1;
+    o.minBuriedness=0.8;
+    o.maxGridPoints=250000;
+    auto found=ligint::findPockets(shell,o);
+    CHECK(found.selectedAtoms==shell.size());
+    CHECK(found.sampledPoints>0);
+    CHECK(!found.pockets.empty());
+    ligint::PocketOptions filtered=o;
+    filtered.chains={"B"};
+    CHECK(ligint::findPockets(shell,filtered).selectedAtoms==0);
+    filtered=o;
+    filtered.spacing=0;
+    bool rejected=false;
+    try { (void)ligint::findPockets(shell,filtered); } catch(const std::invalid_argument&) {rejected=true;}
+    CHECK(rejected);
+}
+
 int main() {
     testListing();
     testHydrogenBondAndPositions();
@@ -1328,6 +1356,7 @@ int main() {
     testFingerprintWithPocket();
     testFingerprintOutputs();
     testScene3d();
+    testBuriednessPockets();
     if (failures) {
         std::cerr << failures << " checks failed\n";
         return 1;
