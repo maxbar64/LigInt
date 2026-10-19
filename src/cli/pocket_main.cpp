@@ -22,6 +22,10 @@ static void help(){
         <<"  --surface-distance A maximum candidate distance to atoms, default 5.0\n"
         <<"  --min-points N      minimum cluster size, default 30\n"
         <<"  --top N             output at most N pockets (default all)\n"
+        <<"  --no-segmentation   retain original connected components\n"
+        <<"  --seed-spacing A    minimum seed separation (default 6 A)\n"
+        <<"  --seed-prominence B minimum seed buriedness over cutoff (default 0.10)\n"
+        <<"  --max-seeds N       maximum seeds per connected region (default 64)\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
         <<"  --pdb FILE          export pocket pseudoatoms (B = 100 * buriedness)\n"
@@ -52,6 +56,7 @@ int main(int argc,char** argv){
                 if(!file.empty())throw std::invalid_argument("Only one structure file is supported");
                 file=a;continue;
             }
+            if(a=="--no-segmentation"){o.segment=false;continue;}
             if(i+1>=argc)throw std::invalid_argument("Missing value for "+a);
             std::string v=argv[++i];
             if(a=="--chains"){
@@ -71,6 +76,9 @@ int main(int argc,char** argv){
             else if(a=="--surface-distance")o.maxSurfaceDistance=number(v);
             else if(a=="--min-points")o.minClusterPoints=nonnegativeInteger(v);
             else if(a=="--top")top=nonnegativeInteger(v);
+            else if(a=="--seed-spacing")o.seedSpacing=number(v);
+            else if(a=="--seed-prominence")o.seedProminence=number(v);
+            else if(a=="--max-seeds")o.maxSeeds=nonnegativeInteger(v);
             else if(a=="--output")output=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
