@@ -68,7 +68,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
     }
     Grid g;
     g.step=o.spacing;
-    const double margin=maxRadius+o.maxSurfaceDistance+o.spacing;
+    const double margin=maxRadius+std::max(o.maxSurfaceDistance,o.solventProbeRadius)+o.spacing;
     int dims[3];
     for(int d=0;d<3;d++) {
         g.origin[d]=lo[d]-margin;
