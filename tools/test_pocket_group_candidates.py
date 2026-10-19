@@ -9,6 +9,7 @@ class GroupingTests(unittest.TestCase):
         b=[(x,y,0.0) for x in (2.0,3.0) for y in (0.0,1.0)]
         result=candidates({1:a,2:b},1.0,min_faces=2,min_fraction=.01,max_volume=100)
         self.assertEqual(result["groups"][0]["members"],[1,2])
+        self.assertEqual(result["pair_candidates"][0]["members"],[1,2])
         restricted=candidates({1:a,2:b},1.0,min_faces=2,min_fraction=.01,max_volume=7)
         self.assertEqual(restricted["groups"],[])
 
