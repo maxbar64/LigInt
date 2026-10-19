@@ -4,7 +4,7 @@
 It is built with `LIGINT_BUILD_CLI=ON`. It does **not** modify the regular `ligint` interaction analysis.
 
 ```bash
-ligint-pocket protein.pdb --chains A,B --output pockets.json --points voxels.csv
+ligint-pocket protein.pdb --chains A,B --output pockets.json --points voxels.csv --pdb pockets.pdb
 ligint-pocket protein.cif --format cif --spacing 1.0 --directions 42 --top 10
 ```
 
@@ -39,8 +39,13 @@ as validated binding-site predictions.
 | `--surface-distance` | 5 Å | candidate distance from nearest atomic surface |
 | `--min-points` | 30 | minimum connected voxel count |
 | `--top` | all | maximum number of candidate clusters exported |
+| `--pdb` | omitted | PDB pseudoatoms for buried voxels; B-factor = buriedness × 100 |
 | `--output` | stdout | JSON summary |
 | `--points` | omitted | voxel CSV for external 3D inspection |
 
 The JSON includes the number of selected atoms, sampled voxels, clusters and, for each
 exported cluster, its center, approximate volume, peak buriedness and voxel count.
+
+## PDB visualization
+
+Use `--pdb pockets.pdb` to export voxel centers as HETATM pseudoatoms named `C` in residue `PKT`, chain `P` (residue sequence = pocket ID). Occupancy is 1.00; the PDB temperature-factor column stores **100 × buriedness**, therefore 0–100 rather than 0–1. This is a visualization property, **not** an experimental atomic displacement factor. Color using the B-factor and display pseudoatoms as dots or spheres. The exporter rejects more than 99,999 pseudoatoms, more than 9,999 pockets, or coordinates outside standard fixed-column PDB ranges, rather than silently wrapping identifiers. JSON and CSV remain available for large exports.
