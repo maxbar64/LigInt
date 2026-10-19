@@ -52,6 +52,7 @@
 #include "SvgView.h"
 #include "ViewerOptionsWidget.h"
 #include "ViewerWidget.h"
+#include "PocketWorkspace.h"
 
 namespace gui {
 namespace {
@@ -289,6 +290,11 @@ void MainWindow::buildUi() {
     viewerLayout->setSpacing(4);
     viewerLayout->addWidget(viewer_, 1);
     viewerLayout->addWidget(graphicsScroll);
+    auto* modes3d = new QTabWidget;
+    auto* pocketWorkspace = new PocketWorkspace;
+    pocketWorkspace->setObjectName("pocketWorkspace");
+    modes3d->addTab(viewerArea, tr("Interactions 3D"));
+    modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
     table_ = new QTableView;
     table_->setModel(proxy_);
@@ -393,7 +399,7 @@ void MainWindow::buildUi() {
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
-    right->addWidget(viewerArea);
+    right->addWidget(modes3d);
     right->addWidget(tabs_);
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
@@ -451,6 +457,7 @@ bool MainWindow::openStructure(const QString& path) {
         return false;
     }
     path_ = path;
+    if(auto* pockets=findChild<PocketWorkspace*>("pocketWorkspace"))pockets->setStructurePath(path);
     allLigands_ = listing.hetResidues;
     {   // alternate conformations present in the file; the previous choice is kept if it still exists
         const QString previous = altlocCombo_->currentData().toString();
