@@ -6,6 +6,10 @@
 #include <QAbstractItemView>
 #include <QSignalBlocker>
 #include <set>
+#include <unordered_set>
+#include <fstream>
+#include <QPolygonF>
+#include <QFrame>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QListWidget>
@@ -54,6 +58,8 @@ protected:
         for(const auto& a:points)for(int k=0;k<3;k++)extent=std::max(extent,std::fabs(a.pos[k]-center[k]));
         const double scale=0.43*std::min(width(),height())*zoom_/extent;
         struct Dot {double depth;QPointF screen;QColor color;bool protein=false;};
+        struct Face {double depth;QPolygonF polygon;QColor color;};
+        std::vector<Face> faces;
         std::vector<Dot> dots;dots.reserve(points.size());
         static const QColor palette[]={QColor(40,185,230),QColor(255,160,60),QColor(120,220,130),QColor(214,100,236)};
         static const QColor warm[]={QColor(248,208,77),QColor(252,107,95),QColor(151,112,244),QColor(78,196,173)};
@@ -69,6 +75,26 @@ protected:
                 QPointF(width()/2.0+rx*scale,height()/2.0-(cp*y-sp*rz)*scale),
                 QColor(148,159,171,75),true});
         }
+        const int mode=owner_->renderMode_->currentIndex();
+        const double spacing=owner_->spacing_->value();
+        auto key=[spacing](const ligint::V3& v){
+            return std::to_string(std::llround(v[0]/spacing))+","+
+                   std::to_string(std::llround(v[1]/spacing))+","+
+                   std::to_string(std::llround(v[2]/spacing));
+        };
+        const double dirs[6][3]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+        auto project=[&](const ligint::V3& v){
+            double x=v[0]-center[0],y=v[1]-center[1],z=v[2]-center[2];
+            double rx=cy*x+sy*z,rz=-sy*x+cy*z;
+            return std::pair<QPointF,double>{
+                QPointF(width()/2.0+rx*scale,height()/2.0-(cp*y-sp*rz)*scale),
+                sp*y+cp*rz};
+        };
+        std::unordered_set<std::string> occupied;
+        if(mode!=0){
+            occupied.reserve(points.size()*2);
+            for(const auto& voxel:points)occupied.insert(key(voxel.pos));
+        }
         for(std::size_t m=0;m<members.size();m++){
             const auto id=members[m];if(id>=owner_->result_.pockets.size())continue;
             for(const auto& voxel:owner_->result_.pockets[id].points){
@@ -77,8 +103,42 @@ protected:
                 const double ry=cp*y-sp*rz,depth=sp*y+cp*rz;
                 QColor color=owner_->palette_->currentIndex()==0?palette[id%4]:warm[id%4];
                 color.setAlphaF(std::clamp((owner_->opacity_->value()/100.0)*(0.3+0.7*voxel.buriedness),0.0,1.0));
-                dots.push_back({depth,QPointF(width()/2.0+rx*scale,height()/2.0-ry*scale),color});
+                if(mode!=1)
+                    dots.push_back({depth,QPointF(width()/2.0+rx*scale,height()/2.0-ry*scale),color});
+                if(mode!=0){
+                    for(const auto& d:dirs){
+                        ligint::V3 neighbor=voxel.pos;
+                        for(int k=0;k<3;k++)neighbor[k]+=d[k]*spacing;
+                        if(occupied.count(key(neighbor)))continue;
+                        ligint::V3 u{},v{};
+                        if(d[0]!=0){u={0,spacing/2,0};v={0,0,spacing/2};}
+                        else if(d[1]!=0){u={spacing/2,0,0};v={0,0,spacing/2};}
+                        else{u={spacing/2,0,0};v={0,spacing/2,0};}
+                        ligint::V3 midpoint=voxel.pos;
+                        for(int k=0;k<3;k++)midpoint[k]+=d[k]*spacing/2;
+                        QPolygonF quad;
+                        double averageDepth=0;
+                        for(int sign=0;sign<4;sign++){
+                            const int su=(sign==0||sign==3)?-1:1;
+                            const int sv=sign<2?-1:1;
+                            ligint::V3 corner=midpoint;
+                            for(int k=0;k<3;k++)corner[k]+=su*u[k]+sv*v[k];
+                            const auto projection=project(corner);
+                            quad<<projection.first;averageDepth+=projection.second/4;
+                        }
+                        faces.push_back({averageDepth,quad,color});
+                    }
+                }
             }
+        }
+        std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
+        std::sort(faces.begin(),faces.end(),[](const Face&a,const Face&b){return a.depth<b.depth;});
+        p.setPen(Qt::NoPen);
+        for(const auto& f:faces){p.setBrush(f.color);p.drawPolygon(f.polygon);}
+        for(const auto& atom:owner_->ligandCoords_){
+            const auto screen=project(atom);
+            QColor ligandColor(250,244,125);ligandColor.setAlpha(240);
+            dots.push_back({screen.second,screen.first,ligandColor,false});
         }
         std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
         p.setPen(Qt::NoPen);
@@ -114,6 +174,20 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Ray length (Å)",ray_);form->addRow("Surface distance (Å)",surface_);
     form->addRow("Solvent probe (Å)",probe_);form->addRow("Morphology",morph_);
     form->addRow("Morph radius",radius_);form->addRow("Min cluster voxels",minPts_);
+    renderMode_=new QComboBox;renderMode_->addItems({"Voxels","Surface","Surface + Voxels"});
+    ligand_=new QComboBox;ligand_->addItem("None",QString());
+    seedSpacing_=new QDoubleSpinBox;seedSpacing_->setRange(1,20);seedSpacing_->setValue(6);
+    seedProminence_=new QDoubleSpinBox;seedProminence_->setRange(0,1);seedProminence_->setDecimals(2);seedProminence_->setValue(.10);
+    mergeDistance_=new QDoubleSpinBox;mergeDistance_->setRange(1,30);mergeDistance_->setValue(10);
+    mergeDrop_=new QDoubleSpinBox;mergeDrop_->setRange(0,1);mergeDrop_->setDecimals(2);mergeDrop_->setValue(.08);
+    maxSeeds_=new QSpinBox;maxSeeds_->setRange(1,256);maxSeeds_->setValue(64);
+    form->addRow("Seed separation (Å)",seedSpacing_);
+    form->addRow("Seed prominence",seedProminence_);
+    form->addRow("Maximum seeds",maxSeeds_);
+    form->addRow("Merge max distance (Å)",mergeDistance_);
+    form->addRow("Merge saddle drop",mergeDrop_);
+    form->addRow("Render mode",renderMode_);
+    form->addRow("Ligand overlay",ligand_);
     form->addRow("Pocket colors",palette_);
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
@@ -146,6 +220,28 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     });
     connect(entries_,&QListWidget::itemSelectionChanged,canvas_,QOverload<>::of(&QWidget::update));
     connect(palette_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(renderMode_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(ligand_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
+        ligandCoords_.clear();
+        const QString token=ligand_->currentData().toString();
+        if(!token.isEmpty()){
+            std::ifstream file(path_.toStdString());
+            std::string line;
+            while(std::getline(file,line)){
+                if(line.size()<54||line.compare(0,6,"HETATM")!=0)continue;
+                const QString code=QString::fromStdString(line.substr(17,3)+"|"+line.substr(21,1)+"|"+line.substr(22,4));
+                if(code!=token)continue;
+                if(line.size()>=78){
+                    const QString el=QString::fromStdString(line.substr(76,2)).trimmed().toUpper();
+                    if(el=="H"||el=="D")continue;
+                }
+                try{ligandCoords_.push_back({std::stod(line.substr(30,8)),
+                    std::stod(line.substr(38,8)),std::stod(line.substr(46,8))});}
+                catch(const std::exception&){}
+            }
+        }
+        canvas_->update();
+    });
     connect(opacity_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(pointSize_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
@@ -155,6 +251,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         o.maxSurfaceDistance=surface_->value();o.solventProbeRadius=probe_->value();
         o.morphology=morph_->currentText().toStdString();o.morphologyRadius=radius_->value();
         o.minClusterPoints=static_cast<std::size_t>(minPts_->value());
+        o.seedSpacing=seedSpacing_->value();o.seedProminence=seedProminence_->value();
+        o.maxSeeds=static_cast<std::size_t>(maxSeeds_->value());
+        o.mergeMaxSeedDistance=mergeDistance_->value();
+        o.mergeSaddleDrop=mergeDrop_->value();
         const QString path=path_;
         const QString chain=chain_->currentData().toString();
         if(!chain.isEmpty())o.chains={chain.toStdString()};
@@ -192,12 +292,24 @@ void PocketWorkspace::setStructurePath(const QString& path){
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
     result_={};groups_.clear();atoms_.clear();entries_->clear();
     chain_->clear();chain_->addItem("All chains",QString());
+    ligand_->clear();ligand_->addItem("None",QString());ligandCoords_.clear();
     if(!path.isEmpty()){
         try{
             const auto atoms=ligint::readPocketAtoms(path.toStdString());
             std::set<std::string> chains;
             for(const auto& atom:atoms)if(!atom.chain.empty())chains.insert(atom.chain);
             for(const auto& chain:chains)chain_->addItem(QString::fromStdString(chain),QString::fromStdString(chain));
+            std::ifstream input(path.toStdString());
+            std::set<std::string> ligandIDs;
+            std::string line;
+            while(std::getline(input,line)){
+                if(line.size()<54||line.compare(0,6,"HETATM")!=0)continue;
+                const std::string token=line.substr(17,3)+"|"+line.substr(21,1)+"|"+line.substr(22,4);
+                if(token.substr(0,3)=="HOH")continue;
+                ligandIDs.insert(token);
+            }
+            for(const auto& token:ligandIDs)
+                ligand_->addItem(QString::fromStdString(token),QString::fromStdString(token));
         }catch(const std::exception& e){status_->setText(QString::fromUtf8(e.what()));}
     }
     canvas_->update();
