@@ -1317,6 +1317,30 @@ static void testBuriednessPockets() {
     CHECK(found.selectedAtoms==shell.size());
     CHECK(found.sampledPoints>0);
     CHECK(!found.pockets.empty());
+    // Morphological filtering must be opt-in and preserve original B values.
+    ligint::PocketOptions opening=o;
+    opening.morphology="opening";
+    opening.morphologyRadius=1;
+    const auto opened=ligint::findPockets(shell,opening);
+    for(const auto& region:opened.pockets)
+        for(const auto& pt:region.points)
+            CHECK(pt.buriedness>=0 && pt.buriedness<=1);
+    ligint::PocketOptions closing=o;
+    closing.morphology="closing";
+    closing.morphologyRadius=1;
+    const auto closed=ligint::findPockets(shell,closing);
+    CHECK(closed.selectedAtoms==shell.size());
+    ligint::PocketOptions neck=o;
+    neck.neckClearance=0.5;
+    const auto pruned=ligint::findPockets(shell,neck);
+    CHECK(pruned.selectedAtoms==shell.size());
+    ligint::PocketOptions badMorph=o;
+    badMorph.morphology="unknown";
+    bool rejectedMorph=false;
+    try {(void)ligint::findPockets(shell,badMorph);}
+    catch(const std::invalid_argument&){rejectedMorph=true;}
+    CHECK(rejectedMorph);
+
     for(const auto& pocket:found.pockets) {
         CHECK(pocket.meanBuriedness>=0 && pocket.meanBuriedness<=1);
         CHECK(pocket.solventAccessibleFraction>=0 && pocket.solventAccessibleFraction<=1);
