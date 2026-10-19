@@ -60,7 +60,10 @@ inline std::vector<PocketGroup> rankPocketGroups(
         const double pocketPrior=std::accumulate(g.members.begin(),g.members.end(),0.0,
             [&](double s,std::size_t id){return s+pockets[id].heuristicScore;})/g.members.size();
         const double interfaceTerm=contacts?edgeSum/contacts:0;
-        const double sizePenalty=0.20*std::max(0.0,total/900.0-1.0);
+        // Singles are already discovered geometries, never a proposed fusion.
+        // Penalize excess size only when forming multi-pocket unions.
+        const double sizePenalty=g.members.size()>1
+            ? 0.20*std::max(0.0,total/900.0-1.0) : 0.0;
         // A small prior rewards viable site size, not maximally large unions.
         const double sizePrior=0.10*(1-std::exp(-total/300.0));
         g.score=0.55*interfaceTerm+0.35*std::clamp(pocketPrior/0.15,0.0,1.0)
@@ -71,7 +74,7 @@ inline std::vector<PocketGroup> rankPocketGroups(
         return a.members<b.members;
     };
     std::vector<PocketGroup> beam,all;
-    for(std::size_t i=0;i<n;i++)if(pockets[i].volume<=maxVolume){
+    for(std::size_t i=0;i<n;i++){
         PocketGroup g;g.members={i};score(g);beam.push_back(g);all.push_back(g);
     }
     std::sort(beam.begin(),beam.end(),better);
