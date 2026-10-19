@@ -1,4 +1,5 @@
 #include "ligint/pocket.hpp"
+#include "ligint/pocket_interfaces.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -36,6 +37,7 @@ static void help(){
         <<"  --merge-max-distance A maximum seed-group span (default 10 A)\n"
         <<"  --merge-min-contact A2 minimum shared voxel-face area (default 8 A2)\n"
         <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
+        <<"  --interfaces FILE   write experimental interface geometry JSON\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
         <<"  --pdb FILE          export pocket pseudoatoms (B = 100 * buriedness)\n"
@@ -56,7 +58,7 @@ int main(int argc,char** argv){
     try{
         if(argc<2){help();return 1;}
         PocketOptions o;
-        std::string file,output,points,pdb,rankBy="volume";
+        std::string file,output,points,pdb,interfaces,rankBy="volume";
         StructureFormat format=StructureFormat::Auto;
         std::size_t top=0;
         for(int i=1;i<argc;i++){
@@ -110,6 +112,7 @@ int main(int argc,char** argv){
             else if(a=="--merge-max-distance")o.mergeMaxSeedDistance=number(v);
             else if(a=="--merge-min-contact")o.mergeMinContactArea=number(v);
             else if(a=="--output")output=v;
+            else if(a=="--interfaces")interfaces=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
             else if(a=="--format"){
@@ -125,6 +128,25 @@ int main(int argc,char** argv){
         if(!o.chains.empty()&&r.selectedAtoms==0)throw std::runtime_error("Selected chains contain no protein atoms");
         if(rankBy=="heuristic")std::stable_sort(r.pockets.begin(),r.pockets.end(),
             [](const PocketCandidate& a,const PocketCandidate& b){return a.heuristicScore>b.heuristicScore;});
+        if(!interfaces.empty()){
+            std::ofstream edgeOut(interfaces);
+            if(!edgeOut)throw std::runtime_error("Cannot write: "+interfaces);
+            const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
+            edgeOut<<std::setprecision(8)<<"{\\n  \\"pocket_count\\": "<<r.pockets.size()
+                   <<",\\n  \\"interfaces\\": [\\n";
+            for(std::size_t j=0;j<edges.size();j++){
+                const auto& e=edges[j];
+                edgeOut<<"    {\\"a\\": "<<e.first+1<<", \\"b\\": "<<e.second+1
+                       <<", \\"contact_faces\\": "<<e.contactFaces
+                       <<", \\"contact_area_a2\\": "<<e.contactArea
+                       <<", \\"mean_boundary_buriedness\\": "<<e.meanBoundaryBuriedness
+                       <<", \\"mean_boundary_clearance_a\\": "<<e.meanBoundaryClearance
+                       <<", \\"max_boundary_clearance_a\\": "<<e.maxBoundaryClearance
+                       <<", \\"bottleneck_clearance_a\\": "<<e.bottleneckClearance
+                       <<"}"<<(j+1<edges.size()?",":"")<<"\\n";
+            }
+            edgeOut<<"  ]\\n}\\n";
+        }
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
         if(!output.empty()){
