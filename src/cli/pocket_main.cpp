@@ -22,6 +22,9 @@ static void help(){
         <<"  --min-buriedness B  threshold 0..1, default 0.5\n"
         <<"  --surface-distance A maximum candidate distance to atoms, default 5.0\n"
         <<"  --min-points N      minimum cluster size, default 30\n"
+        <<"  --morphology MODE   none|opening|closing|open-close (default none)\n"
+        <<"  --morph-radius N    0..2 voxels (default 0; use 1 to enable)\n"
+        <<"  --neck-clearance A  minimum VdW clearance in A (default 0 = off)\n"
         <<"  --top N             output at most N pockets (default all)\n"
         <<"  --rank-by volume|heuristic  pocket ordering (default volume)\n"
         <<"  --no-segmentation   retain original connected components\n"
@@ -83,6 +86,12 @@ int main(int argc,char** argv){
             }else if(a=="--min-buriedness")o.minBuriedness=number(v);
             else if(a=="--surface-distance")o.maxSurfaceDistance=number(v);
             else if(a=="--min-points")o.minClusterPoints=nonnegativeInteger(v);
+            else if(a=="--morphology")o.morphology=v;
+            else if(a=="--morph-radius"){
+                const auto n=nonnegativeInteger(v);
+                if(n>2)throw std::invalid_argument("Morphology radius must be 0..2");
+                o.morphologyRadius=static_cast<int>(n);
+            }else if(a=="--neck-clearance")o.neckClearance=number(v);
             else if(a=="--top")top=nonnegativeInteger(v);
             else if(a=="--rank-by"){
                 if(v!="volume" && v!="heuristic")throw std::invalid_argument("Invalid ranking: "+v);
