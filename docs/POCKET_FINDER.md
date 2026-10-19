@@ -157,3 +157,16 @@ python3 tools/pocket_benchmark.py --crystal 1HSG.pdb --ligand MK1 --ligand-chain
 ```
 
 Check ligand coverage, largest-pocket volume, Top-1/3/5 ranking and whether regrowth makes previously small, isolated pockets too broad. Do not make regrowth the default from the 1HSG result alone.
+
+## Crystal-ligand atom and pocket-contact audit
+
+The independent evaluator `tools/pocket_contact_audit.py` reports the closest pocket to each heavy ligand atom, all pockets within 3 Å and a **ligand-blind** six-connected contact graph between distinct exported pockets. The graph uses a one-voxel face adjacency on the PDB pseudoatom coordinates. The ligand is used only for the audit after pocket discovery, never to produce or merge pockets.
+
+```bash
+python3 tools/pocket_contact_audit.py --crystal 1HSG.pdb --ligand MK1 \\
+  --ligand-chain B --ligand-resseq 902 \\
+  --pockets-pdb opening.pdb --spacing 1.0 \\
+  --output 1hsg_opening_contacts.json
+```
+
+On the 1HSG opening reference, four of 45 MK1 heavy atoms are outside the best single pocket's 3 Å coverage: C4, C5, C6, O2. All four lie close to *other* pockets. Contact alone is NOT sufficient grounds for merging two basins: a future ligand-independent merge criterion must also check saddle/buriedness continuity, neck width, and excessive global component sizes, and be validated on 1STP and 1IEP.
