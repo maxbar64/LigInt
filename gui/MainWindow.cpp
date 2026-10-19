@@ -293,6 +293,10 @@ void MainWindow::buildUi() {
     auto* modes3d = new QTabWidget;
     auto* pocketWorkspace = new PocketWorkspace;
     pocketWorkspace->setObjectName("pocketWorkspace");
+    connect(pocketWorkspace,&PocketWorkspace::pocketOverlayChanged,viewer_,
+        [this](const std::vector<ligint::PocketPoint>& points,double spacing,int smoothing){
+            viewer_->setPocketOverlay(points,spacing,smoothing);
+        });
     modes3d->addTab(viewerArea, tr("Interactions 3D"));
     modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
