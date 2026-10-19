@@ -1469,6 +1469,9 @@ static void testPocketInterfaces() {
         CHECK(g.members.size()==1 || g.volume<=1800);
     }
     CHECK(retainedLarge);
+    const auto reserved=ligint::diversifyPocketGroups(groups,{a,b},2,0.35,1);
+    CHECK(reserved.size()==2);
+    CHECK(!reserved.empty() && reserved[0].group.members.size()==1);
     b.points[0].pos={12,0,0};
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
