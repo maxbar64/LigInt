@@ -64,3 +64,19 @@ The separation parameters have **not** been calibrated yet against known binding
 The merging stage uses adjacency of 6-connected voxels and the strongest shared buriedness saddle. Results are heuristic; vary `--merge-saddle-drop` (e.g. 0.04, 0.08, 0.12) and compare pocket sizes and experimental ligand coverage. The merged candidate's reported buriedness and original voxel values are preserved.
 
 Geometric merge gates: each candidate pair must share at least `--merge-min-contact` square angstroms of voxel faces, and all maxima in the proposed merged group must lie within `--merge-max-distance` of one another. These restrictions are designed to prevent chaining across the entire protein; the contact-area estimate is grid dependent.
+
+## Geometric characterization (experimental)
+
+The JSON summary now includes for each retained region:
+
+- `mean_buriedness`: mean of original directional buriedness samples (0 to 1).
+- `high_buriedness_fraction`: fraction of points with buriedness >= 0.8.
+- `boundary_area_a2`: exposed 6-neighbor voxel-face area; grid dependent.
+- `compactness`: dimensionless isoperimetric quotient `36*pi*volume^2/area^3`; computed from the voxel area, grid dependent.
+- `elongation`: longest/shortest axis-aligned bounding-box extent. Depends on structure orientation.
+- `mean_surface_distance_a`: mean nearest atomic van der Waals surface distance, clipped at zero. This is **not** solvent-accessible depth and should not be presented as such.
+- `heuristic_score`: **unvalidated** composite using volume saturation, mean buriedness, highly buried fraction and compactness. Not an affinity, druggability or probability estimate.
+
+The pocket IDs remain sorted by **volume**, as in earlier revisions; users can separately sort the JSON by `heuristic_score`. No ligand coordinates or experimentally annotated binding sites enter the score.
+
+To compare 1HSG with the earlier segmentation, run the same parameters on chain A, export JSON and compare `pockets[].heuristic_score` and geometric descriptors while keeping the original PDB/CSV voxel geometry unchanged.
