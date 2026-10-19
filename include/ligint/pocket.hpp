@@ -36,6 +36,7 @@ struct PocketSearchResult {
     std::size_t sampledPoints = 0;
     std::size_t selectedAtoms = 0;
 };
+std::vector<PocketAtom> readPocketAtoms(const std::string& path, StructureFormat format = StructureFormat::Auto);
 PocketSearchResult findPockets(const std::vector<PocketAtom>& atoms,
                                const PocketOptions& options = PocketOptions());
 } // namespace ligint
