@@ -144,3 +144,16 @@ The original scalar buriedness is not smoothed or overwritten. A closing operati
 The neck-clearance filter is a **hard clearance mask**, not yet a medial-axis or distance-transform bottleneck segmentation; its effect is to remove narrow space globally. Spherical elements at 1 Å grid resolution are strongly discretized. Grid-pitch sensitivity and preservation of crystal-ligand coverage are required before enabling either filter by default.
 
 Suggested controlled comparison: baseline, opening radius 1, and clearance thresholds 0.5/0.8 Å on **both chains** of 1HSG, plus 1STP and 1IEP. Record coverage within 2 and 3 Å, retained voxels, the number of pockets, and the largest region's fraction of total volume.
+
+## Bounded regrowth from opening cores (experimental)
+
+Use `--morphology opening --morph-radius 1 --regrow-steps 2` to restore at most two 6-connected grid layers of measured, above-threshold buriedness from the **original unfiltered score** after segmentation and basin merging. All surviving final basins expand together. Equidistant voxels contested by multiple basins are deliberately left unassigned; no newly measured or synthetic buriedness is generated. Pocket centers, volumes and descriptors are recomputed after regrowth. The baseline remains `--regrow-steps 0` (disabled). This first version does not recover below-threshold or unsampled positions, and the 6-neighbor growth layers are grid-dependent rather than true Euclidean distances. `--regrow-steps` requires opening or open-close with nonzero morph radius, and is capped at five layers.
+
+Suggested 1HSG A,B comparison (repeat with 1STP and 1IEP):
+
+```bash
+ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic --morphology opening --morph-radius 1 --regrow-steps 2 --output 1hsg_regrow2.json --pdb 1hsg_regrow2.pdb
+python3 tools/pocket_benchmark.py --crystal 1HSG.pdb --ligand MK1 --ligand-chain B --ligand-resseq 902 --pockets-json 1hsg_regrow2.json --pockets-pdb 1hsg_regrow2.pdb --output 1hsg_regrow2_benchmark.json
+```
+
+Check ligand coverage, largest-pocket volume, Top-1/3/5 ranking and whether regrowth makes previously small, isolated pockets too broad. Do not make regrowth the default from the 1HSG result alone.
