@@ -346,6 +346,62 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         }
         out.pockets=std::move(separated);
     }
+    // Descriptors are evaluated after segmentation/merging so exported geometry
+    // and point membership remain unchanged. No trained or ligand-informed score.
+    for(auto& pocket:out.pockets) {
+        if(pocket.points.empty())continue;
+        V3 low=pocket.points.front().pos,high=low;
+        double sumB=0,highB=0,sumDepth=0;
+        std::vector<std::uint8_t> inPocket(count,0);
+        for(const auto& pt:pocket.points) {
+            sumB+=pt.buriedness;
+            if(pt.buriedness>=0.8f)highB+=1;
+            for(int d=0;d<3;d++){
+                low[d]=std::min(low[d],pt.pos[d]);
+                high[d]=std::max(high[d],pt.pos[d]);
+            }
+            const int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+            inPocket[g.index(x,y,z)]=1;
+            double nearest=std::numeric_limits<double>::infinity();
+            for(const auto& atom:atoms) {
+                const double dx=pt.pos[0]-atom.pos[0],dy=pt.pos[1]-atom.pos[1],dz=pt.pos[2]-atom.pos[2];
+                nearest=std::min(nearest,std::sqrt(dx*dx+dy*dy+dz*dz)-atom.radius);
+            }
+            sumDepth+=std::max(0.0,nearest);
+        }
+        const double n=static_cast<double>(pocket.points.size());
+        pocket.meanBuriedness=sumB/n;
+        pocket.highBuriednessFraction=highB/n;
+        pocket.meanAtomSurfaceDistance=sumDepth/n;
+        double extent[3];
+        for(int d=0;d<3;d++)extent[d]=high[d]-low[d]+g.step;
+        const auto mm=std::minmax_element(extent,extent+3);
+        pocket.elongation=*mm.second/std::max(g.step,*mm.first);
+        std::size_t faces=0;
+        for(const auto& pt:pocket.points) {
+            const int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+            const int dx[6]={1,-1,0,0,0,0},dy[6]={0,0,1,-1,0,0},dz[6]={0,0,0,0,1,-1};
+            for(int k=0;k<6;k++) {
+                const int xx=x+dx[k], yy=y+dy[k], zz=z+dz[k];
+                if(!g.inside(xx,yy,zz)||!inPocket[g.index(xx,yy,zz)])++faces;
+            }
+        }
+        pocket.exposedFaceArea=static_cast<double>(faces)*g.step*g.step;
+        constexpr double pi=3.14159265358979323846;
+        if(pocket.exposedFaceArea>0)
+            pocket.compactness=36*pi*pocket.volume*pocket.volume/
+                std::pow(pocket.exposedFaceArea,3);
+        // Bounded, transparent heuristic; coefficients are NOT fitted against MK1.
+        // Discourage tiny isolated basins and sprawling, weakly buried regions.
+        const double sizeTerm=1-std::exp(-pocket.volume/300.0);
+        pocket.heuristicScore=sizeTerm*(0.65*pocket.meanBuriedness+
+            0.35*pocket.highBuriednessFraction)*
+            std::sqrt(std::max(0.0,std::min(1.0,pocket.compactness)));
+    }
     std::sort(out.pockets.begin(),out.pockets.end(),[](const PocketCandidate& a,const PocketCandidate& b){
         if(a.volume!=b.volume)return a.volume>b.volume;
         return a.peakBuriedness>b.peakBuriedness;
