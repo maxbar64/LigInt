@@ -1460,6 +1460,15 @@ static void testPocketInterfaces() {
         CHECK(std::isfinite(diversified[i].selectionScore));
         CHECK(diversified[i].maxOverlap>=0 && diversified[i].maxOverlap<=1);
     }
+    ligint::PocketCandidate large=a;
+    large.volume=2090;
+    const auto withLarge=ligint::rankPocketGroups({large,b},interfaces,8,10,2,1800,0);
+    bool retainedLarge=false;
+    for(const auto& g:withLarge){
+        if(g.members==std::vector<std::size_t>({0}))retainedLarge=true;
+        CHECK(g.members.size()==1 || g.volume<=1800);
+    }
+    CHECK(retainedLarge);
     b.points[0].pos={12,0,0};
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
