@@ -1331,6 +1331,16 @@ static void testBuriednessPockets() {
     noMerge.mergeBasins=false;
     const auto unmerged=ligint::findPockets(shell,noMerge);
     CHECK(found.pockets.size()<=unmerged.pockets.size());
+    ligint::PocketOptions tight=o;
+    tight.mergeMaxSeedDistance=1.0;
+    tight.mergeMinContactArea=1e6;
+    const auto limited=ligint::findPockets(shell,tight);
+    CHECK(limited.pockets.size()>=found.pockets.size());
+    ligint::PocketOptions bad=o;
+    bad.mergeMaxSeedDistance=0;
+    bool invalidDistance=false;
+    try {(void)ligint::findPockets(shell,bad);} catch(const std::invalid_argument&){invalidDistance=true;}
+    CHECK(invalidDistance);
     ligint::PocketOptions invalidDrop=o;
     invalidDrop.mergeSaddleDrop=1.1;
     bool rejectedDrop=false;
