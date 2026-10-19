@@ -111,16 +111,17 @@ struct DiversePocketGroup {
 inline std::vector<DiversePocketGroup> diversifyPocketGroups(
     const std::vector<PocketGroup>& ranked,
     const std::vector<PocketCandidate>& pockets,
-    std::size_t topK=10,double overlapPenalty=0.35) {
+    std::size_t topK=10,double overlapPenalty=0.35,std::size_t reservedSingles=0) {
     if(!std::isfinite(overlapPenalty)||overlapPenalty<0)
         throw std::invalid_argument("Invalid overlap penalty");
     std::vector<DiversePocketGroup> result;
+    reservedSingles=std::min(reservedSingles,topK);
     std::vector<bool> selected(ranked.size(),false);
     while(result.size()<topK && result.size()<ranked.size()){
         std::size_t best=ranked.size();
         double bestScore=-std::numeric_limits<double>::infinity(),bestOverlap=0;
         for(std::size_t i=0;i<ranked.size();++i){
-            if(selected[i])continue;
+            if(selected[i] || (result.size()<reservedSingles && ranked[i].members.size()!=1))continue;
             double overlap=0;
             for(const auto& chosen:result){
                 // Subpocket voxel sets are disjoint; weighted Jaccard on member IDs
