@@ -15,6 +15,7 @@
 #include "ligint/scene3d.hpp"
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_interfaces.hpp"
+#include "ligint/pocket_groups.hpp"
 #include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
@@ -1444,6 +1445,15 @@ static void testPocketInterfaces() {
         CHECK(std::isfinite(interfaces[0].bottleneckClearance));
         CHECK(interfaces[0].bottleneckClearance<=interfaces[0].maxBoundaryClearance+1e-8);
     }
+    a.volume=500;a.pointCount=2;a.heuristicScore=0.1;
+    b.volume=400;b.pointCount=2;b.heuristicScore=0.1;
+    const auto groups=ligint::rankPocketGroups({a,b},interfaces,8,10,2,1800,0);
+    bool hasPair=false;
+    for(const auto& group:groups)
+        if(group.members==std::vector<std::size_t>({0,1}))hasPair=true;
+    CHECK(hasPair);
+    const auto onlySingles=ligint::rankPocketGroups({a,b},interfaces,8,10,2,1800,10);
+    for(const auto& group:onlySingles)CHECK(group.members.size()==1);
     b.points[0].pos={12,0,0};
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
