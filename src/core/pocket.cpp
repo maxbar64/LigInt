@@ -47,7 +47,10 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
          std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0 &&
          std::isfinite(o.mergeSaddleDrop) && o.mergeSaddleDrop>=0 && o.mergeSaddleDrop<=1 &&
          std::isfinite(o.mergeMaxSeedDistance) && o.mergeMaxSeedDistance>0 &&
-         std::isfinite(o.mergeMinContactArea) && o.mergeMinContactArea>=0))
+         std::isfinite(o.mergeMinContactArea) && o.mergeMinContactArea>=0 &&
+         o.morphologyRadius>=0 && o.morphologyRadius<=2 &&
+         (o.morphology=="none" || o.morphology=="opening" || o.morphology=="closing" || o.morphology=="open-close") &&
+         std::isfinite(o.neckClearance) && o.neckClearance>=0))
         throw std::invalid_argument("Invalid pocket search options");
     std::vector<PocketAtom> atoms;
     for(const auto& a:input) {
@@ -129,6 +132,60 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         }
         float b=static_cast<float>(blocked)/static_cast<float>(dirs.size());
         if(b>=o.minBuriedness)score[id]=b;
+    }
+    // Optional binary morphology, keeping original score values untouched.
+    // The mask, not the buriedness field, is changed for region connectivity.
+    if(o.morphology!="none" && o.morphologyRadius>0) {
+        std::vector<std::array<int,3>> offsets;
+        for(int z=-o.morphologyRadius;z<=o.morphologyRadius;z++)
+            for(int y=-o.morphologyRadius;y<=o.morphologyRadius;y++)
+                for(int x=-o.morphologyRadius;x<=o.morphologyRadius;x++)
+                    if(x*x+y*y+z*z<=o.morphologyRadius*o.morphologyRadius)
+                        offsets.push_back({x,y,z});
+        auto transform=[&](const std::vector<std::uint8_t>& src,bool dilate){
+            std::vector<std::uint8_t> dst(count,0);
+            for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+                const auto id=g.index(x,y,z);
+                // Never create a candidate inside atomic van der Waals volume.
+                if(occupied[id])continue;
+                bool value=!dilate;
+                for(const auto& offset:offsets){
+                    int xx=x+offset[0],yy=y+offset[1],zz=z+offset[2];
+                    bool inside=g.inside(xx,yy,zz);
+                    bool present=inside && src[g.index(xx,yy,zz)] && !occupied[g.index(xx,yy,zz)];
+                    if(dilate && present){value=true;break;}
+                    if(!dilate && !present){value=false;break;}
+                }
+                dst[id]=static_cast<std::uint8_t>(value);
+            }
+            return dst;
+        };
+        std::vector<std::uint8_t> mask(count,0);
+        for(std::size_t id=0;id<count;id++)if(score[id]>=0)mask[id]=1;
+        if(o.morphology=="opening"||o.morphology=="open-close")
+            mask=transform(transform(mask,false),true);
+        if(o.morphology=="closing"||o.morphology=="open-close")
+            mask=transform(transform(mask,true),false);
+        // Preserve only measured voxels: added closing voxels have no original
+        // buriedness and must not be assigned artificial values.
+        for(std::size_t id=0;id<count;id++)
+            if(score[id]>=0 && !mask[id])score[id]=-1;
+    }
+    if(o.neckClearance>0) {
+        // Remove narrow free-space centers (van der Waals clearance below threshold).
+        // This does not alter the original scalar buriedness values for retained sites.
+        for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+            const auto id=g.index(x,y,z);
+            if(score[id]<0)continue;
+            const auto p=g.coord(x,y,z);
+            bool narrow=false;
+            for(const auto& a:atoms){
+                const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                const double rr=a.radius+o.neckClearance;
+                if(dx*dx+dy*dy+dz*dz<rr*rr){narrow=true;break;}
+            }
+            if(narrow)score[id]=-1;
+        }
     }
     std::vector<std::uint8_t> seen(count,0);
     // 6-connected components; subsequent refinement can split wide pockets.
