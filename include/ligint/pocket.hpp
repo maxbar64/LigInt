@@ -15,6 +15,9 @@ struct PocketOptions {
     double solventProbeRadius = 1.4; // radius of solvent probe, Angstrom
     double rayLength = 10.0;       // Angstrom
     double maxSurfaceDistance = 5.0;
+    int morphologyRadius = 0; // 0 disabled; 1=6-neighbor cross, 2=radius-2 sphere
+    std::string morphology = "none"; // none, opening, closing, open-close
+    double neckClearance = 0.0; // A; 0 disabled, otherwise cut narrow centers before clustering
     double minBuriedness = 0.5;    // fraction of blocked directions
     int directions = 42;
     std::size_t maxGridPoints = 4000000;
