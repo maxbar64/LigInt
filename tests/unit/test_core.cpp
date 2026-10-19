@@ -1319,6 +1319,9 @@ static void testBuriednessPockets() {
     CHECK(!found.pockets.empty());
     for(const auto& pocket:found.pockets) {
         CHECK(pocket.meanBuriedness>=0 && pocket.meanBuriedness<=1);
+        CHECK(pocket.solventAccessibleFraction>=0 && pocket.solventAccessibleFraction<=1);
+        CHECK(pocket.meanSolventPathDepth>=0);
+        CHECK(pocket.maxSolventPathDepth>=pocket.meanSolventPathDepth);
         CHECK(pocket.highBuriednessFraction>=0 && pocket.highBuriednessFraction<=1);
         CHECK(pocket.exposedFaceArea>0);
         CHECK(pocket.compactness>0 && pocket.compactness<=1.01);
