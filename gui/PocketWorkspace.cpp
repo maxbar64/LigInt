@@ -7,6 +7,8 @@
 #include <QSignalBlocker>
 #include <set>
 #include <unordered_set>
+#include <unordered_map>
+#include <queue>
 #include <fstream>
 #include <QPolygonF>
 #include <QFrame>
@@ -53,6 +55,80 @@ protected:
             points.insert(points.end(),pocket.points.begin(),pocket.points.end());
         }
         if(points.empty())return;
+        // Visual-only clean-up. All operations work on a copy, never on pocket data.
+        // Integer lattice indices avoid floating-point comparison during topology tests.
+        const double filterSpacing=owner_->spacing_->value();
+        using Cell=std::array<long long,3>;
+        struct CellHash {
+            std::size_t operator()(const Cell& c) const {
+                std::size_t h=0;
+                for(auto n:c)h^=std::hash<long long>{}(n)+0x9e3779b97f4a7c15ULL+(h<<6)+(h>>2);
+                return h;
+            }
+        };
+        auto lattice=[filterSpacing](const ligint::V3& p)->Cell{
+            return {std::llround(p[0]/filterSpacing),
+                    std::llround(p[1]/filterSpacing),
+                    std::llround(p[2]/filterSpacing)};
+        };
+        static const Cell offsets[]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+        std::unordered_map<Cell,std::size_t,CellHash> index;
+        index.reserve(points.size()*2);
+        for(std::size_t i=0;i<points.size();++i)index.emplace(lattice(points[i].pos),i);
+        std::vector<unsigned char> keep(points.size(),1);
+        const int minNeighbors=owner_->noiseNeighbors_->value();
+        if(minNeighbors){
+            for(std::size_t i=0;i<points.size();++i){
+                const auto cell=lattice(points[i].pos);
+                int neighborCount=0;
+                for(const auto& offset:offsets){
+                    Cell next=cell;
+                    for(int k=0;k<3;k++)next[k]+=offset[k];
+                    neighborCount+=index.count(next)?1:0;
+                }
+                if(neighborCount<minNeighbors)keep[i]=0;
+            }
+        }
+        const int minComponent=owner_->noiseComponent_->value();
+        if(minComponent>1){
+            std::vector<unsigned char> visited(points.size(),0);
+            for(std::size_t seed=0;seed<points.size();++seed){
+                if(!keep[seed]||visited[seed])continue;
+                std::queue<std::size_t> queue;
+                std::vector<std::size_t> component;
+                queue.push(seed);visited[seed]=1;
+                while(!queue.empty()){
+                    const auto i=queue.front();queue.pop();
+                    component.push_back(i);
+                    const auto cell=lattice(points[i].pos);
+                    for(const auto& offset:offsets){
+                        Cell next=cell;
+                        for(int k=0;k<3;k++)next[k]+=offset[k];
+                        auto found=index.find(next);
+                        if(found!=index.end()&&keep[found->second]&&!visited[found->second]){
+                            visited[found->second]=1;queue.push(found->second);
+                        }
+                    }
+                }
+                if(component.size()<static_cast<std::size_t>(minComponent))
+                    for(auto i:component)keep[i]=0;
+            }
+        }
+        std::unordered_set<Cell,CellHash> visible;
+        visible.reserve(points.size()*2);
+        std::vector<ligint::PocketPoint> cleanPoints;
+        cleanPoints.reserve(points.size());
+        for(std::size_t i=0;i<points.size();++i)if(keep[i]){
+            visible.insert(lattice(points[i].pos));
+            cleanPoints.push_back(points[i]);
+        }
+        const std::size_t hiddenCount=points.size()-cleanPoints.size();
+        points.swap(cleanPoints);
+        if(points.empty()){
+            p.setPen(Qt::white);
+            p.drawText(rect(),Qt::AlignCenter,"All voxels hidden by display noise filters");
+            return;
+        }
         for(const auto& a:points)for(int k=0;k<3;k++)center[k]+=a.pos[k]/points.size();
         double extent=1;
         for(const auto& a:points)for(int k=0;k<3;k++)extent=std::max(extent,std::fabs(a.pos[k]-center[k]));
@@ -98,6 +174,7 @@ protected:
         for(std::size_t m=0;m<members.size();m++){
             const auto id=members[m];if(id>=owner_->result_.pockets.size())continue;
             for(const auto& voxel:owner_->result_.pockets[id].points){
+                if(!visible.count(lattice(voxel.pos)))continue;
                 const double x=voxel.pos[0]-center[0],y=voxel.pos[1]-center[1],z=voxel.pos[2]-center[2];
                 const double rx=cy*x+sy*z,rz=-sy*x+cy*z;
                 const double ry=cp*y-sp*rz,depth=sp*y+cp*rz;
@@ -145,7 +222,7 @@ protected:
         for(const auto& d:dots){p.setBrush(d.color);p.drawEllipse(d.screen,d.protein?1.3:owner_->pointSize_->value()/2.0,d.protein?1.3:owner_->pointSize_->value()/2.0);}
         p.setPen(QColor(230,238,248));
         p.drawText(QRect(10,8,width()-20,24),Qt::AlignLeft,
-            QString("Pocket voxels: %1  |  drag: rotate  wheel: zoom").arg(points.size()));
+            QString("Visible: %1 | hidden noise: %2 | drag: rotate | wheel: zoom").arg(points.size()).arg(hiddenCount));
     }
 private:
     PocketWorkspace* owner_;QPoint last_;double yaw_=0.5,pitch_=0.4,zoom_=1;
@@ -186,6 +263,12 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Maximum seeds",maxSeeds_);
     form->addRow("Merge max distance (Å)",mergeDistance_);
     form->addRow("Merge saddle drop",mergeDrop_);
+    noiseNeighbors_=new QSpinBox;noiseNeighbors_->setRange(0,6);noiseNeighbors_->setValue(1);
+    noiseComponent_=new QSpinBox;noiseComponent_->setRange(1,500);noiseComponent_->setValue(12);
+    noiseNeighbors_->setToolTip("Minimum occupied face-neighbors. 0 disables this display filter.");
+    noiseComponent_->setToolTip("Hide 6-connected voxel components below this size (display only).");
+    form->addRow("Remove isolated voxels",noiseNeighbors_);
+    form->addRow("Min visible island",noiseComponent_);
     form->addRow("Render mode",renderMode_);
     form->addRow("Ligand overlay",ligand_);
     form->addRow("Pocket colors",palette_);
@@ -244,6 +327,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     });
     connect(opacity_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(pointSize_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(noiseNeighbors_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(noiseComponent_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
