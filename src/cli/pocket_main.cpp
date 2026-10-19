@@ -16,6 +16,7 @@ static void help(){
     std::cout<<"Usage: ligint-pocket structure.pdb|structure.cif [options]\n"
         <<"  --chains A,B        selected protein chains (default all)\n"
         <<"  --spacing A         voxel spacing, default 1.0\n"
+        <<"  --solvent-probe A   solvent probe radius (default 1.4 A)\n"
         <<"  --ray-length A      ray length, default 10.0\n"
         <<"  --directions N      ray directions, default 42\n"
         <<"  --min-buriedness B  threshold 0..1, default 0.5\n"
@@ -73,6 +74,7 @@ int main(int argc,char** argv){
                 }
                 if(o.chains.empty())throw std::invalid_argument("Empty chain selection");
             }else if(a=="--spacing")o.spacing=number(v);
+            else if(a=="--solvent-probe")o.solventProbeRadius=number(v);
             else if(a=="--ray-length")o.rayLength=number(v);
             else if(a=="--directions"){
                 auto n=nonnegativeInteger(v);
@@ -130,6 +132,9 @@ int main(int argc,char** argv){
                    <<", \"compactness\": "<<p.compactness
                    <<", \"elongation\": "<<p.elongation
                    <<", \"mean_surface_distance_a\": "<<p.meanAtomSurfaceDistance
+                   <<", \"solvent_accessible_fraction\": "<<p.solventAccessibleFraction
+                   <<", \"mean_solvent_path_depth_a\": "<<p.meanSolventPathDepth
+                   <<", \"max_solvent_path_depth_a\": "<<p.maxSolventPathDepth
                    <<", \"heuristic_score\": "<<p.heuristicScore<<"}"<<(i+1<n?",":"")<<"\n";
         }
         *stream<<"  ]\n}\n";
