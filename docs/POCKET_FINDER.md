@@ -215,3 +215,26 @@ ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic \\
 ```
 
 Pocket IDs in these JSON reports correspond to the same sorted `opening.json` invocation. Re-run all outputs together when parameters change. Validate ranking independently with 1STP and 1IEP before choosing fixed weights or enabling group ranking by default.
+
+## Diversified Top-K site candidates and group coverage benchmark
+
+The opt-in `--diverse-groups FILE` output evaluates up to 250 ranked candidates and selects ten via greedy maximal marginal relevance: `selection_score = raw_group_score - 0.35 * max_voxel_Jaccard(previously_selected)`. Candidate voxel sets are unions of disjoint original subpockets, so weighted Jaccard on member IDs uses their voxel volumes. This **does not modify** `--groups` output or the original pocket ranking. The overlap penalty and top-10 limit are experimental, not calibrated.
+
+```bash
+./build-pocket/src/ligint-pocket 1HSG.pdb --chains A,B \
+  --rank-by heuristic --morphology opening --morph-radius 1 \
+  --output opening.json --pdb opening.pdb \
+  --groups 1hsg_opening_groups.json \
+  --diverse-groups 1hsg_diverse_groups.json
+
+python3 tools/pocket_group_benchmark.py \
+  --crystal 1HSG.pdb --ligand MK1 --ligand-chain B --ligand-resseq 902 \
+  --pockets-pdb opening.pdb --groups-json 1hsg_opening_groups.json \
+  --output 1hsg_groups_benchmark.json
+python3 tools/pocket_group_benchmark.py \
+  --crystal 1HSG.pdb --ligand MK1 --ligand-chain B --ligand-resseq 902 \
+  --pockets-pdb opening.pdb --groups-json 1hsg_diverse_groups.json \
+  --output 1hsg_diverse_benchmark.json
+```
+
+The benchmark uses the ligand **only after prediction**, computes atomwise proximity to the union of group voxel sites, and records first full-coverage rank and individual group coverage. Run equivalent independent benchmarks for 1STP and 1IEP before any score calibration.
