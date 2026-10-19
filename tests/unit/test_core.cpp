@@ -1317,6 +1317,15 @@ static void testBuriednessPockets() {
     CHECK(found.selectedAtoms==shell.size());
     CHECK(found.sampledPoints>0);
     CHECK(!found.pockets.empty());
+    for(const auto& pocket:found.pockets) {
+        CHECK(pocket.meanBuriedness>=0 && pocket.meanBuriedness<=1);
+        CHECK(pocket.highBuriednessFraction>=0 && pocket.highBuriednessFraction<=1);
+        CHECK(pocket.exposedFaceArea>0);
+        CHECK(pocket.compactness>0 && pocket.compactness<=1.01);
+        CHECK(pocket.elongation>=1);
+        CHECK(pocket.meanAtomSurfaceDistance>=0);
+        CHECK(pocket.heuristicScore>=0 && pocket.heuristicScore<=1.01);
+    }
     // Disabling segmentation must reproduce the original connected components.
     ligint::PocketOptions raw=o;
     raw.segment=false;
