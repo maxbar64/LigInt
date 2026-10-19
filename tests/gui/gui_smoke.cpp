@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
             box("opt_backbone")->setChecked(false);
             box("opt_metalDonors")->setChecked(false);
             spin("thr_hbMax")->setValue(3.5); spin("thr_hbLong")->setValue(0); spin("thr_saltMax")->setValue(4.0);
-            spin("thr_saltCentroid")->setValue(0); spin("thr_hydMax")->setValue(4.0); spin("thr_piAngle")->setValue(30);
+            spin("thr_saltCentroid")->setValue(0); spin("thr_hydMax")->setValue(4.0); spin("thr_piMax")->setValue(5.5); spin("thr_piOffset")->setValue(3.5); spin("thr_piAngle")->setValue(30);
         };
         CHECK(w.openStructure(argv[1]));
         w.selectLigand(0);
@@ -261,10 +261,10 @@ int main(int argc, char** argv) {
         box("opt_backbone")->setChecked(true);
         box("opt_merge")->setChecked(false);
         box("opt_metalDonors")->setChecked(true);
-        spin("thr_hbMax")->setValue(3.8); spin("thr_hydMax")->setValue(4.5); spin("thr_piAngle")->setValue(40); spin("thr_saltMax")->setValue(4.5);
+        spin("thr_hbMax")->setValue(3.8); spin("thr_hydMax")->setValue(4.5); spin("thr_piMax")->setValue(6.1); spin("thr_piOffset")->setValue(2.8); spin("thr_piAngle")->setValue(40); spin("thr_saltMax")->setValue(4.5);
         w.analyze(true);
         const QString c3 = w.lastCommandLine();
-        for (const char* opt : {"--no-merge", "--backbone-hyd", "--metal-donors", "--hb-max 3.8", "--hyd-max 4.5", "--pi-angle 40", "--salt-max 4.5"})
+        for (const char* opt : {"--no-merge", "--backbone-hyd", "--metal-donors", "--hb-max 3.8", "--hyd-max 4.5", "--pi-max 6.1", "--pi-offset 2.8", "--pi-angle 40", "--salt-max 4.5"})
             CHECK(c3.contains(opt));
         checkEquivalence(w, binary, "many settings");
 
