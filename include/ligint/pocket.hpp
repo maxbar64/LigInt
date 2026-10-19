@@ -12,7 +12,7 @@ struct PocketAtom {
 };
 struct PocketOptions {
     double spacing = 1.0;
-    double solventProbeRadius = 1.4; // radius of rolling solvent probe, Angstrom          // Angstrom
+    double solventProbeRadius = 1.4; // radius of solvent probe, Angstrom
     double rayLength = 10.0;       // Angstrom
     double maxSurfaceDistance = 5.0;
     double minBuriedness = 0.5;    // fraction of blocked directions
@@ -26,7 +26,7 @@ struct PocketOptions {
     bool mergeBasins = true;
     double mergeSaddleDrop = 0.08;
     double mergeMaxSeedDistance = 10.0; // Angstrom; prevent long-distance chaining
-    double mergeMinContactArea = 8.0;   // Angstrom squared; reject narrow voxel necks // merge when saddle is within this of lower peak       // maximum basin seeds per connected region
+    double mergeMinContactArea = 8.0; // minimum shared voxel-face area, Angstrom^2
     std::vector<std::string> chains; // empty: all; exact chain IDs
 };
 struct PocketPoint {
@@ -44,6 +44,8 @@ struct PocketCandidate {
     double compactness = 0;          // 36*pi*V^2 / A^3 (voxel approximation)
     double elongation = 0;           // bounding-box major/minor extent
     double meanAtomSurfaceDistance = 0; // nearest atom center minus van der Waals radius
+    double accessibilityProbe08 = 0; // reachable voxel fraction for radius 0.8 A
+    double accessibilityProbe20 = 0; // reachable voxel fraction for radius 2.0 A
     double solventAccessibleFraction = 0; // fraction reachable by water-probe center
     double meanSolventPathDepth = 0;  // shortest connected path to grid exterior, Angstrom
     double maxSolventPathDepth = 0;
