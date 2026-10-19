@@ -188,3 +188,16 @@ In the 1HSG opening reference (55 subpockets), initial contact+volume grouping p
 ### Independent pair candidates (greedy-order diagnostic)
 
 The grouping report also emits `pair_candidates`: every face-contacting pair passing the same contact and pair-volume thresholds, **without** excluding pairs because either member has already joined another group. This is diagnostic only, not a merge instruction. For 1HSG, the contact graph has #1–#2 with 90 shared faces and a pair volume of 1,297 Å³; it qualifies under the default 8-face, 0.02 normalized-contact and 1,800 Å³ pair-volume gates even though the greedy partition separates them. Explicitly compare pair candidates and final groups to detect order dependence. The next scientifically justified stage is a ligand-blind score for interface buriedness/clearance and independent crystallographic validation, rather than hard-coding this pair.
+
+## Experimental C++ inter-pocket geometry and maximin throat
+
+The independent C++17 module `include/ligint/pocket_interfaces.hpp` evaluates adjacent predicted pocket pairs without any ligand information. The CLI opt-in `--interfaces FILE` writes a separate JSON interface report with shared voxel faces, mean buriedness at the face, mean and maximum VdW clearance, and **maximin bottleneck clearance**. For each neighboring pair the widest path is traced along six-connected voxels belonging only to the two pocket candidates, between their respective maximum-clearance sites. This provides a reproducible geometric diagnostic, **not** a validated rigid-ligand passage radius, a solvent-channel width, or an automatic merging decision. It does not alter pocket generation or ranking.
+
+```bash
+ligint-pocket 1HSG.pdb --chains A,B --rank-by heuristic \\
+  --morphology opening --morph-radius 1 \\
+  --output opening.json --pdb opening.pdb \\
+  --interfaces 1hsg_opening_interfaces.json
+```
+
+The C++ interface JSON uses pocket indices matching the same invocation's sorted CLI pocket JSON and PDB; regenerate all three files together if flags change. A second run on 1STP and 1IEP with the same settings is necessary to assess whether the interface descriptors generalize. The present calculation finds neighbors only where exported voxel centers share faces; gaps erased by opening cannot be traversed until the full pre-opening buriedness field is exposed by a later revision. The current implementation is a prototype and computationally expensive on large pair sets; no performance or validation claims are made.
