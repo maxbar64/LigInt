@@ -3,6 +3,9 @@
 #include <QComboBox>
 #include <QStringList>
 #include <QPen>
+#include <QAbstractItemView>
+#include <QSignalBlocker>
+#include <set>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
 #include <QListWidget>
@@ -53,6 +56,7 @@ protected:
         struct Dot {double depth;QPointF screen;QColor color;bool protein=false;};
         std::vector<Dot> dots;dots.reserve(points.size());
         static const QColor palette[]={QColor(40,185,230),QColor(255,160,60),QColor(120,220,130),QColor(214,100,236)};
+        static const QColor warm[]={QColor(248,208,77),QColor(252,107,95),QColor(151,112,244),QColor(78,196,173)};
         const double cy=std::cos(yaw_),sy=std::sin(yaw_),cp=std::cos(pitch_),sp=std::sin(pitch_);
         // Faint receptor context: local protein atoms, subsampled to keep painting responsive.
         for(std::size_t i=0;i<owner_->atoms_.size();i+=2){
@@ -71,14 +75,14 @@ protected:
                 const double x=voxel.pos[0]-center[0],y=voxel.pos[1]-center[1],z=voxel.pos[2]-center[2];
                 const double rx=cy*x+sy*z,rz=-sy*x+cy*z;
                 const double ry=cp*y-sp*rz,depth=sp*y+cp*rz;
-                QColor color=palette[m%4];
-                color.setAlphaF(std::clamp(0.18+0.65*voxel.buriedness,0.0,1.0));
+                QColor color=owner_->palette_->currentIndex()==0?palette[id%4]:warm[id%4];
+                color.setAlphaF(std::clamp((owner_->opacity_->value()/100.0)*(0.3+0.7*voxel.buriedness),0.0,1.0));
                 dots.push_back({depth,QPointF(width()/2.0+rx*scale,height()/2.0-ry*scale),color});
             }
         }
         std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
         p.setPen(Qt::NoPen);
-        for(const auto& d:dots){p.setBrush(d.color);p.drawEllipse(d.screen,d.protein?1.3:2.5,d.protein?1.3:2.5);}
+        for(const auto& d:dots){p.setBrush(d.color);p.drawEllipse(d.screen,d.protein?1.3:owner_->pointSize_->value()/2.0,d.protein?1.3:owner_->pointSize_->value()/2.0);}
         p.setPen(QColor(230,238,248));
         p.drawText(QRect(10,8,width()-20,24),Qt::AlignLeft,
             QString("Pocket voxels: %1  |  drag: rotate  wheel: zoom").arg(points.size()));
@@ -101,16 +105,26 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     radius_=new QSpinBox;radius_->setRange(0,2);radius_->setValue(1);
     minPts_=new QSpinBox;minPts_->setRange(1,500);minPts_->setValue(30);
     morph_=new QComboBox;morph_->addItems({"none","opening","closing","open-close"});morph_->setCurrentText("opening");
+    chain_=new QComboBox;chain_->addItem("All chains",QString());
+    palette_=new QComboBox;palette_->addItems({"Cool palette","Warm palette"});
+    opacity_=new QSpinBox;opacity_->setRange(10,100);opacity_->setValue(80);opacity_->setSuffix("%");
+    pointSize_=new QSpinBox;pointSize_->setRange(2,12);pointSize_->setValue(5);
+    form->addRow("Protein chain",chain_);
     form->addRow("Grid spacing (Å)",spacing_);form->addRow("Min buriedness",buried_);
     form->addRow("Ray length (Å)",ray_);form->addRow("Surface distance (Å)",surface_);
     form->addRow("Solvent probe (Å)",probe_);form->addRow("Morphology",morph_);
     form->addRow("Morph radius",radius_);form->addRow("Min cluster voxels",minPts_);
+    form->addRow("Pocket colors",palette_);
+    form->addRow("Voxel opacity",opacity_);
+    form->addRow("Voxel size",pointSize_);
     column->addLayout(form);
     run_=new QPushButton("Find pockets");column->addWidget(run_);
     status_=new QLabel("Open a structure to start");status_->setWordWrap(true);column->addWidget(status_);
     display_=new QComboBox;display_->addItems({"Subpockets","Candidate groups"});
     column->addWidget(display_);
-    entries_=new QListWidget;column->addWidget(entries_,1);
+    entries_=new QListWidget;entries_->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    entries_->setToolTip("Ctrl-click or Shift-click to select multiple pockets or candidate groups");
+    column->addWidget(entries_,1);
     auto* canvas=new PocketCanvas(this);canvas_=canvas;
     outer->addWidget(controls);outer->addWidget(canvas,1);
     connect(display_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
@@ -130,7 +144,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         if(entries_->count())entries_->setCurrentRow(0);
         canvas_->update();
     });
-    connect(entries_,&QListWidget::currentRowChanged,canvas_,QOverload<>::of(&QWidget::update));
+    connect(entries_,&QListWidget::itemSelectionChanged,canvas_,QOverload<>::of(&QWidget::update));
+    connect(palette_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(opacity_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(pointSize_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
@@ -139,6 +156,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         o.morphology=morph_->currentText().toStdString();o.morphologyRadius=radius_->value();
         o.minClusterPoints=static_cast<std::size_t>(minPts_->value());
         const QString path=path_;
+        const QString chain=chain_->currentData().toString();
+        if(!chain.isEmpty())o.chains={chain.toStdString()};
         run_->setEnabled(false);status_->setText("Computing pockets...");
         watcher_.setFuture(QtConcurrent::run([path,o]{
             PocketGuiOutcome out;
@@ -161,7 +180,9 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         atoms_=std::move(out.atoms);
         status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
             .arg(result_.pockets.size()).arg(groups_.size()).arg(result_.selectedAtoms));
-        display_->setCurrentIndex(1);display_->setCurrentIndex(0);
+        const int mode=display_->currentIndex();
+        display_->setCurrentIndex(mode==0?1:0);
+        display_->setCurrentIndex(mode);
         canvas_->update();
     });
 }
@@ -169,15 +190,30 @@ PocketWorkspace::~PocketWorkspace(){if(watcher_.isRunning())watcher_.waitForFini
 void PocketWorkspace::setStructurePath(const QString& path){
     path_=path;run_->setEnabled(!path.isEmpty());
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
-    result_={};groups_.clear();atoms_.clear();entries_->clear();canvas_->update();
+    result_={};groups_.clear();atoms_.clear();entries_->clear();
+    chain_->clear();chain_->addItem("All chains",QString());
+    if(!path.isEmpty()){
+        try{
+            const auto atoms=ligint::readPocketAtoms(path.toStdString());
+            std::set<std::string> chains;
+            for(const auto& atom:atoms)if(!atom.chain.empty())chains.insert(atom.chain);
+            for(const auto& chain:chains)chain_->addItem(QString::fromStdString(chain),QString::fromStdString(chain));
+        }catch(const std::exception& e){status_->setText(QString::fromUtf8(e.what()));}
+    }
+    canvas_->update();
 }
 std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
-    const int row=entries_->currentRow();
-    if(row<0)return {};
-    if(display_->currentIndex()==0){
-        return static_cast<std::size_t>(row)<result_.pockets.size()
-            ?std::vector<std::size_t>{static_cast<std::size_t>(row)}:std::vector<std::size_t>{};
+    std::set<std::size_t> ids;
+    for(const auto* item:entries_->selectedItems()){
+        const int row=entries_->row(item);
+        if(row<0)continue;
+        if(display_->currentIndex()==0){
+            if(static_cast<std::size_t>(row)<result_.pockets.size())
+                ids.insert(static_cast<std::size_t>(row));
+        }else if(static_cast<std::size_t>(row)<groups_.size()){
+            for(auto id:groups_[row].members)ids.insert(id);
+        }
     }
-    return static_cast<std::size_t>(row)<groups_.size()?groups_[row].members:std::vector<std::size_t>{};
+    return {ids.begin(),ids.end()};
 }
 } // namespace gui
