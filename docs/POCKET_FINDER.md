@@ -274,3 +274,9 @@ ligint-pocket pocket_external_results/1IEP.pdb --chains A \\
 ```
 
 A pocket with `raw_rank_full > 30` was not removed at discovery; it was truncated from the report. The `in_diverse_pool` flag indicates membership of the score-ranked top 250, not actual diversified selection.
+
+## Pocket Finder 3D workspace (experimental GUI)
+
+The `ligint-gui` upper 3D area now has **Interactions 3D** and **Pocket Finder 3D** tabs. Open a PDB or mmCIF structure with File > Open, switch to Pocket Finder 3D, configure grid spacing, buriedness threshold, ray length, maximum surface distance, solvent probe, morphology, morphology radius and minimum cluster voxels, then select **Find pockets**. The native `findPockets` calculation runs asynchronously via the existing Qt Concurrent dependency; results are sorted by the same heuristic order as `--rank-by heuristic`. Choose **Subpockets** or **Candidate groups** and select an entry to view translucent, buriedness-tinted voxel centers surrounded by faint local receptor atoms. Drag to rotate and use the mouse wheel to zoom. No Qt 3D, OpenGL, WebEngine, RDKit or external executable is required.
+
+This is an initial diagnostic viewer, **not yet an iso-surface / triangulated pocket boundary**. Group scores remain experimental. For reproducible auditing, the CLI still provides the richer JSON exports, interfaces, and diversified group selection; the GUI currently displays the 30 raw group candidates. Chain selection, advanced segmentation controls, saved presets and group export are planned follow-ups. If the structure is changed, stale pocket results are cleared. Use matching parameters when comparing against CLI results.
