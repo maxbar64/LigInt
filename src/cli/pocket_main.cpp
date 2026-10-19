@@ -116,7 +116,14 @@ int main(int argc,char** argv){
             const auto& p=r.pockets[i];
             *stream<<"    {\"id\": "<<(i+1)<<", \"center\": ["<<p.center[0]<<", "<<p.center[1]<<", "<<p.center[2]
                    <<"], \"volume_a3\": "<<p.volume<<", \"peak_buriedness\": "<<p.peakBuriedness
-                   <<", \"points\": "<<p.pointCount<<"}"<<(i+1<n?",":"")<<"\n";
+                   <<", \"points\": "<<p.pointCount
+                   <<", \"mean_buriedness\": "<<p.meanBuriedness
+                   <<", \"high_buriedness_fraction\": "<<p.highBuriednessFraction
+                   <<", \"boundary_area_a2\": "<<p.exposedFaceArea
+                   <<", \"compactness\": "<<p.compactness
+                   <<", \"elongation\": "<<p.elongation
+                   <<", \"mean_surface_distance_a\": "<<p.meanAtomSurfaceDistance
+                   <<", \"heuristic_score\": "<<p.heuristicScore<<"}"<<(i+1<n?",":"")<<"\n";
         }
         *stream<<"  ]\n}\n";
         if(!points.empty()){
