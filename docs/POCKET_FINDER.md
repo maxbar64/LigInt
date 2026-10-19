@@ -120,3 +120,27 @@ python3 tools/pocket_benchmark.py --crystal 1HSG.pdb --ligand MK1 \\
 ```
 
 For another complex, replace the crystal file and ligand code; specify its actual crystallographic chain and residue number. Use Top-1, Top-3, Top-5 and the best-pocket per-ligand heavy-atom coverage within 3 Å. **These metrics are voxel-proximity metrics, not a validated pocket-overlap or docking-success measure.** Record chain selection, crystallographic assembly, probe radii, grid parameters and ligand-instance identity for reproducibility. Do not tune ranking coefficients to the single 1HSG example.
+
+## Optional 3D morphology and narrow-connection pruning
+
+Experimental post-buriedness processing operates **before** connected components
+and watershed. Both are disabled by default to preserve the reference results.
+
+```bash
+ligint-pocket 1HSG.pdb --chains A,B --morphology opening --morph-radius 1 \
+  --output 1hsg_opening.json --pdb 1hsg_opening.pdb
+ligint-pocket 1HSG.pdb --chains A,B --neck-clearance 0.8 \
+  --output 1hsg_neck.json --pdb 1hsg_neck.pdb
+```
+
+Options:
+
+- `--morphology none|opening|closing|open-close`: opening erodes then dilates the selected voxel mask; closing dilates then erodes; open-close applies both, using a spherical voxel neighborhood.
+- `--morph-radius 0|1|2`: discrete structuring-element radius in **grid voxels**. Default 0 disables morphology, including when a non-none mode is selected.
+- `--neck-clearance A`: remove voxel centers with nearest atom-surface clearance less than A Å (default 0, disabled), without editing the original buriedness measurements.
+
+The original scalar buriedness is not smoothed or overwritten. A closing operation may recover sampled, previously below-threshold voxel centers, using their **measured** buriedness; never assign new values to unsampled positions or to points inside atomic volume. Consequently, a recovered voxel can have a buriedness below `--min-buriedness`. Morphological opening and neck removal can reduce volume and ligand coverage; compare them against the baseline rather than assuming an improvement.
+
+The neck-clearance filter is a **hard clearance mask**, not yet a medial-axis or distance-transform bottleneck segmentation; its effect is to remove narrow space globally. Spherical elements at 1 Å grid resolution are strongly discretized. Grid-pitch sensitivity and preservation of crystal-ligand coverage are required before enabling either filter by default.
+
+Suggested controlled comparison: baseline, opening radius 1, and clearance thresholds 0.5/0.8 Å on **both chains** of 1HSG, plus 1STP and 1IEP. Record coverage within 2 and 3 Å, retained voxels, the number of pockets, and the largest region's fraction of total volume.
