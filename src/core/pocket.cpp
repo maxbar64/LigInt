@@ -396,13 +396,53 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             steps[id]=distance+1;flood.push_back({x,y,z});
         }
     }
+    // Multi-probe accessibility: independent binary reachability masks for
+    // small and large probes. The 1.4 A (configurable) path grid remains above.
+    auto accessibleForProbe=[&](double probe) {
+        std::vector<std::uint8_t> obstacle(count,0),reachable(count,0);
+        for(const auto& a:atoms){
+            const double radius=a.radius+probe;
+            int lower[3],upper[3];
+            for(int d=0;d<3;d++){
+                lower[d]=std::max(0,static_cast<int>(std::floor((a.pos[d]-radius-g.origin[d])/g.step)));
+                upper[d]=std::min(dims[d]-1,static_cast<int>(std::ceil((a.pos[d]+radius-g.origin[d])/g.step)));
+            }
+            for(int z=lower[2];z<=upper[2];z++)for(int y=lower[1];y<=upper[1];y++)
+                for(int x=lower[0];x<=upper[0];x++){
+                    const auto p=g.coord(x,y,z);
+                    const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                    if(dx*dx+dy*dy+dz*dz<=radius*radius)obstacle[g.index(x,y,z)]=1;
+                }
+        }
+        std::deque<std::array<int,3>> queue;
+        auto seed=[&](int x,int y,int z){
+            auto id=g.index(x,y,z);
+            if(!obstacle[id]&&!reachable[id]){reachable[id]=1;queue.push_back({x,y,z});}
+        };
+        for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++){seed(0,y,z);seed(g.nx-1,y,z);}
+        for(int z=0;z<g.nz;z++)for(int x=0;x<g.nx;x++){seed(x,0,z);seed(x,g.ny-1,z);}
+        for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){seed(x,y,0);seed(x,y,g.nz-1);}
+        while(!queue.empty()){
+            auto p=queue.front();queue.pop_front();
+            for(int k=0;k<6;k++){
+                const int x=p[0]+fx[k],y=p[1]+fy[k],z=p[2]+fz[k];
+                if(!g.inside(x,y,z))continue;
+                auto id=g.index(x,y,z);
+                if(obstacle[id]||reachable[id])continue;
+                reachable[id]=1;queue.push_back({x,y,z});
+            }
+        }
+        return reachable;
+    };
+    const auto reachable08=accessibleForProbe(0.8);
+    const auto reachable20=accessibleForProbe(2.0);
     // Descriptors are evaluated after segmentation/merging so exported geometry
     // and point membership remain unchanged. No trained or ligand-informed score.
     for(auto& pocket:out.pockets) {
         if(pocket.points.empty())continue;
         V3 low=pocket.points.front().pos,high=low;
         double sumB=0,highB=0,sumDepth=0,solventSteps=0,maxSteps=0;
-        std::size_t solventCount=0;
+        std::size_t solventCount=0,probe08Count=0,probe20Count=0;
         std::vector<std::uint8_t> inPocket(count,0);
         for(const auto& pt:pocket.points) {
             sumB+=pt.buriedness;
@@ -415,7 +455,10 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
             const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
             inPocket[g.index(x,y,z)]=1;
-            const int pathSteps=steps[g.index(x,y,z)];
+            const auto gridId=g.index(x,y,z);
+            probe08Count+=reachable08[gridId];
+            probe20Count+=reachable20[gridId];
+            const int pathSteps=steps[gridId];
             if(pathSteps>=0) {
                 ++solventCount;
                 solventSteps+=pathSteps;
@@ -430,6 +473,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         }
         const double n=static_cast<double>(pocket.points.size());
         pocket.meanBuriedness=sumB/n;
+        pocket.accessibilityProbe08=probe08Count/n;
+        pocket.accessibilityProbe20=probe20Count/n;
         pocket.solventAccessibleFraction=static_cast<double>(solventCount)/n;
         if(solventCount){pocket.meanSolventPathDepth=g.step*solventSteps/solventCount;
             pocket.maxSolventPathDepth=g.step*maxSteps;}
