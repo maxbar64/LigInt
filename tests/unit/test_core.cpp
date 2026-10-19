@@ -14,6 +14,7 @@
 #include "ligint/rcsb.hpp"
 #include "ligint/scene3d.hpp"
 #include "ligint/pocket.hpp"
+#include "ligint/pocket_interfaces.hpp"
 #include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
@@ -1423,6 +1424,30 @@ static void testBuriednessPockets() {
     CHECK(rejected);
 }
 
+static void testPocketInterfaces() {
+    ligint::PocketCandidate a,b;
+    a.points.push_back({ligint::V3{0,0,0},0.8f});
+    a.points.push_back({ligint::V3{0,1,0},0.7f});
+    b.points.push_back({ligint::V3{1,0,0},0.9f});
+    b.points.push_back({ligint::V3{1,1,0},0.6f});
+    std::vector<ligint::PocketAtom> atoms;
+    ligint::PocketAtom atom;
+    atom.pos={0.5,0.5,2.0};
+    atom.radius=1.0;
+    atoms.push_back(atom);
+    const auto interfaces=ligint::analyzePocketInterfaces({a,b},atoms,1.0);
+    CHECK(interfaces.size()==1);
+    if(!interfaces.empty()){
+        CHECK(interfaces[0].contactFaces==2);
+        CHECK(std::abs(interfaces[0].contactArea-2.0)<1e-8);
+        CHECK(interfaces[0].meanBoundaryBuriedness>0.6);
+        CHECK(std::isfinite(interfaces[0].bottleneckClearance));
+        CHECK(interfaces[0].bottleneckClearance<=interfaces[0].maxBoundaryClearance+1e-8);
+    }
+    b.points[0].pos={12,0,0};
+    b.points[1].pos={12,1,0};
+    CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
+}
 int main() {
     testListing();
     testHydrogenBondAndPositions();
@@ -1453,6 +1478,7 @@ int main() {
     testFingerprintOutputs();
     testScene3d();
     testBuriednessPockets();
+    testPocketInterfaces();
     if (failures) {
         std::cerr << failures << " checks failed\n";
         return 1;
