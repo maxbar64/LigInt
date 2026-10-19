@@ -27,6 +27,8 @@ static void help(){
         <<"  --seed-prominence B minimum seed buriedness over cutoff (default 0.10)\n"
         <<"  --max-seeds N       maximum seeds per connected region (default 64)\n"
         <<"  --merge-saddle-drop B maximum buriedness peak-to-saddle drop (default 0.08)\n"
+        <<"  --merge-max-distance A maximum seed-group span (default 10 A)\n"
+        <<"  --merge-min-contact A2 minimum shared voxel-face area (default 8 A2)\n"
         <<"  --no-basin-merge   disable merging of adjacent watershed basins\n"
         <<"  --output FILE       write summary as JSON (default stdout)\n"
         <<"  --points FILE       export selected buried voxels as CSV\n"
@@ -83,6 +85,8 @@ int main(int argc,char** argv){
             else if(a=="--seed-prominence")o.seedProminence=number(v);
             else if(a=="--max-seeds")o.maxSeeds=nonnegativeInteger(v);
             else if(a=="--merge-saddle-drop")o.mergeSaddleDrop=number(v);
+            else if(a=="--merge-max-distance")o.mergeMaxSeedDistance=number(v);
+            else if(a=="--merge-min-contact")o.mergeMinContactArea=number(v);
             else if(a=="--output")output=v;
             else if(a=="--points")points=v;
             else if(a=="--pdb")pdb=v;
