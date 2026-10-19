@@ -1454,6 +1454,12 @@ static void testPocketInterfaces() {
     CHECK(hasPair);
     const auto onlySingles=ligint::rankPocketGroups({a,b},interfaces,8,10,2,1800,10);
     for(const auto& group:onlySingles)CHECK(group.members.size()==1);
+    const auto diversified=ligint::diversifyPocketGroups(groups,{a,b},3,0.35);
+    CHECK(diversified.size()==3);
+    for(std::size_t i=0;i<diversified.size();++i){
+        CHECK(std::isfinite(diversified[i].selectionScore));
+        CHECK(diversified[i].maxOverlap>=0 && diversified[i].maxOverlap<=1);
+    }
     b.points[0].pos={12,0,0};
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
