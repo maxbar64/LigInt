@@ -20,6 +20,16 @@ def candidates(pockets, spacing, min_faces=8, min_fraction=0.02,
             p=parent[p]
         return p
 
+    pair_candidates = []
+    for (a,b),n in faces.items():
+        ratio=n/(6*min(sizes[a],sizes[b]))
+        volume=(sizes[a]+sizes[b])*spacing**3
+        if n>=min_faces and ratio>=min_fraction and volume<=max_volume:
+            pair_candidates.append({"members":[a,b],
+                 "volume_a3":round(volume,3),
+                 "contact_faces":n,"contact_area_a2":round(n*spacing*spacing,3),
+                 "normalized_contact":round(ratio,5)})
+    pair_candidates.sort(key=lambda row:(-row["normalized_contact"],-row["contact_faces"],row["members"]))
     edges = []
     for (a,b),n in faces.items():
         # Contact ratio normalized to the smaller subpocket's six-neighbor face budget.
@@ -47,7 +57,7 @@ def candidates(pockets, spacing, min_faces=8, min_fraction=0.02,
     return {"settings":{"spacing_a":spacing,"min_contact_faces":min_faces,
                         "min_contact_fraction":min_fraction,"max_group_volume_a3":max_volume,
                         "max_group_members":max_members},
-            "subpocket_count":len(pockets),"groups":[{"members":sorted(m),
+            "subpocket_count":len(pockets),"pair_candidates":pair_candidates,"groups":[{"members":sorted(m),
                  "volume_a3":round(sum(sizes[p] for p in m)*spacing**3,3)}
                  for m in sorted(groups.values(),key=lambda m:(-sum(sizes[p] for p in m),min(m)))
                  if len(m)>1],"merge_history":history,
