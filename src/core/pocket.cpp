@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <deque>
 #include <limits>
+#include <queue>
 #include <stdexcept>
 
 namespace ligint {
@@ -40,7 +41,9 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
     if(!(std::isfinite(o.spacing) && o.spacing>0 && std::isfinite(o.rayLength) && o.rayLength>0 &&
          std::isfinite(o.maxSurfaceDistance) && o.maxSurfaceDistance>0 &&
          std::isfinite(o.minBuriedness) && o.minBuriedness>=0 && o.minBuriedness<=1 &&
-         o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0))
+         o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0 &&
+         std::isfinite(o.seedSpacing) && o.seedSpacing>0 &&
+         std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0))
         throw std::invalid_argument("Invalid pocket search options");
     std::vector<PocketAtom> atoms;
     for(const auto& a:input) {
@@ -154,6 +157,112 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         for(auto& c:pocket.center)c/=static_cast<double>(pocket.pointCount);
         pocket.volume=pocket.pointCount*g.step*g.step*g.step;
         out.pockets.push_back(std::move(pocket));
+    }
+    // Seeded 3D watershed on the precomputed buriedness grid. Smooth only for seed
+    // selection/propagation: keep the original buriedness on exported pseudoatoms.
+    if(o.segment) {
+        std::vector<PocketCandidate> separated;
+        for(const auto& connected:out.pockets) {
+            if(connected.points.size()<2*o.minClusterPoints) {
+                separated.push_back(connected);
+                continue;
+            }
+            std::vector<std::size_t> ids;
+            ids.reserve(connected.points.size());
+            for(const auto& pt:connected.points) {
+                int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+                int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+                int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+                ids.push_back(g.index(x,y,z));
+            }
+            // Six-neighbor averaging is deterministic and removes single-voxel peaks.
+            std::vector<float> smooth(ids.size(),0);
+            const int dx[6]={1,-1,0,0,0,0},dy[6]={0,0,1,-1,0,0},dz[6]={0,0,0,0,1,-1};
+            for(std::size_t i=0;i<ids.size();i++) {
+                auto id=ids[i];
+                int x=static_cast<int>(id%g.nx);
+                int y=static_cast<int>((id/g.nx)%g.ny);
+                int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                double sum=score[id]*2.0,weight=2.0;
+                for(int k=0;k<6;k++){
+                    if(!g.inside(x+dx[k],y+dy[k],z+dz[k]))continue;
+                    const auto j=g.index(x+dx[k],y+dy[k],z+dz[k]);
+                    if(score[j]<0)continue;
+                    sum+=score[j];weight+=1;
+                }
+                smooth[i]=static_cast<float>(sum/weight);
+            }
+            std::vector<std::size_t> order(ids.size());
+            for(std::size_t i=0;i<order.size();i++)order[i]=i;
+            std::sort(order.begin(),order.end(),[&](std::size_t a,std::size_t b){
+                if(smooth[a]!=smooth[b])return smooth[a]>smooth[b];
+                return ids[a]<ids[b];
+            });
+            std::vector<std::size_t> seeds;
+            const double minDist2=o.seedSpacing*o.seedSpacing;
+            // Greedy nonmaximum suppression. A separation radius avoids a seed
+            // for each voxel in a broad plateau with buriedness exactly 1.
+            for(auto i:order){
+                if(smooth[i]<o.minBuriedness+o.seedProminence)break;
+                bool near=false;
+                for(auto s:seeds){
+                    const auto& a=connected.points[i].pos;
+                    const auto& b=connected.points[s].pos;
+                    double d2=0;
+                    for(int k=0;k<3;k++){double d=a[k]-b[k];d2+=d*d;}
+                    if(d2<minDist2){near=true;break;}
+                }
+                if(!near)seeds.push_back(i);
+                if(seeds.size()>=o.maxSeeds)break;
+            }
+            if(seeds.size()<2){separated.push_back(connected);continue;}
+            std::vector<int> belongs(count,-1);
+            for(std::size_t i=0;i<ids.size();i++)belongs[ids[i]]=static_cast<int>(i);
+            std::vector<int> labels(ids.size(),-1);
+            struct Node {float score; std::size_t idx; int label;};
+            auto cmp=[](const Node& a,const Node& b){
+                if(a.score!=b.score)return a.score<b.score;
+                if(a.label!=b.label)return a.label>b.label;
+                return a.idx>b.idx;
+            };
+            std::priority_queue<Node,std::vector<Node>,decltype(cmp)> frontier(cmp);
+            for(std::size_t k=0;k<seeds.size();k++)
+                frontier.push({smooth[seeds[k]],seeds[k],static_cast<int>(k)});
+            while(!frontier.empty()){
+                auto node=frontier.top();frontier.pop();
+                if(labels[node.idx]!=-1)continue;
+                labels[node.idx]=node.label;
+                auto id=ids[node.idx];
+                int x=static_cast<int>(id%g.nx);
+                int y=static_cast<int>((id/g.nx)%g.ny);
+                int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                for(int k=0;k<6;k++){
+                    if(!g.inside(x+dx[k],y+dy[k],z+dz[k]))continue;
+                    int j=belongs[g.index(x+dx[k],y+dy[k],z+dz[k])];
+                    if(j>=0 && labels[static_cast<std::size_t>(j)]<0)
+                        frontier.push({std::min(node.score,smooth[static_cast<std::size_t>(j)]),
+                                       static_cast<std::size_t>(j),node.label});
+                }
+            }
+            std::vector<PocketCandidate> basins(seeds.size());
+            for(std::size_t i=0;i<ids.size();i++){
+                const int label=labels[i];
+                if(label<0)continue;
+                auto& pocket=basins[static_cast<std::size_t>(label)];
+                const auto& pt=connected.points[i];
+                pocket.points.push_back(pt);
+                for(int k=0;k<3;k++)pocket.center[k]+=pt.pos[k];
+                pocket.peakBuriedness=std::max(pocket.peakBuriedness,static_cast<double>(pt.buriedness));
+            }
+            for(auto& pocket:basins){
+                pocket.pointCount=pocket.points.size();
+                if(pocket.pointCount<o.minClusterPoints)continue;
+                for(auto& v:pocket.center)v/=static_cast<double>(pocket.pointCount);
+                pocket.volume=pocket.pointCount*g.step*g.step*g.step;
+                separated.push_back(std::move(pocket));
+            }
+        }
+        out.pockets=std::move(separated);
     }
     std::sort(out.pockets.begin(),out.pockets.end(),[](const PocketCandidate& a,const PocketCandidate& b){
         if(a.volume!=b.volume)return a.volume>b.volume;
