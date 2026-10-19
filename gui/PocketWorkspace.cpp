@@ -251,7 +251,33 @@ protected:
                     const auto projected=project(vertex);
                     polygon<<projected.first;depth+=projected.second/3.0;
                 }
-                faces.push_back({depth,polygon,shell});
+                // Flat normal from triangle edges. Two-sided illumination avoids
+                // artificial black faces on locally inconsistent tetrahedron winding.
+                const auto& a=tri.vertices[0];
+                const auto& b=tri.vertices[1];
+                const auto& d=tri.vertices[2];
+                const double ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2];
+                const double vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+                double nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+                const double norm=std::sqrt(nx*nx+ny*ny+nz*nz);
+                if(norm<1e-10)continue;
+                nx/=norm;ny/=norm;nz/=norm;
+                // Fixed camera-space key light, rotated with the viewer camera.
+                const double lx=0.35,ly=0.48,lz=0.80;
+                const double nrx=cy*nx+sy*nz;
+                const double nrz=-sy*nx+cy*nz;
+                const double nry=cp*ny-sp*nrz;
+                const double ndz=sp*ny+cp*nrz;
+                const double diffuse=std::fabs(nrx*lx+nry*ly+ndz*lz);
+                const double strength=owner_->lightStrength_->value()/100.0;
+                const double spec=std::pow(std::fabs(ndz),24.0)*owner_->shine_->value()/100.0;
+                const double lum=std::clamp(0.38+strength*0.62*diffuse,0.0,1.25);
+                QColor lit=QColor::fromRgb(
+                    std::clamp(int(shell.red()*lum+95*spec),0,255),
+                    std::clamp(int(shell.green()*lum+95*spec),0,255),
+                    std::clamp(int(shell.blue()*lum+95*spec),0,255),
+                    shell.alpha());
+                faces.push_back({depth,polygon,lit});
             }
         }
         std::sort(dots.begin(),dots.end(),[](const Dot&a,const Dot&b){return a.depth<b.depth;});
@@ -320,6 +346,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     smoothSteps_=new QSpinBox;smoothSteps_->setRange(0,4);smoothSteps_->setValue(2);
     smoothSteps_->setToolTip("Relax surface corners toward occupied voxel centers; display only. Zero retains the original voxel boundary.");
     form->addRow("Surface smoothing",smoothSteps_);
+    lightStrength_=new QSpinBox;lightStrength_->setRange(0,100);lightStrength_->setValue(75);lightStrength_->setSuffix("%");
+    shine_=new QSpinBox;shine_->setRange(0,100);shine_->setValue(30);shine_->setSuffix("%");
+    form->addRow("Diffuse light",lightStrength_);
+    form->addRow("Specular highlight",shine_);
     form->addRow("Render mode",renderMode_);
     form->addRow("Ligand overlay",ligand_);
     form->addRow("Pocket colors",palette_);
@@ -381,6 +411,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(noiseNeighbors_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseComponent_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(lightStrength_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(shine_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
