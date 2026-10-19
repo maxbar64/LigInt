@@ -10,6 +10,7 @@ add_library(ligint_gui_lib STATIC
     SvgView.cpp SvgView.h
     HelpWindow.cpp HelpWindow.h
     ${PROJECT_SOURCE_DIR}/docs/manual/html/manual.qrc
+    PocketWorkspace.cpp PocketWorkspace.h
     ViewerWidget.cpp ViewerWidget.h
     ViewerOptionsWidget.cpp ViewerOptionsWidget.h
     Raster.cpp Raster.h
