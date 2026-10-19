@@ -17,6 +17,7 @@ struct PocketOptions {
     double maxSurfaceDistance = 5.0;
     int morphologyRadius = 0; // 0 disabled; 1=6-neighbor cross, 2=radius-2 sphere
     std::string morphology = "none"; // none, opening, closing, open-close
+    int regrowSteps = 0; // 0 disabled, 1..5 six-neighbor layers after opening/watershed
     double neckClearance = 0.0; // A; 0 disabled, otherwise cut narrow centers before clustering
     double minBuriedness = 0.5;    // fraction of blocked directions
     int directions = 42;
