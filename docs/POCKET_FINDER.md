@@ -294,3 +294,12 @@ Pocket Finder 3D offers **Voxels**, **Surface**, and **Surface + Voxels**. The s
 The **Ligand overlay** selector reads HETATM residues from the currently opened local **PDB** file and draws their heavy-atom coordinates in yellow. It is strictly a visual diagnostic; ligands are never passed into pocket discovery, grouping or scoring. mmCIF structures continue to work for pocket discovery but do not yet have a ligand overlay in this phase.
 
 The GUI also exposes seed separation, prominence, maximum seeds, basin merge distance and saddle drop, passed to the existing native core `PocketOptions` fields. The original CLI benchmark settings are not changed. Visual shell rendering and interactive controls are experimental; test with medium-sized structures before using large structures or small grid spacing, as projected voxel faces can be expensive.
+
+## GUI display-only noise removal (phase 4)
+
+The Pocket Finder 3D workspace has two independent **display-only** controls:
+
+- `Remove isolated voxels` (default 1; 0 disables): the minimum number of occupied 6-face neighbors for a displayed voxel.
+- `Min visible island` (default 12; 1 disables): hide the resulting 6-connected islands smaller than the given number of voxel centers.
+
+Processing applies to a temporary copy of the union of currently selected pocket voxel points, before drawing either splats or exposed faces. The top overlay reports visible and hidden voxel counts. Crucially, this does not change pocket discovery, scoring, segmentation, grouping, benchmark coverage or exports. Set the controls to 0 and 1, respectively, to recover the unfiltered display. Increasing the thresholds aggressively can hide genuine narrow throats and small chemical pockets; the default values are conservative starting points rather than validated scientific thresholds.
