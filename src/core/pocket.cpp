@@ -44,7 +44,9 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
          o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0 &&
          std::isfinite(o.seedSpacing) && o.seedSpacing>0 &&
          std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0 &&
-         std::isfinite(o.mergeSaddleDrop) && o.mergeSaddleDrop>=0 && o.mergeSaddleDrop<=1))
+         std::isfinite(o.mergeSaddleDrop) && o.mergeSaddleDrop>=0 && o.mergeSaddleDrop<=1 &&
+         std::isfinite(o.mergeMaxSeedDistance) && o.mergeMaxSeedDistance>0 &&
+         std::isfinite(o.mergeMinContactArea) && o.mergeMinContactArea>=0))
         throw std::invalid_argument("Invalid pocket search options");
     std::vector<PocketAtom> atoms;
     for(const auto& a:input) {
@@ -257,6 +259,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                     ++sizes[k];
                 }
                 std::vector<float> saddle(ns*ns,-1.f);
+                std::vector<std::size_t> contact(ns*ns,0);
                 for(std::size_t i=0;i<ids.size();i++){
                     const int a=labels[i];
                     if(a<0)continue;
@@ -272,6 +275,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                         const int b=labels[static_cast<std::size_t>(j)];
                         if(b<0||a==b)continue;
                         const float v=std::min(smooth[i],smooth[static_cast<std::size_t>(j)]);
+                        ++contact[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)];
+                        ++contact[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)];
                         saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)]=
                             std::max(saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)],v);
                         saddle[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)]=
@@ -279,6 +284,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                     }
                 }
                 std::vector<std::size_t> parent(ns);
+                std::vector<std::vector<std::size_t>> members(ns);
+                for(std::size_t i=0;i<ns;i++)members[i].push_back(i);
                 for(std::size_t i=0;i<ns;i++)parent[i]=i;
                 auto root=[&](std::size_t x){while(parent[x]!=x)x=parent[x]=parent[parent[x]];return x;};
                 struct Edge{std::size_t a,b;float level;};
@@ -297,9 +304,22 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                     if(a==b)continue;
                     const float weaker=std::min(peak[a],peak[b]);
                     if(weaker-edge.level>o.mergeSaddleDrop)continue;
+                    if(static_cast<double>(contact[edge.a*ns+edge.b])*g.step*g.step < o.mergeMinContactArea)continue;
+                    bool close=true;
+                    const double maxD2=o.mergeMaxSeedDistance*o.mergeMaxSeedDistance;
+                    for(auto ia:members[a])for(auto ib:members[b]){
+                        const auto& pa=connected.points[seeds[ia]].pos;
+                        const auto& pb=connected.points[seeds[ib]].pos;
+                        double d2=0;
+                        for(int k=0;k<3;k++){const double d=pa[k]-pb[k];d2+=d*d;}
+                        if(d2>maxD2)close=false;
+                    }
+                    if(!close)continue;
                     // The stronger maximum remains the representative seed.
                     if(peak[a]<peak[b] || (peak[a]==peak[b]&&a>b))std::swap(a,b);
                     parent[b]=a;
+                    members[a].insert(members[a].end(),members[b].begin(),members[b].end());
+                    members[b].clear();
                     sizes[a]+=sizes[b];
                     peak[a]=std::max(peak[a],peak[b]);
                 }
