@@ -200,6 +200,28 @@ protected:
                             const int sv=sign<2?-1:1;
                             ligint::V3 corner=midpoint;
                             for(int k=0;k<3;k++)corner[k]+=su*u[k]+sv*v[k];
+                            // Consistent display-only vertex relaxation on the lattice.
+                            // Shared corners see identical occupancy and therefore remain watertight.
+                            if(owner_->smoothSteps_->value()>0){
+                                ligint::V3 centroid{0,0,0};
+                                int count=0;
+                                for(int dx=-1;dx<=1;dx+=2)
+                                    for(int dy=-1;dy<=1;dy+=2)
+                                        for(int dz=-1;dz<=1;dz+=2){
+                                            ligint::V3 sample=corner;
+                                            sample[0]+=dx*spacing/2;
+                                            sample[1]+=dy*spacing/2;
+                                            sample[2]+=dz*spacing/2;
+                                            if(!visible.count(lattice(sample)))continue;
+                                            for(int k=0;k<3;k++)centroid[k]+=sample[k];
+                                            ++count;
+                                        }
+                                if(count){
+                                    const double alpha=0.17*owner_->smoothSteps_->value();
+                                    for(int k=0;k<3;k++)
+                                        corner[k]=(1-alpha)*corner[k]+alpha*centroid[k]/count;
+                                }
+                            }
                             const auto projection=project(corner);
                             quad<<projection.first;averageDepth+=projection.second/4;
                         }
@@ -269,6 +291,9 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     noiseComponent_->setToolTip("Hide 6-connected voxel components below this size (display only).");
     form->addRow("Remove isolated voxels",noiseNeighbors_);
     form->addRow("Min visible island",noiseComponent_);
+    smoothSteps_=new QSpinBox;smoothSteps_->setRange(0,4);smoothSteps_->setValue(2);
+    smoothSteps_->setToolTip("Relax surface corners toward occupied voxel centers; display only. Zero retains the original voxel boundary.");
+    form->addRow("Surface smoothing",smoothSteps_);
     form->addRow("Render mode",renderMode_);
     form->addRow("Ligand overlay",ligand_);
     form->addRow("Pocket colors",palette_);
@@ -329,6 +354,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(pointSize_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseNeighbors_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseComponent_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
