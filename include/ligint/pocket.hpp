@@ -37,6 +37,13 @@ struct PocketCandidate {
     double volume = 0;             // voxel-count approximation, Angstrom^3
     double peakBuriedness = 0;
     std::size_t pointCount = 0;
+    double meanBuriedness = 0;
+    double highBuriednessFraction = 0; // fraction with buriedness >= 0.8
+    double exposedFaceArea = 0;      // voxel boundary area, Angstrom^2
+    double compactness = 0;          // 36*pi*V^2 / A^3 (voxel approximation)
+    double elongation = 0;           // bounding-box major/minor extent
+    double meanAtomSurfaceDistance = 0; // nearest atom center minus van der Waals radius
+    double heuristicScore = 0;       // experimental ranking, not druggability
     std::vector<PocketPoint> points;
 };
 struct PocketSearchResult {
