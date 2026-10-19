@@ -432,7 +432,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         // Resolve one layer at a time so competing basins reach a tie together.
         while(!frontier.empty()){
             const auto id=frontier.front();frontier.pop_front();
-            if(distance[id]>=o.regrowSteps)continue;
+            if(distance[id]>=o.regrowSteps || owner[id]<0)continue;
             const int x=static_cast<int>(id%g.nx);
             const int y=static_cast<int>((id/g.nx)%g.ny);
             const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
