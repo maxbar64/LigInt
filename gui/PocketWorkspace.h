@@ -9,6 +9,7 @@ namespace gui {
 struct PocketGuiOutcome {
     ligint::PocketSearchResult result;
     std::vector<ligint::PocketGroup> groups;
+    std::vector<ligint::PocketAtom> atoms;
     QString error;
 };
 class PocketWorkspace : public QWidget {
@@ -27,6 +28,7 @@ private:
     QPushButton* run_=nullptr;
     QString path_;
     ligint::PocketSearchResult result_;
+    std::vector<ligint::PocketAtom> atoms_;
     std::vector<ligint::PocketGroup> groups_;
     QFutureWatcher<PocketGuiOutcome> watcher_;
     std::vector<std::size_t> visibleMembers() const;
