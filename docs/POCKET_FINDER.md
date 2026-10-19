@@ -184,3 +184,7 @@ python3 -m unittest discover -s tools -p 'test_pocket_group_candidates.py'
 ```
 
 In the 1HSG opening reference (55 subpockets), initial contact+volume grouping produces ten multiregion candidate groups. One such group contains pockets 2, 3, 14 and 43 (about 1,374 Å³); it **does not** automatically select the crystal-evaluation pair 1+2. This negative result is valuable: do not tune the grouping to MK1 or interpret a contact heuristic as proof of a binding site. Validate ligand coverage and pocket precision post-hoc on independent 1STP and 1IEP complexes before modifying the core predictor.
+
+### Independent pair candidates (greedy-order diagnostic)
+
+The grouping report also emits `pair_candidates`: every face-contacting pair passing the same contact and pair-volume thresholds, **without** excluding pairs because either member has already joined another group. This is diagnostic only, not a merge instruction. For 1HSG, the contact graph has #1–#2 with 90 shared faces and a pair volume of 1,297 Å³; it qualifies under the default 8-face, 0.02 normalized-contact and 1,800 Å³ pair-volume gates even though the greedy partition separates them. Explicitly compare pair candidates and final groups to detect order dependence. The next scientifically justified stage is a ligand-blind score for interface buriedness/clearance and independent crystallographic validation, rather than hard-coding this pair.
