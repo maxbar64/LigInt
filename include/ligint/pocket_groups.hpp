@@ -75,7 +75,7 @@ inline std::vector<PocketGroup> rankPocketGroups(
         PocketGroup g;g.members={i};score(g);beam.push_back(g);all.push_back(g);
     }
     std::sort(beam.begin(),beam.end(),better);
-    if(beam.size()>beamWidth)beam.resize(beamWidth);
+    // Expand every original subpocket once: otherwise global pruning can\n    // suppress valid pairs before the first search step.
     std::set<std::vector<std::size_t>> emitted;
     for(const auto& g:all)emitted.insert(g.members);
     for(std::size_t depth=2;depth<=maxMembers&&!beam.empty();depth++){
