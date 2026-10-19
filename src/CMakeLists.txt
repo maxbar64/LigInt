@@ -5,6 +5,7 @@ add_library(ligint_core
     core/cartoon.cpp
     core/surface.cpp
     core/pocket.cpp
+    core/pocket_input.cpp
     core/chemistry.cpp
     core/mmcif.cpp
     core/pdb.cpp
@@ -36,6 +37,13 @@ if(LIGINT_BUILD_CLI)
     target_link_libraries(ligint PRIVATE ligint::core ligint_options)
     ligint_add_windows_resources(ligint ligint "ligint - ligand-protein interactions (command line)")
     install(TARGETS ligint RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime)
+endif()
+
+# Standalone ligand-independent pocket search.
+if(LIGINT_BUILD_CLI)
+    add_executable(ligint-pocket cli/pocket_main.cpp)
+    target_link_libraries(ligint-pocket PRIVATE ligint::core ligint_options)
+    install(TARGETS ligint-pocket RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime)
 endif()
 
 # Native KLIFS client (online HTTPS optional unless explicitly required).
