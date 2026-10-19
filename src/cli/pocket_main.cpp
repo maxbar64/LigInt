@@ -132,20 +132,20 @@ int main(int argc,char** argv){
             std::ofstream edgeOut(interfaces);
             if(!edgeOut)throw std::runtime_error("Cannot write: "+interfaces);
             const auto edges=analyzePocketInterfaces(r.pockets,atoms,o.spacing);
-            edgeOut<<std::setprecision(8)<<"{\\n  \\"pocket_count\\": "<<r.pockets.size()
-                   <<",\\n  \\"interfaces\\": [\\n";
+            edgeOut<<std::setprecision(8)<<"{\n  \"pocket_count\": "<<r.pockets.size()
+                   <<",\n  \"interfaces\": [\n";
             for(std::size_t j=0;j<edges.size();j++){
                 const auto& e=edges[j];
-                edgeOut<<"    {\\"a\\": "<<e.first+1<<", \\"b\\": "<<e.second+1
-                       <<", \\"contact_faces\\": "<<e.contactFaces
-                       <<", \\"contact_area_a2\\": "<<e.contactArea
-                       <<", \\"mean_boundary_buriedness\\": "<<e.meanBoundaryBuriedness
-                       <<", \\"mean_boundary_clearance_a\\": "<<e.meanBoundaryClearance
-                       <<", \\"max_boundary_clearance_a\\": "<<e.maxBoundaryClearance
-                       <<", \\"bottleneck_clearance_a\\": "<<e.bottleneckClearance
-                       <<"}"<<(j+1<edges.size()?",":"")<<"\\n";
+                edgeOut<<"    {\"a\": "<<e.first+1<<", \"b\": "<<e.second+1
+                       <<", \"contact_faces\": "<<e.contactFaces
+                       <<", \"contact_area_a2\": "<<e.contactArea
+                       <<", \"mean_boundary_buriedness\": "<<e.meanBoundaryBuriedness
+                       <<", \"mean_boundary_clearance_a\": "<<e.meanBoundaryClearance
+                       <<", \"max_boundary_clearance_a\": "<<e.maxBoundaryClearance
+                       <<", \"bottleneck_clearance_a\": "<<e.bottleneckClearance
+                       <<"}"<<(j+1<edges.size()?",":"")<<"\n";
             }
-            edgeOut<<"  ]\\n}\\n";
+            edgeOut<<"  ]\n}\n";
         }
         std::ofstream dest,pointDest,pdbDest;
         std::ostream* stream=&std::cout;
