@@ -148,6 +148,13 @@ void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
     invalidate(false);
 }
 
+void ViewerWidget::setPocketAppearance(bool visible,double opacity,double specular){
+    pocketVisible_=visible;
+    pocketOpacity_=std::clamp(opacity,0.05,1.0);
+    pocketSpecular_=std::clamp(specular,0.0,1.0);
+    invalidate(false);
+}
+
 void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& points,
                                     double spacing,int smoothing) {
     pocketPoints_=points;
@@ -380,13 +387,13 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
     // The pocket shares the protein's world coordinates, camera and z-buffer.
     // Render with the full camera to preserve the selected cavity.
     ren->setCamera(full);
-    if(pieces.pocket){
+    if(pieces.pocket && style.pocketVisible){
         raster::MeshView pv;
         pv.mesh=&pieces.pocket->mesh;
         pv.colors=&pieces.pocket->colors;
-        pv.alpha=0.48f;
+        pv.alpha=static_cast<float>(style.pocketOpacity);
         pv.cullBack=false;
-        pv.specular=0.30f;
+        pv.specular=static_cast<float>(style.pocketSpecular);
         ren->drawMesh(pv);
     }
     // ...ligand and residues remain in the same depth-buffered composition.
@@ -417,7 +424,11 @@ ViewerWidget::Frame ViewerWidget::renderCurrent(const QSize& logicalSize, double
     const raster::Camera full = makeCamera(logicalSize, ratio, false);
     const raster::Camera clipped = makeCamera(logicalSize, ratio, true);
     const double base = style_.perspective ? 5.0 * radius_ : 1000.0;
-    Frame f = renderScene(pieces_, style_, full, clipped, QSize(full.width, full.height), supersample, base - radius_, base + 2.5 * radius_);
+    ViewStyle renderStyle=style_;
+    renderStyle.pocketVisible=pocketVisible_;
+    renderStyle.pocketOpacity=pocketOpacity_;
+    renderStyle.pocketSpecular=pocketSpecular_;
+    Frame f = renderScene(pieces_, renderStyle, full, clipped, QSize(full.width, full.height), supersample, base - radius_, base + 2.5 * radius_);
     f.size = logicalSize;
     f.ratio = ratio;
     f.key = stateKey_;
@@ -436,7 +447,10 @@ void ViewerWidget::startHighQuality() {
     if (frame_.key == stateKey_ && frame_.highQuality && frame_.size == size()) return;
     if (hqWatcher_->isRunning()) { hqPending_ = true; return; }
     const Pieces pieces = pieces_;
-    const ViewStyle style = style_;
+    ViewStyle style = style_;
+    style.pocketVisible=pocketVisible_;
+    style.pocketOpacity=pocketOpacity_;
+    style.pocketSpecular=pocketSpecular_;
     const double ratio = devicePixelRatioF();
     const QSize sz = size();
     const raster::Camera full = makeCamera(sz, ratio, false);
