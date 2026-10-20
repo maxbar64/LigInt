@@ -1129,13 +1129,12 @@ void MainWindow::onGenerateGpcrdbPocket() {
         mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
         if (mapping.isEmpty()) return;
     }
-    QString automaticChain;
+    QString automaticChain, reviewedPositions;
     if(automatic){
         if(path_.isEmpty()){showError(tr("GPCRdb"),tr("Open a receptor-ligand PDB first."));return;}
-        const QString defaultEntry=QFileInfo(path_).fileName().startsWith("3sn6",Qt::CaseInsensitive)
-            ?QStringLiteral("adrb2_human"):s.value("gpcrdbEntry").toString();
+        const QString defaultEntry=QStringLiteral("auto");
         const QString entry=QInputDialog::getText(this,tr("Identify receptor"),
-            tr("GPCRdb receptor entry (e.g. adrb2_human):"),QLineEdit::Normal,defaultEntry,&ok).trimmed();
+            tr("GPCRdb receptor entry (auto = identify from PDB ID; or enter adrb2_human):"),QLineEdit::Normal,defaultEntry,&ok).trimmed();
         if(!ok||entry.isEmpty())return;
         const QString autoChain=QInputDialog::getText(this,tr("Receptor chain"),
             tr("PDB receptor chain (auto = find best receptor chain by sequence):"),
@@ -1166,7 +1165,8 @@ void MainWindow::onGenerateGpcrdbPocket() {
             showError(tr("GPCRdb"),tr("Python 3 was not found. Install Python 3 to enable automatic GPCRdb alignment."));return;
         }
         process.start(python,{"-B",script,"--pdb",path_,"--chain",autoChain,
-                                 "--entry",entry,"--output",out,"--audit",audit});
+                                 "--entry",entry,"--pdb-id",QFileInfo(path_).completeBaseName().left(4),
+                                 "--output",out,"--audit",audit});
         if(!process.waitForStarted(3000)){
             showError(tr("GPCRdb"),tr("Python 3 could not be started: ")+process.errorString());return;
         }
@@ -1226,15 +1226,27 @@ void MainWindow::onGenerateGpcrdbPocket() {
             for(int col=0;col<5;++col)
                 table->setItem(row,col,new QTableWidgetItem(fields[col]));
             const bool isContact=contacted.count({fields[0],fields[1].toInt()})>0;
+            auto* choice=table->item(row,3);
+            choice->setFlags(choice->flags()|Qt::ItemIsUserCheckable);
+            choice->setCheckState(isContact?Qt::Checked:Qt::Unchecked);
             table->setItem(row,5,new QTableWidgetItem(isContact?tr("Yes"):tr("No")));
         }
+        layout->addWidget(new QLabel(tr("Check GPCRdb positions to include in the fingerprint. Contact positions are preselected."),&review));
         layout->addWidget(table);
         auto* buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&review);
         connect(buttons,&QDialogButtonBox::accepted,&review,&QDialog::accept);
         connect(buttons,&QDialogButtonBox::rejected,&review,&QDialog::reject);
         layout->addWidget(buttons);
         if(review.exec()!=QDialog::Accepted)return;
-        s.setValue("gpcrdbEntry",entry);
+        QStringList selected;
+        for(int row=0;row<table->rowCount();++row)
+            if(table->item(row,3)->checkState()==Qt::Checked)
+                selected<<table->item(row,3)->text();
+        if(selected.isEmpty()){
+            showError(tr("GPCRdb"),tr("Select at least one generic position."));return;
+        }
+        reviewedPositions=selected.join(" ");
+        s.setValue("gpcrdbEntry",auditObj.value("entry").toString(entry));
         mapping=out;
         log(tr("GPCRdb automatic mapping created: ")+out);
         log(tr("Alignment audit: ")+audit);
@@ -1243,7 +1255,15 @@ void MainWindow::onGenerateGpcrdbPocket() {
         tr("Receptor chain (e.g. R for 3SN6; do not select a G-protein chain):"),
         QLineEdit::Normal, QString(), &ok);
     if (!automatic && !ok) return;
-    QString positions;
+    QString positions=reviewedPositions;
+    if(!reviewedPositions.isEmpty()){
+        const QString from=mapping;
+        const QString output=QFileDialog::getSaveFileName(this,tr("Save GPCR pocket"),
+            QFileInfo(from).absolutePath()+"/"+QFileInfo(path_).completeBaseName()+"-gpcr-pocket.tsv",
+            tr("TSV files (*.tsv)"));
+        if(!output.isEmpty())generateGpcrdbPocket(numbered,mapping,chain,positions,output);
+        return;
+    }
     const QStringList methods={tr("Suggest GPCRdb positions from analyzed ligand contacts (recommended)"),
                                tr("Enter a custom list of generic positions")};
     const QString method=QInputDialog::getItem(this,tr("Define GPCR fingerprint pocket"),
