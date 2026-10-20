@@ -13,6 +13,12 @@ if(Python3_FOUND AND TARGET ligint)
     set_tests_properties(python_suite PROPERTIES TIMEOUT 600)
 endif()
 
+if(Python3_FOUND)
+    add_test(NAME gpcrdb_auto_mapping_offline
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_gpcrdb_auto_mapping.py)
+    set_tests_properties(gpcrdb_auto_mapping_offline PROPERTIES TIMEOUT 30)
+endif()
+
 # ---- GUI smoke test (Qt "offscreen" platform: no display needed)
 if(TARGET ligint_gui_lib)
     add_executable(ligint_gui_smoke gui/gui_smoke.cpp)
