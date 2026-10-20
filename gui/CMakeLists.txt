@@ -18,7 +18,7 @@ add_library(ligint_gui_lib STATIC
 # the manual (HTML pages and images) is embedded in the library as Qt resources
 set_target_properties(ligint_gui_lib PROPERTIES AUTORCC ON)
 target_include_directories(ligint_gui_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(ligint_gui_lib PRIVATE LIGINT_SOURCE_ROOT=\\"${PROJECT_SOURCE_DIR}\\")
+target_compile_definitions(ligint_gui_lib PRIVATE LIGINT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\")
 target_link_libraries(ligint_gui_lib
     PUBLIC ligint::core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent Threads::Threads
     PRIVATE ligint_options)
