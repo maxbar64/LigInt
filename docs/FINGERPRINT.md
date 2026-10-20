@@ -38,9 +38,13 @@ interactions (histidine is never charged, amines and carboxylates follow the ass
 ligint structure.pdb LIG --fingerprint csv                       one row per residue in contact
 ligint structure.pdb LIG --fingerprint json
 ligint structure.pdb LIG --fingerprint svg > figure.svg
+ligint structure.pdb LIG --fingerprint figure.svg
+ligint structure.pdb LIG --fingerprint report.csv
+ligint structure.pdb LIG --fingerprint report.json
 ligint structure.pdb LIG --fingerprint svg --pocket pocket.tsv   with a pocket definition
 ```
 
+- `--fingerprint csv|json|svg` writes to standard output (legacy behavior). `--fingerprint OUTPUT.csv|OUTPUT.json|OUTPUT.svg` writes directly to the named file, inferring the format from its extension; an unsupported extension is rejected. The directory must already exist and the output file is overwritten. Diagnostics remain on standard error.
 - `--fingerprint` replaces the interaction table (the service information goes to stderr, as with `--csv`).
 - CSV and JSON contain every ligand found (a `ligand` column / one object per ligand). The SVG draws only the first
   ligand and warns on stderr if there are more: select one with the chain and residue number.
