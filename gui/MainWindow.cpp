@@ -4,6 +4,12 @@
 #include "ligint/rcsb.hpp"
 #include <QStandardPaths>
 #include <QInputDialog>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QLineEdit>
 
 #include <QAction>
@@ -1132,8 +1138,8 @@ void MainWindow::onGenerateGpcrdbPocket() {
             tr("GPCRdb receptor entry (e.g. adrb2_human):"),QLineEdit::Normal,defaultEntry,&ok).trimmed();
         if(!ok||entry.isEmpty())return;
         const QString autoChain=QInputDialog::getText(this,tr("Receptor chain"),
-            tr("PDB receptor chain (3SN6: R):"),QLineEdit::Normal,
-            QFileInfo(path_).fileName().startsWith("3sn6",Qt::CaseInsensitive)?QStringLiteral("R"):QString(),&ok).trimmed();
+            tr("PDB receptor chain (auto = find best receptor chain by sequence):"),
+            QLineEdit::Normal,QStringLiteral("auto"),&ok).trimmed();
         if(!ok||autoChain.isEmpty())return;
         const QString out=QFileInfo(path_).absolutePath()+"/"+
                           QFileInfo(path_).completeBaseName()+"-gpcrdb-auto.tsv";
@@ -1172,7 +1178,56 @@ void MainWindow::onGenerateGpcrdbPocket() {
                 tr("\nSee alignment audit: ")+audit);
             return;
         }
-        automaticChain=autoChain;
+        QFile auditFile(audit);
+        if(!auditFile.open(QIODevice::ReadOnly)){
+            showError(tr("GPCRdb"),tr("Cannot read the generated alignment audit: ")+audit);return;
+        }
+        const auto auditDoc=QJsonDocument::fromJson(auditFile.readAll());
+        if(!auditDoc.isObject()){
+            showError(tr("GPCRdb"),tr("Malformed alignment audit."));return;
+        }
+        const auto auditObj=auditDoc.object();
+        automaticChain=auditObj.value("chain").toString();
+        if(automaticChain.isEmpty()){
+            showError(tr("GPCRdb"),tr("The alignment did not identify a receptor chain."));return;
+        }
+        QFile mappingFile(out);
+        if(!mappingFile.open(QIODevice::ReadOnly|QIODevice::Text)){
+            showError(tr("GPCRdb"),tr("Cannot read generated mapping: ")+out);return;
+        }
+        QDialog review(this);
+        review.setWindowTitle(tr("Review GPCRdb numbering — %1 (%2)").arg(entry,automaticChain));
+        review.resize(770,570);
+        auto* layout=new QVBoxLayout(&review);
+        auto* summary=new QLabel(tr("Chain %1 | identity %2% | coverage %3% | GPCRdb positions %4")
+            .arg(automaticChain)
+            .arg(auditObj.value("identity").toDouble()*100.0,0,'f',1)
+            .arg(auditObj.value("coverage").toDouble()*100.0,0,'f',1)
+            .arg(auditObj.value("numbered_positions").toInt()),&review);
+        layout->addWidget(summary);
+        auto* table=new QTableWidget(&review);
+        table->setColumnCount(5);
+        table->setHorizontalHeaderLabels({tr("Chain"),tr("PDB residue"),tr("AA"),
+                                        tr("GPCRdb"),tr("Segment")});
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->horizontalHeader()->setStretchLastSection(true);
+        while(!mappingFile.atEnd()){
+            const QString line=QString::fromUtf8(mappingFile.readLine()).trimmed();
+            if(line.startsWith("chain")||line.isEmpty())continue;
+            const auto fields=line.split('\t');
+            if(fields.size()<5)continue;
+            const int row=table->rowCount();
+            table->insertRow(row);
+            for(int col=0;col<5;++col)
+                table->setItem(row,col,new QTableWidgetItem(fields[col]));
+        }
+        layout->addWidget(table);
+        auto* buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&review);
+        connect(buttons,&QDialogButtonBox::accepted,&review,&QDialog::accept);
+        connect(buttons,&QDialogButtonBox::rejected,&review,&QDialog::reject);
+        layout->addWidget(buttons);
+        if(review.exec()!=QDialog::Accepted)return;
         s.setValue("gpcrdbEntry",entry);
         mapping=out;
         log(tr("GPCRdb automatic mapping created: ")+out);
