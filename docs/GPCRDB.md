@@ -116,3 +116,30 @@ Asn312 (`7x38`) and Tyr316 (`7x42`), and an aromatic edge-to-face contact with P
 The **Generate from GPCRdb…** workflow now offers **Suggest GPCRdb positions from analyzed ligand contacts (recommended)**. First open and **Analyze** the receptor–ligand complex, select a GPCRdb-numbered structure or TSV/CSV mapping, and explicitly enter the receptor chain. LigInt reads the analyzed ligand's contact residues, maps their chain/residue numbers to validated GPCRdb generic numbers, displays a residue-to-generic mapping preview and the number of unmatched contacts, and asks for confirmation before writing/loading the pocket definition. The previous manual position-list workflow remains available.
 
 For **3SN6**, analyze ligand P0G in the original complex, use the GPCRdb-annotated 3SN6 PDB for numbering, and select receptor chain **R**; the G-protein chains are not the fingerprint receptor. **Important:** a contact-derived site is a *suggestion for this particular structure and ligand*. For comparative fingerprint matrices, use a common union or a consistently curated generic-position set across all complexes, including zero-contact positions. A mapping source must preserve the original PDB chain IDs and residue numbers; this mode does not perform sequence alignment or remap renumbered PDBs. It does not contact GPCRdb online and does not infer generic numbers without an annotated source.
+
+## Automatic numbering from GPCRdb reference (experimental, October 2026)
+
+The first entry of **Generate from GPCRdb…** can now **fetch generic numbering and align the selected PDB receptor chain automatically**. Open and analyze a PDB complex, choose this option, enter the GPCRdb receptor entry (for 3SN6, `adrb2_human`) and receptor chain (`R`). LigInt calls the bundled Python 3 standard-library tool `tools/gpcrdb_auto_mapping.py`, which:
+
+1. Retrieves GPCRdb's REST `/services/residues/extended/<entry>/` record, caching a JSON copy under `~/.cache/ligint/gpcrdb`.
+2. Extracts the PDB chain sequence from C-alpha atoms and performs a semiglobal alignment against the reference.
+3. **Rejects** an alignment below 85% identity, 65% observed-chain coverage, or 30 identical residues; mismatching residues are not assigned numbers. Insertion codes are conservatively rejected by the current TSV mapper.
+4. Saves `<PDB>-gpcrdb-auto.tsv` together with `.audit.json` containing identity, coverage, mismatches, mapping provenance, and mapped-residue counts.
+5. Continues to the contact-derived fingerprint pocket wizard using the validated mapping file. The pocket can be saved and loaded normally.
+
+The workflow **does not upload your protein file** to GPCRdb: it fetches a reference sequence and positions, then aligns the PDB locally. It requires an internet connection for an uncached receptor, Python 3, and a local LigInt source checkout containing the script. The GUI asks for the receptor's entry name rather than automatically identifying every GPCR in a multi-chain complex; identification and validation are deliberately kept separate. It currently accepts fixed-column PDB only (not mmCIF) for the mapping tool; the existing native GPCRdb methods still accept their prior inputs. No approximate numbering is silently substituted when a reference cannot be obtained.
+
+For reproducibility or troubleshooting, run directly:
+
+```bash
+python3 tools/gpcrdb_auto_mapping.py --pdb 3SN6.pdb --chain R \
+    --entry adrb2_human --output 3SN6-gpcrdb-auto.tsv
+```
+
+Inspect `3SN6-gpcrdb-auto.tsv.audit.json` before using the mapping. A valid sequence alignment verifies sequence correspondence but does not prove that an engineered construct, unusual insertion, chimeric loop, or missing structural residue should receive a generic number; unmatched residues remain unassigned.
+
+The offline regression test can be run without access to GPCRdb:
+
+```bash
+python3 tests/test_gpcrdb_auto_mapping.py
+```
