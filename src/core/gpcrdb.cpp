@@ -425,8 +425,14 @@ GpcrdbContactMapping mapGpcrdbContacts(
         numbered=std::move(chain.items);
     }
     std::map<std::pair<std::string,int>,std::string> byResidue;
-    for(const auto& n:numbered)if(n.chain==receptorChain&&!n.gpcrdb.empty())
-        byResidue[{n.chain,n.resi}]=n.gpcrdb;
+    for(const auto& n:numbered)if(n.chain==receptorChain&&!n.gpcrdb.empty()){
+        const auto key=std::make_pair(n.chain,n.resi);
+        if(!byResidue.emplace(key,n.gpcrdb).second)
+            throw std::runtime_error("Ambiguous residue number on chain "+n.chain+
+                ": "+std::to_string(n.resi)+
+                " has multiple generic positions (insertion codes). "
+                "Contact mapping needs residue insertion codes to resolve this structure.");
+    }
     GpcrdbContactMapping out;
     std::set<std::string> used;
     for(const auto& contact:contacts){
