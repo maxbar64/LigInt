@@ -45,7 +45,7 @@ def load_mapping(path):
         raise ValueError(f"No numbered residues in {path}")
     return result
 
-def create(files, outdir, positions_file=None, mode="union", missing_policy="reject"):
+def create(files, outdir, positions_file=None, mode="intersection", missing_policy="reject"):
     if mode not in ("union", "intersection"):
         raise ValueError("mode must be union or intersection")
     if missing_policy not in ("reject", "report"):
@@ -86,6 +86,8 @@ def create(files, outdir, positions_file=None, mode="union", missing_policy="rej
                          "--missing-policy report for partial exploratory sets.")
     colors = {"TM1":"#ffa8a8","TM2":"#ffd8a8","TM3":"#ffec99","TM4":"#b2f2bb",
               "TM5":"#99e9f2","TM6":"#a5d8ff","TM7":"#d0bfff"}
+    three_letter = dict(zip("ARNDCEQGHILKMFPSTWYV",
+        "ALA ARG ASN ASP CYS GLU GLN GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL".split()))
     for path,mapping in mappings:
         lines=["@name GPCR shared generic pocket ("+path.stem+")"]
         used={mapping[p][3] for p in positions if p in mapping}
@@ -94,7 +96,8 @@ def create(files, outdir, positions_file=None, mode="union", missing_policy="rej
             if pos not in mapping:
                 continue  # explicitly missing, never invented
             chain,resi,aa,segment=mapping[pos]
-            lines.append("\t".join((chain,resi,pos,segment or f"TM{pos.split('x')[0]}",aa)))
+            label = three_letter.get(aa.upper(), aa.upper())
+            lines.append("\t".join((chain,resi,pos,segment or f"TM{pos.split('x')[0]}",label)))
         (folder/(path.stem+".pocket.tsv")).write_text("\n".join(lines)+"\n")
     return audit
 
