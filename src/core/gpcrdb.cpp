@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <set>
 
 #include "internal.hpp"
 #include "ligint/matrix.hpp"
