@@ -157,3 +157,30 @@ When the input is a known four-character PDB entry (e.g., `3SN6.pdb`), the autom
 The mapping review table now permits editing **which positions to include** using checkboxes in the GPCRdb column. Observed ligand-contact residues start checked, and the user can add other numbered residues (or uncheck contacts) before saving the final pocket definition. The generic residue numbers themselves are read-only and remain exactly as retrieved. This separation ensures the user's fingerprint selection does not silently rewrite an authoritative GPCRdb residue-to-position mapping. For comparative fingerprints, choose the **same generic-position list across samples**, not individually varying contact sets. The audit JSON and complete mapping TSV remain available after selection.
 
 This feature is experimental: the exact GPCRdb structure lookup response may vary, and must be checked against the live service. No end-to-end test on the real 3SN6/GPCRdb endpoint has been performed in this development environment. The unit tests use mocked service responses rather than pretending to validate remote availability.
+
+## Shared GPCRdb position panels for comparable fingerprints
+
+To compare GPCR complexes quantitatively, **do not derive a different set of generic positions separately for every ligand**. Generate an identical list of positions from the verified per-structure GPCRdb mappings. This phase adds the source-based utility `tools/gpcrdb_shared_fingerprints.py`:
+
+```bash
+python3 tools/gpcrdb_shared_fingerprints.py \
+  mappings/3SN6-gpcrdb-auto.tsv mappings/OTHER-gpcrdb-auto.tsv \
+  --output-dir gpcr-shared --mode intersection
+```
+
+The default is an **intersection** of available GPCRdb positions, so all structures have a mapped receptor residue in every position of the common panel. The utility saves `common_gpcrdb_positions.txt`, one `*.pocket.tsv` definition per input mapping, and `coverage_audit.json`. Use those structure-specific pocket files in the `pocket` column of the existing interaction-matrix ligand list (see [MATRIX.md](MATRIX.md)); positions are labelled by GPCRdb number rather than PDB residue number. The same panel will produce the same feature labels across structures.
+
+To use the union of generic positions or a manually curated list, run:
+
+```bash
+python3 tools/gpcrdb_shared_fingerprints.py mappings/*.tsv \
+  --output-dir gpcr-shared --mode union
+python3 tools/gpcrdb_shared_fingerprints.py mappings/*.tsv \
+  --output-dir gpcr-shared --positions curated_gpcr_positions.txt
+```
+
+By default, the utility **rejects** a proposed panel with any unmapped generic position and writes an audit explaining where mappings are incomplete. This is intentional: *missing receptor coordinates or generic numbering are not the same as zero ligand interactions*. If a partial exploratory panel is desired, `--missing-policy report` allows writing partial pocket definitions **and explicitly records their missing labels** in JSON. Do **not** treat the resulting LigInt matrix as a complete binary comparable matrix unless the downstream analysis masks those missing entries; the current standard matrix writer does not have a missing-value state for GPCR positions.
+
+This tool is standard-library Python with no new C++ or Qt dependencies. It processes mapping TSVs produced by the existing GPCRdb alignment script. CTest includes an offline regression for union, intersection, and incomplete mapping handling.
+
+**Next integration:** expose common-panel generation and coverage review from a permanent GUI GPCR Numbering/Fingerprint tab, and validate on multiple receptor families with real GPCRdb annotated structures. This CLI is an initial scientifically conservative foundation, not that finished graphical workflow.
