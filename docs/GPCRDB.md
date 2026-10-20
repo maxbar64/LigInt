@@ -184,3 +184,11 @@ By default, the utility **rejects** a proposed panel with any unmapped generic p
 This tool is standard-library Python with no new C++ or Qt dependencies. It processes mapping TSVs produced by the existing GPCRdb alignment script. CTest includes an offline regression for union, intersection, and incomplete mapping handling.
 
 **Next integration:** expose common-panel generation and coverage review from a permanent GUI GPCR Numbering/Fingerprint tab, and validate on multiple receptor families with real GPCRdb annotated structures. This CLI is an initial scientifically conservative foundation, not that finished graphical workflow.
+
+## Build a shared GPCRdb panel from the graphical interface
+
+The **Pocket definition (fingerprint)** group now includes **Build shared GPCRdb panel…**. Choose two or more `*-gpcrdb-auto.tsv` mapping files for the receptor structures you intend to compare, choose **Intersection** (recommended), a curated list, or Union, and select an output directory. LigInt invokes the local standard-library Python helper, shows progress, and displays a coverage summary. If any position required by the panel is not mapped in one structure, the operation fails with a specific audit report rather than representing a missing residue as a zero interaction.
+
+On success, the output folder contains `common_gpcrdb_positions.txt`, `coverage_audit.json`, and one `*.pocket.tsv` for each input mapping. Enter each pocket path in the **pocket** column of the existing Interaction Matrix input list. This produces the same generic-position feature labels for all structures, provided they use the same generic numbering scheme.
+
+**Scope of this GUI step:** shared-panel creation and coverage review are integrated; matrix list creation and a permanent embedded GPCR editor are still separate. It requires the LigInt source checkout and Python 3, and does not make online GPCRdb calls. The command-line tool remains useful for reproducible batch processing.
