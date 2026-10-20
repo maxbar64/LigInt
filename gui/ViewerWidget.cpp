@@ -392,7 +392,8 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
         pv.mesh=&pieces.pocket->mesh;
         pv.colors=&pieces.pocket->colors;
         pv.alpha=static_cast<float>(style.pocketOpacity);
-        pv.cullBack=false;
+        // Display only the front shell: avoids double blending of entry/exit walls.
+        pv.cullBack=pv.alpha<0.999f;
         pv.specular=static_cast<float>(style.pocketSpecular);
         ren->drawMesh(pv);
     }
