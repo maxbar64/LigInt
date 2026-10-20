@@ -356,12 +356,15 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Pocket colors",palette_);
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
+    overlayMaterial_=new QComboBox;
+    overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
+    form->addRow("3D pocket material",overlayMaterial_);
     overlayVisible_=new QCheckBox("Show pocket in Interactions 3D");
     overlayVisible_->setChecked(true);
     overlayOpacity_=new QSpinBox;overlayOpacity_->setRange(5,100);
-    overlayOpacity_->setValue(48);overlayOpacity_->setSuffix("%");
+    overlayOpacity_->setValue(38);overlayOpacity_->setSuffix("%");
     overlaySpecular_=new QSpinBox;overlaySpecular_->setRange(0,100);
-    overlaySpecular_->setValue(22);overlaySpecular_->setSuffix("%");
+    overlaySpecular_->setValue(12);overlaySpecular_->setSuffix("%");
     form->addRow(overlayVisible_);
     form->addRow("3D overlay opacity",overlayOpacity_);
     form->addRow("3D overlay specular",overlaySpecular_);
@@ -426,14 +429,31 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this]{publishSelection();});
     connect(lightStrength_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(shine_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(overlayMaterial_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this](int preset){
+        if(preset==3)return;
+        const QSignalBlocker blockOpacity(overlayOpacity_);
+        const QSignalBlocker blockSpecular(overlaySpecular_);
+        if(preset==0){overlayOpacity_->setValue(38);overlaySpecular_->setValue(12);}
+        if(preset==1){overlayOpacity_->setValue(65);overlaySpecular_->setValue(0);}
+        if(preset==2){overlayOpacity_->setValue(55);overlaySpecular_->setValue(55);}
+        emit pocketAppearanceChanged(overlayVisible_->isChecked(),
+                                     overlayOpacity_->value()/100.0,
+                                     overlaySpecular_->value()/100.0);
+    });
     auto appearanceChanged=[this]{
         emit pocketAppearanceChanged(overlayVisible_->isChecked(),
                                      overlayOpacity_->value()/100.0,
                                      overlaySpecular_->value()/100.0);
     };
     connect(overlayVisible_,&QCheckBox::toggled,this,appearanceChanged);
-    connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,appearanceChanged);
-    connect(overlaySpecular_,QOverload<int>::of(&QSpinBox::valueChanged),this,appearanceChanged);
+    connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this,appearanceChanged](int){
+        if(overlayMaterial_->currentIndex()!=3)overlayMaterial_->setCurrentIndex(3);
+        appearanceChanged();
+    });
+    connect(overlaySpecular_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this,appearanceChanged](int){
+        if(overlayMaterial_->currentIndex()!=3)overlayMaterial_->setCurrentIndex(3);
+        appearanceChanged();
+    });
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
