@@ -1108,14 +1108,14 @@ bool MainWindow::generateGpcrdbPocket(const QString& numberedStructure, const QS
 void MainWindow::onGenerateGpcrdbPocket() {
     QSettings s("ligint", "ligint-gui");
     QStringList sources = {tr("Automatically fetch GPCRdb numbering and align receptor chain (recommended)"), tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
-    if (path_.isEmpty()) sources.removeFirst();                                                // there is no open structure
+    if (path_.isEmpty()) { sources.removeFirst(); sources.removeFirst(); } // requires a structure for automatic numbering
     bool ok = false;
     const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("How should numbering be obtained?"), sources, 0, false, &ok);
     if (!ok) return;
     QString numbered, mapping;
     const QString folder = path_.isEmpty() ? s.value("lastDir").toString() : QFileInfo(path_).absolutePath();
     const bool automatic = source.startsWith(tr("Automatically fetch GPCRdb numbering"));
-    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : 0) - 1; // -1 auto, 0 open, 1 another, 2 table
+    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : -1); // -1 auto, 0 open, 1 another, 2 table
     if (index == 1) {
         numbered = QFileDialog::getOpenFileName(this, tr("Structure annotated by GPCRdb"), folder, tr("Structures (*.pdb *.ent *.cif *.mmcif);;All files (*)"));
         if (numbered.isEmpty()) return;
