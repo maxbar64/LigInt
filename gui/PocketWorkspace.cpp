@@ -2,6 +2,7 @@
 #include "ligint/pocket_interfaces.hpp"
 #include "PocketSmoothMesh.h"
 #include <QComboBox>
+#include <QCheckBox>
 #include <QStringList>
 #include <QPen>
 #include <QAbstractItemView>
@@ -355,6 +356,15 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Pocket colors",palette_);
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
+    overlayVisible_=new QCheckBox("Show pocket in Interactions 3D");
+    overlayVisible_->setChecked(true);
+    overlayOpacity_=new QSpinBox;overlayOpacity_->setRange(5,100);
+    overlayOpacity_->setValue(48);overlayOpacity_->setSuffix("%");
+    overlaySpecular_=new QSpinBox;overlaySpecular_->setRange(0,100);
+    overlaySpecular_->setValue(22);overlaySpecular_->setSuffix("%");
+    form->addRow(overlayVisible_);
+    form->addRow("3D overlay opacity",overlayOpacity_);
+    form->addRow("3D overlay specular",overlaySpecular_);
     column->addLayout(form);
     run_=new QPushButton("Find pockets");column->addWidget(run_);
     status_=new QLabel("Open a structure to start");status_->setWordWrap(true);column->addWidget(status_);
@@ -416,6 +426,14 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(smoothSteps_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this]{publishSelection();});
     connect(lightStrength_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(shine_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    auto appearanceChanged=[this]{
+        emit pocketAppearanceChanged(overlayVisible_->isChecked(),
+                                     overlayOpacity_->value()/100.0,
+                                     overlaySpecular_->value()/100.0);
+    };
+    connect(overlayVisible_,&QCheckBox::toggled,this,appearanceChanged);
+    connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,appearanceChanged);
+    connect(overlaySpecular_,QOverload<int>::of(&QSpinBox::valueChanged),this,appearanceChanged);
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
         ligint::PocketOptions o;
