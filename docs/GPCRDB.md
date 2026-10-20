@@ -143,3 +143,9 @@ The offline regression test can be run without access to GPCRdb:
 ```bash
 python3 tests/test_gpcrdb_auto_mapping.py
 ```
+
+## Automatic receptor-chain identification and interactive mapping review
+
+For automatic numbering, enter the GPCRdb receptor entry (e.g. `adrb2_human`) and leave the chain as **auto**. LigInt checks the CA sequences of all protein chains against the reference, selects the uniquely best qualifying match, and rejects ambiguous cases. A validation dialog then lists the **chain, PDB residue, amino acid, GPCRdb generic number, and protein segment**, together with global alignment identity and coverage. Confirm to continue to contact-derived fingerprint generation; cancel to reject the proposed mapping. The mapping TSV and JSON audit are retained for reproducibility.
+
+**Scope:** the receptor *chain* is detected automatically after the GPCRdb receptor entry is supplied. Identification of the correct receptor entry solely from an arbitrary PDB file is not yet implemented; users can select it manually. The validation table is read-only in this stage to prevent untracked edits to official mappings. This feature uses Python and a source checkout; a packaged application will need to bundle the script and a Python runtime or port this component to C++.
