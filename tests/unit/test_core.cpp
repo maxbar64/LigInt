@@ -649,6 +649,23 @@ static void testGpcrdbNumbers() {
     CHECK(g.pocket.positions[0].resName == "ALA" && g.pocket.positions[0].resi == 141);                                  // 2x551 is the residue after Leu 140 (2x55); 100-130 are TM3, 131-135 are not numbered, 136-139 loops and H8
     CHECK((g.missing == std::vector<std::string>{"3x99"}) && g.warnings.size() == 1 && g.warnings[0].find("3x99") != std::string::npos);
     CHECK(g.pocket.colors.size() == 5 && g.pocket.name.find("chain A") != std::string::npos);                    // TM2, TM3, ICL2, ECL2, H8
+    // Contact-derived GPCRdb mapping must resolve the analyzed chain/residue IDs.
+    {
+        const auto contactMap=ligint::mapGpcrdbContacts("gp_a.pdb","", "A",
+            {{"A",109},{"A",109},{"A",110},{"A",999},{"B",109}});
+        CHECK(contactMap.positions.size()==2);
+        CHECK(contactMap.positions[0]=="3x32");
+        CHECK(contactMap.positions[1]=="3x33");
+        CHECK(contactMap.missing.size()==1);
+        CHECK(contactMap.missing[0]=="A:999");
+        ligint::GpcrdbOptions suggested;
+        suggested.numberedStructure="gp_a.pdb";
+        suggested.chain="A";
+        suggested.positions=contactMap.positions;
+        const auto site=ligint::generateGpcrdbPocket(suggested);
+        CHECK(site.pocket.positions.size()==2);
+        CHECK(site.pocket.positions[0].resi==109);
+    }
     // the same with the negative B-factor: the raw output of GPCRdb
     CHECK(g.pocket.positions[0].label == "2x551" && g.pocket.positions[0].chain == "A");
     // the pocket file can be read back
