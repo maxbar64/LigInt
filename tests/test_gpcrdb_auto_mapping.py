@@ -5,6 +5,8 @@ import json
 import pathlib
 import tempfile
 import unittest
+from unittest.mock import patch
+from io import BytesIO
 
 SCRIPT = pathlib.Path(__file__).resolve().parents[1] / "tools" / "gpcrdb_auto_mapping.py"
 spec = importlib.util.spec_from_file_location("gpcrdb_auto_mapping", SCRIPT)
@@ -49,6 +51,18 @@ class AutoGpcrdbTests(unittest.TestCase):
             pdb.write_text("".join(lines))
             reference = [(i+1, aa, "3x32", "TM3") for i,aa in enumerate(seq)]
             self.assertEqual(module.detect_chain(pdb, reference), "R")
+
+    def test_pdb_receptor_lookup(self):
+        with patch.object(module, "urlopen", return_value=BytesIO(
+            json.dumps({"protein": {"entry_name": "adrb2_human"}}).encode())):
+            self.assertEqual(module.identify_entry_from_pdb("3SN6"), "adrb2_human")
+
+    def test_pdb_lookup_rejects_unrecognized_schema(self):
+        with patch.object(module, "urlopen", return_value=BytesIO(b'{"protein":"unknown-value"}')):
+            self.assertEqual(module.identify_entry_from_pdb("3SN6"), "unknown-value")
+        with patch.object(module, "urlopen", return_value=BytesIO(b'{"result":"missing"}')):
+            with self.assertRaises(ValueError):
+                module.identify_entry_from_pdb("3SN6")
 
     def test_reject_mismatched_reference(self):
         with self.assertRaises(ValueError):
