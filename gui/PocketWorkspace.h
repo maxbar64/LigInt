@@ -24,6 +24,7 @@ signals:
 private:
     QWidget* canvas_=nullptr;
     QCheckBox* overlayVisible_=nullptr;
+    QComboBox* overlayMaterial_=nullptr;
     QSpinBox *overlayOpacity_=nullptr,*overlaySpecular_=nullptr;
     QComboBox *renderMode_=nullptr,*ligand_=nullptr;
     QDoubleSpinBox *seedSpacing_=nullptr,*seedProminence_=nullptr,*mergeDistance_=nullptr,*mergeDrop_=nullptr;
