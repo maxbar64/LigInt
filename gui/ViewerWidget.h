@@ -117,7 +117,7 @@ private:
     double pocketSpacing_=1.0;
     int pocketSmoothing_=2;
     bool pocketVisible_=true;
-    double pocketOpacity_=0.48, pocketSpecular_=0.22;
+    double pocketOpacity_=0.38, pocketSpecular_=0.12;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
