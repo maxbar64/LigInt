@@ -28,6 +28,9 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPlainTextEdit>
+#include <QProcess>
+#include <QProgressDialog>
+#include <QTimer>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSettings>
@@ -1104,20 +1107,69 @@ bool MainWindow::generateGpcrdbPocket(const QString& numberedStructure, const QS
 
 void MainWindow::onGenerateGpcrdbPocket() {
     QSettings s("ligint", "ligint-gui");
-    QStringList sources = {tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
+    QStringList sources = {tr("Automatically fetch GPCRdb numbering and align receptor chain (recommended)"), tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
     if (path_.isEmpty()) sources.removeFirst();                                                // there is no open structure
     bool ok = false;
-    const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("Where are the generic residue numbers of the receptor?"), sources, 0, false, &ok);
+    const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("How should numbering be obtained?"), sources, 0, false, &ok);
     if (!ok) return;
     QString numbered, mapping;
     const QString folder = path_.isEmpty() ? s.value("lastDir").toString() : QFileInfo(path_).absolutePath();
-    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : 0);                      // 0 open structure, 1 another structure, 2 a table
+    const bool automatic = source.startsWith(tr("Automatically fetch GPCRdb numbering"));
+    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : 0) - 1; // -1 auto, 0 open, 1 another, 2 table
     if (index == 1) {
         numbered = QFileDialog::getOpenFileName(this, tr("Structure annotated by GPCRdb"), folder, tr("Structures (*.pdb *.ent *.cif *.mmcif);;All files (*)"));
         if (numbered.isEmpty()) return;
     } else if (index == 2) {
         mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
         if (mapping.isEmpty()) return;
+    }
+    if(automatic){
+        if(path_.isEmpty()){showError(tr("GPCRdb"),tr("Open a receptor-ligand PDB first."));return;}
+        const QString defaultEntry=QFileInfo(path_).fileName().startsWith("3sn6",Qt::CaseInsensitive)
+            ?QStringLiteral("adrb2_human"):s.value("gpcrdbEntry").toString();
+        const QString entry=QInputDialog::getText(this,tr("Identify receptor"),
+            tr("GPCRdb receptor entry (e.g. adrb2_human):"),QLineEdit::Normal,defaultEntry,&ok).trimmed();
+        if(!ok||entry.isEmpty())return;
+        const QString autoChain=QInputDialog::getText(this,tr("Receptor chain"),
+            tr("PDB receptor chain (3SN6: R):"),QLineEdit::Normal,
+            QFileInfo(path_).fileName().startsWith("3sn6",Qt::CaseInsensitive)?QStringLiteral("R"):QString(),&ok).trimmed();
+        if(!ok||autoChain.isEmpty())return;
+        const QString out=QFileInfo(path_).absolutePath()+"/"+
+                          QFileInfo(path_).completeBaseName()+"-gpcrdb-auto.tsv";
+        const QString audit=out+".audit.json";
+        const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/gpcrdb_auto_mapping.py";
+        if(!QFileInfo::exists(script)){
+            showError(tr("GPCRdb"),tr("The GPCRdb alignment script was not found: ")+script);return;
+        }
+        QProcess process;
+        QProgressDialog progress(tr("Downloading GPCRdb reference and validating alignment…"),
+                                 tr("Cancel"),0,0,this);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMinimumDuration(0);
+        bool finished=false;
+        connect(&process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                &progress,[&](int,QProcess::ExitStatus){finished=true;progress.accept();});
+        connect(&progress,&QProgressDialog::canceled,&process,&QProcess::kill);
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        connect(&timeout,&QTimer::timeout,&process,&QProcess::kill);
+        process.start("python3",{"-B",script,"--pdb",path_,"--chain",autoChain,
+                                 "--entry",entry,"--output",out,"--audit",audit});
+        if(!process.waitForStarted(3000)){
+            showError(tr("GPCRdb"),tr("Python 3 could not be started: ")+process.errorString());return;
+        }
+        timeout.start(45000);
+        if(!finished)progress.exec();
+        if(!finished||process.exitStatus()!=QProcess::NormalExit||process.exitCode()!=0){
+            showError(tr("GPCRdb automatic mapping failed"),
+                QString::fromUtf8(process.readAllStandardError())+
+                tr("\nSee alignment audit: ")+audit);
+            return;
+        }
+        s.setValue("gpcrdbEntry",entry);
+        mapping=out;
+        log(tr("GPCRdb automatic mapping created: ")+out);
+        log(tr("Alignment audit: ")+audit);
     }
     const QString chain = QInputDialog::getText(this, tr("GPCR pocket"),
         tr("Receptor chain (e.g. R for 3SN6; do not select a G-protein chain):"),
