@@ -40,6 +40,29 @@ def pdb_residues(path, chain):
         raise ValueError(f"No receptor C-alpha residues found for chain {chain!r}")
     return rows
 
+def identify_entry_from_pdb(pdb_id):
+    """Best-effort GPCRdb structure lookup; fail closed for uncertain responses."""
+    import re
+    if not re.fullmatch(r"[A-Za-z0-9]{4}", pdb_id):
+        raise ValueError("PDB identifier must be four alphanumeric characters")
+    url = f"https://gpcrdb.org/services/structure/{pdb_id.upper()}/"
+    with urlopen(Request(url, headers={"User-Agent": "LigInt-GPCRdb/1.0",
+                                        "Accept": "application/json"}), timeout=15) as res:
+        data = json.load(res)
+    if isinstance(data, list):
+        if len(data) != 1:
+            raise ValueError("GPCRdb structure lookup returned multiple or no records")
+        data = data[0]
+    if not isinstance(data, dict):
+        raise ValueError("Unexpected GPCRdb structure response")
+    candidates = [data.get("protein"), data.get("receptor"), data.get("protein_entry_name")]
+    for value in candidates:
+        if isinstance(value, dict):
+            value = value.get("entry_name")
+        if isinstance(value, str) and re.fullmatch(r"[a-z0-9_]+", value.lower()):
+            return value.lower()
+    raise ValueError("GPCRdb structure lookup does not contain a validated receptor entry")
+
 def fetch_reference(entry, cache_dir):
     cache = pathlib.Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
@@ -177,7 +200,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pdb", required=True)
     ap.add_argument("--chain", default="auto", help="PDB chain ID, or auto to identify the best matching receptor chain")
-    ap.add_argument("--entry", required=True, help="GPCRdb entry, e.g. adrb2_human")
+    ap.add_argument("--entry", default="auto", help="GPCRdb entry or auto (infer from PDB identifier)")
+    ap.add_argument("--pdb-id", help="Four-character PDB ID when --entry auto")
     ap.add_argument("--output", required=True)
     ap.add_argument("--audit")
     ap.add_argument("--cache-dir", default=str(pathlib.Path.home()/".cache"/"ligint"/"gpcrdb"))
@@ -186,6 +210,8 @@ def main():
         ap.error("Invalid GPCRdb entry")
     audit = a.audit or a.output + ".audit.json"
     try:
+        if a.entry == "auto":
+            a.entry = identify_entry_from_pdb(a.pdb_id or pathlib.Path(a.pdb).stem[:4])
         report = create(a.pdb, a.chain, a.entry, a.cache_dir, a.output, audit)
     except Exception as exc:
         print(f"GPCRdb mapping failed: {exc}", file=sys.stderr)
