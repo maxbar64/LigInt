@@ -21,6 +21,8 @@ struct ViewStyle {
     SurfaceType surfaceType = SurfaceType::SolventExcluded;
     SurfaceColor surfaceColor = SurfaceColor::Neutral;
     double surfaceOpacity = 0.45;          // 1 = opaque
+    bool pocketVisible = true;
+    double pocketOpacity = 0.48, pocketSpecular = 0.22;
     LigandStyle ligand = LigandStyle::BallStick;
     ResidueStyle residues = ResidueStyle::Sticks;
     bool showLigand = true;
