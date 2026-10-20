@@ -35,6 +35,21 @@ class AutoGpcrdbTests(unittest.TestCase):
             self.assertEqual(len(out.read_text().splitlines()),81)
             self.assertEqual(json.loads(audit.read_text())["coverage"],1.0)
 
+    def test_detect_receptor_chain(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp)
+            seq = "ARNDCEQGHILKMFPSTWYV"*4
+            reverse = {aa: code for code, aa in module.AA.items() if len(code)==3}
+            lines = []
+            for i, aa in enumerate(seq):
+                lines.append(f"ATOM  {i+1:5d}   CA {reverse[aa]:>3s} R{i+101:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\\n")
+            for i, aa in enumerate("G"*50):
+                lines.append(f"ATOM  {100+i:5d}   CA {reverse[aa]:>3s} A{i+1:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\\n")
+            pdb = root/"complex.pdb"
+            pdb.write_text("".join(lines))
+            reference = [(i+1, aa, "3x32", "TM3") for i,aa in enumerate(seq)]
+            self.assertEqual(module.detect_chain(pdb, reference), "R")
+
     def test_reject_mismatched_reference(self):
         with self.assertRaises(ValueError):
             module.align("A"*3000, "A"*3000)
