@@ -98,8 +98,35 @@ def align(query, reference):
             j -= 1
     return list(reversed(pairs))
 
+def detect_chain(pdb, reference):
+    """Identify the best receptor chain by alignment, rejecting ambiguous matches."""
+    chains = sorted({
+        line[21].strip() for line in pathlib.Path(pdb).read_text(errors="replace").splitlines()
+        if len(line) >= 27 and line.startswith("ATOM  ") and line[12:16].strip() == "CA"
+        and line[21].strip()
+    })
+    candidates = []
+    target = "".join(r[1] for r in reference)
+    for chain in chains:
+        observed = pdb_residues(pdb, chain)
+        if len(observed) < 35:
+            continue
+        pairs = align("".join(r[2] for r in observed), target)
+        matches = sum(observed[i][2] == reference[j][1] for i, j in pairs)
+        identity = matches / len(pairs) if pairs else 0
+        coverage = matches / len(observed)
+        if matches >= 30 and identity >= .85 and coverage >= .65:
+            candidates.append((matches, identity, coverage, chain))
+    candidates.sort(reverse=True)
+    if not candidates:
+        raise ValueError("No chain matches this GPCRdb receptor. Select the chain and check the receptor entry.")
+    if len(candidates) > 1 and candidates[1][0] >= candidates[0][0] * .95:
+        raise ValueError("Multiple similarly matching receptor chains: " +
+                         ", ".join(item[3] for item in candidates[:3]) +
+                         ". Select one explicitly.")
+    return candidates[0][3]
+
 def create(pdb, chain, entry, cache_dir, output, audit_path):
-    observed = pdb_residues(pdb, chain)
     raw = fetch_reference(entry, cache_dir)
     reference = []
     for item in raw:
@@ -112,6 +139,9 @@ def create(pdb, chain, entry, cache_dir, output, audit_path):
     reference.sort(key=lambda r: r[0])
     if len(reference) < 50:
         raise ValueError("Reference has too few GPCRdb residues")
+    if chain.lower() == "auto":
+        chain = detect_chain(pdb, reference)
+    observed = pdb_residues(pdb, chain)
     pairs = align("".join(x[2] for x in observed), "".join(x[1] for x in reference))
     exact = [(i,j) for i,j in pairs if observed[i][2] == reference[j][1]]
     identity = len(exact)/len(pairs) if pairs else 0
@@ -146,7 +176,7 @@ def create(pdb, chain, entry, cache_dir, output, audit_path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pdb", required=True)
-    ap.add_argument("--chain", required=True)
+    ap.add_argument("--chain", default="auto", help="PDB chain ID, or auto to identify the best matching receptor chain")
     ap.add_argument("--entry", required=True, help="GPCRdb entry, e.g. adrb2_human")
     ap.add_argument("--output", required=True)
     ap.add_argument("--audit")
