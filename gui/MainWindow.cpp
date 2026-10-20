@@ -1123,6 +1123,7 @@ void MainWindow::onGenerateGpcrdbPocket() {
         mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
         if (mapping.isEmpty()) return;
     }
+    QString automaticChain;
     if(automatic){
         if(path_.isEmpty()){showError(tr("GPCRdb"),tr("Open a receptor-ligand PDB first."));return;}
         const QString defaultEntry=QFileInfo(path_).fileName().startsWith("3sn6",Qt::CaseInsensitive)
@@ -1153,7 +1154,12 @@ void MainWindow::onGenerateGpcrdbPocket() {
         QTimer timeout;
         timeout.setSingleShot(true);
         connect(&timeout,&QTimer::timeout,&process,&QProcess::kill);
-        process.start("python3",{"-B",script,"--pdb",path_,"--chain",autoChain,
+        QString python=QStandardPaths::findExecutable("python3");
+        if(python.isEmpty())python=QStandardPaths::findExecutable("python");
+        if(python.isEmpty()){
+            showError(tr("GPCRdb"),tr("Python 3 was not found. Install Python 3 to enable automatic GPCRdb alignment."));return;
+        }
+        process.start(python,{"-B",script,"--pdb",path_,"--chain",autoChain,
                                  "--entry",entry,"--output",out,"--audit",audit});
         if(!process.waitForStarted(3000)){
             showError(tr("GPCRdb"),tr("Python 3 could not be started: ")+process.errorString());return;
@@ -1166,15 +1172,16 @@ void MainWindow::onGenerateGpcrdbPocket() {
                 tr("\nSee alignment audit: ")+audit);
             return;
         }
+        automaticChain=autoChain;
         s.setValue("gpcrdbEntry",entry);
         mapping=out;
         log(tr("GPCRdb automatic mapping created: ")+out);
         log(tr("Alignment audit: ")+audit);
     }
-    const QString chain = QInputDialog::getText(this, tr("GPCR pocket"),
+    const QString chain = automatic ? automaticChain : QInputDialog::getText(this, tr("GPCR pocket"),
         tr("Receptor chain (e.g. R for 3SN6; do not select a G-protein chain):"),
         QLineEdit::Normal, QString(), &ok);
-    if (!ok) return;
+    if (!automatic && !ok) return;
     QString positions;
     const QStringList methods={tr("Suggest GPCRdb positions from analyzed ligand contacts (recommended)"),
                                tr("Enter a custom list of generic positions")};
