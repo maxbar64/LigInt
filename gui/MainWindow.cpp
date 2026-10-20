@@ -266,6 +266,96 @@ void MainWindow::buildUi() {
     pkv->addLayout(pkRow);
     pkv->addWidget(pkKlifs);
     pkv->addWidget(pkGpcr);
+    auto* pkShared = new QPushButton(tr("Build shared GPCRdb panel…"));
+    pkShared->setObjectName("gpcrdb_shared_panel");
+    pkShared->setToolTip(tr("Build matched GPCRdb positions across multiple receptor structures; missing positions are audited and never treated as zero contacts."));
+    connect(pkShared, &QPushButton::clicked, this, [this] {
+        QSettings settings("ligint", "ligint-gui");
+        const QStringList files = QFileDialog::getOpenFileNames(
+            this, tr("Select GPCRdb mapping tables (two or more)"),
+            settings.value("lastGpcrMappingDir", path_.isEmpty() ? QString() : QFileInfo(path_).absolutePath()).toString(),
+            tr("GPCRdb mapping TSV (*.tsv);;All files (*)"));
+        if (files.isEmpty()) return;
+        if (files.size() < 2) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Choose at least two receptor mapping tables.")); return;
+        }
+        settings.setValue("lastGpcrMappingDir", QFileInfo(files.front()).absolutePath());
+        bool accepted = false;
+        const QStringList modes = {tr("Intersection (only positions mapped in all structures; recommended)"),
+                                   tr("Curated GPCRdb position list (reject incomplete coverage)"),
+                                   tr("Union (reject incomplete coverage)")};
+        const QString mode = QInputDialog::getItem(this, tr("Common GPCRdb positions"),
+             tr("How should the common fingerprint positions be selected?"),
+             modes, 0, false, &accepted);
+        if (!accepted) return;
+        QString curated;
+        if (mode == modes[1]) {
+            curated = QFileDialog::getOpenFileName(this, tr("Curated generic-position list"),
+                        QFileInfo(files.front()).absolutePath(), tr("Text files (*.txt);;All files (*)"));
+            if (curated.isEmpty()) return;
+        }
+        const QString output = QFileDialog::getExistingDirectory(this, tr("Output directory for shared GPCRdb pocket definitions"),
+                              QFileInfo(files.front()).absolutePath(), QFileDialog::ShowDirsOnly);
+        if (output.isEmpty()) return;
+        const QString script = QStringLiteral(LIGINT_SOURCE_ROOT) + "/tools/gpcrdb_shared_fingerprints.py";
+        if (!QFileInfo::exists(script)) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Cannot locate GPCRdb panel tool: ") + script); return;
+        }
+        QString python = QStandardPaths::findExecutable("python3");
+        if (python.isEmpty()) python = QStandardPaths::findExecutable("python");
+        if (python.isEmpty()) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Python 3 is required.")); return;
+        }
+        QStringList args = {script, "--output-dir", output};
+        if (!curated.isEmpty()) args << "--positions" << curated;
+        else args << "--mode" << (mode == modes[0] ? "intersection" : "union");
+        args << files;
+        QProcess process;
+        process.start(python, args);
+        if (!process.waitForStarted(3000)) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Failed to start Python: ") + process.errorString()); return;
+        }
+        QProgressDialog progress(tr("Checking GPCRdb position coverage across structures…"), tr("Cancel"), 0, 0, this);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMinimumDuration(0);
+        connect(&process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                &progress, [&](int, QProcess::ExitStatus) { progress.accept(); });
+        connect(&progress, &QProgressDialog::canceled, &process, &QProcess::kill);
+        progress.exec();
+        const QString reportPath = output + "/coverage_audit.json";
+        QFile reportFile(reportPath);
+        QString summary;
+        if (reportFile.open(QIODevice::ReadOnly)) {
+            const auto doc = QJsonDocument::fromJson(reportFile.readAll());
+            const auto object = doc.object();
+            const auto positions = object.value("positions").toArray();
+            const auto structures = object.value("structures").toArray();
+            summary = tr("Common generic positions: %1\\nStructures: %2\\n\\n")
+                          .arg(positions.size()).arg(structures.size());
+            for (const auto& record : structures) {
+                const auto value = record.toObject();
+                summary += tr("%1: %2/%3 mapped; %4 missing\\n")
+                               .arg(value.value("mapping").toString())
+                               .arg(value.value("covered").toInt())
+                               .arg(value.value("total").toInt())
+                               .arg(value.value("missing").toArray().size());
+            }
+        }
+        const bool success = process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
+        if (!success) {
+            showError(tr("Shared GPCRdb panel not accepted"),
+                      QString::fromUtf8(process.readAllStandardError()) +
+                      tr("\\n\\nCoverage report: ") + reportPath +
+                      (summary.isEmpty() ? QString() : "\\n\\n" + summary));
+            return;
+        }
+        log(tr("Shared GPCRdb pocket definitions: ") + output);
+        log(tr("Coverage audit: ") + reportPath);
+        QMessageBox::information(this, tr("Shared GPCRdb panel created"),
+                                 summary + tr("\\nDefinitions saved in: ") + output +
+                                 tr("\\n\\nUse the per-structure *.pocket.tsv files in the Matrix input list."));
+    });
+    pkv->addWidget(pkShared);
     pkv->addWidget(pocketLabel_);
     lv->addWidget(gPocket);
 
