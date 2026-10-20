@@ -318,10 +318,16 @@ void MainWindow::buildUi() {
         QProgressDialog progress(tr("Checking GPCRdb position coverage across structures…"), tr("Cancel"), 0, 0, this);
         progress.setWindowModality(Qt::WindowModal);
         progress.setMinimumDuration(0);
+        bool done = false;
         connect(&process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
-                &progress, [&](int, QProcess::ExitStatus) { progress.accept(); });
+                &progress, [&](int, QProcess::ExitStatus) { done = true; progress.accept(); });
         connect(&progress, &QProgressDialog::canceled, &process, &QProcess::kill);
-        progress.exec();
+        QTimer guard;
+        guard.setSingleShot(true);
+        connect(&guard, &QTimer::timeout, &process, &QProcess::kill);
+        guard.start(30000);
+        if (process.state() != QProcess::NotRunning) progress.exec();
+        if (process.state() != QProcess::NotRunning) process.waitForFinished(2000);
         const QString reportPath = output + "/coverage_audit.json";
         QFile reportFile(reportPath);
         QString summary;
