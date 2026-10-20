@@ -43,6 +43,7 @@
 #include <cmath>
 #include <fstream>
 #include <map>
+#include <set>
 #include <sstream>
 
 #include "CommandLine.h"
@@ -1118,14 +1119,61 @@ void MainWindow::onGenerateGpcrdbPocket() {
         mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
         if (mapping.isEmpty()) return;
     }
-    const QString positions = QInputDialog::getMultiLineText(
-        this, tr("GPCR pocket"),
-        tr("Generic residue numbers of the pocket, separated by blanks, commas or lines. GPCRdb scheme: 3x32 3x33 6x48. "
-           "Ballesteros-Weinstein numbers (3.32) only if the file has them. The path of a file with the numbers also works."),
-        s.value("gpcrdbPositions").toString(), &ok);
-    if (!ok || positions.trimmed().isEmpty()) return;
-    const QString chain = QInputDialog::getText(this, tr("GPCR pocket"), tr("Chain of the receptor (empty: the only chain that has numbers):"), QLineEdit::Normal, QString(), &ok);
+    const QString chain = QInputDialog::getText(this, tr("GPCR pocket"),
+        tr("Receptor chain (e.g. R for 3SN6; do not select a G-protein chain):"),
+        QLineEdit::Normal, QString(), &ok);
     if (!ok) return;
+    QString positions;
+    const QStringList methods={tr("Suggest GPCRdb positions from analyzed ligand contacts (recommended)"),
+                               tr("Enter a custom list of generic positions")};
+    const QString method=QInputDialog::getItem(this,tr("Define GPCR fingerprint pocket"),
+        tr("How should LigInt choose the pocket positions?"),methods,0,false,&ok);
+    if(!ok)return;
+    if(method==methods.front()){
+        if(result_.ligands.empty()){
+            showError(tr("GPCRdb"),tr("Analyze the selected ligand first; its contacts are needed for the suggested pocket."));
+            return;
+        }
+        if(chain.trimmed().isEmpty()){
+            showError(tr("GPCRdb"),tr("Choose the receptor chain to map ligand contacts."));
+            return;
+        }
+        const QString numberedSource=numbered.isEmpty()?path_:numbered;
+        std::vector<std::pair<std::string,int>> contacts;
+        std::set<std::pair<std::string,int>> unique;
+        for(const auto& atom:result_.ligands.front().contactAtoms){
+            const auto pair=std::make_pair(atom.chain,atom.resi);
+            if(unique.insert(pair).second)contacts.push_back(pair);
+        }
+        try{
+            const auto mappingResult=ligint::mapGpcrdbContacts(
+                numberedSource.toStdString(),mapping.toStdString(),
+                chain.trimmed().toStdString(),contacts);
+            QStringList proposed,details;
+            for(const auto& p:mappingResult.positions)proposed<<QString::fromStdString(p);
+            for(const auto& item:mappingResult.details)details<<QString::fromStdString(item);
+            positions=proposed.join(" ");
+            const QString audit=tr("%1 contact positions were mapped. %2 could not be mapped.\n\n%3")
+                .arg(proposed.size()).arg(mappingResult.missing.size()).arg(details.join("\n"));
+            log(tr("GPCRdb contact mapping:\n")+audit);
+            if(!mappingResult.missing.empty()){
+                QStringList missing;
+                for(const auto& item:mappingResult.missing)missing<<QString::fromStdString(item);
+                log(tr("Unmapped contact residues: ")+missing.join(", "));
+            }
+            if(QMessageBox::question(this,tr("Confirm contact-derived GPCR pocket"),
+                audit+tr("\n\nUse these positions for the fingerprint?"),
+                QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes)!=QMessageBox::Yes)return;
+        }catch(const std::exception& e){
+            showError(tr("GPCRdb mapping failed"),QString::fromUtf8(e.what()));return;
+        }
+    }else{
+        positions = QInputDialog::getMultiLineText(
+            this,tr("GPCR pocket"),
+            tr("Enter GPCRdb positions such as 3x32 3x33 6x48, or a file path."),
+            s.value("gpcrdbPositions").toString(),&ok);
+        if(!ok||positions.trimmed().isEmpty())return;
+    }
     const QString from = !mapping.isEmpty() ? mapping : (!numbered.isEmpty() ? numbered : path_);
     const QString output = QFileDialog::getSaveFileName(this, tr("Save GPCR pocket"), QFileInfo(from).absolutePath() + "/" + QFileInfo(from).completeBaseName() + "-gpcr-pocket.tsv",
                                                         tr("TSV files (*.tsv)"));
