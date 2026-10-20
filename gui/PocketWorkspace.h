@@ -4,7 +4,7 @@
 #include <QPoint>
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_groups.hpp"
-class QComboBox;class QDoubleSpinBox;class QSpinBox;class QListWidget;class QLabel;class QPushButton;
+class QCheckBox;class QComboBox;class QDoubleSpinBox;class QSpinBox;class QListWidget;class QLabel;class QPushButton;
 namespace gui {
 struct PocketGuiOutcome {
     ligint::PocketSearchResult result;
@@ -19,9 +19,12 @@ public:
     ~PocketWorkspace() override;
     void setStructurePath(const QString& path);
 signals:
+    void pocketAppearanceChanged(bool visible,double opacity,double specular);
     void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing);
 private:
     QWidget* canvas_=nullptr;
+    QCheckBox* overlayVisible_=nullptr;
+    QSpinBox *overlayOpacity_=nullptr,*overlaySpecular_=nullptr;
     QComboBox *renderMode_=nullptr,*ligand_=nullptr;
     QDoubleSpinBox *seedSpacing_=nullptr,*seedProminence_=nullptr,*mergeDistance_=nullptr,*mergeDrop_=nullptr;
     QSpinBox *maxSeeds_=nullptr,*noiseNeighbors_=nullptr,*noiseComponent_=nullptr,*smoothSteps_=nullptr,*lightStrength_=nullptr,*shine_=nullptr;
