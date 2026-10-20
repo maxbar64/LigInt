@@ -1206,9 +1206,13 @@ void MainWindow::onGenerateGpcrdbPocket() {
             .arg(auditObj.value("numbered_positions").toInt()),&review);
         layout->addWidget(summary);
         auto* table=new QTableWidget(&review);
-        table->setColumnCount(5);
+        table->setColumnCount(6);
         table->setHorizontalHeaderLabels({tr("Chain"),tr("PDB residue"),tr("AA"),
-                                        tr("GPCRdb"),tr("Segment")});
+                                        tr("GPCRdb"),tr("Segment"),tr("Ligand contact")});
+        std::set<std::pair<QString,int>> contacted;
+        if(!result_.ligands.empty())
+            for(const auto& atom:result_.ligands.front().contactAtoms)
+                contacted.insert({QString::fromStdString(atom.chain),atom.resi});
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->horizontalHeader()->setStretchLastSection(true);
@@ -1221,6 +1225,8 @@ void MainWindow::onGenerateGpcrdbPocket() {
             table->insertRow(row);
             for(int col=0;col<5;++col)
                 table->setItem(row,col,new QTableWidgetItem(fields[col]));
+            const bool isContact=contacted.count({fields[0],fields[1].toInt()})>0;
+            table->setItem(row,5,new QTableWidgetItem(isContact?tr("Yes"):tr("No")));
         }
         layout->addWidget(table);
         auto* buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&review);
