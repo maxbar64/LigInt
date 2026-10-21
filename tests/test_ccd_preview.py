@@ -13,6 +13,16 @@ m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 CCD="""data_TEST
 #
 loop_
+_chem_comp_atom.comp_id
+_chem_comp_atom.atom_id
+_chem_comp_atom.type_symbol
+TEST C1 C
+TEST N1 N
+TEST C2 C
+TEST C3 C
+TEST H1 H
+#
+loop_
 _chem_comp_bond.comp_id
 _chem_comp_bond.atom_id_1
 _chem_comp_bond.atom_id_2
@@ -21,12 +31,13 @@ _chem_comp_bond.pdbx_aromatic_flag
 TEST C1 N1 SING N
 TEST N1 C2 DOUB N
 TEST C2 C3 SING Y
+TEST N1 H1 SING N
 #
 """
 class CcdTests(unittest.TestCase):
     def test_order_and_atom_names(self):
         self.assertEqual(m.parse_component(CCD,"TEST"),
-                         [["C1","N1",1],["N1","C2",2],["C2","C3",4]])
+                         [["C1","N1",1],["N1","C2",2],["C2","C3",4],["N1","H1",1]])
     def test_refuses_missing_bond_table(self):
         with self.assertRaises(ValueError):
             m.parse_component("data_TEST\n#\n","TEST")
@@ -34,6 +45,8 @@ class CcdTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             (Path(folder)/"TEST.cif").write_text(CCD)
             with patch.object(m,"urlopen",side_effect=AssertionError("network attempted")):
-                self.assertEqual(len(m.get_component("TEST",Path(folder))),3)
+                bonds, sites=m.get_component("TEST",Path(folder))
+                self.assertEqual(len(bonds),4)
+                self.assertEqual(sites,{"N1":1})
 if __name__=="__main__":
     unittest.main()
