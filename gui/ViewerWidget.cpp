@@ -160,18 +160,54 @@ void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedInd
     if(selectedIndex>=0 && selectedIndex<static_cast<int>(importedLigands_.size()))
         data_=importedLigands_[selectedIndex];
     else data_=ligint::LigandResult();
-    // Preview ligand coordinates without chemical bond inference or interaction analysis.
-    auto piece=std::make_shared<AtomsPiece>();
-    for(const auto& ligand:importedLigands_) {
-        for(const auto& atom:ligand.atoms){
-            const auto& p=atom.pos;
-            const std::string& el=atom.element;
-            const std::uint32_t color = el=="O"?0xe05252u:el=="N"?0x478de6u:
-                el=="S"?0xe2bb35u:el=="P"?0xea8c36u:0x54c7a9u;
-            piece->spheres.push_back({static_cast<float>(p[0]),static_cast<float>(p[1]),
-                static_cast<float>(p[2]),selectedIndex>=0 && &ligand==&importedLigands_[selectedIndex]?0.48f:0.34f,color});
+    // Draw geometry-inferred heavy-atom connectivity. Bond orders and protonation
+    // are unknown here: this is visualization, not chemical annotation.
+    ligint::LigandResult combined;
+    for(const auto& ligand:importedLigands_){
+        const int offset=static_cast<int>(combined.atoms.size());
+        combined.atoms.insert(combined.atoms.end(),ligand.atoms.begin(),ligand.atoms.end());
+        for(const auto& bond:ligand.bonds)
+            combined.bonds.push_back({bond.a+offset,bond.b+offset,bond.order});
+        if(previewDonorHydrogens_){
+            std::vector<std::vector<int>> neighbors(ligand.atoms.size());
+            for(const auto& bond:ligand.bonds){
+                if(bond.a>=0&&bond.b>=0&&bond.a<static_cast<int>(neighbors.size())&&
+                   bond.b<static_cast<int>(neighbors.size())){
+                    neighbors[bond.a].push_back(bond.b);
+                    neighbors[bond.b].push_back(bond.a);
+                }
+            }
+            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
+                const auto& donor=ligand.atoms[i];
+                // Only unambiguous-looking isolated O-H groups, never infer
+                // nitrogen protonation, tautomerism or chemically unknown bond orders.
+                if(donor.element!="O" || neighbors[i].size()!=1)continue;
+                const auto& other=ligand.atoms[neighbors[i][0]];
+                if(other.element=="H"||other.element=="O")continue;
+                const double dx=donor.pos[0]-other.pos[0];
+                const double dy=donor.pos[1]-other.pos[1];
+                const double dz=donor.pos[2]-other.pos[2];
+                const double length=std::sqrt(dx*dx+dy*dy+dz*dz);
+                if(length<0.8)continue;
+                ligint::AtomRecord hydrogen;
+                hydrogen.name="H_EST";hydrogen.element="H";hydrogen.res=donor.res;
+                hydrogen.chain=donor.chain;hydrogen.resi=donor.resi;
+                hydrogen.icode=donor.icode;hydrogen.hetero=true;
+                hydrogen.pos={donor.pos[0]+dx/length*0.96,
+                              donor.pos[1]+dy/length*0.96,
+                              donor.pos[2]+dz/length*0.96};
+                const int index=static_cast<int>(combined.atoms.size());
+                combined.atoms.push_back(hydrogen);
+                combined.bonds.push_back({offset+i,index,1});
+            }
         }
     }
+    const auto stylePreview = style_.ligand == LigandStyle::Spheres ? LigandStyle::BallStick : style_.ligand;
+    auto piece=makeLigandPiece(combined, [&] {
+        ViewStyle preview=style_;
+        preview.ligand=stylePreview;
+        return preview;
+    }());
     pieces_.previewLigands=piece;
     pieces_.ligand.reset(); // spheres are drawn by the shared import-preview layer
     pieces_.residues.reset();
@@ -195,6 +231,23 @@ void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedInd
         }
     }
     invalidate(false);
+}
+
+void ViewerWidget::setPreviewDonorHydrogens(bool enabled) {
+    if(previewDonorHydrogens_==enabled)return;
+    previewDonorHydrogens_=enabled;
+    if(!importedLigands_.empty()){
+        ligint::Result preview;
+        preview.ligands=importedLigands_;
+        if(protein_){preview.backbone=protein_->backbone;preview.proteinAtoms=protein_->proteinAtoms;}
+        int chosen=-1;
+        for(int i=0;i<static_cast<int>(importedLigands_.size());++i)
+            if(importedLigands_[i].chain==data_.chain &&
+               importedLigands_[i].resi==data_.resi &&
+               importedLigands_[i].icode==data_.icode &&
+               importedLigands_[i].resName==data_.resName){chosen=i;break;}
+        setImportPreview(preview,chosen);
+    }
 }
 
 void ViewerWidget::setPocketAppearance(bool visible,double opacity,double specular){
