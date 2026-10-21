@@ -177,28 +177,52 @@ void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedInd
                     neighbors[bond.b].push_back(bond.a);
                 }
             }
-            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
+            for(const auto& site:ligand.ccdDonorHydrogens){
+                const int i=site.first,count=site.second;
+                if(i<0 || i>=static_cast<int>(ligand.atoms.size()) ||
+                   count<1 || count>3 || neighbors[i].empty())continue;
                 const auto& donor=ligand.atoms[i];
-                // Only unambiguous-looking isolated O-H groups, never infer
-                // nitrogen protonation, tautomerism or chemically unknown bond orders.
-                if(donor.element!="O" || neighbors[i].size()!=1)continue;
-                const auto& other=ligand.atoms[neighbors[i][0]];
-                if(other.element=="H"||other.element=="O")continue;
-                const double dx=donor.pos[0]-other.pos[0];
-                const double dy=donor.pos[1]-other.pos[1];
-                const double dz=donor.pos[2]-other.pos[2];
-                const double length=std::sqrt(dx*dx+dy*dy+dz*dz);
-                if(length<0.8)continue;
-                ligint::AtomRecord hydrogen;
-                hydrogen.name="H_EST";hydrogen.element="H";hydrogen.res=donor.res;
-                hydrogen.chain=donor.chain;hydrogen.resi=donor.resi;
-                hydrogen.icode=donor.icode;hydrogen.hetero=true;
-                hydrogen.pos={donor.pos[0]+dx/length*0.96,
-                              donor.pos[1]+dy/length*0.96,
-                              donor.pos[2]+dz/length*0.96};
-                const int index=static_cast<int>(combined.atoms.size());
-                combined.atoms.push_back(hydrogen);
-                combined.bonds.push_back({offset+i,index,1});
+                if(donor.element!="N"&&donor.element!="O")continue;
+                ligint::V3 outward{0,0,0};
+                for(int j:neighbors[i]){
+                    if(ligand.atoms[j].element=="H")continue;
+                    const auto& q=ligand.atoms[j].pos;
+                    ligint::V3 v{donor.pos[0]-q[0],donor.pos[1]-q[1],donor.pos[2]-q[2]};
+                    const double length=std::sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+                    if(length>0.2)for(int k=0;k<3;++k)outward[k]+=v[k]/length;
+                }
+                double len=std::sqrt(outward[0]*outward[0]+outward[1]*outward[1]+outward[2]*outward[2]);
+                if(len<0.1)continue; // local orientation underdetermined
+                for(double& x:outward)x/=len;
+                const ligint::V3 basis=std::abs(outward[2])<0.85?
+                    ligint::V3{0,0,1}:ligint::V3{0,1,0};
+                ligint::V3 transverse{outward[1]*basis[2]-outward[2]*basis[1],
+                                      outward[2]*basis[0]-outward[0]*basis[2],
+                                      outward[0]*basis[1]-outward[1]*basis[0]};
+                len=std::sqrt(transverse[0]*transverse[0]+transverse[1]*transverse[1]+transverse[2]*transverse[2]);
+                if(len<0.1)continue;
+                for(double& x:transverse)x/=len;
+                const ligint::V3 second{outward[1]*transverse[2]-outward[2]*transverse[1],
+                                        outward[2]*transverse[0]-outward[0]*transverse[2],
+                                        outward[0]*transverse[1]-outward[1]*transverse[0]};
+                for(int h=0;h<count;++h){
+                    const double theta=6.283185307179586*h/count;
+                    const double spread=count==1?0.0:0.65;
+                    ligint::V3 direction;
+                    for(int k=0;k<3;++k)
+                        direction[k]=outward[k]*std::sqrt(1-spread*spread)+
+                            spread*(transverse[k]*std::cos(theta)+second[k]*std::sin(theta));
+                    ligint::AtomRecord hydrogen;
+                    hydrogen.name="H_CCD_EST";hydrogen.element="H";hydrogen.res=donor.res;
+                    hydrogen.chain=donor.chain;hydrogen.resi=donor.resi;
+                    hydrogen.icode=donor.icode;hydrogen.hetero=true;
+                    hydrogen.pos={donor.pos[0]+0.99*direction[0],
+                                  donor.pos[1]+0.99*direction[1],
+                                  donor.pos[2]+0.99*direction[2]};
+                    const int index=static_cast<int>(combined.atoms.size());
+                    combined.atoms.push_back(hydrogen);
+                    combined.bonds.push_back({offset+i,index,1});
+                }
             }
         }
     }
