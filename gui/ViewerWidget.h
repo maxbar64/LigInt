@@ -33,6 +33,8 @@ public:
     // ...or the ligand with the protein of the analysis (Result::backbone and Result::proteinAtoms, see Options::protein3d).
     void setStructure(const ligint::Result& result, int ligandIndex = 0);
     void setImportPreview(const ligint::Result& result, int selectedIndex = -1);
+    void setPreviewDonorHydrogens(bool enabled);
+    bool previewDonorHydrogens() const { return previewDonorHydrogens_; }
     void clear();
     // Overlay the raw pocket volume in the same depth-buffered scene as protein and ligand.
     void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2);
@@ -113,7 +115,8 @@ private:
     ligint::LigandResult data_;
     std::shared_ptr<ligint::Result> protein_;
     std::vector<ligint::LigandResult> importedLigands_;
-    QPoint pressPoint_;        // backbone and atoms only
+    QPoint pressPoint_;
+    bool previewDonorHydrogens_ = false;        // backbone and atoms only
     bool hasData_ = false;
     ViewStyle style_;
     Pieces pieces_;
