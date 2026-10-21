@@ -194,144 +194,7 @@ void MainWindow::buildUi() {
     auto* ccdButton=new QPushButton(tr("Enrich ligand preview from CCD…"));
     ccdButton->setObjectName("preview_ccd_enrich");
     ccdButton->setToolTip(tr("Fetch cached or official RCSB Chemical Component Dictionary bonds. Only exact, unambiguous atom-name matches are accepted."));
-    connect(ccdButton,&QPushButton::clicked,this,[this] {
-        if(importPreview_.ligands.empty())return;
-        QStringList ids;
-        for(const auto& ligand:importPreview_.ligands){
-            const QString id=QString::fromStdString(ligand.resName).toUpper();
-            if(!ids.contains(id))ids<<id;
-        }
-        const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/ccd_preview.py";
-        if(!QFileInfo::exists(script)){showError(tr("CCD preview"),tr("CCD helper not found: ")+script);return;}
-        QString python=QStandardPaths::findExecutable("python3");
-        if(python.isEmpty())python=QStandardPaths::findExecutable("python");
-        if(python.isEmpty()){showError(tr("CCD preview"),tr("Python 3 is required."));return;}
-        QProcess process;
-        QStringList args{script};args<<ids;
-        process.start(python,args);
-        if(!process.waitForStarted(3000)){showError(tr("CCD preview"),process.errorString());return;}
-        QProgressDialog progress(tr("Retrieving CCD connectivity for ligand previews…"),tr("Cancel"),0,0,this);
-        progress.setWindowModality(Qt::WindowModal);
-        progress.setMinimumDuration(0);
-        connect(&process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
-                &progress,[&](int,QProcess::ExitStatus){progress.accept();});
-        connect(&progress,&QProgressDialog::canceled,&process,&QProcess::kill);
-        QTimer guard;guard.setSingleShot(true);
-        connect(&guard,&QTimer::timeout,&process,&QProcess::kill);
-        guard.start(90000);
-        if(process.state()!=QProcess::NotRunning)progress.exec();
-        if(process.state()!=QProcess::NotRunning)process.waitForFinished(2000);
-        if(process.exitStatus()!=QProcess::NormalExit||process.exitCode()!=0){
-            showError(tr("CCD preview"),tr("CCD lookup failed: ")+QString::fromUtf8(process.readAllStandardError()));
-            return;
-        }
-        const auto json=QJsonDocument::fromJson(process.readAllStandardOutput());
-        if(!json.isObject()){showError(tr("CCD preview"),tr("Invalid CCD response."));return;}
-        int updated=0,skipped=0;
-        const auto results=json.object();
-        for(auto& ligand:importPreview_.ligands){
-            const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
-            if(!entry.contains("bonds")){
-                ++skipped;
-                log(tr("CCD %1: %2").arg(QString::fromStdString(ligand.resName),
-                    entry.value("error").toString(tr("No CCD bond data returned"))));
-                continue;
-            }
-            const auto bonds=entry.value("bonds").toArray();
-            std::map<QString,int> byName;
-            bool collision=false;
-            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
-                const QString name=QString::fromStdString(ligand.atoms[i].name).trimmed();
-                if(byName.count(name)){collision=true;break;}
-                byName[name]=i;
-            }
-            if(collision){++skipped;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
-            // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
-            // inventory; partial components can assign unsafe connectivity/protonation.
-            const auto elements=entry.value("elements").toObject();
-            int ccdHeavy=0;
-            bool compatible=!elements.isEmpty();
-            for(auto it=elements.begin();it!=elements.end();++it){
-                const QString element=it.value().toString().toUpper();
-                if(element=="H"||element=="D")continue;
-                ++ccdHeavy;
-                if(!byName.count(it.key()) ||
-                   QString::fromStdString(ligand.atoms[byName[it.key()]].element).toUpper()!=element){
-                    compatible=false;break;
-                }
-            }
-            // A crystallographic ligand may have unresolved atoms. Preserve
-            // CCD bonds whose endpoints are both present and element-validated;
-            // allow CCD-derived H counts only for fully matching components.
-            bool validObserved=true;
-            for(const auto& atom:ligand.atoms){
-                const QString name=QString::fromStdString(atom.name).trimmed();
-                if(!elements.contains(name) ||
-                   elements.value(name).toString().toUpper()!=QString::fromStdString(atom.element).toUpper()){
-                    validObserved=false;break;
-                }
-            }
-            if(!validObserved || !compatible){
-                ++skipped;
-                log(tr("CCD %1: atom identity mismatch; geometric fallback retained.")
-                    .arg(QString::fromStdString(ligand.resName)));
-                continue;
-            }
-            const bool complete=ccdHeavy==static_cast<int>(ligand.atoms.size());
-            std::vector<ligint::BondRecord> newBonds;
-            std::set<std::pair<int,int>> seen;
-            bool invalid=false;
-            for(const auto& bondValue:bonds){
-                const auto fields=bondValue.toArray();
-                if(fields.size()!=3){invalid=true;break;}
-                const QString a=fields[0].toString(),b=fields[1].toString();
-                // CCD hydrogen atoms are frequently absent from deposited structures.
-                if(!byName.count(a)||!byName.count(b))continue;
-                const int ia=byName[a],ib=byName[b],order=fields[2].toInt();
-                const auto key=std::minmax(ia,ib);
-                if(ia==ib||order<1||order>4||!seen.insert(key).second){invalid=true;break;}
-                newBonds.push_back({ia,ib,order});
-            }
-            if(invalid||newBonds.empty()){
-                ++skipped;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
-                continue;
-            }
-            ligand.bonds=std::move(newBonds);
-            ligand.ccdDonorHydrogens.clear();
-            const auto donorSites=complete ? entry.value("donor_hydrogens").toObject() : QJsonObject();
-            for(auto it=donorSites.begin();it!=donorSites.end();++it){
-                const QString name=it.key();
-                const int n=it.value().toInt();
-                if(byName.count(name) && n>=1 && n<=3){
-                    const int idx=byName[name];
-                    const auto& element=ligand.atoms[idx].element;
-                    if(element=="N"||element=="O")ligand.ccdDonorHydrogens.push_back({idx,n});
-                }
-            }
-            ligand.annotation=complete ? "CCD atom-name matched connectivity" :
-                "Partial CCD connectivity (no donor H assignment)";
-            if(!complete)log(tr("CCD %1: partial topology applied; estimated hydrogens disabled.")
-                .arg(QString::fromStdString(ligand.resName)));
-            ++updated;
-        }
-        if(updated){
-            // Keep the selected ligand when rebuilding the import preview.
-            const auto index=ligandCombo_->currentIndex();
-            int selected=-1;
-            if(index>=0&&index<static_cast<int>(shownLigands_.size())){
-                const auto& id=shownLigands_[index];
-                for(int i=0;i<static_cast<int>(importPreview_.ligands.size());++i){
-                    const auto& lig=importPreview_.ligands[i];
-                    if(lig.resName==id.res&&lig.chain==id.chain&&lig.resi==id.resi&&lig.icode==id.icode){
-                        selected=i;break;
-                    }
-                }
-            }
-            viewer_->setImportPreview(importPreview_,selected);
-        }
-        log(tr("CCD ligand preview: %1 updated, %2 unchanged (details above).").arg(updated).arg(skipped));
-        statusBar()->showMessage(tr("CCD: %1 enriched, %2 unchanged; see Log").arg(updated).arg(skipped),12000);
-    });
+    connect(ccdButton,&QPushButton::clicked,this,&MainWindow::startCcdPreview);
     sv->addWidget(ccdButton);
 
     lv->addWidget(gStruct);
@@ -748,6 +611,155 @@ void MainWindow::showError(const QString& title, const QString& text) {
     if (interactive_) QMessageBox::warning(this, title, text);
 }
 
+
+void MainWindow::applyCcdPreview(const QJsonObject& results) {
+        int updated=0,skipped=0;
+        for(auto& ligand:importPreview_.ligands){
+            const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
+            if(!entry.contains("bonds")){
+                ++skipped;
+                log(tr("CCD %1: %2").arg(QString::fromStdString(ligand.resName),
+                    entry.value("error").toString(tr("No CCD bond data returned"))));
+                continue;
+            }
+            const auto bonds=entry.value("bonds").toArray();
+            std::map<QString,int> byName;
+            bool collision=false;
+            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
+                const QString name=QString::fromStdString(ligand.atoms[i].name).trimmed();
+                if(byName.count(name)){collision=true;break;}
+                byName[name]=i;
+            }
+            if(collision){++skipped;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
+            // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
+            // inventory; partial components can assign unsafe connectivity/protonation.
+            const auto elements=entry.value("elements").toObject();
+            int ccdHeavy=0;
+            bool compatible=!elements.isEmpty();
+            for(auto it=elements.begin();it!=elements.end();++it){
+                const QString element=it.value().toString().toUpper();
+                if(element=="H"||element=="D")continue;
+                ++ccdHeavy;
+                if(!byName.count(it.key()) ||
+                   QString::fromStdString(ligand.atoms[byName[it.key()]].element).toUpper()!=element){
+                    compatible=false;break;
+                }
+            }
+            // A crystallographic ligand may have unresolved atoms. Preserve
+            // CCD bonds whose endpoints are both present and element-validated;
+            // allow CCD-derived H counts only for fully matching components.
+            bool validObserved=true;
+            for(const auto& atom:ligand.atoms){
+                const QString name=QString::fromStdString(atom.name).trimmed();
+                if(!elements.contains(name) ||
+                   elements.value(name).toString().toUpper()!=QString::fromStdString(atom.element).toUpper()){
+                    validObserved=false;break;
+                }
+            }
+            if(!validObserved || !compatible){
+                ++skipped;
+                log(tr("CCD %1: atom identity mismatch; geometric fallback retained.")
+                    .arg(QString::fromStdString(ligand.resName)));
+                continue;
+            }
+            const bool complete=ccdHeavy==static_cast<int>(ligand.atoms.size());
+            std::vector<ligint::BondRecord> newBonds;
+            std::set<std::pair<int,int>> seen;
+            bool invalid=false;
+            for(const auto& bondValue:bonds){
+                const auto fields=bondValue.toArray();
+                if(fields.size()!=3){invalid=true;break;}
+                const QString a=fields[0].toString(),b=fields[1].toString();
+                // CCD hydrogen atoms are frequently absent from deposited structures.
+                if(!byName.count(a)||!byName.count(b))continue;
+                const int ia=byName[a],ib=byName[b],order=fields[2].toInt();
+                const auto key=std::minmax(ia,ib);
+                if(ia==ib||order<1||order>4||!seen.insert(key).second){invalid=true;break;}
+                newBonds.push_back({ia,ib,order});
+            }
+            if(invalid||newBonds.empty()){
+                ++skipped;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
+                continue;
+            }
+            ligand.bonds=std::move(newBonds);
+            ligand.ccdDonorHydrogens.clear();
+            const auto donorSites=complete ? entry.value("donor_hydrogens").toObject() : QJsonObject();
+            for(auto it=donorSites.begin();it!=donorSites.end();++it){
+                const QString name=it.key();
+                const int n=it.value().toInt();
+                if(byName.count(name) && n>=1 && n<=3){
+                    const int idx=byName[name];
+                    const auto& element=ligand.atoms[idx].element;
+                    if(element=="N"||element=="O")ligand.ccdDonorHydrogens.push_back({idx,n});
+                }
+            }
+            ligand.annotation=complete ? "CCD atom-name matched connectivity" :
+                "Partial CCD connectivity (no donor H assignment)";
+            if(!complete)log(tr("CCD %1: partial topology applied; estimated hydrogens disabled.")
+                .arg(QString::fromStdString(ligand.resName)));
+            ++updated;
+        }
+        if(updated){
+            // Keep the selected ligand when rebuilding the import preview.
+            const auto index=ligandCombo_->currentIndex();
+            int selected=-1;
+            if(index>=0&&index<static_cast<int>(shownLigands_.size())){
+                const auto& id=shownLigands_[index];
+                for(int i=0;i<static_cast<int>(importPreview_.ligands.size());++i){
+                    const auto& lig=importPreview_.ligands[i];
+                    if(lig.resName==id.res&&lig.chain==id.chain&&lig.resi==id.resi&&lig.icode==id.icode){
+                        selected=i;break;
+                    }
+                }
+            }
+            viewer_->setImportPreview(importPreview_,selected);
+        }
+        log(tr("CCD ligand preview: %1 updated, %2 unchanged (details above).").arg(updated).arg(skipped));
+        statusBar()->showMessage(tr("CCD: %1 enriched, %2 unchanged; see Log").arg(updated).arg(skipped),12000);
+
+}
+
+void MainWindow::startCcdPreview() {
+    if(importPreview_.ligands.empty())return;
+    ++ccdGeneration_;
+    if(ccdProcess_) { ccdProcess_->disconnect(this); ccdProcess_->kill(); ccdProcess_->deleteLater(); ccdProcess_=nullptr; }
+    QStringList ids;
+    for(const auto& lig:importPreview_.ligands){
+        const QString id=QString::fromStdString(lig.resName).toUpper();
+        if(!ids.contains(id)) ids<<id;
+    }
+    const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/ccd_preview.py";
+    if(!QFileInfo::exists(script)){ log(tr("CCD: helper not found: ")+script);return; }
+    QString python=QStandardPaths::findExecutable("python3");
+    if(python.isEmpty())python=QStandardPaths::findExecutable("python");
+    if(python.isEmpty()){log(tr("CCD: Python 3 not found"));return;}
+    QProcess* process=new QProcess(this);
+    ccdProcess_=process;
+    const quint64 generation=ccdGeneration_;
+    connect(process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),this,
+        [this,process,generation](int code,QProcess::ExitStatus status) {
+            const QByteArray output=process->readAllStandardOutput();
+            const QString error=QString::fromUtf8(process->readAllStandardError());
+            if(ccdProcess_==process) ccdProcess_=nullptr;
+            process->deleteLater();
+            if(generation!=ccdGeneration_)return; // another PDB was opened
+            if(status!=QProcess::NormalExit || code!=0){
+                log(tr("CCD automatic preview failed: ")+error);return;
+            }
+            QJsonParseError parseError{};
+            const auto json=QJsonDocument::fromJson(output,&parseError);
+            if(!json.isObject()){log(tr("CCD: invalid helper output: ")+parseError.errorString());return;}
+            applyCcdPreview(json.object());
+        });
+    connect(process,&QProcess::errorOccurred,this,
+        [this,process,generation](QProcess::ProcessError){
+            if(generation==ccdGeneration_)log(tr("CCD: ")+process->errorString());
+        });
+    QTimer::singleShot(90000,this,[process] { if(process->state()!=QProcess::NotRunning)process->kill(); });
+    QStringList args{script}; args<<ids;
+    process->start(python,args);
+}
+
 bool MainWindow::openStructure(const QString& path) {
     ligint::Result listing;
     try {
@@ -759,6 +771,8 @@ bool MainWindow::openStructure(const QString& path) {
         showError(tr("Cannot open the file"), QString::fromUtf8(e.what()));
         return false;
     }
+    ++ccdGeneration_;
+    if(ccdProcess_){ccdProcess_->disconnect(this);ccdProcess_->kill();ccdProcess_->deleteLater();ccdProcess_=nullptr;}
     path_ = path;
     if(auto* pockets=findChild<PocketWorkspace*>("pocketWorkspace"))pockets->setStructurePath(path);
     allLigands_ = listing.hetResidues;
@@ -794,6 +808,7 @@ bool MainWindow::openStructure(const QString& path) {
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(viewer_->hasData());
+    startCcdPreview();
     if (ligandCombo_->count() == 0) statusBar()->showMessage(tr("No HETATM ligand in this file"));
     else statusBar()->showMessage(tr("%1 ligands: choose one and press \u00abAnalyze\u00bb").arg(ligandCombo_->count()));
     return true;
