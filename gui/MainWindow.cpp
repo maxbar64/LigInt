@@ -183,6 +183,13 @@ void MainWindow::buildUi() {
     sv->addWidget(new QLabel(tr("Ligand:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
+    auto* previewHydrogens=new QCheckBox(tr("Preview: estimated hydroxyl H atoms"));
+    previewHydrogens->setObjectName("preview_donor_hydrogens");
+    previewHydrogens->setToolTip(tr("Draw tentative O-H hydrogen atoms in the import preview only. The geometry is illustrative; no protonation or hydrogen bond analysis is performed."));
+    connect(previewHydrogens,&QCheckBox::toggled,this,[this](bool checked){
+        viewer_->setPreviewDonorHydrogens(checked);
+    });
+    sv->addWidget(previewHydrogens);
     lv->addWidget(gStruct);
 
     auto* gOpt = new QGroupBox(tr("Options"));
