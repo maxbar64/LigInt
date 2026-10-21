@@ -197,8 +197,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             id.res = atoms[0].res; id.chain = get<0>(k); id.resi = get<1>(k); id.icode = get<2>(k); id.atoms = (int)atoms.size();
             res.hetResidues.push_back(id);
         }
-        // Lightweight ligand coordinates for the import-time viewer: no bonds or contacts inferred.
-        for (const auto& [key, atoms] : hetRes) {
+        // Lightweight ligand coordinates for the import-time viewer only.
+        if (opt.previewLigands3d) for (const auto& [key, atoms] : hetRes) {
             if (atoms.empty()) continue;
             LigandResult preview;
             preview.resName = atoms.front().res;
