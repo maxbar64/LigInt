@@ -563,7 +563,9 @@ void MainWindow::showError(const QString& title, const QString& text) {
 bool MainWindow::openStructure(const QString& path) {
     ligint::Result listing;
     try {
-        listing = ligint::analyzeFile(path.toStdString(), ligint::Options());
+        ligint::Options previewOptions;
+        previewOptions.protein3d = true;
+        listing = ligint::analyzeFile(path.toStdString(), previewOptions);
     } catch (const std::exception& e) {
         showError(tr("Cannot open the file"), QString::fromUtf8(e.what()));
         return false;
@@ -582,7 +584,8 @@ bool MainWindow::openStructure(const QString& path) {
     }
     result_ = ligint::Result();
     model_->setHits({});
-    viewer_->clear();
+    if (!listing.backbone.empty()) viewer_->setStructure(listing, -1);
+    else viewer_->clear();
     residueTable_->setRowCount(0);
     typeList_->clear();
     fp_ = ligint::Fingerprint();
@@ -598,7 +601,7 @@ bool MainWindow::openStructure(const QString& path) {
     refreshLigandCombo();
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
-    imageAct_->setEnabled(false);
+    imageAct_->setEnabled(viewer_->hasData());
     if (ligandCombo_->count() == 0) statusBar()->showMessage(tr("No HETATM ligand in this file"));
     else statusBar()->showMessage(tr("%1 ligands: choose one and press \u00abAnalyze\u00bb").arg(ligandCombo_->count()));
     return true;
