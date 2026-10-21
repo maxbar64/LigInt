@@ -188,6 +188,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         }
     }
     if (ligName.empty() || ligs.empty()) {
+        // A listing can still provide protein geometry for the 3D preview.
+        if (opt.protein3d) buildProteinScene(prot, res);
         res.listingOnly = true;
         for (auto& [n, s] : hetNames) res.hetCounts[n] = (int)s.size();
         for (auto& [k, atoms] : hetRes) {
