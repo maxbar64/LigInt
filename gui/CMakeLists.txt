@@ -56,7 +56,7 @@ if(WIN32)
 else()
     set(_ligint_bundle_qt_default OFF)
 endif()
-option(LIGINT_BUNDLE_QT "Install the Qt libraries and plugins with ligint-gui" ${_ligint_bundle_qt_default})
+option(LIGINT_BUNDLE_QT "Install the Qt libraries and plugins with ligint-gui (Linux: also json-c and the launchers bin/*.sh)" ${_ligint_bundle_qt_default})
 if(LIGINT_BUNDLE_QT AND QT_VERSION_MAJOR EQUAL 6)
     if(UNIX AND NOT APPLE)
         # with a Qt in a system prefix the deployment cannot tell Qt from the system libraries, and would bundle glibc too
