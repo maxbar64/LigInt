@@ -177,6 +177,7 @@ private:
     std::vector<ligint::Tmpl> templates_;
     QStringList templateNames_;
     ligint::Result result_;
+    ligint::Result importPreview_;
 
     // control panel
     QLabel* fileLabel_ = nullptr;
