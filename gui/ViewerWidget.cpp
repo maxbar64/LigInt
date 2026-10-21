@@ -126,6 +126,8 @@ ViewerWidget::~ViewerWidget() {
 
 // ---- data ----------------------------------------------------------------------------------------
 void ViewerWidget::setLigand(const ligint::LigandResult& r) {
+    importedLigands_.clear();
+    pieces_.previewLigands.reset();
     data_ = r;
     protein_.reset();
     hasData_ = !data_.atoms.empty();
@@ -136,6 +138,8 @@ void ViewerWidget::setLigand(const ligint::LigandResult& r) {
 }
 
 void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
+    importedLigands_.clear();
+    pieces_.previewLigands.reset();
     const bool withLigand = ligandIndex >= 0 && ligandIndex < static_cast<int>(result.ligands.size());
     data_ = withLigand ? result.ligands[ligandIndex] : ligint::LigandResult();
     protein_ = std::make_shared<ligint::Result>();
@@ -146,6 +150,33 @@ void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
     rebuildAll();
     if (withLigand) orient();
     else { rot_ = Mat3{1,0,0,0,1,0,0,0,1}; fitProtein(); }
+    invalidate(false);
+}
+
+void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedIndex) {
+    setStructure(result,-1);
+    importedLigands_=result.ligands;
+    if(selectedIndex>=0 && selectedIndex<static_cast<int>(importedLigands_.size()))
+        data_=importedLigands_[selectedIndex];
+    else data_=ligint::LigandResult();
+    // Preview ligand coordinates without chemical bond inference or interaction analysis.
+    auto piece=std::make_shared<AtomsPiece>();
+    for(const auto& ligand:importedLigands_) {
+        for(const auto& atom:ligand.atoms){
+            const auto& p=atom.pos;
+            const std::string& el=atom.element;
+            const std::uint32_t color = el=="O"?0xe05252u:el=="N"?0x478de6u:
+                el=="S"?0xe2bb35u:el=="P"?0xea8c36u:0x54c7a9u;
+            piece->spheres.push_back({static_cast<float>(p[0]),static_cast<float>(p[1]),
+                static_cast<float>(p[2]),selectedIndex>=0 && &ligand==&importedLigands_[selectedIndex]?0.48f:0.34f,color});
+        }
+    }
+    pieces_.previewLigands=piece;
+    pieces_.ligand.reset(); // spheres are drawn by the shared import-preview layer
+    pieces_.residues.reset();
+    pieces_.water.reset();
+    if(selectedIndex>=0 && !data_.atoms.empty()) focusLigand();
+    else fitProtein();
     invalidate(false);
 }
 
@@ -206,6 +237,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
 }
 
 void ViewerWidget::clear() {
+    importedLigands_.clear();
     data_ = ligint::LigandResult();
     protein_.reset();
     pieces_ = Pieces();
@@ -401,7 +433,7 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
     }
     // ...ligand and residues remain in the same depth-buffered composition.
 
-    for (const auto& piece : {pieces.residues, pieces.ligand, pieces.water}) {
+    for (const auto& piece : {pieces.residues, pieces.ligand, pieces.water, pieces.previewLigands}) {
         if (!piece) continue;
         if (!piece->sticks.empty()) {
             raster::MeshView mv;
@@ -642,7 +674,7 @@ void ViewerWidget::drawOverlay(QPainter& p, const QRectF& rect, const Frame& fra
 }
 
 // ---- mouse ---------------------------------------------------------------------------------------
-void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint(); }
+void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint(); pressPoint_=last_; }
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     const QPoint cur = eventPos(e).toPoint();
@@ -660,7 +692,27 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     invalidate(true);
 }
 
-void ViewerWidget::mouseReleaseEvent(QMouseEvent*) {
+void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
+    if(e->button()==Qt::LeftButton && !importedLigands_.empty() &&
+       (eventPos(e).toPoint()-pressPoint_).manhattanLength()<5) {
+        const auto camera=makeCamera(size(),1.0,false);
+        const QPointF click=eventPos(e);
+        int best=-1;
+        double bestDist2=144.0;
+        double bestDepth=1e30;
+        for(int i=0;i<static_cast<int>(importedLigands_.size());++i) {
+            for(const auto& a:importedLigands_[i].atoms){
+                const auto pt=camera.project(a.pos);
+                if(!pt.ok)continue;
+                const double dx=pt.x-click.x(),dy=pt.y-click.y();
+                const double d2=dx*dx+dy*dy;
+                if(d2<bestDist2 || (d2==bestDist2 && pt.w<bestDepth)) {
+                    best=i;bestDist2=d2;bestDepth=pt.w;
+                }
+            }
+        }
+        if(best>=0)emit importLigandPicked(best);
+    }
     if (interacting_) {
         interacting_ = false;
         stateKey_++;          // a fresh frame at the normal size, then the high quality one
