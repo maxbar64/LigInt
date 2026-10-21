@@ -190,6 +190,95 @@ void MainWindow::buildUi() {
         viewer_->setPreviewDonorHydrogens(checked);
     });
     sv->addWidget(previewHydrogens);
+
+    auto* ccdButton=new QPushButton(tr("Enrich ligand preview from CCD…"));
+    ccdButton->setObjectName("preview_ccd_enrich");
+    ccdButton->setToolTip(tr("Fetch cached or official RCSB Chemical Component Dictionary bonds. Only exact, unambiguous atom-name matches are accepted."));
+    connect(ccdButton,&QPushButton::clicked,this,[this] {
+        if(importPreview_.ligands.empty())return;
+        QStringList ids;
+        for(const auto& ligand:importPreview_.ligands){
+            const QString id=QString::fromStdString(ligand.resName).toUpper();
+            if(!ids.contains(id))ids<<id;
+        }
+        const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/ccd_preview.py";
+        if(!QFileInfo::exists(script)){showError(tr("CCD preview"),tr("CCD helper not found: ")+script);return;}
+        QString python=QStandardPaths::findExecutable("python3");
+        if(python.isEmpty())python=QStandardPaths::findExecutable("python");
+        if(python.isEmpty()){showError(tr("CCD preview"),tr("Python 3 is required."));return;}
+        QProcess process;
+        QStringList args{script};args<<ids;
+        process.start(python,args);
+        if(!process.waitForStarted(3000)){showError(tr("CCD preview"),process.errorString());return;}
+        QProgressDialog progress(tr("Retrieving CCD connectivity for ligand previews…"),tr("Cancel"),0,0,this);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMinimumDuration(0);
+        connect(&process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                &progress,[&](int,QProcess::ExitStatus){progress.accept();});
+        connect(&progress,&QProgressDialog::canceled,&process,&QProcess::kill);
+        QTimer guard;guard.setSingleShot(true);
+        connect(&guard,&QTimer::timeout,&process,&QProcess::kill);
+        guard.start(90000);
+        if(process.state()!=QProcess::NotRunning)progress.exec();
+        if(process.state()!=QProcess::NotRunning)process.waitForFinished(2000);
+        if(process.exitStatus()!=QProcess::NormalExit||process.exitCode()!=0){
+            showError(tr("CCD preview"),tr("CCD lookup failed: ")+QString::fromUtf8(process.readAllStandardError()));
+            return;
+        }
+        const auto json=QJsonDocument::fromJson(process.readAllStandardOutput());
+        if(!json.isObject()){showError(tr("CCD preview"),tr("Invalid CCD response."));return;}
+        int updated=0,skipped=0;
+        const auto results=json.object();
+        for(auto& ligand:importPreview_.ligands){
+            const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
+            if(!entry.contains("bonds")){++skipped;continue;}
+            const auto bonds=entry.value("bonds").toArray();
+            std::map<QString,int> byName;
+            bool collision=false;
+            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
+                const QString name=QString::fromStdString(ligand.atoms[i].name).trimmed();
+                if(byName.count(name)){collision=true;break;}
+                byName[name]=i;
+            }
+            if(collision){++skipped;continue;}
+            std::vector<ligint::BondRecord> newBonds;
+            std::set<std::pair<int,int>> seen;
+            bool invalid=false;
+            for(const auto& bondValue:bonds){
+                const auto fields=bondValue.toArray();
+                if(fields.size()!=3){invalid=true;break;}
+                const QString a=fields[0].toString(),b=fields[1].toString();
+                // CCD hydrogen atoms are frequently absent from deposited structures.
+                if(!byName.count(a)||!byName.count(b))continue;
+                const int ia=byName[a],ib=byName[b],order=fields[2].toInt();
+                const auto key=std::minmax(ia,ib);
+                if(ia==ib||order<1||order>4||!seen.insert(key).second){invalid=true;break;}
+                newBonds.push_back({ia,ib,order});
+            }
+            if(invalid||newBonds.empty()){++skipped;continue;}
+            ligand.bonds=std::move(newBonds);
+            ligand.annotation="CCD atom-name matched connectivity";
+            ++updated;
+        }
+        if(updated){
+            // Keep the selected ligand when rebuilding the import preview.
+            const auto index=ligandCombo_->currentIndex();
+            int selected=-1;
+            if(index>=0&&index<static_cast<int>(shownLigands_.size())){
+                const auto& id=shownLigands_[index];
+                for(int i=0;i<static_cast<int>(importPreview_.ligands.size());++i){
+                    const auto& lig=importPreview_.ligands[i];
+                    if(lig.resName==id.res&&lig.chain==id.chain&&lig.resi==id.resi&&lig.icode==id.icode){
+                        selected=i;break;
+                    }
+                }
+            }
+            viewer_->setImportPreview(importPreview_,selected);
+        }
+        log(tr("CCD ligand preview: %1 updated, %2 unchanged (no compatible CCD match).").arg(updated).arg(skipped));
+    });
+    sv->addWidget(ccdButton);
+
     lv->addWidget(gStruct);
 
     auto* gOpt = new QGroupBox(tr("Options"));
