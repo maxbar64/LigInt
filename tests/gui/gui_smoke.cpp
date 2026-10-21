@@ -106,6 +106,12 @@ int main(int argc, char** argv) {
     CHECK(w.openStructure(argv[1]));
     CHECK(w.ligandCount() > 0);
     CHECK(w.viewer()->hasData());                     // imported protein preview is immediately visible
+    if (auto* aromatic = w.findChild<QComboBox*>("graphics_aromatic_style")) {
+        CHECK(aromatic->count() == 3);
+        aromatic->setCurrentIndex(1);
+        CHECK(w.viewer()->style().aromaticDisplay == gui::AromaticDisplay::KekuleLike);
+        aromatic->setCurrentIndex(0);
+    } else CHECK(false);
     CHECK(w.viewer()->hasProtein());
     CHECK(w.viewer()->cartoonTriangles() > 0);
     CHECK(w.result().ligands.empty());                // preview must not trigger interaction analysis
