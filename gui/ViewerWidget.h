@@ -32,6 +32,7 @@ public:
     void setLigand(const ligint::LigandResult& r);
     // ...or the ligand with the protein of the analysis (Result::backbone and Result::proteinAtoms, see Options::protein3d).
     void setStructure(const ligint::Result& result, int ligandIndex = 0);
+    void setImportPreview(const ligint::Result& result, int selectedIndex = -1);
     void clear();
     // Overlay the raw pocket volume in the same depth-buffered scene as protein and ligand.
     void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2);
@@ -61,6 +62,7 @@ public:
 signals:
     void styleChanged();
     void busyChanged(bool busy);
+    void importLigandPicked(int index);
 
 public slots:
     void resetView();        // initial orientation, framing the ligand
@@ -81,7 +83,7 @@ private:
 
     struct Pieces {
         std::shared_ptr<const MeshPiece> cartoon, surface, pocket;
-        std::shared_ptr<const AtomsPiece> ligand, residues, water;
+        std::shared_ptr<const AtomsPiece> ligand, residues, water, previewLigands;
     };
     struct Frame {                                   // result of a render
         QImage image;
@@ -109,7 +111,9 @@ private:
     std::size_t triangleCount() const;
 
     ligint::LigandResult data_;
-    std::shared_ptr<ligint::Result> protein_;        // backbone and atoms only
+    std::shared_ptr<ligint::Result> protein_;
+    std::vector<ligint::LigandResult> importedLigands_;
+    QPoint pressPoint_;        // backbone and atoms only
     bool hasData_ = false;
     ViewStyle style_;
     Pieces pieces_;
