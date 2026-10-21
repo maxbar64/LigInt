@@ -44,9 +44,9 @@ class AutoGpcrdbTests(unittest.TestCase):
             reverse = {aa: code for code, aa in module.AA.items() if len(code)==3}
             lines = []
             for i, aa in enumerate(seq):
-                lines.append(f"ATOM  {i+1:5d}   CA {reverse[aa]:>3s} R{i+101:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\\n")
+                lines.append(f"ATOM  {i+1:5d}   CA {reverse[aa]:>3s} R{i+101:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\n")
             for i, aa in enumerate("G"*50):
-                lines.append(f"ATOM  {100+i:5d}   CA {reverse[aa]:>3s} A{i+1:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\\n")
+                lines.append(f"ATOM  {100+i:5d}   CA {reverse[aa]:>3s} A{i+1:4d}    {float(i):8.3f}{0.:8.3f}{0.:8.3f}{1.:6.2f}{20.:6.2f}           C\n")
             pdb = root/"complex.pdb"
             pdb.write_text("".join(lines))
             reference = [(i+1, aa, "3x32", "TM3") for i,aa in enumerate(seq)]
@@ -59,7 +59,8 @@ class AutoGpcrdbTests(unittest.TestCase):
 
     def test_pdb_lookup_rejects_unrecognized_schema(self):
         with patch.object(module, "urlopen", return_value=BytesIO(b'{"protein":"unknown-value"}')):
-            self.assertEqual(module.identify_entry_from_pdb("3SN6"), "unknown-value")
+            with self.assertRaises(ValueError):
+                module.identify_entry_from_pdb("3SN6")
         with patch.object(module, "urlopen", return_value=BytesIO(b'{"result":"missing"}')):
             with self.assertRaises(ValueError):
                 module.identify_entry_from_pdb("3SN6")
