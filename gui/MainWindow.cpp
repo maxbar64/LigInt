@@ -381,6 +381,43 @@ void MainWindow::buildUi() {
 
     // ---- view and tables (right)
     viewer_ = new ViewerWidget;
+    connect(viewer_, &ViewerWidget::importLigandPicked, this, [this](int previewIndex) {
+        if (!result_.ligands.empty()) return; // only import preview has pickable HETATM residues
+        if (previewIndex < 0 || previewIndex >= static_cast<int>(importPreview_.ligands.size())) return;
+        const auto& picked = importPreview_.ligands[previewIndex];
+        for (int i=0;i<static_cast<int>(shownLigands_.size());++i) {
+            const auto& id=shownLigands_[i];
+            if(id.chain==picked.chain && id.resi==picked.resi &&
+               id.icode==picked.icode && id.res==picked.resName) {
+                ligandCombo_->setCurrentIndex(i);
+                return;
+            }
+        }
+        if (!showSmall_->isChecked()) {
+            showSmall_->setChecked(true);
+            for (int i=0;i<static_cast<int>(shownLigands_.size());++i) {
+                const auto& id=shownLigands_[i];
+                if(id.chain==picked.chain && id.resi==picked.resi &&
+                   id.icode==picked.icode && id.res==picked.resName) {
+                    ligandCombo_->setCurrentIndex(i);return;
+                }
+            }
+        }
+    });
+    connect(ligandCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        if (!result_.ligands.empty() || importPreview_.ligands.empty()) return;
+        if(index<0 || index>=static_cast<int>(shownLigands_.size())) return;
+        const auto& selected=shownLigands_[index];
+        for (int n=0;n<static_cast<int>(importPreview_.ligands.size());++n) {
+            const auto& lig=importPreview_.ligands[n];
+            if(lig.chain==selected.chain && lig.resi==selected.resi &&
+               lig.icode==selected.icode && lig.resName==selected.res) {
+                viewer_->setImportPreview(importPreview_,n);
+                return;
+            }
+        }
+    });
     graphicsOptions_ = new ViewerOptionsWidget(viewer_);
     auto* graphicsScroll = new QScrollArea;
     graphicsScroll->setObjectName("graphicsOptionsScroll");
@@ -583,8 +620,9 @@ bool MainWindow::openStructure(const QString& path) {
         altlocCombo_->setEnabled(!listing.altlocs.empty());
     }
     result_ = ligint::Result();
+    importPreview_ = listing;
     model_->setHits({});
-    if (!listing.backbone.empty()) viewer_->setStructure(listing, -1);
+    if (!listing.backbone.empty() || !listing.ligands.empty()) viewer_->setImportPreview(importPreview_, -1);
     else viewer_->clear();
     residueTable_->setRowCount(0);
     typeList_->clear();
