@@ -241,6 +241,23 @@ void MainWindow::buildUi() {
                 byName[name]=i;
             }
             if(collision){++skipped;continue;}
+            // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
+            // inventory; partial components can assign unsafe connectivity/protonation.
+            const auto elements=entry.value("elements").toObject();
+            int ccdHeavy=0;
+            bool compatible=!elements.isEmpty();
+            for(auto it=elements.begin();it!=elements.end();++it){
+                const QString element=it.value().toString().toUpper();
+                if(element=="H"||element=="D")continue;
+                ++ccdHeavy;
+                if(!byName.count(it.key()) ||
+                   QString::fromStdString(ligand.atoms[byName[it.key()]].element).toUpper()!=element){
+                    compatible=false;break;
+                }
+            }
+            if(!compatible || ccdHeavy!=static_cast<int>(ligand.atoms.size())){
+                ++skipped;continue;
+            }
             std::vector<ligint::BondRecord> newBonds;
             std::set<std::pair<int,int>> seen;
             bool invalid=false;
