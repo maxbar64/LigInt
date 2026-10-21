@@ -156,6 +156,7 @@ void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
 void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedIndex) {
     setStructure(result,-1);
     importedLigands_=result.ligands;
+    hasData_=!importedLigands_.empty() || hasProtein();
     if(selectedIndex>=0 && selectedIndex<static_cast<int>(importedLigands_.size()))
         data_=importedLigands_[selectedIndex];
     else data_=ligint::LigandResult();
