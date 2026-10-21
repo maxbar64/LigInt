@@ -65,6 +65,10 @@ if(LIGINT_BUNDLE_QT AND QT_VERSION_MAJOR EQUAL 6)
         endif()
         # the bundled Qt is found next to the program, wherever the package is unpacked
         set_target_properties(ligint-gui PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+        # besides the default platform (xcb), the offscreen one: headless runs (QT_QPA_PLATFORM=offscreen), as in the CI
+        qt_import_plugins(ligint-gui INCLUDE Qt6::QOffscreenIntegrationPlugin)
+        # the list of plugins to deploy (platforms, image formats...) is written only for finalized targets (windeployqt finds them by itself)
+        qt_finalize_target(ligint-gui)
     endif()
     if(COMMAND qt_generate_deploy_app_script)
         set(LIGINT_DEPLOY_OPTIONS NO_UNSUPPORTED_PLATFORM_ERROR)
