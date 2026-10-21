@@ -11,6 +11,7 @@ enum class SurfaceMode { Off, Pocket, Protein };
 enum class SurfaceType { SolventExcluded, SolventAccessible };
 enum class SurfaceColor { Neutral, Atoms, Hydrophobicity, Protein };    // Protein = the same colors as the cartoon
 enum class LigandStyle { Sticks, BallStick, Spheres };
+enum class AromaticDisplay { Dashed, KekuleLike, Single };
 enum class ResidueStyle { Off, Sticks };
 enum class Background { White, Light, Dark };
 
@@ -24,6 +25,7 @@ struct ViewStyle {
     bool pocketVisible = true;
     double pocketOpacity = 0.38, pocketSpecular = 0.12;
     LigandStyle ligand = LigandStyle::BallStick;
+    AromaticDisplay aromaticDisplay = AromaticDisplay::Dashed;
     ResidueStyle residues = ResidueStyle::Sticks;
     bool showLigand = true;
     bool showWaters = true;
