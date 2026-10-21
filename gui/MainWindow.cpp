@@ -659,7 +659,7 @@ void MainWindow::applyCcdPreview(const QJsonObject& results) {
                 }
             }
             if(!validObserved || !compatible){
-                ++skipped;
+                ++skipped;failedComponents<<component;
                 log(tr("CCD %1: atom identity mismatch; geometric fallback retained.")
                     .arg(QString::fromStdString(ligand.resName)));
                 continue;
