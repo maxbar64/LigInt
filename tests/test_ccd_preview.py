@@ -38,6 +38,10 @@ class CcdTests(unittest.TestCase):
     def test_order_and_atom_names(self):
         self.assertEqual(m.parse_component(CCD,"TEST"),
                          [["C1","N1",1],["N1","C2",2],["C2","C3",4],["N1","H1",1]])
+    def test_wrapped_cif_loop_rows(self):
+        wrapped=CCD.replace("TEST N1 C2 DOUB N", "TEST N1\nC2 DOUB N")
+        self.assertEqual(len(m.parse_component(wrapped,"TEST")),4)
+        self.assertEqual(m.parse_atom_elements(wrapped)["N1"],"N")
     def test_refuses_missing_bond_table(self):
         with self.assertRaises(ValueError):
             m.parse_component("data_TEST\n#\n","TEST")
