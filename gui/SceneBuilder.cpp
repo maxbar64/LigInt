@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <map>
+#include <queue>
 
 #include "Style.h"
 
@@ -178,6 +179,44 @@ std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecor
     auto piece = std::make_shared<AtomsPiece>();
     std::vector<QColor> col(atoms.size());
     for (std::size_t i = 0; i < atoms.size(); i++) col[i] = elementColor(QString::fromStdString(atoms[i].element), ligand);
+    // Detect minimal aromatic cycles from the CCD bond graph. A fused system can
+    // have more than one cycle; each aromatic edge uses the shortest alternative
+    // path to place its inner stroke towards a real ring, rather than arbitrarily.
+    std::vector<std::vector<int>> aromaticAdj(atoms.size());
+    for (const auto& edge:bonds)
+        if(edge.order==4 && edge.a>=0 && edge.b>=0 &&
+           edge.a<static_cast<int>(atoms.size()) && edge.b<static_cast<int>(atoms.size())){
+            aromaticAdj[edge.a].push_back(edge.b);
+            aromaticAdj[edge.b].push_back(edge.a);
+        }
+    auto aromaticInterior=[&](int from,int to,const V3& midpoint,const V3& axis,const V3& fallback){
+        std::vector<int> parent(atoms.size(),-1);
+        std::queue<int> pending;
+        parent[from]=from;pending.push(from);
+        while(!pending.empty()&&parent[to]<0){
+            int at=pending.front();pending.pop();
+            for(int next:aromaticAdj[at]){
+                if((at==from&&next==to)||(at==to&&next==from))continue;
+                if(parent[next]>=0)continue;
+                parent[next]=at;pending.push(next);
+            }
+        }
+        if(parent[to]<0)return fallback;
+        V3 center{0,0,0};
+        int count=0;
+        for(int at=to;at!=from;at=parent[at]){
+            center=add3(center,atoms[at].pos);++count;
+            if(count>12)return fallback;
+        }
+        center=add3(center,atoms[from].pos);++count;
+        center=mul3(center,1.0/count);
+        const V3 towards=sub3(center,midpoint);
+        const double axisSq=dot3(axis,axis);
+        if(axisSq<1e-10)return fallback;
+        const V3 projected=sub3(towards,mul3(axis,dot3(towards,axis)/axisSq));
+        const double distance=len3(projected);
+        return distance>0.05?mul3(projected,1.0/distance):fallback;
+    };
     for (const auto& b : bonds) {
         if (b.a < 0 || b.b < 0 || b.a >= (int)atoms.size() || b.b >= (int)atoms.size()) continue;
         const V3 a=atoms[b.a].pos, z=atoms[b.b].pos;
@@ -205,14 +244,19 @@ std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecor
             // Aromatic connections: continuous outer bond and an inset dashed
             // parallel segment. Fused systems use the same per-edge convention.
             stroke(0,stickRadius,a,z);
+            const V3 inward=aromaticInterior(b.a,b.b,mul3(add3(a,z),0.5),axis,normal);
+            const auto insetStroke=[&](const V3& start,const V3& end){
+                const V3 d=mul3(inward,0.16);
+                appendBond(*piece,add3(start,d),add3(end,d),stickRadius*0.48,col[b.a],col[b.b]);
+            };
             const V3 p=add3(a,mul3(axis,0.22)),q=add3(a,mul3(axis,0.46));
             const V3 u=add3(a,mul3(axis,0.56)),v=add3(a,mul3(axis,0.80));
             if(aromaticDisplay==AromaticDisplay::KekuleLike){
                 // This is an illustrative alternating appearance, not a formally assigned Kekule structure.
-                stroke(0.16,stickRadius*0.48,p,v);
+                insetStroke(p,v);
             }else{
-                stroke(0.16,stickRadius*0.48,p,q);
-                stroke(0.16,stickRadius*0.48,u,v);
+                insetStroke(p,q);
+                insetStroke(u,v);
             }
         }else appendBond(*piece,a,z,stickRadius,col[b.a],col[b.b]);
     }
