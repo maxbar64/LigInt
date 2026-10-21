@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs a program of the ligint .tar.gz with the libraries of the package (@CMAKE_INSTALL_LIBDIR@/ next to bin/) found before those of the system.
+# Installed as bin/ligint.sh and bin/ligint-gui.sh: each one runs the program with its own name without ".sh". It can be called through a symbolic link.
+here=$(dirname "$(readlink -f "$0")")
+prog="$here/$(basename "$(readlink -f "$0")" .sh)"
+LD_LIBRARY_PATH="$(dirname "$here")/@CMAKE_INSTALL_LIBDIR@${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH
+exec "$prog" "$@"

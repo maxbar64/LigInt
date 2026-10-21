@@ -17,6 +17,10 @@
 #include <filesystem>
 #include "ligint/ligint.hpp"
 
+#ifndef M_PI    // MSVC defines it only with _USE_MATH_DEFINES
+#define M_PI 3.14159265358979323846
+#endif
+
 static int failures = 0;
 #define CHECK(cond)                                                                    \
     do {                                                                               \

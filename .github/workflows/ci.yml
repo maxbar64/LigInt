@@ -4,267 +4,101 @@ on:
   pull_request:
   workflow_dispatch:        # also from the Actions page ("Run workflow")
 
+env:
+  BUCKET_NAME: build.moldiscovery.com      # S3 bucket of the uploaded builds (moldiscovery/upload-build)
+
 jobs:
-  linux-gui:
-    name: Linux (GCC, GUI Qt6)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-        env:
-          QT_QPA_PLATFORM: offscreen
-
-  linux-clang:
-    name: Linux (Clang, GUI Qt6)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build clang libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev libgl1-mesa-dev fonts-dejavu-core
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DLIGINT_WARNINGS_AS_ERRORS=ON
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-        env:
-          QT_QPA_PLATFORM: offscreen
-
-  sanitizers:
-    name: Linux (ASan + UBSan, no GUI)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLIGINT_SANITIZE=ON -DLIGINT_BUILD_GUI=OFF
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-
-  macos-cli:
-    name: macOS (library and CLI only)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLIGINT_BUILD_GUI=OFF
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-
   # ---------------------------------------------------------------------------------------------
-  # Installers and packages. They are built after the tests pass, tried (installed, started,
-  # removed) and kept as artifacts; a version tag (v*) publishes them in a GitHub release.
+  # Linux and Windows builds (command line and GUI). They are built, tested, packaged, tried and
+  # kept as artifacts; a version tag (v*) publishes them in a GitHub release.
   # ---------------------------------------------------------------------------------------------
-  linux-packages:
-    name: Linux packages (.deb, .tar.gz)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libcurl4-openssl-dev libjson-c-dev pkg-config qt6-base-dev qt6-svg-dev libgl1-mesa-dev fonts-dejavu-core lintian desktop-file-utils
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: The HTML manual is up to date with its sources
-        run: |
-          pip install -r tools/requirements-manual.txt
-          python3 tools/build_manual.py --check
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
-      - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-        env:
-          QT_QPA_PLATFORM: offscreen
-      - name: Package
-        run: cd build && cpack -G "DEB;TGZ"
-      - name: Check the packages (lintian)
-        run: lintian --fail-on error build/ligint_*_amd64.deb build/ligint-dev_*_amd64.deb
-      - name: Install, run, remove
-        run: |
-          sudo apt-get install -y ./build/ligint_*_amd64.deb ./build/ligint-dev_*_amd64.deb
-          ligint --version
-          ligint tests/data/1AZM.pdb AZM --csv | head -3
-          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
-          desktop-file-validate /usr/share/applications/ligint-gui.desktop
-          # a program built against the installed development package (this catches a CMake package that names build-only targets)
-          mkdir consumer
-          cat > consumer/CMakeLists.txt <<'EOF'
-          cmake_minimum_required(VERSION 3.16)
-          project(consumer CXX)
-          set(CMAKE_CXX_STANDARD 17)
-          find_package(ligint REQUIRED)
-          add_executable(consumer main.cpp)
-          target_link_libraries(consumer PRIVATE ligint::core)
-          EOF
-          cat > consumer/main.cpp <<'EOF'
-          #include <iostream>
-          #include <ligint/ligint.hpp>
-          int main(int, char** argv) {
-              ligint::Options opt;
-              opt.ligName = argv[2];
-              auto r = ligint::analyzeFile(argv[1], opt);
-              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
-          }
-          EOF
-          cmake -S consumer -B consumer/build
-          cmake --build consumer/build
-          consumer/build/consumer tests/data/1AZM.pdb AZM
-          sudo apt-get remove -y ligint ligint-dev
-          hash -r                       # forget the cached path of the removed program
-          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-packages
-          path: |
-            build/ligint_*_amd64.deb
-            build/ligint-dev_*_amd64.deb
-            build/ligint-*-linux-*.tar.gz
-
-  linux-ubuntu22:
-    name: Ubuntu 22.04 packages (.deb)
-    runs-on: ubuntu-24.04
-    # Built in an Ubuntu 22.04 container, not on the runner image "ubuntu-22.04" (GitHub is retiring that label in 2027): the container
-    # has the libraries of 22.04 (Qt 6.2, libcurl 7.81, glibc 2.35), so the package depends on them and installs on 22.04.
+  # Linux: built in the RHEL 8 image of moldiscovery (GCC from gcc-toolset-10, Qt 6 from moldiscovery/build-qt),
+  # so the binaries run on RHEL 8 and on newer distributions.
+  linux-rhel8:
+    name: Linux (RHEL 8, GCC 10, GUI Qt6) package
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write        # moldiscovery/upload-build authenticates to S3 with GitHub OIDC
+      contents: read
+      packages: read
     container:
-      image: ubuntu:22.04
+      image: ghcr.io/moldiscovery/rhel8:20261019
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+    env:
+      QT_VERSION: qt-6.5.3-3-linux
     steps:
-      - name: Prepare
+      - name: Dependencies (via dnf)
+        run: dnf -y --enablerepo=powertools install libcurl-devel json-c-devel mesa-libGL-devel dejavu-sans-fonts python3
+      - name: Download Qt from releases
+        uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "moldiscovery/build-qt"
+          tag: ${{ env.QT_VERSION }}
+          fileName: ${{ env.QT_VERSION }}.tar.xz
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: Extract Qt and add it to $PATH
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
+          rm -rf /Qt
+          tar xf ${{ env.QT_VERSION }}.tar.xz -C /
+          rm ${{ env.QT_VERSION }}.tar.xz
+          echo "/Qt/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v4
-      - name: Dependencies
-        run: |
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cmake ninja-build g++ make pkg-config libcurl4-openssl-dev libjson-c-dev \
-            qt6-base-dev libqt6svg6-dev libgl1-mesa-dev fonts-dejavu-core python3 python3-pip lintian desktop-file-utils dpkg-dev file
-      - name: The HTML manual is up to date with its sources
-        run: |
-          pip3 install -r tools/requirements-manual.txt
-          python3 tools/build_manual.py --check
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIGINT_WARNINGS_AS_ERRORS=ON
+        run: scl enable gcc-toolset-10 "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/Qt -DLIGINT_WARNINGS_AS_ERRORS=ON -DLIGINT_BUNDLE_QT=ON"
       - name: Build
-        run: cmake --build build
+        run: scl enable gcc-toolset-10 "cmake --build build -j$(nproc)"
+      - name: The GUI was built
+        # the GUI is optional in CMake: fail here if Qt was not found instead of shipping the command line only
+        run: find build -type f -name ligint-gui -perm -u+x | grep -q .
       - name: Test
         run: ctest --test-dir build --output-on-failure
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONIOENCODING: utf-8
       - name: Package
-        run: cd build && cpack -G DEB
-      - name: Check the packages (lintian)
-        run: lintian --fail-on error build/ligint_*_amd64.deb build/ligint-dev_*_amd64.deb
-      - name: Install, run, remove
-        run: |
-          apt-get install -y ./build/ligint_*_amd64.deb ./build/ligint-dev_*_amd64.deb
-          ligint --version
-          ligint tests/data/1AZM.pdb AZM --csv | head -3
-          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
-          desktop-file-validate /usr/share/applications/ligint-gui.desktop
-          # a program built against the installed development package
-          mkdir consumer
-          cat > consumer/CMakeLists.txt <<'EOF'
-          cmake_minimum_required(VERSION 3.16)
-          project(consumer CXX)
-          set(CMAKE_CXX_STANDARD 17)
-          find_package(ligint REQUIRED)
-          add_executable(consumer main.cpp)
-          target_link_libraries(consumer PRIVATE ligint::core)
-          EOF
-          cat > consumer/main.cpp <<'EOF'
-          #include <iostream>
-          #include <ligint/ligint.hpp>
-          int main(int, char** argv) {
-              ligint::Options opt;
-              opt.ligName = argv[2];
-              auto r = ligint::analyzeFile(argv[1], opt);
-              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
-          }
-          EOF
-          cmake -S consumer -B consumer/build
-          cmake --build consumer/build
-          consumer/build/consumer tests/data/1AZM.pdb AZM
-          apt-get remove -y ligint ligint-dev
-          hash -r                       # forget the cached path of the removed program
-          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
-      - name: Name the packages for Ubuntu 22.04
-        # the same package name and version as the one for Ubuntu 24.04: the release collects all the files in one folder, so they need different names
-        run: |
-          cd build
-          for f in ligint_*_amd64.deb ligint-dev_*_amd64.deb; do mv "$f" "${f%_amd64.deb}_ubuntu22.04_amd64.deb"; done
-          ls -l ligint*_ubuntu22.04_amd64.deb
+        run: cd build && scl enable gcc-toolset-10 "cpack -G TGZ"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-ubuntu22-packages
-          path: |
-            build/ligint_*_ubuntu22.04_amd64.deb
-            build/ligint-dev_*_ubuntu22.04_amd64.deb
+          name: linux-rhel8-package
+          path: build/ligint-*-linux-*.tar.gz
 
-  deb-clean-install:
-    name: Install the .deb on a clean ${{ matrix.name }}
-    # The jobs that build the packages install them in an environment that already has the development tools. A user does not: this installs the .deb
-    # as a user does (with the recommended packages) on a system with nothing else, so that a missing dependency shows.
-    needs: [linux-packages, linux-ubuntu22]
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: Ubuntu 22.04
-            image: "ubuntu:22.04"
-            artifact: linux-ubuntu22-packages
-          - name: Ubuntu 24.04
-            image: "ubuntu:24.04"
-            artifact: linux-packages
-    container:
-      image: ${{ matrix.image }}
-    steps:
-      - name: Prepare
-        run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Set package info
+        shell: bash
+        run: echo "PKG_NAME=$(ls -t build/ligint-*-linux-*.tar.gz | head -n 1 | xargs basename)" >> $GITHUB_ENV
+      - name: Upload build
+        id: upload
+        if: ${{ success() }}
+        uses: moldiscovery/upload-build@v1
         with:
-          name: ${{ matrix.artifact }}
-          path: debs
-      - name: Install
-        run: |
-          ls -l debs
-          DEBIAN_FRONTEND=noninteractive apt-get install -y ./debs/ligint_*_amd64.deb
-      - name: Run
-        run: |
-          ligint --version
-          ligint tests/data/1AZM.pdb AZM --csv | head -3
-          QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
-      - name: Remove
-        run: |
-          apt-get remove -y ligint
-          hash -r
-          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
+          file: build/${{ env.PKG_NAME }}
+          bucket: ${{ env.BUCKET_NAME }}
+      - name: Send notification
+        if: ${{ success() }}
+        uses: moldiscovery/notify-build@v1
+        with:
+          project-name: LigInt
+          platform: Linux
+          download-url: ${{ steps.upload.outputs.download-url }}
+          gchat-webhook: ${{ secrets.GCHAT_DEVTOOLS_WEBHOOK }}
 
   windows:
     name: Windows (MSVC, Qt 6) installer
     runs-on: windows-2022
+    permissions:
+      id-token: write        # moldiscovery/upload-build authenticates to S3 with GitHub OIDC
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: The HTML manual is up to date with its sources
+        run: |
+          pip install -r tools/requirements-manual.txt
+          python tools/build_manual.py --check
       - uses: jurplel/install-qt-action@v4
         with:
           version: "6.7.*"
@@ -298,13 +132,7 @@ jobs:
           $gui.Kill()
           Start-Process -FilePath 'C:\ligint-test\Uninstall.exe' -ArgumentList '/S', '_?=C:\ligint-test' -Wait
           if (Test-Path 'C:\ligint-test\bin\ligint.exe') { throw "the uninstaller left ligint.exe behind" }
-      - name: Try the portable zip
-        shell: pwsh
-        run: |
-          $zip = (Get-ChildItem build\ligint-*-win64.zip | Select-Object -First 1).FullName
-          Expand-Archive -Path $zip -DestinationPath C:\ligint-zip
-          $exe = (Get-ChildItem C:\ligint-zip -Recurse -Filter ligint.exe | Select-Object -First 1).FullName
-          & $exe --version
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
@@ -312,140 +140,29 @@ jobs:
             build/ligint-*-win64.exe
             build/ligint-*-win64.zip
 
-  # RPM for Rocky Linux / AlmaLinux / RHEL 9. It is built inside a Rocky 9 container (the binaries then link
-  # against the glibc and libstdc++ of that release) and installed in a clean AlmaLinux 9 container, the way a
-  # user would do it. Qt 6 comes from EPEL: if it is not available the job builds the command line only.
-  rpm-rocky9:
-    name: RPM (built in Rocky Linux 9)
-    runs-on: ubuntu-24.04
-    container:
-      image: rockylinux:9
-    steps:
-      - name: Dependencies
-        run: |
-          dnf install -y dnf-plugins-core epel-release
-          dnf config-manager --set-enabled crb
-          dnf install -y git gcc-c++ cmake make python3 desktop-file-utils dejavu-sans-fonts
-          dnf install -y rpm-build redhat-rpm-config || dnf install -y rpm-build
-          # network features (RCSB download, KLIFS service): the libcurl of RHEL 9 is 7.76, older than 7.85, which the code handles
-          dnf install -y libcurl-devel json-c-devel pkgconf-pkg-config || echo "::warning::libcurl or json-c development packages not found: building without network features"
-          if dnf install -y qt6-qtbase-devel qt6-qtsvg-devel mesa-libGL-devel; then
-            echo "LIGINT_GUI=ON" >> "$GITHUB_ENV"
-          else
-            echo "::warning::Qt 6 development packages not found in the Rocky 9 and EPEL repositories: building the command line only"
-            echo "LIGINT_GUI=OFF" >> "$GITHUB_ENV"
-          fi
-      - uses: actions/checkout@v4
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DLIGINT_BUILD_GUI="$LIGINT_GUI"
-      - name: Build
-        run: cmake --build build -j"$(nproc)"
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
-        env:
-          QT_QPA_PLATFORM: offscreen
-          PYTHONIOENCODING: utf-8
-      - name: Package
-        run: cd build && cpack -G RPM
-      - name: Contents and dependencies of the packages
-        run: |
-          cd build
-          for f in ligint-*.rpm; do
-            echo "=== $f"
-            rpm -qpi "$f" | head -12
-            rpm -qpl "$f" | grep -v "/doc/ligint/img\|/doc/ligint/examples"
-            echo "--- requires"
-            rpm -qpR "$f"
-          done
-      - name: Install, run, remove
-        run: |
-          dnf install -y ./build/ligint-[0-9]*.rpm
-          ligint --version
-          ligint tests/data/1AZM.pdb AZM --csv | head -3
-          if [ -x /usr/bin/ligint-gui ]; then
-            QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
-            desktop-file-validate /usr/share/applications/ligint-gui.desktop
-          fi
-          rpm -V ligint
-          dnf remove -y ligint
-          hash -r                       # forget the cached path of the removed program
-          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
-      - name: Summary
-        run: |
-          {
-            echo "### RPM built on Rocky Linux 9"
-            echo "- GUI included: $LIGINT_GUI"
-            echo "- GCC: $(gcc --version | head -1)"
-            echo "- CMake: $(cmake --version | head -1)"
-            ls -1 build/ligint-*.rpm | sed 's/^/- /'
-          } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - name: Set package info
+        shell: bash
+        run: echo "PKG_NAME=$(ls -t build/ligint-*-win64.exe | head -n 1 | xargs basename)" >> $GITHUB_ENV
+      - name: Upload build
+        id: upload
+        if: ${{ success() }}
+        uses: moldiscovery/upload-build@v1
         with:
-          name: rpm-rocky9
-          path: build/ligint-*.rpm
-
-  rpm-alma9:
-    name: RPM installed on AlmaLinux 9
-    needs: rpm-rocky9
-    runs-on: ubuntu-24.04
-    container:
-      image: almalinux:9
-    steps:
-      - name: Prepare
-        run: dnf install -y git epel-release desktop-file-utils dejavu-sans-fonts
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+          file: build/${{ env.PKG_NAME }}
+          bucket: ${{ env.BUCKET_NAME }}
+      - name: Send notification
+        if: ${{ success() }}
+        uses: moldiscovery/notify-build@v1
         with:
-          name: rpm-rocky9
-          path: rpms
-      - name: Install the program (its dependencies come from the repositories)
-        run: |
-          dnf install -y ./rpms/ligint-[0-9]*.rpm
-          ligint --version
-          ligint tests/data/1AZM.pdb AZM --csv | head -3
-          if [ -x /usr/bin/ligint-gui ]; then
-            QT_QPA_PLATFORM=offscreen timeout 5 ligint-gui tests/data/1AZM.pdb || [ $? -eq 124 ]
-            desktop-file-validate /usr/share/applications/ligint-gui.desktop
-          fi
-      - name: Install the development package and build a program with it
-        run: |
-          # ligint-devel needs the development packages of libcurl and json-c; json-c-devel is in the CodeReady Linux Builder repository (CRB).
-          # Only this step enables it: the program itself must install from the default repositories (previous step).
-          dnf install -y dnf-plugins-core
-          dnf config-manager --set-enabled crb
-          dnf install -y gcc-c++ cmake make ./rpms/ligint-devel-*.rpm
-          mkdir consumer
-          cat > consumer/CMakeLists.txt <<'EOF'
-          cmake_minimum_required(VERSION 3.16)
-          project(consumer CXX)
-          set(CMAKE_CXX_STANDARD 17)
-          find_package(ligint REQUIRED)
-          add_executable(consumer main.cpp)
-          target_link_libraries(consumer PRIVATE ligint::core)
-          EOF
-          cat > consumer/main.cpp <<'EOF'
-          #include <iostream>
-          #include <ligint/ligint.hpp>
-          int main(int, char** argv) {
-              ligint::Options opt;
-              opt.ligName = argv[2];
-              auto r = ligint::analyzeFile(argv[1], opt);
-              std::cout << "ligint " << LIGINT_VERSION << ": " << r.ligands.at(0).hits.size() << " interactions\n";
-          }
-          EOF
-          cmake -S consumer -B consumer/build
-          cmake --build consumer/build
-          consumer/build/consumer tests/data/1AZM.pdb AZM
-      - name: Remove
-        run: |
-          dnf remove -y ligint ligint-devel
-          hash -r                       # forget the cached path of the removed program
-          if command -v ligint > /dev/null; then echo "ligint is still in the PATH after removal"; exit 1; fi
+          project-name: LigInt
+          platform: Windows
+          download-url: ${{ steps.upload.outputs.download-url }}
+          gchat-webhook: ${{ secrets.GCHAT_DEVTOOLS_WEBHOOK }}
 
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-packages, linux-ubuntu22, deb-clean-install, windows, rpm-alma9]
+    needs: [linux-rhel8, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

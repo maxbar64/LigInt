@@ -87,6 +87,19 @@ def expand_includes(text, errors, where):
             return ""
     return re.sub(r'^<!-- include: (\S+) "(.+?)" -->[ \t]*$', sub, text, flags=re.M)         # only a line of its own
 
+def exists_exact(path):
+    """os.path.exists with the case of every component checked, so that Windows and macOS give the same answer as Linux."""
+    full = os.path.join(ROOT, path)
+    if not os.path.exists(full):
+        return False
+    rel = os.path.relpath(full, ROOT)
+    parent = ROOT
+    for part in rel.split(os.sep):
+        if part not in (os.curdir, os.pardir) and part not in os.listdir(parent):
+            return False
+        parent = os.path.join(parent, part)
+    return True
+
 def png_size(path):
     with open(path, "rb") as f:
         head = f.read(24)
@@ -111,7 +124,7 @@ class Builder:
         path, _, frag = href.partition("#")
         target = os.path.normpath(os.path.join(os.path.dirname(src), path))
         base = os.path.basename(path)
-        if os.path.dirname(path) == "" and base.endswith((".md", ".html")) and base.rsplit(".", 1)[0] in self.ids and not os.path.exists(os.path.join(ROOT, target)):
+        if os.path.dirname(path) == "" and base.endswith((".md", ".html")) and base.rsplit(".", 1)[0] in self.ids and not exists_exact(target):
             return base.rsplit(".", 1)[0] + ".html" + ("#" + frag if frag else "")     # a link to a page of the manual, by its id
         if target in self.sources:
             return self.sources[target]["id"] + ".html" + ("#" + frag if frag else "")

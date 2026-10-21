@@ -49,8 +49,27 @@ if(UNIX AND NOT APPLE)
     install(FILES ${PROJECT_SOURCE_DIR}/packaging/ligint.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps COMPONENT Runtime)
 endif()
 
-# Windows: copy the Qt libraries and plugins next to the program when installing (needs Qt 6.3 or later)
-if(WIN32 AND QT_VERSION_MAJOR EQUAL 6)
+# Copy the Qt libraries and plugins next to the program when installing (Windows: needs Qt 6.3 or later; Linux: Qt 6.5 or later).
+# On by default on Windows; on Linux it is for the self-contained .tar.gz (the .deb uses the Qt of the distribution).
+if(WIN32)
+    set(_ligint_bundle_qt_default ON)
+else()
+    set(_ligint_bundle_qt_default OFF)
+endif()
+option(LIGINT_BUNDLE_QT "Install the Qt libraries and plugins with ligint-gui (Linux: also json-c and the launchers bin/*.sh)" ${_ligint_bundle_qt_default})
+if(LIGINT_BUNDLE_QT AND QT_VERSION_MAJOR EQUAL 6)
+    if(UNIX AND NOT APPLE)
+        # with a Qt in a system prefix the deployment cannot tell Qt from the system libraries, and would bundle glibc too
+        if(QT6_INSTALL_PREFIX MATCHES "^/usr(/|$)")
+            message(FATAL_ERROR "LIGINT_BUNDLE_QT needs a Qt installed outside /usr (this one is in ${QT6_INSTALL_PREFIX})")
+        endif()
+        # the bundled Qt is found next to the program, wherever the package is unpacked
+        set_target_properties(ligint-gui PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+        # besides the default platform (xcb), the offscreen one: headless runs (QT_QPA_PLATFORM=offscreen), as in the CI
+        qt_import_plugins(ligint-gui INCLUDE Qt6::QOffscreenIntegrationPlugin)
+        # the list of plugins to deploy (platforms, image formats...) is written only for finalized targets (windeployqt finds them by itself)
+        qt_finalize_target(ligint-gui)
+    endif()
     if(COMMAND qt_generate_deploy_app_script)
         set(LIGINT_DEPLOY_OPTIONS NO_UNSUPPORTED_PLATFORM_ERROR)
         if(Qt6_VERSION VERSION_GREATER_EQUAL 6.5)
@@ -59,7 +78,7 @@ if(WIN32 AND QT_VERSION_MAJOR EQUAL 6)
         qt_generate_deploy_app_script(TARGET ligint-gui OUTPUT_SCRIPT LIGINT_QT_DEPLOY_SCRIPT ${LIGINT_DEPLOY_OPTIONS})
         install(SCRIPT ${LIGINT_QT_DEPLOY_SCRIPT} COMPONENT Runtime)
     else()
-        message(WARNING "ligint: qt_generate_deploy_app_script not available (Qt older than 6.3): the Windows installer will not include the Qt libraries")
+        message(WARNING "ligint: qt_generate_deploy_app_script not available (Qt older than 6.3): the package will not include the Qt libraries")
     endif()
 endif()
 

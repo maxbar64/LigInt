@@ -120,5 +120,28 @@ if(UNIX AND NOT APPLE)
     install(FILES packaging/copyright ${LIGINT_CHANGELOG_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/ligint-dev COMPONENT Development)
 endif()
 
+# Linux self-contained .tar.gz (LIGINT_BUNDLE_QT, see gui/CMakeLists.txt): besides Qt, json-c goes with the programs, because its
+# soname changes between distributions (libjson-c.so.4 on RHEL 8, .so.5 later); libcurl.so.4 is the same everywhere and stays the system one.
+# The launchers bin/ligint.sh and bin/ligint-gui.sh run the programs with LD_LIBRARY_PATH set to the libraries of the package.
+if(LIGINT_BUNDLE_QT AND UNIX AND NOT APPLE)
+    set(_ligint_bundled_programs ligint)
+    if(TARGET ligint-gui)
+        list(APPEND _ligint_bundled_programs ligint-gui)
+    endif()
+    set(_ligint_bundled_files "")
+    foreach(_prog IN LISTS _ligint_bundled_programs)
+        set_target_properties(${_prog} PROPERTIES INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+        list(APPEND _ligint_bundled_files "$<TARGET_FILE:${_prog}>")
+        install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ligint-launcher.sh DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME ${_prog}.sh COMPONENT Runtime)
+    endforeach()
+    configure_file(packaging/ligint-launcher.sh.in ligint-launcher.sh @ONLY)
+    install(CODE "
+        file(GET_RUNTIME_DEPENDENCIES EXECUTABLES ${_ligint_bundled_files} RESOLVED_DEPENDENCIES_VAR _libs
+             PRE_INCLUDE_REGEXES \"^libjson-c\\\\.so\" PRE_EXCLUDE_REGEXES \".*\")
+        foreach(_lib IN LISTS _libs)
+            file(INSTALL \"\${_lib}\" DESTINATION \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\" FOLLOW_SYMLINK_CHAIN)
+        endforeach()" COMPONENT Runtime)
+endif()
+
 # installers and packages (cpack): .deb / .tar.gz on Linux, NSIS installer / .zip on Windows
 include(cmake/Packaging.cmake)
