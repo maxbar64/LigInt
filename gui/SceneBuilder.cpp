@@ -174,7 +174,7 @@ double vdwRadius(const QString& el) {
 }
 
 std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecord>& atoms, const std::vector<ligint::BondRecord>& bonds, bool ligand,
-                                             LigandStyle style, double stickRadius) {
+                                             LigandStyle style, double stickRadius, AromaticDisplay aromaticDisplay = AromaticDisplay::Dashed) {
     auto piece = std::make_shared<AtomsPiece>();
     std::vector<QColor> col(atoms.size());
     for (std::size_t i = 0; i < atoms.size(); i++) col[i] = elementColor(QString::fromStdString(atoms[i].element), ligand);
@@ -201,14 +201,19 @@ std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecor
             stroke(-d,stickRadius*0.72,a,z);
             stroke(+d,stickRadius*0.72,a,z);
             if(b.order==3)stroke(0,stickRadius*0.72,a,z);
-        }else if(b.order==4 && style!=LigandStyle::Spheres){
+        }else if(b.order==4 && aromaticDisplay!=AromaticDisplay::Single){
             // Aromatic connections: continuous outer bond and an inset dashed
             // parallel segment. Fused systems use the same per-edge convention.
             stroke(0,stickRadius,a,z);
             const V3 p=add3(a,mul3(axis,0.22)),q=add3(a,mul3(axis,0.46));
             const V3 u=add3(a,mul3(axis,0.56)),v=add3(a,mul3(axis,0.80));
-            stroke(0.16,stickRadius*0.48,p,q);
-            stroke(0.16,stickRadius*0.48,u,v);
+            if(aromaticDisplay==AromaticDisplay::KekuleLike){
+                // This is an illustrative alternating appearance, not a formally assigned Kekule structure.
+                stroke(0.16,stickRadius*0.48,p,v);
+            }else{
+                stroke(0.16,stickRadius*0.48,p,q);
+                stroke(0.16,stickRadius*0.48,u,v);
+            }
         }else appendBond(*piece,a,z,stickRadius,col[b.a],col[b.b]);
     }
     for (std::size_t i = 0; i < atoms.size(); i++) {
@@ -298,7 +303,7 @@ std::shared_ptr<const MeshPiece> makeSurfacePiece(const ligint::Result& r, const
 std::shared_ptr<const AtomsPiece> makeLigandPiece(const ligint::LigandResult& lig, const ViewStyle& style) {
     if (!style.showLigand) return nullptr;
     const double radius = style.ligand == LigandStyle::Sticks ? 0.15 : 0.11;
-    return atomsPiece(lig.atoms, lig.bonds, true, style.ligand, radius);
+    return atomsPiece(lig.atoms, lig.bonds, true, style.ligand, radius, style.aromaticDisplay);
 }
 
 std::shared_ptr<const AtomsPiece> makeResiduePiece(const ligint::LigandResult& lig, const ViewStyle& style) {
