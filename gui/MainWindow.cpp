@@ -614,10 +614,12 @@ void MainWindow::showError(const QString& title, const QString& text) {
 
 void MainWindow::applyCcdPreview(const QJsonObject& results) {
         int updated=0,skipped=0;
+        QStringList failedComponents;
         for(auto& ligand:importPreview_.ligands){
+            const QString component=QString::fromStdString(ligand.resName);
             const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
             if(!entry.contains("bonds")){
-                ++skipped;
+                ++skipped;failedComponents<<component;
                 log(tr("CCD %1: %2").arg(QString::fromStdString(ligand.resName),
                     entry.value("error").toString(tr("No CCD bond data returned"))));
                 continue;
@@ -630,7 +632,7 @@ void MainWindow::applyCcdPreview(const QJsonObject& results) {
                 if(byName.count(name)){collision=true;break;}
                 byName[name]=i;
             }
-            if(collision){++skipped;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
+            if(collision){++skipped;failedComponents<<component;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
             // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
             // inventory; partial components can assign unsafe connectivity/protonation.
             const auto elements=entry.value("elements").toObject();
@@ -678,7 +680,7 @@ void MainWindow::applyCcdPreview(const QJsonObject& results) {
                 newBonds.push_back({ia,ib,order});
             }
             if(invalid||newBonds.empty()){
-                ++skipped;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
+                ++skipped;failedComponents<<component;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
                 continue;
             }
             ligand.bonds=std::move(newBonds);
@@ -716,6 +718,12 @@ void MainWindow::applyCcdPreview(const QJsonObject& results) {
         }
         log(tr("CCD ligand preview: %1 updated, %2 unchanged (details above).").arg(updated).arg(skipped));
         statusBar()->showMessage(tr("CCD: %1 enriched, %2 unchanged; see Log").arg(updated).arg(skipped),12000);
+        if(skipped>0){
+            failedComponents.removeDuplicates();
+            const QString sample=failedComponents.mid(0,6).join(", ") + (failedComponents.size()>6 ? ", …" : "");
+            const QString warning=tr("CCD preview could not enrich %1 ligand(s) (%2). Geometric fallback is retained. See the Log for details.").arg(skipped).arg(sample);
+            if(interactive_) QMessageBox::warning(this,tr("CCD ligand preview warning"),warning);
+        }
 
 }
 
@@ -729,10 +737,10 @@ void MainWindow::startCcdPreview() {
         if(!ids.contains(id)) ids<<id;
     }
     const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/ccd_preview.py";
-    if(!QFileInfo::exists(script)){ log(tr("CCD: helper not found: ")+script);return; }
+    if(!QFileInfo::exists(script)){ const QString msg=tr("CCD: helper not found: ")+script;log(msg);if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);return; }
     QString python=QStandardPaths::findExecutable("python3");
     if(python.isEmpty())python=QStandardPaths::findExecutable("python");
-    if(python.isEmpty()){log(tr("CCD: Python 3 not found"));return;}
+    if(python.isEmpty()){const QString msg=tr("CCD: Python 3 not found");log(msg);if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);return;}
     QProcess* process=new QProcess(this);
     ccdProcess_=process;
     const quint64 generation=ccdGeneration_;
@@ -744,11 +752,19 @@ void MainWindow::startCcdPreview() {
             process->deleteLater();
             if(generation!=ccdGeneration_)return; // another PDB was opened
             if(status!=QProcess::NormalExit || code!=0){
-                log(tr("CCD automatic preview failed: ")+error);return;
+                const QString msg=tr("CCD automatic preview failed: ")+error;
+                log(msg);
+                if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);
+                return;
             }
             QJsonParseError parseError{};
             const auto json=QJsonDocument::fromJson(output,&parseError);
-            if(!json.isObject()){log(tr("CCD: invalid helper output: ")+parseError.errorString());return;}
+            if(!json.isObject()){
+                const QString msg=tr("CCD: invalid helper output: ")+parseError.errorString();
+                log(msg);
+                if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);
+                return;
+            }
             applyCcdPreview(json.object());
         });
     connect(process,&QProcess::errorOccurred,this,
