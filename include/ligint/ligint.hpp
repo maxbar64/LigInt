@@ -146,6 +146,7 @@ struct LigandResult {
     std::vector<std::string> info;          // informational lines (composite, annotation, B-factor)
     std::vector<AtomRecord> atoms;          // heavy atoms of the ligand
     std::vector<BondRecord> bonds;
+    std::vector<std::pair<int,int>> ccdDonorHydrogens; // heavy atom index, explicit CCD H count; 3D estimated only
     std::size_t nRings = 0;
     std::vector<HitRecord> hits;            // sorted by type, atom, distance
     std::vector<AtomRecord> contactAtoms;   // all atoms of the protein residues that interact
