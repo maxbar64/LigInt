@@ -117,3 +117,7 @@ depend on Qt.
 - Comparison of the fingerprint with those of other tools.
 
 The fingerprints of several ligands on the same columns, one bit for each position and class, are in the [interaction matrix](MATRIX.md). Pocket definitions for kinases come from [KLIFS](KLIFS.md) and for GPCRs from the generic residue numbers of [GPCRdb](GPCRDB.md).
+
+## Immediate 3D preview on structure import
+
+The GUI now builds the protein 3D geometry when a PDB or mmCIF file is opened, before **Analyze**. The **Interactions 3D** viewer displays the imported protein using the current protein rendering style, initially framed on the entire structure. This preview does not generate ligand interactions, fingerprints or analysis results. After selecting a ligand and running **Analyze**, the same viewer switches to the normal protein–ligand interaction scene. **Reset view** returns to a whole-protein framing while in preview mode. Files without a reconstructible protein backbone still show the normal empty viewer until analysis.
