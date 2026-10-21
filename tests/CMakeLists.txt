@@ -14,6 +14,9 @@ if(Python3_FOUND AND TARGET ligint)
 endif()
 
 if(Python3_FOUND)
+    add_test(NAME ccd_preview_offline
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_ccd_preview.py)
+    set_tests_properties(ccd_preview_offline PROPERTIES TIMEOUT 30)
     add_test(NAME gpcrdb_shared_fingerprints_offline
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_gpcrdb_shared_fingerprints.py)
     set_tests_properties(gpcrdb_shared_fingerprints_offline PROPERTIES TIMEOUT 30)
