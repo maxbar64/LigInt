@@ -107,6 +107,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 }
 
 MainWindow::~MainWindow() {
+    // A pending CCD lookup is a child QProcess. Stop and reap it before QObject
+    // tears down its children; otherwise Qt warns (and may crash on teardown).
+    ++ccdGeneration_;
+    if (ccdProcess_) {
+        ccdProcess_->disconnect(this);
+        if (ccdProcess_->state() != QProcess::NotRunning) {
+            ccdProcess_->kill();
+            ccdProcess_->waitForFinished(3000);
+        }
+        ccdProcess_ = nullptr;
+    }
     if (watcher_ && watcher_->isRunning()) watcher_->waitForFinished();
     if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
     if (matrixWatcher_ && matrixWatcher_->isRunning()) matrixWatcher_->waitForFinished();
@@ -751,6 +762,9 @@ void MainWindow::startCcdPreview() {
             if(ccdProcess_==process) ccdProcess_=nullptr;
             process->deleteLater();
             if(generation!=ccdGeneration_)return; // another PDB was opened
+            // Analyze may finish while CCD networking is still in progress.
+            // Never replace an analyzed ligand scene with import-preview data.
+            if(!result_.ligands.empty() || !importPreview_.listingOnly)return;
             if(status!=QProcess::NormalExit || code!=0){
                 const QString msg=tr("CCD automatic preview failed: ")+error;
                 log(msg);
