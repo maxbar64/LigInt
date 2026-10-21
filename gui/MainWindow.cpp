@@ -231,7 +231,12 @@ void MainWindow::buildUi() {
         const auto results=json.object();
         for(auto& ligand:importPreview_.ligands){
             const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
-            if(!entry.contains("bonds")){++skipped;continue;}
+            if(!entry.contains("bonds")){
+                ++skipped;
+                log(tr("CCD %1: %2").arg(QString::fromStdString(ligand.resName),
+                    entry.value("error").toString(tr("No CCD bond data returned"))));
+                continue;
+            }
             const auto bonds=entry.value("bonds").toArray();
             std::map<QString,int> byName;
             bool collision=false;
@@ -240,7 +245,7 @@ void MainWindow::buildUi() {
                 if(byName.count(name)){collision=true;break;}
                 byName[name]=i;
             }
-            if(collision){++skipped;continue;}
+            if(collision){++skipped;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
             // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
             // inventory; partial components can assign unsafe connectivity/protonation.
             const auto elements=entry.value("elements").toObject();
@@ -256,7 +261,10 @@ void MainWindow::buildUi() {
                 }
             }
             if(!compatible || ccdHeavy!=static_cast<int>(ligand.atoms.size())){
-                ++skipped;continue;
+                ++skipped;
+                log(tr("CCD %1: incomplete or mismatched atom inventory (CCD %2 heavy atoms, PDB %3).")
+                    .arg(QString::fromStdString(ligand.resName)).arg(ccdHeavy).arg(ligand.atoms.size()));
+                continue;
             }
             std::vector<ligint::BondRecord> newBonds;
             std::set<std::pair<int,int>> seen;
@@ -272,7 +280,10 @@ void MainWindow::buildUi() {
                 if(ia==ib||order<1||order>4||!seen.insert(key).second){invalid=true;break;}
                 newBonds.push_back({ia,ib,order});
             }
-            if(invalid||newBonds.empty()){++skipped;continue;}
+            if(invalid||newBonds.empty()){
+                ++skipped;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
+                continue;
+            }
             ligand.bonds=std::move(newBonds);
             ligand.ccdDonorHydrogens.clear();
             const auto donorSites=entry.value("donor_hydrogens").toObject();
@@ -303,7 +314,8 @@ void MainWindow::buildUi() {
             }
             viewer_->setImportPreview(importPreview_,selected);
         }
-        log(tr("CCD ligand preview: %1 updated, %2 unchanged (no compatible CCD match).").arg(updated).arg(skipped));
+        log(tr("CCD ligand preview: %1 updated, %2 unchanged (details above).").arg(updated).arg(skipped));
+        statusBar()->showMessage(tr("CCD: %1 enriched, %2 unchanged; see Log").arg(updated).arg(skipped),12000);
     });
     sv->addWidget(ccdButton);
 
