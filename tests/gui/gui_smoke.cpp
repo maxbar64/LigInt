@@ -109,8 +109,10 @@ int main(int argc, char** argv) {
     CHECK(w.viewer()->hasProtein());
     CHECK(w.viewer()->cartoonTriangles() > 0);
     CHECK(w.result().ligands.empty());                // preview must not trigger interaction analysis
-
+    CHECK(!w.viewer()->renderImage(QSize(320, 240)).isNull());
     w.selectLigand(0);
+    CHECK(w.viewer()->hasData());
+    CHECK(w.result().ligands.empty());                // selection is still only a preview
     w.analyze(true);
     CHECK(!w.result().ligands.empty());
     CHECK(w.hitsModel()->rowCount() > 0);
