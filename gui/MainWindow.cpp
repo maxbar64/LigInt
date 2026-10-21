@@ -183,9 +183,9 @@ void MainWindow::buildUi() {
     sv->addWidget(new QLabel(tr("Ligand:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
-    auto* previewHydrogens=new QCheckBox(tr("Preview: estimated hydroxyl H atoms"));
+    auto* previewHydrogens=new QCheckBox(tr("Preview: CCD-defined donor H (estimated geometry)"));
     previewHydrogens->setObjectName("preview_donor_hydrogens");
-    previewHydrogens->setToolTip(tr("Draw tentative O-H hydrogen atoms in the import preview only. The geometry is illustrative; no protonation or hydrogen bond analysis is performed."));
+    previewHydrogens->setToolTip(tr("Draw N-H/O-H only at sites explicitly defined by the selected CCD component; coordinates are estimated and do not establish experimental protonation."));
     connect(previewHydrogens,&QCheckBox::toggled,this,[this](bool checked){
         viewer_->setPreviewDonorHydrogens(checked);
     });
@@ -257,6 +257,17 @@ void MainWindow::buildUi() {
             }
             if(invalid||newBonds.empty()){++skipped;continue;}
             ligand.bonds=std::move(newBonds);
+            ligand.ccdDonorHydrogens.clear();
+            const auto donorSites=entry.value("donor_hydrogens").toObject();
+            for(auto it=donorSites.begin();it!=donorSites.end();++it){
+                const QString name=it.key();
+                const int n=it.value().toInt();
+                if(byName.count(name) && n>=1 && n<=3){
+                    const int idx=byName[name];
+                    const auto& element=ligand.atoms[idx].element;
+                    if(element=="N"||element=="O")ligand.ccdDonorHydrogens.push_back({idx,n});
+                }
+            }
             ligand.annotation="CCD atom-name matched connectivity";
             ++updated;
         }
