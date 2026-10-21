@@ -11,6 +11,27 @@ from urllib.request import Request, urlopen
 
 ORDER={"SING":1,"DOUB":2,"TRIP":3,"AROM":4}
 
+def loop_records(lines, start, columns):
+    """Read CIF loop values across physical lines, rather than assuming one row per line."""
+    values = []
+    i = start
+    while i < len(lines):
+        raw = lines[i].strip()
+        if raw == "#":
+            i += 1
+            break
+        if raw in ("loop_", "stop_") or raw.startswith(("data_", "save_", "_")):
+            break
+        if raw.startswith(";"):
+            raise ValueError("Multiline CIF text fields in CCD atom/bond loop are unsupported")
+        if raw:
+            values.extend(shlex.split(raw, comments=False, posix=True))
+        i += 1
+    if len(values) % len(columns):
+        raise ValueError("Incomplete CCD loop row (field count mismatch)")
+    return (values[j:j + len(columns)] for j in range(0, len(values), len(columns)))
+
+
 def parse_component(text, component):
     lines=text.splitlines()
     result=[]
@@ -33,25 +54,13 @@ def parse_component(text, component):
         indices=[columns.index(x) for x in target]
         arom_index=columns.index(aromatic) if aromatic in columns else None
         comp_col=columns.index("_chem_comp_bond.comp_id") if "_chem_comp_bond.comp_id" in columns else None
-        while i<len(lines):
-            line=lines[i].strip()
-            if not line or line=="#":
-                i+=1
-                if line=="#":break
-                continue
-            if line=="loop_" or line.startswith("_") or line.startswith("data_") or line.startswith("save_"):
-                break
-            if line.startswith(";"):
-                raise ValueError("Unsupported multiline bond entry")
-            values=shlex.split(line,comments=False,posix=True)
-            if len(values)!=len(columns):
-                raise ValueError("CCD bond row has unexpected number of fields")
-            if comp_col is None or values[comp_col]==component:
+        for values in loop_records(lines, i, columns):
+            if comp_col is None or values[comp_col].upper()==component:
                 order=ORDER.get(values[indices[2]].upper())
                 if order is None:raise ValueError("Unsupported bond order")
                 if arom_index is not None and values[arom_index].upper()=="Y":order=4
                 result.append([values[indices[0]],values[indices[1]],order])
-            i+=1
+        break
     if not result:raise ValueError("No CCD bond table found")
     return result
 
@@ -69,16 +78,9 @@ def parse_atom_elements(text):
         if not all(k in headers for k in names):continue
         name_idx= headers.index(names[0]);elem_idx=headers.index(names[1])
         result={}
-        while i<len(lines):
-            raw=lines[i].strip()
-            if raw=="#":break
-            if not raw: i+=1;continue
-            if raw=="loop_" or raw.startswith(("_","data_","save_")):break
-            fields=shlex.split(raw,comments=False,posix=True)
-            if len(fields)!=len(headers):raise ValueError("Unexpected CCD atom field count")
+        for fields in loop_records(lines, i, headers):
             if fields[name_idx] in result:raise ValueError("Duplicate CCD atom")
             result[fields[name_idx]]=fields[elem_idx].upper()
-            i+=1
         if result:return result
     raise ValueError("CCD atom definitions missing")
 
