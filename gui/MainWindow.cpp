@@ -602,6 +602,7 @@ bool MainWindow::openStructure(const QString& path) {
     try {
         ligint::Options previewOptions;
         previewOptions.protein3d = true;
+        previewOptions.previewLigands3d = true;
         listing = ligint::analyzeFile(path.toStdString(), previewOptions);
     } catch (const std::exception& e) {
         showError(tr("Cannot open the file"), QString::fromUtf8(e.what()));
