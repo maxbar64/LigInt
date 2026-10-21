@@ -201,7 +201,7 @@ std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecor
             stroke(-d,stickRadius*0.72,a,z);
             stroke(+d,stickRadius*0.72,a,z);
             if(b.order==3)stroke(0,stickRadius*0.72,a,z);
-        }else if(b.order==4){
+        }else if(b.order==4 && style!=LigandStyle::Spheres){
             // Aromatic connections: continuous outer bond and an inset dashed
             // parallel segment. Fused systems use the same per-edge convention.
             stroke(0,stickRadius,a,z);
