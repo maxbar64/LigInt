@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QString>
 #include <QStringList>
+#include <QJsonObject>
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
@@ -15,6 +16,7 @@
 #include "ligint/ligint.hpp"
 
 class QCheckBox;
+class QProcess;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
@@ -159,6 +161,8 @@ private slots:
 private:
     void buildUi();
     void refreshLigandCombo();
+    void startCcdPreview();
+    void applyCcdPreview(const QJsonObject& results);
     ligint::Options buildOptions() const;
     void applyOutcome(const AnalysisOutcome& o);
     void fillResidueTable();
@@ -178,6 +182,8 @@ private:
     QStringList templateNames_;
     ligint::Result result_;
     ligint::Result importPreview_;
+    QProcess* ccdProcess_ = nullptr;
+    quint64 ccdGeneration_ = 0;
 
     // control panel
     QLabel* fileLabel_ = nullptr;
