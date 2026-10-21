@@ -113,6 +113,13 @@ int main(int argc, char** argv) {
     w.selectLigand(0);
     CHECK(w.viewer()->hasData());
     CHECK(w.result().ligands.empty());                // selection is still only a preview
+    if(auto* estimated=w.findChild<QCheckBox*>("preview_donor_hydrogens")){
+        CHECK(!estimated->isChecked());
+        estimated->setChecked(true);
+        CHECK(w.viewer()->previewDonorHydrogens());
+        CHECK(w.viewer()->hasData());
+        estimated->setChecked(false);
+    }else CHECK(false);
     w.analyze(true);
     CHECK(!w.result().ligands.empty());
     CHECK(w.hitsModel()->rowCount() > 0);
