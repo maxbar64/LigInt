@@ -638,6 +638,8 @@ bool MainWindow::openStructure(const QString& path) {
     for (const auto& w : listing.warnings) log(QString::fromStdString(w));
     log(tr("Opened %1: %2 HETATM residues").arg(path).arg(allLigands_.size()));
     refreshLigandCombo();
+    // Keep the full-structure framing initially; combo selection can focus a ligand later.
+    if (viewer_->hasData()) viewer_->setImportPreview(importPreview_, -1);
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(viewer_->hasData());
