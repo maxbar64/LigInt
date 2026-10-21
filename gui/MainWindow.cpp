@@ -260,12 +260,24 @@ void MainWindow::buildUi() {
                     compatible=false;break;
                 }
             }
-            if(!compatible || ccdHeavy!=static_cast<int>(ligand.atoms.size())){
+            // A crystallographic ligand may have unresolved atoms. Preserve
+            // CCD bonds whose endpoints are both present and element-validated;
+            // allow CCD-derived H counts only for fully matching components.
+            bool validObserved=true;
+            for(const auto& atom:ligand.atoms){
+                const QString name=QString::fromStdString(atom.name).trimmed();
+                if(!elements.contains(name) ||
+                   elements.value(name).toString().toUpper()!=QString::fromStdString(atom.element).toUpper()){
+                    validObserved=false;break;
+                }
+            }
+            if(!validObserved || !compatible){
                 ++skipped;
-                log(tr("CCD %1: incomplete or mismatched atom inventory (CCD %2 heavy atoms, PDB %3).")
-                    .arg(QString::fromStdString(ligand.resName)).arg(ccdHeavy).arg(ligand.atoms.size()));
+                log(tr("CCD %1: atom identity mismatch; geometric fallback retained.")
+                    .arg(QString::fromStdString(ligand.resName)));
                 continue;
             }
+            const bool complete=ccdHeavy==static_cast<int>(ligand.atoms.size());
             std::vector<ligint::BondRecord> newBonds;
             std::set<std::pair<int,int>> seen;
             bool invalid=false;
@@ -286,7 +298,7 @@ void MainWindow::buildUi() {
             }
             ligand.bonds=std::move(newBonds);
             ligand.ccdDonorHydrogens.clear();
-            const auto donorSites=entry.value("donor_hydrogens").toObject();
+            const auto donorSites=complete ? entry.value("donor_hydrogens").toObject() : QJsonObject();
             for(auto it=donorSites.begin();it!=donorSites.end();++it){
                 const QString name=it.key();
                 const int n=it.value().toInt();
@@ -296,7 +308,10 @@ void MainWindow::buildUi() {
                     if(element=="N"||element=="O")ligand.ccdDonorHydrogens.push_back({idx,n});
                 }
             }
-            ligand.annotation="CCD atom-name matched connectivity";
+            ligand.annotation=complete ? "CCD atom-name matched connectivity" :
+                "Partial CCD connectivity (no donor H assignment)";
+            if(!complete)log(tr("CCD %1: partial topology applied; estimated hydrogens disabled.")
+                .arg(QString::fromStdString(ligand.resName)));
             ++updated;
         }
         if(updated){
