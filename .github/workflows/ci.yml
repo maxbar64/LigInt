@@ -42,7 +42,7 @@ jobs:
           echo "/Qt/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v4
       - name: Configure
-        run: scl enable gcc-toolset-10 "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/Qt -DLIGINT_WARNINGS_AS_ERRORS=ON"
+        run: scl enable gcc-toolset-10 "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/Qt -DLIGINT_WARNINGS_AS_ERRORS=ON -DLIGINT_BUNDLE_QT=ON"
       - name: Build
         run: scl enable gcc-toolset-10 "cmake --build build -j$(nproc)"
       - name: The GUI was built
