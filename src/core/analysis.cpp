@@ -197,6 +197,24 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             id.res = atoms[0].res; id.chain = get<0>(k); id.resi = get<1>(k); id.icode = get<2>(k); id.atoms = (int)atoms.size();
             res.hetResidues.push_back(id);
         }
+        // Lightweight ligand coordinates for the import-time viewer: no bonds or contacts inferred.
+        for (const auto& [key, atoms] : hetRes) {
+            if (atoms.empty()) continue;
+            LigandResult preview;
+            preview.resName = atoms.front().res;
+            preview.chain = get<0>(key);
+            preview.resi = get<1>(key);
+            preview.icode = get<2>(key);
+            preview.id = preview.resName + " " + to_string(preview.resi) + preview.chain;
+            for (const auto& a : atoms) {
+                AtomRecord atom;
+                atom.name = a.name; atom.res = a.res; atom.chain = a.chain;
+                atom.resi = a.resi; atom.icode = a.icode; atom.element = a.el;
+                atom.pos = {a.x, a.y, a.z}; atom.hetero = true;
+                preview.atoms.push_back(atom);
+            }
+            res.ligands.push_back(std::move(preview));
+        }
         if (!ligName.empty()) res.notFound = ligName;
         return res;
     }
