@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <set>
 
 #include "internal.hpp"
 #include "ligint/matrix.hpp"
@@ -406,6 +407,47 @@ std::vector<std::string> parseGpcrdbPositions(const std::string& listOrFile) {
         }
     }
     if (out.empty()) throw std::runtime_error("No generic residue numbers given for the pocket");
+    return out;
+}
+
+GpcrdbContactMapping mapGpcrdbContacts(
+    const std::string& numberedStructure,const std::string& mappingFile,
+    const std::string& receptorChain,const std::vector<std::pair<std::string,int>>& contacts) {
+    if(receptorChain.empty())throw std::runtime_error("Select the receptor chain before mapping contacts");
+    std::vector<std::string> warnings;
+    std::vector<Numbered> numbered;
+    if(!mappingFile.empty())numbered=numberFromTable(mappingFile,receptorChain,warnings);
+    else {
+        if(numberedStructure.empty())throw std::runtime_error("Provide a GPCRdb-numbered structure or mapping table");
+        auto chain=numberChain(receptorChain,readResidues(numberedStructure),warnings);
+        if(!chain.annotated)throw std::runtime_error(
+            "The selected chain has no validated GPCRdb numbers. Upload the structure to GPCRdb Generic residue numbering first.");
+        numbered=std::move(chain.items);
+    }
+    std::map<std::pair<std::string,int>,std::string> byResidue;
+    for(const auto& n:numbered)if(n.chain==receptorChain&&!n.gpcrdb.empty()){
+        const auto key=std::make_pair(n.chain,n.resi);
+        if(!byResidue.emplace(key,n.gpcrdb).second)
+            throw std::runtime_error("Ambiguous residue number on chain "+n.chain+
+                ": "+std::to_string(n.resi)+
+                " has multiple generic positions (insertion codes). "
+                "Contact mapping needs residue insertion codes to resolve this structure.");
+    }
+    GpcrdbContactMapping out;
+    std::set<std::string> used;
+    for(const auto& contact:contacts){
+        if(contact.first!=receptorChain)continue;
+        const auto found=byResidue.find(contact);
+        if(found==byResidue.end()){
+            out.missing.push_back(contact.first+":"+std::to_string(contact.second));
+            continue;
+        }
+        if(used.insert(found->second).second)out.positions.push_back(found->second);
+        out.details.push_back(contact.first+":"+std::to_string(contact.second)+" -> "+found->second);
+    }
+    if(out.positions.empty())throw std::runtime_error(
+        "No ligand-contact residues match GPCRdb numbers for chain "+receptorChain+
+        ". Check chain IDs and residue numbering against the analyzed structure.");
     return out;
 }
 

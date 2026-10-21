@@ -13,6 +13,9 @@
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
 #include "ligint/scene3d.hpp"
+#include "ligint/pocket.hpp"
+#include "ligint/pocket_interfaces.hpp"
+#include "ligint/pocket_groups.hpp"
 #include <algorithm>
 #include <filesystem>
 #include "ligint/ligint.hpp"
@@ -646,6 +649,23 @@ static void testGpcrdbNumbers() {
     CHECK(g.pocket.positions[0].resName == "ALA" && g.pocket.positions[0].resi == 141);                                  // 2x551 is the residue after Leu 140 (2x55); 100-130 are TM3, 131-135 are not numbered, 136-139 loops and H8
     CHECK((g.missing == std::vector<std::string>{"3x99"}) && g.warnings.size() == 1 && g.warnings[0].find("3x99") != std::string::npos);
     CHECK(g.pocket.colors.size() == 5 && g.pocket.name.find("chain A") != std::string::npos);                    // TM2, TM3, ICL2, ECL2, H8
+    // Contact-derived GPCRdb mapping must resolve the analyzed chain/residue IDs.
+    {
+        const auto contactMap=ligint::mapGpcrdbContacts("gp_a.pdb","", "A",
+            {{"A",109},{"A",109},{"A",110},{"A",999},{"B",109}});
+        CHECK(contactMap.positions.size()==2);
+        CHECK(contactMap.positions[0]=="3x32");
+        CHECK(contactMap.positions[1]=="3x33");
+        CHECK(contactMap.missing.size()==1);
+        CHECK(contactMap.missing[0]=="A:999");
+        ligint::GpcrdbOptions suggested;
+        suggested.numberedStructure="gp_a.pdb";
+        suggested.chain="A";
+        suggested.positions=contactMap.positions;
+        const auto site=ligint::generateGpcrdbPocket(suggested);
+        CHECK(site.pocket.positions.size()==2);
+        CHECK(site.pocket.positions[0].resi==109);
+    }
     // the same with the negative B-factor: the raw output of GPCRdb
     CHECK(g.pocket.positions[0].label == "2x551" && g.pocket.positions[0].chain == "A");
     // the pocket file can be read back
@@ -1299,6 +1319,180 @@ static void testScene3d() {
     }
 }
 
+
+static void testBuriednessPockets() {
+    // A shell surrounding an empty cavity should have high directional buriedness.
+    std::vector<ligint::PocketAtom> shell;
+    for(int i=0;i<150;i++) {
+        double y=1.0-2.0*(i+0.5)/150.0;
+        double r=std::sqrt(1-y*y), a=i*2.399963229728653;
+        shell.push_back({{5*r*std::cos(a),5*y,5*r*std::sin(a)},1.7,"A","SHELL"});
+    }
+    ligint::PocketOptions o;
+    o.minClusterPoints=1;
+    o.minBuriedness=0.8;
+    o.maxGridPoints=250000;
+    auto found=ligint::findPockets(shell,o);
+    CHECK(found.selectedAtoms==shell.size());
+    CHECK(found.sampledPoints>0);
+    CHECK(!found.pockets.empty());
+    // Morphological filtering must be opt-in and preserve original B values.
+    ligint::PocketOptions opening=o;
+    opening.morphology="opening";
+    opening.morphologyRadius=1;
+    const auto opened=ligint::findPockets(shell,opening);
+    opening.regrowSteps=2;
+    const auto regrown=ligint::findPockets(shell,opening);
+    CHECK(regrown.selectedAtoms==opened.selectedAtoms);
+    std::size_t openPoints=0,grownPoints=0;
+    for(const auto& region:opened.pockets)openPoints+=region.pointCount;
+    for(const auto& region:regrown.pockets)grownPoints+=region.pointCount;
+    CHECK(grownPoints>=openPoints);
+    CHECK(regrown.pockets.size()==opened.pockets.size());
+    for(const auto& region:opened.pockets)
+        for(const auto& pt:region.points)
+            CHECK(pt.buriedness>=0 && pt.buriedness<=1);
+    ligint::PocketOptions closing=o;
+    closing.morphology="closing";
+    closing.morphologyRadius=1;
+    const auto closed=ligint::findPockets(shell,closing);
+    CHECK(closed.selectedAtoms==shell.size());
+    ligint::PocketOptions neck=o;
+    neck.neckClearance=0.5;
+    const auto pruned=ligint::findPockets(shell,neck);
+    CHECK(pruned.selectedAtoms==shell.size());
+    ligint::PocketOptions badMorph=o;
+    badMorph.morphology="unknown";
+    bool rejectedMorph=false;
+    try {(void)ligint::findPockets(shell,badMorph);}
+    catch(const std::invalid_argument&){rejectedMorph=true;}
+    CHECK(rejectedMorph);
+
+    for(const auto& pocket:found.pockets) {
+        CHECK(pocket.meanBuriedness>=0 && pocket.meanBuriedness<=1);
+        CHECK(pocket.solventAccessibleFraction>=0 && pocket.solventAccessibleFraction<=1);
+        CHECK(pocket.accessibilityProbe08>=0 && pocket.accessibilityProbe08<=1);
+        CHECK(pocket.accessibilityProbe20>=0 && pocket.accessibilityProbe20<=1);
+        CHECK(pocket.accessibilityProbe08+1e-10>=pocket.accessibilityProbe20);
+        CHECK(pocket.meanSolventPathDepth>=0);
+        CHECK(pocket.maxSolventPathDepth>=pocket.meanSolventPathDepth);
+        CHECK(pocket.highBuriednessFraction>=0 && pocket.highBuriednessFraction<=1);
+        CHECK(pocket.exposedFaceArea>0);
+        CHECK(pocket.compactness>0 && pocket.compactness<=1.01);
+        CHECK(pocket.elongation>=1);
+        CHECK(pocket.meanAtomSurfaceDistance>=0);
+        CHECK(pocket.heuristicScore>=0 && pocket.heuristicScore<=1.01);
+    }
+    // Disabling segmentation must reproduce the original connected components.
+    ligint::PocketOptions raw=o;
+    raw.segment=false;
+    const auto unsegmented=ligint::findPockets(shell,raw);
+    CHECK(!unsegmented.pockets.empty());
+    std::size_t rawCount=0, splitCount=0;
+    for(const auto& p:unsegmented.pockets)rawCount+=p.pointCount;
+    for(const auto& p:found.pockets)splitCount+=p.pointCount;
+    CHECK(splitCount<=rawCount);
+    CHECK(found.pockets.size()>=unsegmented.pockets.size());
+    ligint::PocketOptions noMerge=o;
+    noMerge.mergeBasins=false;
+    const auto unmerged=ligint::findPockets(shell,noMerge);
+    CHECK(found.pockets.size()<=unmerged.pockets.size());
+    ligint::PocketOptions tight=o;
+    tight.mergeMaxSeedDistance=1.0;
+    tight.mergeMinContactArea=1e6;
+    const auto limited=ligint::findPockets(shell,tight);
+    CHECK(limited.pockets.size()>=found.pockets.size());
+    ligint::PocketOptions bad=o;
+    bad.mergeMaxSeedDistance=0;
+    bool invalidDistance=false;
+    try {(void)ligint::findPockets(shell,bad);} catch(const std::invalid_argument&){invalidDistance=true;}
+    CHECK(invalidDistance);
+    ligint::PocketOptions invalidDrop=o;
+    invalidDrop.mergeSaddleDrop=1.1;
+    bool rejectedDrop=false;
+    try {(void)ligint::findPockets(shell,invalidDrop);}
+    catch(const std::invalid_argument&){rejectedDrop=true;}
+    CHECK(rejectedDrop);
+
+    ligint::PocketOptions invalid=o;
+    invalid.seedSpacing=0;
+    bool rejectedSeed=false;
+    try {(void)ligint::findPockets(shell,invalid);} catch(const std::invalid_argument&){rejectedSeed=true;}
+    CHECK(rejectedSeed);
+
+    // The reader must work without any ligand-selection workflow.
+    const auto temp = std::filesystem::temp_directory_path() / "ligint_pocket_input_test.pdb";
+    {
+        std::ofstream f(temp);
+        f << atomLine("ATOM", 1, "CA", "ALA", 'A', 1, 0, 0, 0, "C") << "\n";
+        f << atomLine("ATOM", 2, "CA", "GLY", 'B', 2, 4, 0, 0, "C") << "\n";
+        f << atomLine("HETATM", 3, "O", "HOH", 'A', 3, 8, 0, 0, "O") << "\nEND\n";
+    }
+    const auto loaded=ligint::readPocketAtoms(temp.string());
+    CHECK(loaded.size()==2);
+    CHECK(loaded.size()<2 || (loaded[0].chain=="A" && loaded[1].chain=="B"));
+    std::filesystem::remove(temp);
+    ligint::PocketOptions filtered=o;
+    filtered.chains={"B"};
+    CHECK(ligint::findPockets(shell,filtered).selectedAtoms==0);
+    filtered=o;
+    filtered.spacing=0;
+    bool rejected=false;
+    try { (void)ligint::findPockets(shell,filtered); } catch(const std::invalid_argument&) {rejected=true;}
+    CHECK(rejected);
+}
+
+static void testPocketInterfaces() {
+    ligint::PocketCandidate a,b;
+    a.points.push_back({ligint::V3{0,0,0},0.8f});
+    a.points.push_back({ligint::V3{0,1,0},0.7f});
+    b.points.push_back({ligint::V3{1,0,0},0.9f});
+    b.points.push_back({ligint::V3{1,1,0},0.6f});
+    std::vector<ligint::PocketAtom> atoms;
+    ligint::PocketAtom atom;
+    atom.pos={0.5,0.5,2.0};
+    atom.radius=1.0;
+    atoms.push_back(atom);
+    const auto interfaces=ligint::analyzePocketInterfaces({a,b},atoms,1.0);
+    CHECK(interfaces.size()==1);
+    if(!interfaces.empty()){
+        CHECK(interfaces[0].contactFaces==2);
+        CHECK(std::abs(interfaces[0].contactArea-2.0)<1e-8);
+        CHECK(interfaces[0].meanBoundaryBuriedness>0.6);
+        CHECK(std::isfinite(interfaces[0].bottleneckClearance));
+        CHECK(interfaces[0].bottleneckClearance<=interfaces[0].maxBoundaryClearance+1e-8);
+    }
+    a.volume=500;a.pointCount=2;a.heuristicScore=0.1;
+    b.volume=400;b.pointCount=2;b.heuristicScore=0.1;
+    const auto groups=ligint::rankPocketGroups({a,b},interfaces,8,10,2,1800,0);
+    bool hasPair=false;
+    for(const auto& group:groups)
+        if(group.members==std::vector<std::size_t>({0,1}))hasPair=true;
+    CHECK(hasPair);
+    const auto onlySingles=ligint::rankPocketGroups({a,b},interfaces,8,10,2,1800,10);
+    for(const auto& group:onlySingles)CHECK(group.members.size()==1);
+    const auto diversified=ligint::diversifyPocketGroups(groups,{a,b},3,0.35);
+    CHECK(diversified.size()==3);
+    for(std::size_t i=0;i<diversified.size();++i){
+        CHECK(std::isfinite(diversified[i].selectionScore));
+        CHECK(diversified[i].maxOverlap>=0 && diversified[i].maxOverlap<=1);
+    }
+    ligint::PocketCandidate large=a;
+    large.volume=2090;
+    const auto withLarge=ligint::rankPocketGroups({large,b},interfaces,8,10,2,1800,0);
+    bool retainedLarge=false;
+    for(const auto& g:withLarge){
+        if(g.members==std::vector<std::size_t>({0}))retainedLarge=true;
+        CHECK(g.members.size()==1 || g.volume<=1800);
+    }
+    CHECK(retainedLarge);
+    const auto reserved=ligint::diversifyPocketGroups(groups,{a,b},2,0.35,1);
+    CHECK(reserved.size()==2);
+    CHECK(!reserved.empty() && reserved[0].group.members.size()==1);
+    b.points[0].pos={12,0,0};
+    b.points[1].pos={12,1,0};
+    CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
+}
 int main() {
     testListing();
     testHydrogenBondAndPositions();
@@ -1328,6 +1522,8 @@ int main() {
     testFingerprintWithPocket();
     testFingerprintOutputs();
     testScene3d();
+    testBuriednessPockets();
+    testPocketInterfaces();
     if (failures) {
         std::cerr << failures << " checks failed\n";
         return 1;

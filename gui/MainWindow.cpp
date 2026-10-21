@@ -4,6 +4,12 @@
 #include "ligint/rcsb.hpp"
 #include <QStandardPaths>
 #include <QInputDialog>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QLineEdit>
 
 #include <QAction>
@@ -28,6 +34,9 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPlainTextEdit>
+#include <QProcess>
+#include <QProgressDialog>
+#include <QTimer>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSettings>
@@ -43,6 +52,7 @@
 #include <cmath>
 #include <fstream>
 #include <map>
+#include <set>
 #include <sstream>
 
 #include "CommandLine.h"
@@ -52,6 +62,7 @@
 #include "SvgView.h"
 #include "ViewerOptionsWidget.h"
 #include "ViewerWidget.h"
+#include "PocketWorkspace.h"
 
 namespace gui {
 namespace {
@@ -172,6 +183,20 @@ void MainWindow::buildUi() {
     sv->addWidget(new QLabel(tr("Ligand:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
+    auto* previewHydrogens=new QCheckBox(tr("Preview: CCD-defined donor H (estimated geometry)"));
+    previewHydrogens->setObjectName("preview_donor_hydrogens");
+    previewHydrogens->setToolTip(tr("Draw N-H/O-H only at sites explicitly defined by the selected CCD component; coordinates are estimated and do not establish experimental protonation."));
+    connect(previewHydrogens,&QCheckBox::toggled,this,[this](bool checked){
+        viewer_->setPreviewDonorHydrogens(checked);
+    });
+    sv->addWidget(previewHydrogens);
+
+    auto* ccdButton=new QPushButton(tr("Enrich ligand preview from CCD…"));
+    ccdButton->setObjectName("preview_ccd_enrich");
+    ccdButton->setToolTip(tr("Fetch cached or official RCSB Chemical Component Dictionary bonds. Only exact, unambiguous atom-name matches are accepted."));
+    connect(ccdButton,&QPushButton::clicked,this,&MainWindow::startCcdPreview);
+    sv->addWidget(ccdButton);
+
     lv->addWidget(gStruct);
 
     auto* gOpt = new QGroupBox(tr("Options"));
@@ -255,6 +280,102 @@ void MainWindow::buildUi() {
     pkv->addLayout(pkRow);
     pkv->addWidget(pkKlifs);
     pkv->addWidget(pkGpcr);
+    auto* pkShared = new QPushButton(tr("Build shared GPCRdb panel…"));
+    pkShared->setObjectName("gpcrdb_shared_panel");
+    pkShared->setToolTip(tr("Build matched GPCRdb positions across multiple receptor structures; missing positions are audited and never treated as zero contacts."));
+    connect(pkShared, &QPushButton::clicked, this, [this] {
+        QSettings settings("ligint", "ligint-gui");
+        const QStringList files = QFileDialog::getOpenFileNames(
+            this, tr("Select GPCRdb mapping tables (two or more)"),
+            settings.value("lastGpcrMappingDir", path_.isEmpty() ? QString() : QFileInfo(path_).absolutePath()).toString(),
+            tr("GPCRdb mapping TSV (*.tsv);;All files (*)"));
+        if (files.isEmpty()) return;
+        if (files.size() < 2) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Choose at least two receptor mapping tables.")); return;
+        }
+        settings.setValue("lastGpcrMappingDir", QFileInfo(files.front()).absolutePath());
+        bool accepted = false;
+        const QStringList modes = {tr("Intersection (only positions mapped in all structures; recommended)"),
+                                   tr("Curated GPCRdb position list (reject incomplete coverage)"),
+                                   tr("Union (reject incomplete coverage)")};
+        const QString mode = QInputDialog::getItem(this, tr("Common GPCRdb positions"),
+             tr("How should the common fingerprint positions be selected?"),
+             modes, 0, false, &accepted);
+        if (!accepted) return;
+        QString curated;
+        if (mode == modes[1]) {
+            curated = QFileDialog::getOpenFileName(this, tr("Curated generic-position list"),
+                        QFileInfo(files.front()).absolutePath(), tr("Text files (*.txt);;All files (*)"));
+            if (curated.isEmpty()) return;
+        }
+        const QString output = QFileDialog::getExistingDirectory(this, tr("Output directory for shared GPCRdb pocket definitions"),
+                              QFileInfo(files.front()).absolutePath(), QFileDialog::ShowDirsOnly);
+        if (output.isEmpty()) return;
+        const QString script = QStringLiteral(LIGINT_SOURCE_ROOT) + "/tools/gpcrdb_shared_fingerprints.py";
+        if (!QFileInfo::exists(script)) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Cannot locate GPCRdb panel tool: ") + script); return;
+        }
+        QString python = QStandardPaths::findExecutable("python3");
+        if (python.isEmpty()) python = QStandardPaths::findExecutable("python");
+        if (python.isEmpty()) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Python 3 is required.")); return;
+        }
+        QStringList args = {script, "--output-dir", output};
+        if (!curated.isEmpty()) args << "--positions" << curated;
+        else args << "--mode" << (mode == modes[0] ? "intersection" : "union");
+        args << files;
+        QProcess process;
+        process.start(python, args);
+        if (!process.waitForStarted(3000)) {
+            showError(tr("Shared GPCRdb fingerprints"), tr("Failed to start Python: ") + process.errorString()); return;
+        }
+        QProgressDialog progress(tr("Checking GPCRdb position coverage across structures…"), tr("Cancel"), 0, 0, this);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMinimumDuration(0);
+        bool done = false;
+        connect(&process, QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                &progress, [&](int, QProcess::ExitStatus) { done = true; progress.accept(); });
+        connect(&progress, &QProgressDialog::canceled, &process, &QProcess::kill);
+        QTimer guard;
+        guard.setSingleShot(true);
+        connect(&guard, &QTimer::timeout, &process, &QProcess::kill);
+        guard.start(30000);
+        if (process.state() != QProcess::NotRunning) progress.exec();
+        if (process.state() != QProcess::NotRunning) process.waitForFinished(2000);
+        const QString reportPath = output + "/coverage_audit.json";
+        QFile reportFile(reportPath);
+        QString summary;
+        if (reportFile.open(QIODevice::ReadOnly)) {
+            const auto doc = QJsonDocument::fromJson(reportFile.readAll());
+            const auto object = doc.object();
+            const auto positions = object.value("positions").toArray();
+            const auto structures = object.value("structures").toArray();
+            summary = tr("Common generic positions: %1\\nStructures: %2\\n\\n")
+                          .arg(positions.size()).arg(structures.size());
+            for (const auto& record : structures) {
+                const auto value = record.toObject();
+                summary += tr("%1: %2/%3 mapped; %4 missing\\n")
+                               .arg(value.value("mapping").toString())
+                               .arg(value.value("covered").toInt())
+                               .arg(value.value("total").toInt())
+                               .arg(value.value("missing").toArray().size());
+            }
+        }
+        const bool success = process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
+        if (!success) {
+            showError(tr("Shared GPCRdb panel not accepted"),
+                      QString::fromUtf8(process.readAllStandardError()) +
+                      tr("\\n\\nCoverage report: ") + reportPath +
+                      (summary.isEmpty() ? QString() : "\\n\\n" + summary));
+            return;
+        }
+        log(tr("Shared GPCRdb pocket definitions: ") + output);
+        log(tr("Coverage audit: ") + reportPath);
+        QMessageBox::information(this, tr("Shared GPCRdb panel created"),
+                                 summary + tr("\\nDefinitions saved in: ") + output +
+                                 tr("\\n\\nUse the per-structure *.pocket.tsv files in the Matrix input list."));
+    });
+    pkv->addWidget(pkShared);
     pkv->addWidget(pocketLabel_);
     lv->addWidget(gPocket);
 
@@ -274,6 +395,43 @@ void MainWindow::buildUi() {
 
     // ---- view and tables (right)
     viewer_ = new ViewerWidget;
+    connect(viewer_, &ViewerWidget::importLigandPicked, this, [this](int previewIndex) {
+        if (!result_.ligands.empty()) return; // only import preview has pickable HETATM residues
+        if (previewIndex < 0 || previewIndex >= static_cast<int>(importPreview_.ligands.size())) return;
+        const auto& picked = importPreview_.ligands[previewIndex];
+        for (int i=0;i<static_cast<int>(shownLigands_.size());++i) {
+            const auto& id=shownLigands_[i];
+            if(id.chain==picked.chain && id.resi==picked.resi &&
+               id.icode==picked.icode && id.res==picked.resName) {
+                ligandCombo_->setCurrentIndex(i);
+                return;
+            }
+        }
+        if (!showSmall_->isChecked()) {
+            showSmall_->setChecked(true);
+            for (int i=0;i<static_cast<int>(shownLigands_.size());++i) {
+                const auto& id=shownLigands_[i];
+                if(id.chain==picked.chain && id.resi==picked.resi &&
+                   id.icode==picked.icode && id.res==picked.resName) {
+                    ligandCombo_->setCurrentIndex(i);return;
+                }
+            }
+        }
+    });
+    connect(ligandCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, [this](int index) {
+        if (!result_.ligands.empty() || importPreview_.ligands.empty()) return;
+        if(index<0 || index>=static_cast<int>(shownLigands_.size())) return;
+        const auto& selected=shownLigands_[index];
+        for (int n=0;n<static_cast<int>(importPreview_.ligands.size());++n) {
+            const auto& lig=importPreview_.ligands[n];
+            if(lig.chain==selected.chain && lig.resi==selected.resi &&
+               lig.icode==selected.icode && lig.resName==selected.res) {
+                viewer_->setImportPreview(importPreview_,n);
+                return;
+            }
+        }
+    });
     graphicsOptions_ = new ViewerOptionsWidget(viewer_);
     auto* graphicsScroll = new QScrollArea;
     graphicsScroll->setObjectName("graphicsOptionsScroll");
@@ -289,6 +447,17 @@ void MainWindow::buildUi() {
     viewerLayout->setSpacing(4);
     viewerLayout->addWidget(viewer_, 1);
     viewerLayout->addWidget(graphicsScroll);
+    auto* modes3d = new QTabWidget;
+    auto* pocketWorkspace = new PocketWorkspace;
+    pocketWorkspace->setObjectName("pocketWorkspace");
+    connect(pocketWorkspace,&PocketWorkspace::pocketAppearanceChanged,viewer_,
+        &ViewerWidget::setPocketAppearance);
+    connect(pocketWorkspace,&PocketWorkspace::pocketOverlayChanged,viewer_,
+        [this](const std::vector<ligint::PocketPoint>& points,double spacing,int smoothing){
+            viewer_->setPocketOverlay(points,spacing,smoothing);
+        });
+    modes3d->addTab(viewerArea, tr("Interactions 3D"));
+    modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
     table_ = new QTableView;
     table_->setModel(proxy_);
@@ -393,7 +562,7 @@ void MainWindow::buildUi() {
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
-    right->addWidget(viewerArea);
+    right->addWidget(modes3d);
     right->addWidget(tabs_);
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
@@ -442,15 +611,187 @@ void MainWindow::showError(const QString& title, const QString& text) {
     if (interactive_) QMessageBox::warning(this, title, text);
 }
 
+
+void MainWindow::applyCcdPreview(const QJsonObject& results) {
+        int updated=0,skipped=0;
+        QStringList failedComponents;
+        for(auto& ligand:importPreview_.ligands){
+            const QString component=QString::fromStdString(ligand.resName);
+            const auto entry=results.value(QString::fromStdString(ligand.resName).toUpper()).toObject();
+            if(!entry.contains("bonds")){
+                ++skipped;failedComponents<<component;
+                log(tr("CCD %1: %2").arg(QString::fromStdString(ligand.resName),
+                    entry.value("error").toString(tr("No CCD bond data returned"))));
+                continue;
+            }
+            const auto bonds=entry.value("bonds").toArray();
+            std::map<QString,int> byName;
+            bool collision=false;
+            for(int i=0;i<static_cast<int>(ligand.atoms.size());++i){
+                const QString name=QString::fromStdString(ligand.atoms[i].name).trimmed();
+                if(byName.count(name)){collision=true;break;}
+                byName[name]=i;
+            }
+            if(collision){++skipped;failedComponents<<component;log(tr("CCD %1: duplicate atom names in PDB ligand").arg(QString::fromStdString(ligand.resName)));continue;}
+            // Accept CCD chemistry only for a complete, uniquely matched heavy-atom
+            // inventory; partial components can assign unsafe connectivity/protonation.
+            const auto elements=entry.value("elements").toObject();
+            int ccdHeavy=0;
+            bool compatible=!elements.isEmpty();
+            for(auto it=elements.begin();it!=elements.end();++it){
+                const QString element=it.value().toString().toUpper();
+                if(element=="H"||element=="D")continue;
+                ++ccdHeavy;
+                if(!byName.count(it.key()) ||
+                   QString::fromStdString(ligand.atoms[byName[it.key()]].element).toUpper()!=element){
+                    compatible=false;break;
+                }
+            }
+            // A crystallographic ligand may have unresolved atoms. Preserve
+            // CCD bonds whose endpoints are both present and element-validated;
+            // allow CCD-derived H counts only for fully matching components.
+            bool validObserved=true;
+            for(const auto& atom:ligand.atoms){
+                const QString name=QString::fromStdString(atom.name).trimmed();
+                if(!elements.contains(name) ||
+                   elements.value(name).toString().toUpper()!=QString::fromStdString(atom.element).toUpper()){
+                    validObserved=false;break;
+                }
+            }
+            if(!validObserved || !compatible){
+                ++skipped;failedComponents<<component;
+                log(tr("CCD %1: atom identity mismatch; geometric fallback retained.")
+                    .arg(QString::fromStdString(ligand.resName)));
+                continue;
+            }
+            const bool complete=ccdHeavy==static_cast<int>(ligand.atoms.size());
+            std::vector<ligint::BondRecord> newBonds;
+            std::set<std::pair<int,int>> seen;
+            bool invalid=false;
+            for(const auto& bondValue:bonds){
+                const auto fields=bondValue.toArray();
+                if(fields.size()!=3){invalid=true;break;}
+                const QString a=fields[0].toString(),b=fields[1].toString();
+                // CCD hydrogen atoms are frequently absent from deposited structures.
+                if(!byName.count(a)||!byName.count(b))continue;
+                const int ia=byName[a],ib=byName[b],order=fields[2].toInt();
+                const auto key=std::minmax(ia,ib);
+                if(ia==ib||order<1||order>4||!seen.insert(key).second){invalid=true;break;}
+                newBonds.push_back({ia,ib,order});
+            }
+            if(invalid||newBonds.empty()){
+                ++skipped;failedComponents<<component;log(tr("CCD %1: invalid or empty matched bond table").arg(QString::fromStdString(ligand.resName)));
+                continue;
+            }
+            ligand.bonds=std::move(newBonds);
+            ligand.ccdDonorHydrogens.clear();
+            const auto donorSites=complete ? entry.value("donor_hydrogens").toObject() : QJsonObject();
+            for(auto it=donorSites.begin();it!=donorSites.end();++it){
+                const QString name=it.key();
+                const int n=it.value().toInt();
+                if(byName.count(name) && n>=1 && n<=3){
+                    const int idx=byName[name];
+                    const auto& element=ligand.atoms[idx].element;
+                    if(element=="N"||element=="O")ligand.ccdDonorHydrogens.push_back({idx,n});
+                }
+            }
+            ligand.annotation=complete ? "CCD atom-name matched connectivity" :
+                "Partial CCD connectivity (no donor H assignment)";
+            if(!complete)log(tr("CCD %1: partial topology applied; estimated hydrogens disabled.")
+                .arg(QString::fromStdString(ligand.resName)));
+            ++updated;
+        }
+        if(updated){
+            // Keep the selected ligand when rebuilding the import preview.
+            const auto index=ligandCombo_->currentIndex();
+            int selected=-1;
+            if(index>=0&&index<static_cast<int>(shownLigands_.size())){
+                const auto& id=shownLigands_[index];
+                for(int i=0;i<static_cast<int>(importPreview_.ligands.size());++i){
+                    const auto& lig=importPreview_.ligands[i];
+                    if(lig.resName==id.res&&lig.chain==id.chain&&lig.resi==id.resi&&lig.icode==id.icode){
+                        selected=i;break;
+                    }
+                }
+            }
+            viewer_->setImportPreview(importPreview_,selected);
+        }
+        log(tr("CCD ligand preview: %1 updated, %2 unchanged (details above).").arg(updated).arg(skipped));
+        statusBar()->showMessage(tr("CCD: %1 enriched, %2 unchanged; see Log").arg(updated).arg(skipped),12000);
+        if(skipped>0){
+            failedComponents.removeDuplicates();
+            const QString sample=failedComponents.mid(0,6).join(", ") + (failedComponents.size()>6 ? ", …" : "");
+            const QString warning=tr("CCD preview could not enrich %1 ligand(s) (%2). Geometric fallback is retained. See the Log for details.").arg(skipped).arg(sample);
+            if(interactive_) QMessageBox::warning(this,tr("CCD ligand preview warning"),warning);
+        }
+
+}
+
+void MainWindow::startCcdPreview() {
+    if(importPreview_.ligands.empty())return;
+    ++ccdGeneration_;
+    if(ccdProcess_) { ccdProcess_->disconnect(this); ccdProcess_->kill(); ccdProcess_->deleteLater(); ccdProcess_=nullptr; }
+    QStringList ids;
+    for(const auto& lig:importPreview_.ligands){
+        const QString id=QString::fromStdString(lig.resName).toUpper();
+        if(!ids.contains(id)) ids<<id;
+    }
+    const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/ccd_preview.py";
+    if(!QFileInfo::exists(script)){ const QString msg=tr("CCD: helper not found: ")+script;log(msg);if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);return; }
+    QString python=QStandardPaths::findExecutable("python3");
+    if(python.isEmpty())python=QStandardPaths::findExecutable("python");
+    if(python.isEmpty()){const QString msg=tr("CCD: Python 3 not found");log(msg);if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);return;}
+    QProcess* process=new QProcess(this);
+    ccdProcess_=process;
+    const quint64 generation=ccdGeneration_;
+    connect(process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),this,
+        [this,process,generation](int code,QProcess::ExitStatus status) {
+            const QByteArray output=process->readAllStandardOutput();
+            const QString error=QString::fromUtf8(process->readAllStandardError());
+            if(ccdProcess_==process) ccdProcess_=nullptr;
+            process->deleteLater();
+            if(generation!=ccdGeneration_)return; // another PDB was opened
+            if(status!=QProcess::NormalExit || code!=0){
+                const QString msg=tr("CCD automatic preview failed: ")+error;
+                log(msg);
+                if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);
+                return;
+            }
+            QJsonParseError parseError{};
+            const auto json=QJsonDocument::fromJson(output,&parseError);
+            if(!json.isObject()){
+                const QString msg=tr("CCD: invalid helper output: ")+parseError.errorString();
+                log(msg);
+                if(interactive_)QMessageBox::warning(this,tr("CCD ligand preview warning"),msg);
+                return;
+            }
+            applyCcdPreview(json.object());
+        });
+    connect(process,&QProcess::errorOccurred,this,
+        [this,process,generation](QProcess::ProcessError){
+            if(generation==ccdGeneration_)log(tr("CCD: ")+process->errorString());
+        });
+    QPointer<QProcess> safeProcess(process);
+    QTimer::singleShot(90000,this,[safeProcess] { if(safeProcess && safeProcess->state()!=QProcess::NotRunning) safeProcess->kill(); });
+    QStringList args{script}; args<<ids;
+    process->start(python,args);
+}
+
 bool MainWindow::openStructure(const QString& path) {
     ligint::Result listing;
     try {
-        listing = ligint::analyzeFile(path.toStdString(), ligint::Options());
+        ligint::Options previewOptions;
+        previewOptions.protein3d = true;
+        previewOptions.previewLigands3d = true;
+        listing = ligint::analyzeFile(path.toStdString(), previewOptions);
     } catch (const std::exception& e) {
         showError(tr("Cannot open the file"), QString::fromUtf8(e.what()));
         return false;
     }
+    ++ccdGeneration_;
+    if(ccdProcess_){ccdProcess_->disconnect(this);ccdProcess_->kill();ccdProcess_->deleteLater();ccdProcess_=nullptr;}
     path_ = path;
+    if(auto* pockets=findChild<PocketWorkspace*>("pocketWorkspace"))pockets->setStructurePath(path);
     allLigands_ = listing.hetResidues;
     {   // alternate conformations present in the file; the previous choice is kept if it still exists
         const QString previous = altlocCombo_->currentData().toString();
@@ -462,8 +803,10 @@ bool MainWindow::openStructure(const QString& path) {
         altlocCombo_->setEnabled(!listing.altlocs.empty());
     }
     result_ = ligint::Result();
+    importPreview_ = listing;
     model_->setHits({});
-    viewer_->clear();
+    if (!listing.backbone.empty() || !listing.ligands.empty()) viewer_->setImportPreview(importPreview_, -1);
+    else viewer_->clear();
     residueTable_->setRowCount(0);
     typeList_->clear();
     fp_ = ligint::Fingerprint();
@@ -477,9 +820,12 @@ bool MainWindow::openStructure(const QString& path) {
     for (const auto& w : listing.warnings) log(QString::fromStdString(w));
     log(tr("Opened %1: %2 HETATM residues").arg(path).arg(allLigands_.size()));
     refreshLigandCombo();
+    // Keep the full-structure framing initially; combo selection can focus a ligand later.
+    if (viewer_->hasData()) viewer_->setImportPreview(importPreview_, -1);
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
-    imageAct_->setEnabled(false);
+    imageAct_->setEnabled(viewer_->hasData());
+    startCcdPreview();
     if (ligandCombo_->count() == 0) statusBar()->showMessage(tr("No HETATM ligand in this file"));
     else statusBar()->showMessage(tr("%1 ligands: choose one and press \u00abAnalyze\u00bb").arg(ligandCombo_->count()));
     return true;
@@ -1090,14 +1436,15 @@ bool MainWindow::generateGpcrdbPocket(const QString& numberedStructure, const QS
 
 void MainWindow::onGenerateGpcrdbPocket() {
     QSettings s("ligint", "ligint-gui");
-    QStringList sources = {tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
-    if (path_.isEmpty()) sources.removeFirst();                                                // there is no open structure
+    QStringList sources = {tr("Automatically fetch GPCRdb numbering and align receptor chain (recommended)"), tr("The open structure (annotated by GPCRdb)"), tr("Another structure annotated by GPCRdb…"), tr("A table of generic numbers (TSV or CSV)…")};
+    if (path_.isEmpty()) { sources.removeFirst(); sources.removeFirst(); } // requires a structure for automatic numbering
     bool ok = false;
-    const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("Where are the generic residue numbers of the receptor?"), sources, 0, false, &ok);
+    const QString source = QInputDialog::getItem(this, tr("GPCR pocket"), tr("How should numbering be obtained?"), sources, 0, false, &ok);
     if (!ok) return;
     QString numbered, mapping;
     const QString folder = path_.isEmpty() ? s.value("lastDir").toString() : QFileInfo(path_).absolutePath();
-    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : 0);                      // 0 open structure, 1 another structure, 2 a table
+    const bool automatic = source.startsWith(tr("Automatically fetch GPCRdb numbering"));
+    const int index = sources.indexOf(source) + (path_.isEmpty() ? 1 : -1); // -1 auto, 0 open, 1 another, 2 table
     if (index == 1) {
         numbered = QFileDialog::getOpenFileName(this, tr("Structure annotated by GPCRdb"), folder, tr("Structures (*.pdb *.ent *.cif *.mmcif);;All files (*)"));
         if (numbered.isEmpty()) return;
@@ -1105,14 +1452,191 @@ void MainWindow::onGenerateGpcrdbPocket() {
         mapping = QFileDialog::getOpenFileName(this, tr("Table of generic residue numbers"), folder, tr("Tables (*.tsv *.csv *.txt);;All files (*)"));
         if (mapping.isEmpty()) return;
     }
-    const QString positions = QInputDialog::getMultiLineText(
-        this, tr("GPCR pocket"),
-        tr("Generic residue numbers of the pocket, separated by blanks, commas or lines. GPCRdb scheme: 3x32 3x33 6x48. "
-           "Ballesteros-Weinstein numbers (3.32) only if the file has them. The path of a file with the numbers also works."),
-        s.value("gpcrdbPositions").toString(), &ok);
-    if (!ok || positions.trimmed().isEmpty()) return;
-    const QString chain = QInputDialog::getText(this, tr("GPCR pocket"), tr("Chain of the receptor (empty: the only chain that has numbers):"), QLineEdit::Normal, QString(), &ok);
-    if (!ok) return;
+    QString automaticChain, reviewedPositions;
+    if(automatic){
+        if(path_.isEmpty()){showError(tr("GPCRdb"),tr("Open a receptor-ligand PDB first."));return;}
+        const QString defaultEntry=QStringLiteral("auto");
+        const QString entry=QInputDialog::getText(this,tr("Identify receptor"),
+            tr("GPCRdb receptor entry (auto = identify from PDB ID; or enter adrb2_human):"),QLineEdit::Normal,defaultEntry,&ok).trimmed();
+        if(!ok||entry.isEmpty())return;
+        const QString autoChain=QInputDialog::getText(this,tr("Receptor chain"),
+            tr("PDB receptor chain (auto = find best receptor chain by sequence):"),
+            QLineEdit::Normal,QStringLiteral("auto"),&ok).trimmed();
+        if(!ok||autoChain.isEmpty())return;
+        const QString out=QFileInfo(path_).absolutePath()+"/"+
+                          QFileInfo(path_).completeBaseName()+"-gpcrdb-auto.tsv";
+        const QString audit=out+".audit.json";
+        const QString script=QStringLiteral(LIGINT_SOURCE_ROOT)+"/tools/gpcrdb_auto_mapping.py";
+        if(!QFileInfo::exists(script)){
+            showError(tr("GPCRdb"),tr("The GPCRdb alignment script was not found: ")+script);return;
+        }
+        QProcess process;
+        QProgressDialog progress(tr("Downloading GPCRdb reference and validating alignment…"),
+                                 tr("Cancel"),0,0,this);
+        progress.setWindowModality(Qt::WindowModal);
+        progress.setMinimumDuration(0);
+        bool finished=false;
+        connect(&process,QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+                &progress,[&](int,QProcess::ExitStatus){finished=true;progress.accept();});
+        connect(&progress,&QProgressDialog::canceled,&process,&QProcess::kill);
+        QTimer timeout;
+        timeout.setSingleShot(true);
+        connect(&timeout,&QTimer::timeout,&process,&QProcess::kill);
+        QString python=QStandardPaths::findExecutable("python3");
+        if(python.isEmpty())python=QStandardPaths::findExecutable("python");
+        if(python.isEmpty()){
+            showError(tr("GPCRdb"),tr("Python 3 was not found. Install Python 3 to enable automatic GPCRdb alignment."));return;
+        }
+        process.start(python,{"-B",script,"--pdb",path_,"--chain",autoChain,
+                                 "--entry",entry,"--pdb-id",QFileInfo(path_).completeBaseName().left(4),
+                                 "--output",out,"--audit",audit});
+        if(!process.waitForStarted(3000)){
+            showError(tr("GPCRdb"),tr("Python 3 could not be started: ")+process.errorString());return;
+        }
+        timeout.start(45000);
+        if(!finished)progress.exec();
+        if(!finished||process.exitStatus()!=QProcess::NormalExit||process.exitCode()!=0){
+            showError(tr("GPCRdb automatic mapping failed"),
+                QString::fromUtf8(process.readAllStandardError())+
+                tr("\nSee alignment audit: ")+audit);
+            return;
+        }
+        QFile auditFile(audit);
+        if(!auditFile.open(QIODevice::ReadOnly)){
+            showError(tr("GPCRdb"),tr("Cannot read the generated alignment audit: ")+audit);return;
+        }
+        const auto auditDoc=QJsonDocument::fromJson(auditFile.readAll());
+        if(!auditDoc.isObject()){
+            showError(tr("GPCRdb"),tr("Malformed alignment audit."));return;
+        }
+        const auto auditObj=auditDoc.object();
+        automaticChain=auditObj.value("chain").toString();
+        if(automaticChain.isEmpty()){
+            showError(tr("GPCRdb"),tr("The alignment did not identify a receptor chain."));return;
+        }
+        QFile mappingFile(out);
+        if(!mappingFile.open(QIODevice::ReadOnly|QIODevice::Text)){
+            showError(tr("GPCRdb"),tr("Cannot read generated mapping: ")+out);return;
+        }
+        QDialog review(this);
+        review.setWindowTitle(tr("Review GPCRdb numbering — %1 (%2)").arg(entry,automaticChain));
+        review.resize(770,570);
+        auto* layout=new QVBoxLayout(&review);
+        auto* summary=new QLabel(tr("Chain %1 | identity %2% | coverage %3% | GPCRdb positions %4")
+            .arg(automaticChain)
+            .arg(auditObj.value("identity").toDouble()*100.0,0,'f',1)
+            .arg(auditObj.value("coverage").toDouble()*100.0,0,'f',1)
+            .arg(auditObj.value("numbered_positions").toInt()),&review);
+        layout->addWidget(summary);
+        auto* table=new QTableWidget(&review);
+        table->setColumnCount(6);
+        table->setHorizontalHeaderLabels({tr("Chain"),tr("PDB residue"),tr("AA"),
+                                        tr("GPCRdb"),tr("Segment"),tr("Ligand contact")});
+        std::set<std::pair<QString,int>> contacted;
+        if(!result_.ligands.empty())
+            for(const auto& atom:result_.ligands.front().contactAtoms)
+                contacted.insert({QString::fromStdString(atom.chain),atom.resi});
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->horizontalHeader()->setStretchLastSection(true);
+        while(!mappingFile.atEnd()){
+            const QString line=QString::fromUtf8(mappingFile.readLine()).trimmed();
+            if(line.startsWith("chain")||line.isEmpty())continue;
+            const auto fields=line.split('\t');
+            if(fields.size()<5)continue;
+            const int row=table->rowCount();
+            table->insertRow(row);
+            for(int col=0;col<5;++col)
+                table->setItem(row,col,new QTableWidgetItem(fields[col]));
+            const bool isContact=contacted.count({fields[0],fields[1].toInt()})>0;
+            auto* choice=table->item(row,3);
+            choice->setFlags(choice->flags()|Qt::ItemIsUserCheckable);
+            choice->setCheckState(isContact?Qt::Checked:Qt::Unchecked);
+            table->setItem(row,5,new QTableWidgetItem(isContact?tr("Yes"):tr("No")));
+        }
+        layout->addWidget(new QLabel(tr("Check GPCRdb positions to include in the fingerprint. Contact positions are preselected."),&review));
+        layout->addWidget(table);
+        auto* buttons=new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&review);
+        connect(buttons,&QDialogButtonBox::accepted,&review,&QDialog::accept);
+        connect(buttons,&QDialogButtonBox::rejected,&review,&QDialog::reject);
+        layout->addWidget(buttons);
+        if(review.exec()!=QDialog::Accepted)return;
+        QStringList selected;
+        for(int row=0;row<table->rowCount();++row)
+            if(table->item(row,3)->checkState()==Qt::Checked)
+                selected<<table->item(row,3)->text();
+        if(selected.isEmpty()){
+            showError(tr("GPCRdb"),tr("Select at least one generic position."));return;
+        }
+        reviewedPositions=selected.join(" ");
+        s.setValue("gpcrdbEntry",auditObj.value("entry").toString(entry));
+        mapping=out;
+        log(tr("GPCRdb automatic mapping created: ")+out);
+        log(tr("Alignment audit: ")+audit);
+    }
+    const QString chain = automatic ? automaticChain : QInputDialog::getText(this, tr("GPCR pocket"),
+        tr("Receptor chain (e.g. R for 3SN6; do not select a G-protein chain):"),
+        QLineEdit::Normal, QString(), &ok);
+    if (!automatic && !ok) return;
+    QString positions=reviewedPositions;
+    if(!reviewedPositions.isEmpty()){
+        const QString from=mapping;
+        const QString output=QFileDialog::getSaveFileName(this,tr("Save GPCR pocket"),
+            QFileInfo(from).absolutePath()+"/"+QFileInfo(path_).completeBaseName()+"-gpcr-pocket.tsv",
+            tr("TSV files (*.tsv)"));
+        if(!output.isEmpty())generateGpcrdbPocket(numbered,mapping,chain,positions,output);
+        return;
+    }
+    const QStringList methods={tr("Suggest GPCRdb positions from analyzed ligand contacts (recommended)"),
+                               tr("Enter a custom list of generic positions")};
+    const QString method=QInputDialog::getItem(this,tr("Define GPCR fingerprint pocket"),
+        tr("How should LigInt choose the pocket positions?"),methods,0,false,&ok);
+    if(!ok)return;
+    if(method==methods.front()){
+        if(result_.ligands.empty()){
+            showError(tr("GPCRdb"),tr("Analyze the selected ligand first; its contacts are needed for the suggested pocket."));
+            return;
+        }
+        if(chain.trimmed().isEmpty()){
+            showError(tr("GPCRdb"),tr("Choose the receptor chain to map ligand contacts."));
+            return;
+        }
+        const QString numberedSource=numbered.isEmpty()?path_:numbered;
+        std::vector<std::pair<std::string,int>> contacts;
+        std::set<std::pair<std::string,int>> unique;
+        for(const auto& atom:result_.ligands.front().contactAtoms){
+            const auto pair=std::make_pair(atom.chain,atom.resi);
+            if(unique.insert(pair).second)contacts.push_back(pair);
+        }
+        try{
+            const auto mappingResult=ligint::mapGpcrdbContacts(
+                numberedSource.toStdString(),mapping.toStdString(),
+                chain.trimmed().toStdString(),contacts);
+            QStringList proposed,details;
+            for(const auto& p:mappingResult.positions)proposed<<QString::fromStdString(p);
+            for(const auto& item:mappingResult.details)details<<QString::fromStdString(item);
+            positions=proposed.join(" ");
+            const QString audit=tr("%1 contact positions were mapped. %2 could not be mapped.\n\n%3")
+                .arg(proposed.size()).arg(mappingResult.missing.size()).arg(details.join("\n"));
+            log(tr("GPCRdb contact mapping:\n")+audit);
+            if(!mappingResult.missing.empty()){
+                QStringList missing;
+                for(const auto& item:mappingResult.missing)missing<<QString::fromStdString(item);
+                log(tr("Unmapped contact residues: ")+missing.join(", "));
+            }
+            if(QMessageBox::question(this,tr("Confirm contact-derived GPCR pocket"),
+                audit+tr("\n\nUse these positions for the fingerprint?"),
+                QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes)!=QMessageBox::Yes)return;
+        }catch(const std::exception& e){
+            showError(tr("GPCRdb mapping failed"),QString::fromUtf8(e.what()));return;
+        }
+    }else{
+        positions = QInputDialog::getMultiLineText(
+            this,tr("GPCR pocket"),
+            tr("Enter GPCRdb positions such as 3x32 3x33 6x48, or a file path."),
+            s.value("gpcrdbPositions").toString(),&ok);
+        if(!ok||positions.trimmed().isEmpty())return;
+    }
     const QString from = !mapping.isEmpty() ? mapping : (!numbered.isEmpty() ? numbered : path_);
     const QString output = QFileDialog::getSaveFileName(this, tr("Save GPCR pocket"), QFileInfo(from).absolutePath() + "/" + QFileInfo(from).completeBaseName() + "-gpcr-pocket.tsv",
                                                         tr("TSV files (*.tsv)"));

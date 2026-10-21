@@ -110,3 +110,85 @@ Asn312 (`7x38`) and Tyr316 (`7x42`), and an aromatic edge-to-face contact with P
 - **Checked by the automated test of the window** (with numbers that I wrote on the residues of another structure, not with a real receptor): the numbers of the open structure and of another one, the table, the
   background thread, the errors, and that the command line of the log makes the same pocket as the window.
 - **Not done**: downloading the numbers from the GPCRdb web service (the files are made with its tool and you give them to ligint), classes B, C and F beyond what the GPCRdb scheme gives (their sequence-based numbers are read only if the tool writes them as `N.NN` in the N atoms), annotated mmCIF files (the reader accepts them but it was not tried).
+
+## Guided ligand-contact pocket generation (experimental GUI)
+
+The **Generate from GPCRdb…** workflow now offers **Suggest GPCRdb positions from analyzed ligand contacts (recommended)**. First open and **Analyze** the receptor–ligand complex, select a GPCRdb-numbered structure or TSV/CSV mapping, and explicitly enter the receptor chain. LigInt reads the analyzed ligand's contact residues, maps their chain/residue numbers to validated GPCRdb generic numbers, displays a residue-to-generic mapping preview and the number of unmatched contacts, and asks for confirmation before writing/loading the pocket definition. The previous manual position-list workflow remains available.
+
+For **3SN6**, analyze ligand P0G in the original complex, use the GPCRdb-annotated 3SN6 PDB for numbering, and select receptor chain **R**; the G-protein chains are not the fingerprint receptor. **Important:** a contact-derived site is a *suggestion for this particular structure and ligand*. For comparative fingerprint matrices, use a common union or a consistently curated generic-position set across all complexes, including zero-contact positions. A mapping source must preserve the original PDB chain IDs and residue numbers; this mode does not perform sequence alignment or remap renumbered PDBs. It does not contact GPCRdb online and does not infer generic numbers without an annotated source.
+
+## Automatic numbering from GPCRdb reference (experimental, October 2026)
+
+The first entry of **Generate from GPCRdb…** can now **fetch generic numbering and align the selected PDB receptor chain automatically**. Open and analyze a PDB complex, choose this option, enter the GPCRdb receptor entry (for 3SN6, `adrb2_human`) and receptor chain (`R`). LigInt calls the bundled Python 3 standard-library tool `tools/gpcrdb_auto_mapping.py`, which:
+
+1. Retrieves GPCRdb's REST `/services/residues/extended/<entry>/` record, caching a JSON copy under `~/.cache/ligint/gpcrdb`.
+2. Extracts the PDB chain sequence from C-alpha atoms and performs a semiglobal alignment against the reference.
+3. **Rejects** an alignment below 85% identity, 65% observed-chain coverage, or 30 identical residues; mismatching residues are not assigned numbers. Insertion codes are conservatively rejected by the current TSV mapper.
+4. Saves `<PDB>-gpcrdb-auto.tsv` together with `.audit.json` containing identity, coverage, mismatches, mapping provenance, and mapped-residue counts.
+5. Continues to the contact-derived fingerprint pocket wizard using the validated mapping file. The pocket can be saved and loaded normally.
+
+The workflow **does not upload your protein file** to GPCRdb: it fetches a reference sequence and positions, then aligns the PDB locally. It requires an internet connection for an uncached receptor, Python 3, and a local LigInt source checkout containing the script. The GUI asks for the receptor's entry name rather than automatically identifying every GPCR in a multi-chain complex; identification and validation are deliberately kept separate. It currently accepts fixed-column PDB only (not mmCIF) for the mapping tool; the existing native GPCRdb methods still accept their prior inputs. No approximate numbering is silently substituted when a reference cannot be obtained.
+
+For reproducibility or troubleshooting, run directly:
+
+```bash
+python3 tools/gpcrdb_auto_mapping.py --pdb 3SN6.pdb --chain R \
+    --entry adrb2_human --output 3SN6-gpcrdb-auto.tsv
+```
+
+Inspect `3SN6-gpcrdb-auto.tsv.audit.json` before using the mapping. A valid sequence alignment verifies sequence correspondence but does not prove that an engineered construct, unusual insertion, chimeric loop, or missing structural residue should receive a generic number; unmatched residues remain unassigned.
+
+The offline regression test can be run without access to GPCRdb:
+
+```bash
+python3 tests/test_gpcrdb_auto_mapping.py
+```
+
+## Automatic receptor-chain identification and interactive mapping review
+
+For automatic numbering, enter the GPCRdb receptor entry (e.g. `adrb2_human`) and leave the chain as **auto**. LigInt checks the CA sequences of all protein chains against the reference, selects the uniquely best qualifying match, and rejects ambiguous cases. A validation dialog then lists the **chain, PDB residue, amino acid, GPCRdb generic number, and protein segment**, together with global alignment identity and coverage. Confirm to continue to contact-derived fingerprint generation; cancel to reject the proposed mapping. The mapping TSV and JSON audit are retained for reproducibility.
+
+**Scope:** the receptor *chain* is detected automatically after the GPCRdb receptor entry is supplied. Identification of the correct receptor entry solely from an arbitrary PDB file is not yet implemented; users can select it manually. The validation table is read-only in this stage to prevent untracked edits to official mappings. This feature uses Python and a source checkout; a packaged application will need to bundle the script and a Python runtime or port this component to C++.
+
+## PDB-code receptor discovery and fingerprint position selection
+
+When the input is a known four-character PDB entry (e.g., `3SN6.pdb`), the automatic numbering wizard accepts **entry = auto**. It tries GPCRdb `/services/structure/3SN6/`, extracts its receptor entry name only if the returned structure metadata has a recognized form, then retrieves the receptor's official generic positions. If discovery fails (no record, network unavailable, unrecognized response), **no guessed receptor is accepted**: rerun the wizard with an explicitly chosen entry, for example `adrb2_human` for 3SN6. Receptor-chain identification can independently remain `auto`.
+
+The mapping review table now permits editing **which positions to include** using checkboxes in the GPCRdb column. Observed ligand-contact residues start checked, and the user can add other numbered residues (or uncheck contacts) before saving the final pocket definition. The generic residue numbers themselves are read-only and remain exactly as retrieved. This separation ensures the user's fingerprint selection does not silently rewrite an authoritative GPCRdb residue-to-position mapping. For comparative fingerprints, choose the **same generic-position list across samples**, not individually varying contact sets. The audit JSON and complete mapping TSV remain available after selection.
+
+This feature is experimental: the exact GPCRdb structure lookup response may vary, and must be checked against the live service. No end-to-end test on the real 3SN6/GPCRdb endpoint has been performed in this development environment. The unit tests use mocked service responses rather than pretending to validate remote availability.
+
+## Shared GPCRdb position panels for comparable fingerprints
+
+To compare GPCR complexes quantitatively, **do not derive a different set of generic positions separately for every ligand**. Generate an identical list of positions from the verified per-structure GPCRdb mappings. This phase adds the source-based utility `tools/gpcrdb_shared_fingerprints.py`:
+
+```bash
+python3 tools/gpcrdb_shared_fingerprints.py \
+  mappings/3SN6-gpcrdb-auto.tsv mappings/OTHER-gpcrdb-auto.tsv \
+  --output-dir gpcr-shared --mode intersection
+```
+
+The default is an **intersection** of available GPCRdb positions, so all structures have a mapped receptor residue in every position of the common panel. The utility saves `common_gpcrdb_positions.txt`, one `*.pocket.tsv` definition per input mapping, and `coverage_audit.json`. Use those structure-specific pocket files in the `pocket` column of the existing interaction-matrix ligand list (see [MATRIX.md](MATRIX.md)); positions are labelled by GPCRdb number rather than PDB residue number. The same panel will produce the same feature labels across structures.
+
+To use the union of generic positions or a manually curated list, run:
+
+```bash
+python3 tools/gpcrdb_shared_fingerprints.py mappings/*.tsv \
+  --output-dir gpcr-shared --mode union
+python3 tools/gpcrdb_shared_fingerprints.py mappings/*.tsv \
+  --output-dir gpcr-shared --positions curated_gpcr_positions.txt
+```
+
+By default, the utility **rejects** a proposed panel with any unmapped generic position and writes an audit explaining where mappings are incomplete. This is intentional: *missing receptor coordinates or generic numbering are not the same as zero ligand interactions*. If a partial exploratory panel is desired, `--missing-policy report` allows writing partial pocket definitions **and explicitly records their missing labels** in JSON. Do **not** treat the resulting LigInt matrix as a complete binary comparable matrix unless the downstream analysis masks those missing entries; the current standard matrix writer does not have a missing-value state for GPCR positions.
+
+This tool is standard-library Python with no new C++ or Qt dependencies. It processes mapping TSVs produced by the existing GPCRdb alignment script. CTest includes an offline regression for union, intersection, and incomplete mapping handling.
+
+**Next integration:** expose common-panel generation and coverage review from a permanent GUI GPCR Numbering/Fingerprint tab, and validate on multiple receptor families with real GPCRdb annotated structures. This CLI is an initial scientifically conservative foundation, not that finished graphical workflow.
+
+## Build a shared GPCRdb panel from the graphical interface
+
+The **Pocket definition (fingerprint)** group now includes **Build shared GPCRdb panel…**. Choose two or more `*-gpcrdb-auto.tsv` mapping files for the receptor structures you intend to compare, choose **Intersection** (recommended), a curated list, or Union, and select an output directory. LigInt invokes the local standard-library Python helper, shows progress, and displays a coverage summary. If any position required by the panel is not mapped in one structure, the operation fails with a specific audit report rather than representing a missing residue as a zero interaction.
+
+On success, the output folder contains `common_gpcrdb_positions.txt`, `coverage_audit.json`, and one `*.pocket.tsv` for each input mapping. Enter each pocket path in the **pocket** column of the existing Interaction Matrix input list. This produces the same generic-position feature labels for all structures, provided they use the same generic numbering scheme.
+
+**Scope of this GUI step:** shared-panel creation and coverage review are integrated; matrix list creation and a permanent embedded GPCR editor are still separate. It requires the LigInt source checkout and Python 3, and does not make online GPCRdb calls. The command-line tool remains useful for reproducible batch processing.
