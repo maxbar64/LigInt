@@ -180,7 +180,36 @@ std::shared_ptr<const AtomsPiece> atomsPiece(const std::vector<ligint::AtomRecor
     for (std::size_t i = 0; i < atoms.size(); i++) col[i] = elementColor(QString::fromStdString(atoms[i].element), ligand);
     for (const auto& b : bonds) {
         if (b.a < 0 || b.b < 0 || b.a >= (int)atoms.size() || b.b >= (int)atoms.size()) continue;
-        appendBond(*piece, atoms[b.a].pos, atoms[b.b].pos, stickRadius, col[b.a], col[b.b]);
+        const V3 a=atoms[b.a].pos, z=atoms[b.b].pos;
+        const V3 axis=sub3(z,a);
+        const double length=len3(axis);
+        if(length<1e-5)continue;
+        // Choose a stable orthogonal displacement even for almost vertical bonds.
+        const V3 reference=std::abs(axis[2]/length)<0.85?V3{0,0,1}:V3{0,1,0};
+        const V3 perpendicular={axis[1]*reference[2]-axis[2]*reference[1],
+                                axis[2]*reference[0]-axis[0]*reference[2],
+                                axis[0]*reference[1]-axis[1]*reference[0]};
+        const double norm=len3(perpendicular);
+        if(norm<1e-7)continue;
+        const V3 normal=mul3(perpendicular,1.0/norm);
+        auto stroke=[&](double shift,double radius,const V3& start,const V3& end){
+            const V3 delta=mul3(normal,shift);
+            appendBond(*piece,add3(start,delta),add3(end,delta),radius,col[b.a],col[b.b]);
+        };
+        if(b.order==2||b.order==3){
+            const double d=0.17;
+            stroke(-d,stickRadius*0.72,a,z);
+            stroke(+d,stickRadius*0.72,a,z);
+            if(b.order==3)stroke(0,stickRadius*0.72,a,z);
+        }else if(b.order==4){
+            // Aromatic connections: continuous outer bond and an inset dashed
+            // parallel segment. Fused systems use the same per-edge convention.
+            stroke(0,stickRadius,a,z);
+            const V3 p=add3(a,mul3(axis,0.22)),q=add3(a,mul3(axis,0.46));
+            const V3 u=add3(a,mul3(axis,0.56)),v=add3(a,mul3(axis,0.80));
+            stroke(0.16,stickRadius*0.48,p,q);
+            stroke(0.16,stickRadius*0.48,u,v);
+        }else appendBond(*piece,a,z,stickRadius,col[b.a],col[b.b]);
     }
     for (std::size_t i = 0; i < atoms.size(); i++) {
         const QString el = QString::fromStdString(atoms[i].element);
