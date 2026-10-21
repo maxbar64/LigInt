@@ -755,7 +755,8 @@ void MainWindow::startCcdPreview() {
         [this,process,generation](QProcess::ProcessError){
             if(generation==ccdGeneration_)log(tr("CCD: ")+process->errorString());
         });
-    QTimer::singleShot(90000,this,[process] { if(process->state()!=QProcess::NotRunning)process->kill(); });
+    QPointer<QProcess> safeProcess(process);
+    QTimer::singleShot(90000,this,[safeProcess] { if(safeProcess && safeProcess->state()!=QProcess::NotRunning) safeProcess->kill(); });
     QStringList args{script}; args<<ids;
     process->start(python,args);
 }
