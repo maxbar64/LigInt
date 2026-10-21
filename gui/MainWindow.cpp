@@ -741,7 +741,15 @@ void MainWindow::applyCcdPreview(const QJsonObject& results) {
 void MainWindow::startCcdPreview() {
     if(importPreview_.ligands.empty())return;
     ++ccdGeneration_;
-    if(ccdProcess_) { ccdProcess_->disconnect(this); ccdProcess_->kill(); ccdProcess_->deleteLater(); ccdProcess_=nullptr; }
+    if(ccdProcess_){
+        ccdProcess_->disconnect(this);
+        if(ccdProcess_->state()!=QProcess::NotRunning){
+            ccdProcess_->kill();
+            ccdProcess_->waitForFinished(3000);
+        }
+        ccdProcess_->deleteLater();
+        ccdProcess_=nullptr;
+    }
     QStringList ids;
     for(const auto& lig:importPreview_.ligands){
         const QString id=QString::fromStdString(lig.resName).toUpper();
@@ -803,7 +811,15 @@ bool MainWindow::openStructure(const QString& path) {
         return false;
     }
     ++ccdGeneration_;
-    if(ccdProcess_){ccdProcess_->disconnect(this);ccdProcess_->kill();ccdProcess_->deleteLater();ccdProcess_=nullptr;}
+    if(ccdProcess_){
+        ccdProcess_->disconnect(this);
+        if(ccdProcess_->state()!=QProcess::NotRunning){
+            ccdProcess_->kill();
+            ccdProcess_->waitForFinished(3000);
+        }
+        ccdProcess_->deleteLater();
+        ccdProcess_=nullptr;
+    }
     path_ = path;
     if(auto* pockets=findChild<PocketWorkspace*>("pocketWorkspace"))pockets->setStructurePath(path);
     allLigands_ = listing.hetResidues;
