@@ -105,7 +105,8 @@ def get_component(component, cache):
         text=raw.decode("utf-8")
     bonds=parse_component(text,component)
     if not path.exists():path.write_text(text)
-    return bonds,donor_hydrogens(bonds,parse_atom_elements(text))
+    elements=parse_atom_elements(text)
+    return bonds,donor_hydrogens(bonds,elements),elements
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -117,8 +118,8 @@ def main():
     output={}
     for component in dict.fromkeys(s.upper() for s in args.components):
         try:
-            bonds,hydrogens=get_component(component,cache)
-            output[component]={"bonds":bonds,"donor_hydrogens":hydrogens}
+            bonds,hydrogens,elements=get_component(component,cache)
+            output[component]={"bonds":bonds,"donor_hydrogens":hydrogens,"elements":elements}
         except Exception as exc:output[component]={"error":str(exc)}
     print(json.dumps(output))
 if __name__=="__main__":main()
