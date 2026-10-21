@@ -45,8 +45,9 @@ class CcdTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             (Path(folder)/"TEST.cif").write_text(CCD)
             with patch.object(m,"urlopen",side_effect=AssertionError("network attempted")):
-                bonds, sites=m.get_component("TEST",Path(folder))
+                bonds, sites, elements=m.get_component("TEST",Path(folder))
                 self.assertEqual(len(bonds),4)
                 self.assertEqual(sites,{"N1":1})
+                self.assertEqual(elements["N1"],"N")
 if __name__=="__main__":
     unittest.main()
