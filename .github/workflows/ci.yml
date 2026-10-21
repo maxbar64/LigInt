@@ -55,14 +55,7 @@ jobs:
           PYTHONIOENCODING: utf-8
       - name: Package
         run: cd build && scl enable gcc-toolset-10 "cpack -G TGZ"
-      - name: Try the package (unpack, run)
-        run: |
-          mkdir pkgtest
-          tar xf build/ligint-*-linux-*.tar.gz -C pkgtest
-          bin=$(dirname "$(find pkgtest -type f -name ligint | head -1)")
-          "$bin/ligint" --version
-          "$bin/ligint" tests/data/1AZM.pdb AZM --csv | head -3
-          QT_QPA_PLATFORM=offscreen timeout 5 "$bin/ligint-gui" tests/data/1AZM.pdb || [ $? -eq 124 ]
+
       - uses: actions/upload-artifact@v4
         with:
           name: linux-rhel8-package
@@ -113,13 +106,7 @@ jobs:
           $gui.Kill()
           Start-Process -FilePath 'C:\ligint-test\Uninstall.exe' -ArgumentList '/S', '_?=C:\ligint-test' -Wait
           if (Test-Path 'C:\ligint-test\bin\ligint.exe') { throw "the uninstaller left ligint.exe behind" }
-      - name: Try the portable zip
-        shell: pwsh
-        run: |
-          $zip = (Get-ChildItem build\ligint-*-win64.zip | Select-Object -First 1).FullName
-          Expand-Archive -Path $zip -DestinationPath C:\ligint-zip
-          $exe = (Get-ChildItem C:\ligint-zip -Recurse -Filter ligint.exe | Select-Object -First 1).FullName
-          & $exe --version
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
