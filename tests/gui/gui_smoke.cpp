@@ -105,7 +105,10 @@ int main(int argc, char** argv) {
     CHECK(!w.openStructure("/no/such.pdb"));       // error handled without crashing
     CHECK(w.openStructure(argv[1]));
     CHECK(w.ligandCount() > 0);
-    CHECK(!w.viewer()->hasData());                    // nothing to show before the analysis
+    CHECK(w.viewer()->hasData());                     // imported protein preview is immediately visible
+    CHECK(w.viewer()->hasProtein());
+    CHECK(w.viewer()->cartoonTriangles() > 0);
+    CHECK(w.result().ligands.empty());                // preview must not trigger interaction analysis
 
     w.selectLigand(0);
     w.analyze(true);
