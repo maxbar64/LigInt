@@ -55,6 +55,43 @@ def parse_component(text, component):
     if not result:raise ValueError("No CCD bond table found")
     return result
 
+def parse_atom_elements(text):
+    """Return atom-name -> element from the CCD atom category; fail closed."""
+    lines=text.splitlines()
+    i=0
+    while i<len(lines):
+        if lines[i].strip()!="loop_":
+            i+=1;continue
+        i+=1;headers=[]
+        while i<len(lines) and lines[i].lstrip().startswith("_"):
+            headers.append(lines[i].strip().split()[0]);i+=1
+        names=("_chem_comp_atom.atom_id","_chem_comp_atom.type_symbol")
+        if not all(k in headers for k in names):continue
+        name_idx= headers.index(names[0]);elem_idx=headers.index(names[1])
+        result={}
+        while i<len(lines):
+            raw=lines[i].strip()
+            if raw=="#":break
+            if not raw: i+=1;continue
+            if raw=="loop_" or raw.startswith(("_","data_","save_")):break
+            fields=shlex.split(raw,comments=False,posix=True)
+            if len(fields)!=len(headers):raise ValueError("Unexpected CCD atom field count")
+            if fields[name_idx] in result:raise ValueError("Duplicate CCD atom")
+            result[fields[name_idx]]=fields[elem_idx].upper()
+            i+=1
+        if result:return result
+    raise ValueError("CCD atom definitions missing")
+
+def donor_hydrogens(bonds, elements):
+    """CCD-defined N-H/O-H sites; CCD is an explicit *component* model, not experimental pH."""
+    sites={}
+    for a,b,_ in bonds:
+        if elements.get(a)=="H" and elements.get(b) in ("N","O"):
+            sites[b]=sites.get(b,0)+1
+        elif elements.get(b)=="H" and elements.get(a) in ("N","O"):
+            sites[a]=sites.get(a,0)+1
+    return sites
+
 def get_component(component, cache):
     if not re.fullmatch(r"[A-Z0-9]{1,8}",component):raise ValueError("Invalid CCD ID")
     path=cache/(component+".cif")
@@ -68,7 +105,7 @@ def get_component(component, cache):
         text=raw.decode("utf-8")
     bonds=parse_component(text,component)
     if not path.exists():path.write_text(text)
-    return bonds
+    return bonds,donor_hydrogens(bonds,parse_atom_elements(text))
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -79,7 +116,9 @@ def main():
     cache.mkdir(parents=True,exist_ok=True)
     output={}
     for component in dict.fromkeys(s.upper() for s in args.components):
-        try:output[component]={"bonds":get_component(component,cache)}
+        try:
+            bonds,hydrogens=get_component(component,cache)
+            output[component]={"bonds":bonds,"donor_hydrogens":hydrogens}
         except Exception as exc:output[component]={"error":str(exc)}
     print(json.dumps(output))
 if __name__=="__main__":main()
