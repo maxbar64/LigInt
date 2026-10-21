@@ -377,7 +377,21 @@ void ViewerWidget::setStyle(const ViewStyle& n) {
     const ViewStyle o = style_;
     style_ = n;
     if (n.protein != o.protein || n.proteinColor != o.proteinColor) rebuildCartoon();
-    if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues || n.showWaters != o.showWaters) rebuildAtoms();
+    if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues ||
+        n.showWaters != o.showWaters || n.aromaticDisplay != o.aromaticDisplay) {
+        if (!importedLigands_.empty()) {
+            ligint::Result preview;
+            preview.ligands=importedLigands_;
+            if(protein_){preview.backbone=protein_->backbone;preview.proteinAtoms=protein_->proteinAtoms;}
+            int selected=-1;
+            for(int i=0;i<static_cast<int>(importedLigands_.size());++i)
+                if(importedLigands_[i].chain==data_.chain &&
+                   importedLigands_[i].resi==data_.resi &&
+                   importedLigands_[i].icode==data_.icode &&
+                   importedLigands_[i].resName==data_.resName){selected=i;break;}
+            setImportPreview(preview,selected);
+        }else rebuildAtoms();
+    }
     if (n.surface != o.surface || n.surfaceType != o.surfaceType || n.surfaceColor != o.surfaceColor ||
         (n.surfaceColor == SurfaceColor::Protein && n.proteinColor != o.proteinColor))
         startSurface();
