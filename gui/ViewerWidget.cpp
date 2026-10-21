@@ -177,7 +177,23 @@ void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedInd
     pieces_.residues.reset();
     pieces_.water.reset();
     if(selectedIndex>=0 && !data_.atoms.empty()) focusLigand();
-    else fitProtein();
+    else if(hasProtein()) fitProtein();
+    else {
+        std::vector<ligint::V3> points;
+        for(const auto& lig:importedLigands_)
+            for(const auto& atom:lig.atoms)points.push_back(atom.pos);
+        if(!points.empty()){
+            ligint::V3 lo=points.front(),hi=points.front();
+            for(const auto& p:points)for(int axis=0;axis<3;++axis){
+                lo[axis]=std::min(lo[axis],p[axis]);
+                hi[axis]=std::max(hi[axis],p[axis]);
+            }
+            ligint::V3 center{(lo[0]+hi[0])*0.5,(lo[1]+hi[1])*0.5,(lo[2]+hi[2])*0.5};
+            double extent=4.0;
+            for(const auto& p:points)extent=std::max(extent,dist3(p,center));
+            setFrame(center,extent+3.0);
+        }
+    }
     invalidate(false);
 }
 
