@@ -136,15 +136,16 @@ void ViewerWidget::setLigand(const ligint::LigandResult& r) {
 }
 
 void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
-    if (ligandIndex < 0 || ligandIndex >= static_cast<int>(result.ligands.size())) { clear(); return; }
-    data_ = result.ligands[ligandIndex];
+    const bool withLigand = ligandIndex >= 0 && ligandIndex < static_cast<int>(result.ligands.size());
+    data_ = withLigand ? result.ligands[ligandIndex] : ligint::LigandResult();
     protein_ = std::make_shared<ligint::Result>();
     protein_->backbone = result.backbone;
     protein_->proteinAtoms = result.proteinAtoms;
-    hasData_ = !data_.atoms.empty();
+    hasData_ = !data_.atoms.empty() || !protein_->backbone.empty();
     highlight_ = -1;
     rebuildAll();
-    orient();
+    if (withLigand) orient();
+    else { rot_ = Mat3{1,0,0,0,1,0,0,0,1}; fitProtein(); }
     invalidate(false);
 }
 
@@ -327,7 +328,8 @@ void ViewerWidget::fitProtein() {
 }
 
 void ViewerWidget::resetView() {
-    if (hasData_) orient();
+    if (!data_.atoms.empty()) orient();
+    else if (hasProtein()) { rot_ = Mat3{1,0,0,0,1,0,0,0,1}; fitProtein(); }
     invalidate(false);
 }
 
