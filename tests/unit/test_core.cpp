@@ -1493,7 +1493,40 @@ static void testPocketInterfaces() {
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
 }
+
+static void testExternalLigandPose() {
+    ligint::Options opt;
+    ligint::Tmpl molecule;
+    molecule.name = "docked_pose";
+    ligint::TAtom carbon; carbon.el = "C"; carbon.p = {0, 0, 0};
+    ligint::TAtom oxygen; oxygen.el = "O"; oxygen.p = {1.43, 0, 0};
+    molecule.at = {carbon, oxygen};
+    molecule.bd.push_back({0, 1, 1});
+    opt.templates.push_back(molecule);
+    opt.externalLigandIndex = 0;
+    opt.protein3d = true;
+    std::ostringstream pdb;
+    pdb << atomLine("ATOM", 1, "OD1", "ASN", 'A', 10, 2.83, 2.4248, 0, "O") << "\nEND\n";
+    auto result = run(pdb.str(), opt);
+    CHECK(!result.listingOnly);
+    CHECK(result.ligands.size() == 1);
+    if (result.ligands.size() == 1) {
+        const auto& lig = result.ligands.front();
+        CHECK(lig.atoms.size() == 2);
+        CHECK(lig.bonds.size() == 1);
+        CHECK(lig.annotation.find("external SDF/MOL2") != std::string::npos);
+        CHECK(std::fabs(lig.atoms[1].pos[0] - 1.43) < 0.001);
+        CHECK(hasType(lig, ligint::type::HydrogenBond));
+        auto fp = ligint::makeFingerprint(lig, nullptr);
+        CHECK(!fp.ligand.empty());
+    }
+    ligint::Options listing;
+    listing.templates = opt.templates;
+    CHECK(run(pdb.str(), listing).listingOnly);
+}
+
 int main() {
+    testExternalLigandPose();
     testListing();
     testHydrogenBondAndPositions();
     testParams();
