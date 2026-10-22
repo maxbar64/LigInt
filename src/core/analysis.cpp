@@ -165,6 +165,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                      (wantChain.empty() || a.chain == wantChain) &&
                      (wantResi == INT_MIN || a.resi == wantResi) &&
                      (wantIcode == 0 || a.icode == wantIcode);
+        if (opt.externalLigandIndex >= 0 && !opt.excludePdbLigand.empty() && r.het &&
+            a.res == opt.excludePdbLigand) return;
         if (isH) { hatoms.push_back({a, isLig}); return; }
         if (r.het) { hetNames[a.res].insert({a.chain, a.resi, a.icode}); hetRes[{a.chain, a.resi, a.icode}].push_back(a); }
         if (isLig) ligs[{a.chain, a.resi, a.icode}].push_back(a);
