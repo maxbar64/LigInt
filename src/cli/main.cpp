@@ -5,7 +5,7 @@
 #include "ligint/klifs.hpp"
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
-#include "pose_batch.hpp"
+#include "ligint/pose_batch.hpp"
 
 #ifdef _WIN32
 #include <fcntl.h>
