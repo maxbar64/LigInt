@@ -183,7 +183,7 @@ void MainWindow::buildUi() {
     auto* openBtn = new QPushButton(tr("Open structure…"));
     connect(openBtn, &QPushButton::clicked, this, &MainWindow::onOpen);
     ligandCombo_ = new QComboBox;
-    ligandCombo_->setToolTip(tr("Ligands (HETATM residues) present in the file"));
+    ligandCombo_->setToolTip(tr("Choose a crystallographic ligand from the receptor or an external SDF/MOL2 ligand pose."));
     showSmall_ = new QCheckBox(tr("Also show ions and small molecules"));
     connect(showSmall_, &QCheckBox::toggled, this, [this] { refreshLigandCombo(); });
     sv->addWidget(openBtn);
@@ -191,7 +191,7 @@ void MainWindow::buildUi() {
     connect(rcsbBtn, &QPushButton::clicked, this, &MainWindow::onDownloadRcsb);
     sv->addWidget(rcsbBtn);
     sv->addWidget(fileLabel_);
-    sv->addWidget(new QLabel(tr("Ligand:")));
+    sv->addWidget(new QLabel(tr("Ligand to analyze:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
     auto* previewHydrogens=new QCheckBox(tr("Preview: CCD-defined donor H (estimated geometry)"));
@@ -869,19 +869,24 @@ void MainWindow::refreshLigandCombo() {
     std::stable_sort(shownLigands_.begin(), shownLigands_.end(), [](const ligint::LigandId& a, const ligint::LigandId& b) { return a.atoms > b.atoms; });
     ligandCombo_->clear();
     for (const auto& l : shownLigands_)
-        ligandCombo_->addItem(tr("%1 %2 %3%4  (%5 atoms)")
+        ligandCombo_->addItem(tr("Crystal: %1 %2 %3%4  (%5 atoms)")
                                   .arg(QString::fromStdString(l.res))
                                   .arg(QString::fromStdString(l.chain))
                                   .arg(l.resi)
                                   .arg(l.icode == ' ' ? QString() : QString(QChar(l.icode)))
                                   .arg(l.atoms));
+    for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i)
+        ligandCombo_->setItemData(i, tr("Crystallographic ligand (HETATM) from the receptor structure."), Qt::ToolTipRole);
     if (!templates_.empty()) {
         ligint::LigandId ext;
         ext.res = "EXT"; ext.chain = "__EXTERNAL__"; ext.resi = 0;
         for (const auto& atom : templates_.front().at) if (atom.el != "H" && atom.el != "D") ++ext.atoms;
         shownLigands_.push_back(ext);
-        ligandCombo_->addItem(tr("External: %1 (%2 heavy atoms)")
+        ligandCombo_->addItem(tr("External pose: %1 (%2 heavy atoms)")
                                   .arg(QString::fromStdString(templates_.front().name)).arg(ext.atoms));
+        ligandCombo_->setItemData(ligandCombo_->count() - 1,
+                                  tr("Use the imported SDF/MOL2 coordinates and chemistry directly. Ligand and receptor must share a coordinate frame."),
+                                  Qt::ToolTipRole);
     }
     runButton_->setEnabled(ligandCombo_->count() > 0 && !path_.isEmpty());
 }
