@@ -71,6 +71,30 @@ inline Row analyze(const std::string& receptor, const ligint::Options& base, siz
     } catch (const std::exception& e) { row.error = e.what(); }
     return row;
 }
+// Exact residue/type fingerprint: geometry is intentionally not part of the signature.
+inline std::string interactionSignature(const Row& row) {
+    if (!row.error.empty()) return {};
+    std::ostringstream signature;
+    for (const auto& pair : row.residueTypes) {
+        signature << pair.first.size() << ':' << pair.first << '=';
+        for (const auto& type : pair.second)
+            signature << type.size() << ':' << type << ';';
+        signature << '|';
+    }
+    return signature.str();
+}
+inline std::vector<size_t> exactFingerprintGroups(const std::vector<Row>& rows) {
+    std::map<std::string, size_t> known;
+    std::vector<size_t> groups;
+    groups.reserve(rows.size());
+    for (const Row& row : rows) {
+        if (!row.error.empty()) { groups.push_back(0); continue; }
+        const std::string signature = interactionSignature(row);
+        auto inserted = known.emplace(signature, known.size() + 1);
+        groups.push_back(inserted.first->second);
+    }
+    return groups;
+}
 inline void writeResidueMatrix(std::ostream& o, const std::vector<Row>& rows, const std::string& format) {
     std::map<std::string, size_t> counts;
     size_t successful = 0;
