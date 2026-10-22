@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/pose_batch.hpp"
 #include "ligint/gpcrdb.hpp"
 #include "ligint/matrix.hpp"
 #include <QPointer>
@@ -158,6 +159,8 @@ private slots:
     void onTypeFilterChanged();
     void onRowChanged();
     void onFinished();
+    void runPoseComparison();
+    void selectComparedPose(int row);
 
 private:
     void buildUi();
@@ -212,6 +215,11 @@ private:
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
     QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
     QFutureWatcher<MatrixOutcome>* matrixWatcher_ = nullptr;
+    QFutureWatcher<std::vector<ligand_pose_batch::Row>>* poseWatcher_ = nullptr;
+    QTableWidget* poseTable_ = nullptr;
+    QPushButton* poseRunButton_ = nullptr;
+    QPushButton* poseExportButton_ = nullptr;
+    std::vector<ligand_pose_batch::Row> poseRows_;
     QString matrixListPath_;
     std::vector<ligint::MatrixEntry> matrixEntries_;
     ligint::InteractionMatrix matrix_;
