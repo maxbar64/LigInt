@@ -303,6 +303,41 @@
      "level": 2,
      "text": "Not covered yet",
      "id": "not-covered-yet"
+    },
+    {
+     "level": 2,
+     "text": "Immediate 3D preview on structure import",
+     "id": "immediate-3d-preview-on-structure-import"
+    },
+    {
+     "level": 2,
+     "text": "Ligands in the immediate 3D import preview",
+     "id": "ligands-in-the-immediate-3d-import-preview"
+    },
+    {
+     "level": 2,
+     "text": "Bonded ligand preview and estimated hydroxyl hydrogens",
+     "id": "bonded-ligand-preview-and-estimated-hydroxyl-hydrogens"
+    },
+    {
+     "level": 2,
+     "text": "CCD-enriched connectivity in import preview",
+     "id": "ccd-enriched-connectivity-in-import-preview"
+    },
+    {
+     "level": 2,
+     "text": "Aromatic rings, bond orders, and CCD-defined donor hydrogens",
+     "id": "aromatic-rings-bond-orders-and-ccd-defined-donor-hydrogens"
+    },
+    {
+     "level": 3,
+     "text": "Troubleshooting CCD enrichment",
+     "id": "troubleshooting-ccd-enrichment"
+    },
+    {
+     "level": 3,
+     "text": "Automatic CCD enrichment when opening structures",
+     "id": "automatic-ccd-enrichment-when-opening-structures"
     }
    ]
   },
@@ -439,6 +474,36 @@
      "level": 2,
      "text": "Checked and not checked",
      "id": "checked-and-not-checked"
+    },
+    {
+     "level": 2,
+     "text": "Guided ligand-contact pocket generation (experimental GUI)",
+     "id": "guided-ligand-contact-pocket-generation-experimental-gui"
+    },
+    {
+     "level": 2,
+     "text": "Automatic numbering from GPCRdb reference (experimental, October 2026)",
+     "id": "automatic-numbering-from-gpcrdb-reference-experimental-october-2026"
+    },
+    {
+     "level": 2,
+     "text": "Automatic receptor-chain identification and interactive mapping review",
+     "id": "automatic-receptor-chain-identification-and-interactive-mapping-review"
+    },
+    {
+     "level": 2,
+     "text": "PDB-code receptor discovery and fingerprint position selection",
+     "id": "pdb-code-receptor-discovery-and-fingerprint-position-selection"
+    },
+    {
+     "level": 2,
+     "text": "Shared GPCRdb position panels for comparable fingerprints",
+     "id": "shared-gpcrdb-position-panels-for-comparable-fingerprints"
+    },
+    {
+     "level": 2,
+     "text": "Build a shared GPCRdb panel from the graphical interface",
+     "id": "build-a-shared-gpcrdb-panel-from-the-graphical-interface"
     }
    ]
   },
