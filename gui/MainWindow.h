@@ -220,6 +220,7 @@ private:
     QTableWidget* poseResidueTable_ = nullptr;
     QPushButton* poseRunButton_ = nullptr;
     QPushButton* poseExportButton_ = nullptr;
+    QPushButton* poseMatrixExportButton_ = nullptr;
     std::vector<ligand_pose_batch::Row> poseRows_;
     QString matrixListPath_;
     std::vector<ligint::MatrixEntry> matrixEntries_;
