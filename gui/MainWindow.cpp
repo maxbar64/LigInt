@@ -883,15 +883,15 @@ void MainWindow::refreshLigandCombo() {
                                   .arg(l.atoms));
     for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i)
         ligandCombo_->setItemData(i, tr("Crystallographic ligand (HETATM) from the receptor structure."), Qt::ToolTipRole);
-    if (!templates_.empty()) {
+    for (size_t ti = 0; ti < templates_.size(); ++ti) {
         ligint::LigandId ext;
-        ext.res = "EXT"; ext.chain = "__EXTERNAL__"; ext.resi = 0;
-        for (const auto& atom : templates_.front().at) if (atom.el != "H" && atom.el != "D") ++ext.atoms;
+        ext.res = "EXT"; ext.chain = "__EXTERNAL__"; ext.resi = static_cast<int>(ti);
+        for (const auto& atom : templates_[ti].at) if (atom.el != "H" && atom.el != "D") ++ext.atoms;
         shownLigands_.push_back(ext);
-        ligandCombo_->addItem(tr("External pose: %1 (%2 heavy atoms)")
-                                  .arg(QString::fromStdString(templates_.front().name)).arg(ext.atoms));
+        ligandCombo_->addItem(tr("External pose %1: %2 (%3 heavy atoms)")
+                                  .arg(ti + 1).arg(QString::fromStdString(templates_[ti].name)).arg(ext.atoms));
         ligandCombo_->setItemData(ligandCombo_->count() - 1,
-                                  tr("Use the imported SDF/MOL2 coordinates and chemistry directly. Ligand and receptor must share a coordinate frame."),
+                                  tr("Imported SDF/MOL2 molecule %1. Coordinates must share the receptor frame.").arg(ti + 1),
                                   Qt::ToolTipRole);
     }
     runButton_->setEnabled(ligandCombo_->count() > 0 && !path_.isEmpty());
@@ -941,7 +941,7 @@ ligint::Options MainWindow::buildOptions() const {
     const int idx = ligandCombo_->currentIndex();
     if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
         const auto& l = shownLigands_[idx];
-        if (l.chain == "__EXTERNAL__") opt.externalLigandIndex = 0;
+        if (l.chain == "__EXTERNAL__") opt.externalLigandIndex = l.resi;
         else {
             opt.ligName = l.res;
             opt.chain = l.chain;
@@ -1125,9 +1125,11 @@ QStringList MainWindow::optionArgs() const {
     if (plipLike_->isChecked()) thr("hal-max", 4.0, d.halMax);     // the preset also lowers the halogen distance
     for (const QString& t : templatePaths_) a << (t.endsWith(".mol2", Qt::CaseInsensitive) ? "--mol2" : "--sdf") << t;
     const int idx = ligandCombo_->currentIndex();
-    if (idx >= 0 && idx < static_cast<int>(shownLigands_.size()) &&
-        shownLigands_[idx].chain == "__EXTERNAL__" && !excludePdbLigand_->text().trimmed().isEmpty())
-        a << "--exclude-pdb-ligand" << excludePdbLigand_->text().trimmed();
+    if (idx >= 0 && idx < static_cast<int>(shownLigands_.size()) && shownLigands_[idx].chain == "__EXTERNAL__") {
+        a << "--external-index" << QString::number(shownLigands_[idx].resi + 1);
+        if (!excludePdbLigand_->text().trimmed().isEmpty())
+            a << "--exclude-pdb-ligand" << excludePdbLigand_->text().trimmed();
+    }
     return a;
 }
 
