@@ -24,7 +24,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
+         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
@@ -135,6 +135,16 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        else if (s == "--external-index") {
+            if (i + 1 >= argc) { cerr << "--external-index requires a positive integer\n"; return 1; }
+            const std::string value = argv[++i];
+            char* end = nullptr;
+            const long index = std::strtol(value.c_str(), &end, 10);
+            if (value.empty() || *end != '\0' || index < 1 || index > 1000000) {
+                cerr << "--external-index requires a positive integer (1-based)\n"; return 1;
+            }
+            opt.externalLigandIndex = static_cast<int>(index - 1);
+        }
         else if (s == "--exclude-pdb-ligand") {
             if (i + 1 >= argc || argv[i + 1][0] == '-') { cerr << "--exclude-pdb-ligand requires a residue name\n"; return 1; }
             opt.excludePdbLigand = argv[++i];
@@ -190,7 +200,10 @@ int main(int argc, char** argv) {
     if (pa.empty() && !useKlifs && !useGpcrdb) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
-    if (pa.size() == 1 && !opt.templates.empty()) opt.externalLigandIndex = 0;
+    if (pa.size() == 1 && !opt.templates.empty() && opt.externalLigandIndex < 0) opt.externalLigandIndex = 0;
+    if (opt.externalLigandIndex >= 0 && (pa.size() != 1 || static_cast<size_t>(opt.externalLigandIndex) >= opt.templates.size())) {
+        cerr << "--external-index needs a receptor without a RESNAME argument and a valid loaded SDF/MOL2 molecule index\n"; return 1;
+    }
     if (!opt.excludePdbLigand.empty() && opt.externalLigandIndex < 0) {
         cerr << "--exclude-pdb-ligand requires an external SDF/MOL2 ligand pose (omit RESNAME)\n"; return 1;
     }
