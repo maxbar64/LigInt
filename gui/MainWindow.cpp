@@ -99,6 +99,27 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(taskWatcher_, &QFutureWatcher<TaskOutcome>::finished, this, [this] { applyTask(taskWatcher_->result()); });
     matrixWatcher_ = new QFutureWatcher<MatrixOutcome>(this);
     connect(matrixWatcher_, &QFutureWatcher<MatrixOutcome>::finished, this, [this] { applyMatrix(matrixWatcher_->result()); });
+    poseWatcher_ = new QFutureWatcher<std::vector<ligand_pose_batch::Row>>(this);
+    connect(poseWatcher_, &QFutureWatcher<std::vector<ligand_pose_batch::Row>>::finished, this, [this] {
+        poseRows_ = poseWatcher_->result();
+        poseTable_->setRowCount(static_cast<int>(poseRows_.size()));
+        for (int i = 0; i < static_cast<int>(poseRows_.size()); ++i) {
+            const auto& r = poseRows_[i];
+            const QStringList fields = {QString::number(r.index), QString::fromStdString(r.name),
+                r.error.empty() ? tr("OK") : tr("Error"), QString::number(r.favorable),
+                QString::number(r.hbonds), QString::number(r.hydrophobic), QString::number(r.pi),
+                QString::number(r.water), QString::number(r.clashes), QString::number(r.residues)};
+            for (int j = 0; j < fields.size(); ++j) {
+                auto* item = new QTableWidgetItem(fields[j]);
+                if (j != 1 && j != 2) item->setData(Qt::EditRole, j == 0 ? QVariant(static_cast<int>(r.index)) : QVariant(fields[j].toInt()));
+                poseTable_->setItem(i, j, item);
+            }
+            if (!r.error.empty()) poseTable_->item(i, 2)->setToolTip(QString::fromStdString(r.error));
+        }
+        poseRunButton_->setEnabled(true);
+        poseExportButton_->setEnabled(!poseRows_.empty());
+        statusBar()->showMessage(tr("Pose comparison: %1 poses analyzed").arg(poseRows_.size()));
+    });
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
@@ -121,6 +142,7 @@ MainWindow::~MainWindow() {
     if (watcher_ && watcher_->isRunning()) watcher_->waitForFinished();
     if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
     if (matrixWatcher_ && matrixWatcher_->isRunning()) matrixWatcher_->waitForFinished();
+    if (poseWatcher_ && poseWatcher_->isRunning()) poseWatcher_->waitForFinished();
 }
 
 void MainWindow::buildUi() {
@@ -576,6 +598,34 @@ void MainWindow::buildUi() {
         connect(matrixRunButton_, &QPushButton::clicked, this, [this] { runMatrix(); });
     }
     tabs_->addTab(matrixTab_, tr("Matrix"));
+    auto* posePanel = new QWidget;
+    auto* poseLayout = new QVBoxLayout(posePanel);
+    auto* poseTools = new QHBoxLayout;
+    poseRunButton_ = new QPushButton(tr("Analyze all imported poses"));
+    poseExportButton_ = new QPushButton(tr("Export CSV…"));
+    poseExportButton_->setEnabled(false);
+    poseTools->addWidget(poseRunButton_);
+    poseTools->addWidget(poseExportButton_);
+    poseLayout->addLayout(poseTools);
+    poseTable_ = new QTableWidget(0, 10);
+    poseTable_->setHorizontalHeaderLabels({tr("Index"), tr("Pose"), tr("Status"), tr("Favorable"), tr("H-bonds"), tr("Hydrophobic"), tr("Pi"), tr("Water"), tr("Clashes"), tr("Residues")});
+    poseTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    poseTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    poseTable_->setSelectionMode(QAbstractItemView::SingleSelection);
+    poseTable_->setSortingEnabled(false);
+    poseTable_->horizontalHeader()->setStretchLastSection(true);
+    poseLayout->addWidget(poseTable_);
+    connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
+    connect(poseTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) { selectComparedPose(row); });
+    connect(poseExportButton_, &QPushButton::clicked, this, [this] {
+        const QString file = QFileDialog::getSaveFileName(this, tr("Export pose comparison"), QStringLiteral("pose_comparison.csv"), tr("CSV (*.csv)"));
+        if (file.isEmpty()) return;
+        std::ofstream out(file.toStdString(), std::ios::binary | std::ios::trunc);
+        if (!out) { showError(tr("Export failed"), tr("Cannot open output file")); return; }
+        ligand_pose_batch::write(out, poseRows_, "csv");
+        if (!out) showError(tr("Export failed"), tr("Could not write comparison table"));
+    });
+    tabs_->addTab(posePanel, tr("Pose Comparison"));
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
@@ -899,6 +949,40 @@ void MainWindow::refreshLigandCombo() {
 
 int MainWindow::ligandCount() const { return ligandCombo_->count(); }
 void MainWindow::selectLigand(int index) { ligandCombo_->setCurrentIndex(index); }
+
+void MainWindow::runPoseComparison() {
+    if (path_.isEmpty() || templates_.empty() || poseWatcher_->isRunning()) {
+        if (path_.isEmpty() || templates_.empty()) showError(tr("Pose comparison"), tr("Load a receptor and one or more SDF/MOL2 ligand structures first."));
+        return;
+    }
+    poseRunButton_->setEnabled(false);
+    poseExportButton_->setEnabled(false);
+    poseRows_.clear();
+    poseTable_->setRowCount(0);
+    ligint::Options opt = buildOptions();
+    opt.protein3d = false;
+    opt.excludePdbLigand = excludePdbLigand_->text().trimmed().toStdString();
+    const std::string receptor = path_.toStdString();
+    statusBar()->showMessage(tr("Analyzing imported poses…"));
+    poseWatcher_->setFuture(QtConcurrent::run([receptor, opt]() {
+        std::vector<ligand_pose_batch::Row> rows;
+        rows.reserve(opt.templates.size());
+        for (size_t i = 0; i < opt.templates.size(); ++i) rows.push_back(ligand_pose_batch::analyze(receptor, opt, i));
+        return rows;
+    }));
+}
+
+void MainWindow::selectComparedPose(int row) {
+    if (row < 0 || row >= static_cast<int>(poseRows_.size()) || !poseRows_[row].error.empty()) return;
+    const int index = static_cast<int>(poseRows_[row].index) - 1;
+    for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i) {
+        if (shownLigands_[i].chain == "__EXTERNAL__" && shownLigands_[i].resi == index) {
+            ligandCombo_->setCurrentIndex(i);
+            analyze(false);
+            return;
+        }
+    }
+}
 
 bool MainWindow::addTemplate(const QString& path) {
     std::vector<ligint::Tmpl> t;
