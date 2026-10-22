@@ -106,6 +106,7 @@ struct Options {
     bool previewLigands3d = false; // listing-only: retain raw HETATM coordinates for the GUI; no analysis
     bool protein3d = false;         // also return the backbone and the atoms of the protein for the 3D graphics (see scene3d.hpp)
     std::vector<Tmpl> templates;    // chemical annotation of the ligands (matched by coordinates)
+    std::string excludePdbLigand;   // external pose only: HETATM residue name to omit from receptor contacts
     int externalLigandIndex = -1;   // >=0: analyze this template as an independent ligand, using its coordinates
 };
 
