@@ -5,6 +5,7 @@
 #include "ligint/klifs.hpp"
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
+#include "pose_batch.hpp"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -24,7 +25,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
+         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --batch-poses csv|json  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
@@ -45,6 +46,7 @@ int main(int argc, char** argv) {
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
+    std::string batchFormat;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
     string fpFormat, fpOutput, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
@@ -135,6 +137,11 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        else if (s == "--batch-poses") {
+            if (i + 1 >= argc) { cerr << "--batch-poses expects csv or json\n"; return 1; }
+            batchFormat = argv[++i];
+            if (batchFormat != "csv" && batchFormat != "json") { cerr << "--batch-poses expects csv or json\n"; return 1; }
+        }
         else if (s == "--external-index") {
             if (i + 1 >= argc) { cerr << "--external-index requires a positive integer\n"; return 1; }
             const std::string value = argv[++i];
@@ -201,6 +208,9 @@ int main(int argc, char** argv) {
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     if (pa.size() == 1 && !opt.templates.empty() && opt.externalLigandIndex < 0) opt.externalLigandIndex = 0;
+    if (!batchFormat.empty() && (pa.size() != 1 || opt.templates.empty() || csv || !fpFormat.empty() || !matrixPath.empty() || useKlifs || useGpcrdb || useRcsb || opt.externalLigandIndex > 0)) {
+        cerr << "--batch-poses requires a receptor and SDF/MOL2 molecules without RESNAME, --external-index > 1, --csv, --fingerprint or matrix/pocket generation options\n"; return 1;
+    }
     if (opt.externalLigandIndex >= 0 && (pa.size() != 1 || static_cast<size_t>(opt.externalLigandIndex) >= opt.templates.size())) {
         cerr << "--external-index needs a receptor without a RESNAME argument and a valid loaded SDF/MOL2 molecule index\n"; return 1;
     }
@@ -256,6 +266,18 @@ int main(int argc, char** argv) {
     }
     if (havePocket && fpFormat.empty() && !useKlifs && !useGpcrdb) { cerr << "--pocket requires --fingerprint\n"; return 1; }
 
+    if (!batchFormat.empty()) {
+        std::vector<ligand_pose_batch::Row> rows;
+        rows.reserve(opt.templates.size());
+        bool failed = false;
+        for (size_t i = 0; i < opt.templates.size(); ++i) {
+            auto row = ligand_pose_batch::analyze(pa[0], opt, i);
+            if (!row.error.empty()) { failed = true; cerr << "Pose " << row.index << ": " << row.error << "\n"; }
+            rows.push_back(std::move(row));
+        }
+        ligand_pose_batch::write(cout, rows, batchFormat);
+        return failed ? 1 : 0;
+    }
     try {
         Result r = analyzeFile(pa[0], opt);
         for (auto& w : r.warnings) cerr << w << "\n";
