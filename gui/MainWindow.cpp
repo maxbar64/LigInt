@@ -143,7 +143,24 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             poseResidueTable_->setItem(residueRow, 2, percent);
             for (int pi = 0; pi < static_cast<int>(poseRows_.size()); ++pi) {
                 const auto& pose = poseRows_[pi];
-                auto* cell = new QTableWidgetItem(pose.error.empty() ? (pose.contactResidues.count(entry.first) ? QStringLiteral("●") : QString()) : QStringLiteral("—"));
+                QStringList codes, descriptions;
+                const auto typesIt = pose.residueTypes.find(entry.first);
+                if (pose.error.empty() && typesIt != pose.residueTypes.end()) {
+                    for (const auto& type : typesIt->second) {
+                        descriptions << QString::fromStdString(type);
+                        if (type == ligint::type::HydrogenBond) codes << QStringLiteral("HB");
+                        else if (type == ligint::type::Hydrophobic || type == ligint::type::BackboneApolar) codes << QStringLiteral("HY");
+                        else if (type == ligint::type::PiStackingParallel || type == ligint::type::PiStackingT || type == ligint::type::CationPi) codes << QStringLiteral("PI");
+                        else if (type == ligint::type::SaltBridge) codes << QStringLiteral("SB");
+                        else if (type == ligint::type::WaterBridge) codes << QStringLiteral("WB");
+                        else if (type == ligint::type::HalogenBond) codes << QStringLiteral("XB");
+                        else if (type == ligint::type::MetalCoordination) codes << QStringLiteral("ME");
+                        else codes << QStringLiteral("OT");
+                    }
+                    codes.removeDuplicates();
+                }
+                auto* cell = new QTableWidgetItem(pose.error.empty() ? codes.join(QStringLiteral("+")) : QStringLiteral("—"));
+                cell->setToolTip(descriptions.join(QStringLiteral("\n")));
                 cell->setTextAlignment(Qt::AlignCenter);
                 poseResidueTable_->setItem(residueRow, 3 + pi, cell);
             }
@@ -153,6 +170,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         poseResidueTable_->sortItems(1, Qt::DescendingOrder);
         poseRunButton_->setEnabled(true);
         poseExportButton_->setEnabled(!poseRows_.empty());
+        poseMatrixExportButton_->setEnabled(!poseRows_.empty());
         statusBar()->showMessage(tr("Pose comparison: %1 poses analyzed").arg(poseRows_.size()));
     });
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
@@ -639,8 +657,11 @@ void MainWindow::buildUi() {
     poseRunButton_ = new QPushButton(tr("Analyze all imported poses"));
     poseExportButton_ = new QPushButton(tr("Export CSV…"));
     poseExportButton_->setEnabled(false);
+    poseMatrixExportButton_ = new QPushButton(tr("Export residue matrix…"));
+    poseMatrixExportButton_->setEnabled(false);
     poseTools->addWidget(poseRunButton_);
     poseTools->addWidget(poseExportButton_);
+    poseTools->addWidget(poseMatrixExportButton_);
     poseLayout->addLayout(poseTools);
     poseTable_ = new QTableWidget(0, 10);
     poseTable_->setHorizontalHeaderLabels({tr("Index"), tr("Pose"), tr("Status"), tr("Favorable"), tr("H-bonds"), tr("Hydrophobic"), tr("Pi"), tr("Water"), tr("Clashes"), tr("Residues")});
@@ -669,6 +690,15 @@ void MainWindow::buildUi() {
         if (!out) { showError(tr("Export failed"), tr("Cannot open output file")); return; }
         ligand_pose_batch::write(out, poseRows_, "csv");
         if (!out) showError(tr("Export failed"), tr("Could not write comparison table"));
+    });
+    connect(poseMatrixExportButton_, &QPushButton::clicked, this, [this] {
+        const QString file = QFileDialog::getSaveFileName(this, tr("Export conserved residue matrix"), QStringLiteral("pose_residue_matrix.csv"), tr("CSV (*.csv);;JSON (*.json)"));
+        if (file.isEmpty()) return;
+        const std::string format = file.endsWith(QStringLiteral(".json"), Qt::CaseInsensitive) ? "json" : "csv";
+        std::ofstream out(file.toStdString(), std::ios::binary | std::ios::trunc);
+        if (!out) { showError(tr("Export failed"), tr("Cannot open output file")); return; }
+        ligand_pose_batch::writeResidueMatrix(out, poseRows_, format);
+        if (!out) showError(tr("Export failed"), tr("Could not write residue matrix"));
     });
     tabs_->addTab(posePanel, tr("Pose Comparison"));
     tabs_->addTab(log_, tr("Log"));
@@ -1002,6 +1032,7 @@ void MainWindow::runPoseComparison() {
     }
     poseRunButton_->setEnabled(false);
     poseExportButton_->setEnabled(false);
+    poseMatrixExportButton_->setEnabled(false);
     poseRows_.clear();
     poseTable_->setRowCount(0);
     poseResidueTable_->setRowCount(0);
