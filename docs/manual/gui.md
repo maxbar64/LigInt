@@ -8,7 +8,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 
 ![The window](img/gui-1HSG-window.png)
 
-- The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
+- The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Ligand structures** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
 - The **3D view** is at the top right, with the **Graphics** panel on its side (protein, surface, ligand, interactions, camera).
 - The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
@@ -65,13 +65,14 @@ All the other thresholds have fixed defaults in the window; they can be changed 
 [command line](cli.md#thresholds), and the window shows the command that corresponds to your settings. The meaning of each criterion is in
 [Interactions and assumptions](interactions.md).
 
-## Chemical templates
+## Ligand structures (SDF/MOL2)
 
-By default the donors, acceptors and charges of the ligand are inferred from its geometry. **Add template...** loads an **SDF** or **MOL2**
-file of the ligand with its bond orders, explicit hydrogens and formal charges, which makes the chemistry exact. The ligand of the structure is
-matched to the molecule **by coordinates**, so the file must have the same coordinates as the structure (for example, a ligand file
-prepared from the same complex). The label below the button shows what was loaded; the **Log** says whether the template was applied or why
-not. Templates stay loaded when you open another structure. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
+By default, ligand donors, acceptors and charges are inferred from geometry. **Add ligand structure...** loads an **SDF** or **MOL2** file containing ligand coordinates, bond orders, explicit hydrogens and formal charges. The imported molecule can serve two purposes:
+
+- **Ligand already in the PDB/mmCIF:** select the crystallographic ligand to transfer chemical information from the imported structure. The heavy atoms must match by coordinates.
+- **External ligand pose:** select **External: ...** from the ligand selector to analyze the imported molecule directly, without requiring its presence in the receptor PDB/mmCIF. The imported ligand and receptor must be in the same coordinate frame.
+
+The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
 
 ## Pocket definition
 
