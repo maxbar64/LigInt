@@ -72,7 +72,7 @@ By default, ligand donors, acceptors and charges are inferred from geometry. **A
 - **Ligand already in the PDB/mmCIF:** select the crystallographic ligand to transfer chemical information from the imported structure. The heavy atoms must match by coordinates.
 - **External ligand pose:** select **External: ...** from the ligand selector to analyze the imported molecule directly, without requiring its presence in the receptor PDB/mmCIF. The imported ligand and receptor must be in the same coordinate frame.
 
-The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
+In the **Ligand to analyze** selector, **Crystal:** identifies a ligand already present as a HETATM residue in the receptor, while **External pose:** identifies the imported SDF/MOL2 molecule used directly for analysis. Tooltips describe the difference. The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
 
 ## Pocket definition
 
