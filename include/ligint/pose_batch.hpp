@@ -13,6 +13,7 @@ struct Row {
     size_t index = 0, atoms = 0, favorable = 0, hbonds = 0, hydrophobic = 0;
     size_t pi = 0, salt = 0, water = 0, clashes = 0, repulsions = 0, covalent = 0, residues = 0;
     std::string name, error;
+    std::set<std::string> contactResidues; // unique favorable protein residues per pose
 };
 inline std::string csvQuote(const std::string& s) {
     if (s.find_first_of(",\"\r\n") == std::string::npos) return s;
@@ -56,7 +57,10 @@ inline Row analyze(const std::string& receptor, const ligint::Options& base, siz
             if (h.type == ligint::type::StericClash) ++row.clashes;
             if (h.type == ligint::type::ElectrostaticRepulsion) ++row.repulsions;
             if (h.type == ligint::type::PossibleCovalent) ++row.covalent;
-            if (!h.residue.empty()) residues.insert(h.residue);
+            if (!h.residue.empty()) {
+                residues.insert(h.residue);
+                if (h.favorable) row.contactResidues.insert(h.residue);
+            }
         }
         row.residues = residues.size();
     } catch (const std::exception& e) { row.error = e.what(); }
