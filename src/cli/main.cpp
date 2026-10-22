@@ -6,6 +6,11 @@
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -21,7 +26,7 @@ static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
          << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
-         << "Fingerprint: --fingerprint csv|json|svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
+         << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
          << "Matrix: --matrix LIST [--matrix-format csv|json|svg] [--matrix-classes klifs|all|NAMES] [--matrix-hide-empty] [--matrix-title TEXT] [--pocket FILE]\n"
          << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
@@ -41,7 +46,7 @@ int main(int argc, char** argv) {
     vector<string> pa;
     bool csv = false;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
-    string fpFormat, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
+    string fpFormat, fpOutput, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
         string s = argv[i];
         if (s == "--help" || s == "-h") { usage(argv[0], P); return 0; }
@@ -117,8 +122,17 @@ int main(int argc, char** argv) {
             string v = argv[++i];
             if (s == "--pocket") pocketPath = v;
             else {
-                if (v != "csv" && v != "json" && v != "svg") { cerr << "--fingerprint expects csv, json or svg\n"; return 1; }
-                fpFormat = v;
+                if (v == "csv" || v == "json" || v == "svg") fpFormat = v;
+                else {
+                    const auto dot = v.find_last_of('.');
+                    const string ext = dot == string::npos ? "" : v.substr(dot + 1);
+                    if (ext != "csv" && ext != "json" && ext != "svg") {
+                        cerr << "--fingerprint expects csv, json, svg, or a file ending in .csv, .json or .svg\n";
+                        return 1;
+                    }
+                    fpFormat = ext;
+                    fpOutput = v;
+                }
             }
         }
         else if (s == "--sdf" || s == "--mol2") {
@@ -224,6 +238,14 @@ int main(int argc, char** argv) {
     try {
         Result r = analyzeFile(pa[0], opt);
         for (auto& w : r.warnings) cerr << w << "\n";
+        #ifdef _WIN32
+        if (fpOutput.empty()) {
+            if (_setmode(_fileno(stdout), _O_BINARY) == -1) {
+                cerr << "Cannot set binary stdout mode\n";
+                return 1;
+            }
+        }
+        #endif
         if (!fpFormat.empty() && !r.listingOnly) {
             vector<Fingerprint> fps;
             for (auto& lig : r.ligands) {
@@ -232,12 +254,21 @@ int main(int argc, char** argv) {
             }
             for (auto& s : r.info) cerr << s << "\n";
             for (auto& lig : r.ligands) for (auto& s : lig.info) cerr << s << "\n";
-            if (fpFormat == "csv") writeFingerprintCsv(cout, fps);
-            else if (fpFormat == "json") writeFingerprintJson(cout, fps);
+            ofstream outputFile;
+            ostream* destination = &cout;
+            if (!fpOutput.empty()) {
+                outputFile.open(fpOutput, ios::binary | ios::trunc);
+                if (!outputFile) { cerr << "Cannot open fingerprint output file: " << fpOutput << "\n"; return 1; }
+                destination = &outputFile;
+            }
+            if (fpFormat == "csv") writeFingerprintCsv(*destination, fps);
+            else if (fpFormat == "json") writeFingerprintJson(*destination, fps);
             else {
                 if (fps.size() > 1) cerr << "Warning: " << fps.size() << " ligands found, only the first is drawn (select one with chain and residue)\n";
-                cout << fingerprintSvg(fps.front());
+                if (fps.empty()) { cerr << "No ligand fingerprint available for SVG output\n"; return 1; }
+                *destination << fingerprintSvg(fps.front());
             }
+            if (!*destination) { cerr << "Failed to write fingerprint output" << (fpOutput.empty() ? "" : ": " + fpOutput) << "\n"; return 1; }
         } else if (csv) printCsv(cout, cerr, r);
         else printText(cout, r);
     } catch (const exception& e) {

@@ -1011,6 +1011,39 @@ def fingerprint_csv_json_svg_are_consistent():
 
 
 @test("fp")
+def fingerprint_filename_infers_format_and_preserves_stdout_mode():
+    pdb = tmpfile(fp_system().text())
+    for extension in ("csv", "json", "svg"):
+        output = os.path.join(CFG["tmp"], "fingerprint_output." + extension)
+        result = run_raw([pdb, "LIG", "--fingerprint", output])
+        check(result.rc == 0, "output file failed: " + result.err)
+        check(not result.out.strip(), "output-file mode should not print the fingerprint to stdout")
+        with open(output, encoding="utf-8") as stream:
+            content = stream.read()
+        if extension == "csv":
+            check(content.startswith("ligand,residue,"), "CSV output file contents")
+        elif extension == "json":
+            check(isinstance(json.loads(content), list), "JSON output file contents")
+        else:
+            check(ET.fromstring(content).tag == SVG_NS + "svg", "SVG output file contents")
+        legacy = run_raw([pdb, "LIG", "--fingerprint", extension])
+        normalized_stdout = legacy.out.replace("\r\n", "\n").replace("\r", "\n")
+        normalized_file = content.replace("\r\n", "\n").replace("\r", "\n")
+        check(
+            legacy.rc == 0 and normalized_stdout == normalized_file,
+            (
+                f"legacy stdout differs from file mode ({extension}): "
+                f"rc={legacy.rc}, "
+                f"stdout_len={len(legacy.out)}, file_len={len(content)}, "
+                f"stdout_prefix={legacy.out[:120]!r}, "
+                f"file_prefix={content[:120]!r}"
+            )
+        )
+    invalid = run_raw([pdb, "LIG", "--fingerprint", "output.txt"])
+    check(invalid.rc != 0 and "ending in .csv" in invalid.err, "invalid extension should be rejected")
+
+
+@test("fp")
 def fingerprint_uses_the_pocket_definition():
     s = fp_system()
     pk = pocket_file(["# example", "@name My pocket", "@color regA #336699",

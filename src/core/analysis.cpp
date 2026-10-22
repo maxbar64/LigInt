@@ -188,12 +188,77 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         }
     }
     if (ligName.empty() || ligs.empty()) {
+        // A listing can still provide protein geometry for the 3D preview.
+        if (opt.protein3d) buildProteinScene(prot, res);
         res.listingOnly = true;
         for (auto& [n, s] : hetNames) res.hetCounts[n] = (int)s.size();
         for (auto& [k, atoms] : hetRes) {
             LigandId id;
             id.res = atoms[0].res; id.chain = get<0>(k); id.resi = get<1>(k); id.icode = get<2>(k); id.atoms = (int)atoms.size();
             res.hetResidues.push_back(id);
+        }
+        // Lightweight ligand coordinates for the import-time viewer only.
+        if (opt.previewLigands3d) for (const auto& [key, atoms] : hetRes) {
+            if (atoms.empty()) continue;
+            LigandResult preview;
+            preview.resName = atoms.front().res;
+            preview.chain = get<0>(key);
+            preview.resi = get<1>(key);
+            preview.icode = get<2>(key);
+            preview.id = preview.resName + " " + to_string(preview.resi) + preview.chain;
+            for (const auto& a : atoms) {
+                AtomRecord atom;
+                atom.name = a.name; atom.res = a.res; atom.chain = a.chain;
+                atom.resi = a.resi; atom.icode = a.icode; atom.element = a.el;
+                atom.pos = {a.x, a.y, a.z}; atom.hetero = true;
+                preview.atoms.push_back(atom);
+            }
+            // Geometry-only bond inference for preview (bond orders are deliberately unknown).
+            // Conservative distance and coordination gates avoid bridging neighboring molecules.
+            auto covalent=[](const std::string& e) -> double {
+                if(e=="H")return 0.31;
+                if(e=="C")return 0.76;
+                if(e=="N")return 0.71;
+                if(e=="O")return 0.66;
+                if(e=="S")return 1.05;
+                if(e=="P")return 1.07;
+                if(e=="F")return 0.57;
+                if(e=="Cl")return 1.02;
+                if(e=="Br")return 1.20;
+                if(e=="I")return 1.39;
+                return 0.0;
+            };
+            auto coordination=[](const std::string& e) {
+                if(e=="C")return 4;
+                if(e=="N")return 3;
+                if(e=="O")return 2;
+                if(e=="S")return 2;
+                if(e=="P")return 5;
+                if(e=="F"||e=="Cl"||e=="Br"||e=="I")return 1;
+                return 0;
+            };
+            struct Candidate { int a,b; double distance; };
+            std::vector<Candidate> proposed;
+            for(int i=0;i<static_cast<int>(preview.atoms.size());++i)
+                for(int j=i+1;j<static_cast<int>(preview.atoms.size());++j){
+                    const auto& a=preview.atoms[i];const auto& b=preview.atoms[j];
+                    if(!coordination(a.element)||!coordination(b.element))continue;
+                    const double r=covalent(a.element)+covalent(b.element);
+                    const double dx=a.pos[0]-b.pos[0],dy=a.pos[1]-b.pos[1],dz=a.pos[2]-b.pos[2];
+                    const double d=std::sqrt(dx*dx+dy*dy+dz*dz);
+                    if(d>=0.65 && d<=std::min(2.20,r+0.35))
+                        proposed.push_back({i,j,d});
+                }
+            std::sort(proposed.begin(),proposed.end(),
+                      [](const Candidate& a,const Candidate& b){return a.distance<b.distance;});
+            std::vector<int> degree(preview.atoms.size(),0);
+            for(const auto& bond:proposed){
+                if(degree[bond.a]>=coordination(preview.atoms[bond.a].element) ||
+                   degree[bond.b]>=coordination(preview.atoms[bond.b].element))continue;
+                preview.bonds.push_back({bond.a,bond.b,0});
+                ++degree[bond.a];++degree[bond.b];
+            }
+            res.ligands.push_back(std::move(preview));
         }
         if (!ligName.empty()) res.notFound = ligName;
         return res;

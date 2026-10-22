@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
@@ -27,6 +28,17 @@ struct GpcrdbOptions {
     std::vector<std::string> positions;       // the pocket: generic numbers, "3x32" (GPCRdb) or "3.32" (Ballesteros-Weinstein)
     std::string name;                         // name of the definition; empty = "GPCR pocket (GPCRdb numbering, chain X)"
 };
+
+struct GpcrdbContactMapping {
+    std::vector<std::string> positions;
+    std::vector<std::string> details; // residue -> generic position for verification
+    std::vector<std::string> missing;
+};
+// Derive a suggested site from contacts, never from hardcoded generic numbers.
+// Contacts use the chain and residue number of the currently analyzed structure.
+GpcrdbContactMapping mapGpcrdbContacts(
+    const std::string& numberedStructure,const std::string& mappingFile,
+    const std::string& receptorChain,const std::vector<std::pair<std::string,int>>& contacts);
 
 struct GpcrdbPocket {
     PocketDefinition pocket;                  // the positions that this structure has, in the order of the helices

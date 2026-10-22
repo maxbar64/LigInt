@@ -18,6 +18,7 @@
 #include "SceneBuilder.h"
 #include "ViewStyle.h"
 #include "ligint/ligint.hpp"
+#include "ligint/pocket.hpp"
 
 namespace gui {
 
@@ -31,7 +32,13 @@ public:
     void setLigand(const ligint::LigandResult& r);
     // ...or the ligand with the protein of the analysis (Result::backbone and Result::proteinAtoms, see Options::protein3d).
     void setStructure(const ligint::Result& result, int ligandIndex = 0);
+    void setImportPreview(const ligint::Result& result, int selectedIndex = -1);
+    void setPreviewDonorHydrogens(bool enabled);
+    bool previewDonorHydrogens() const { return previewDonorHydrogens_; }
     void clear();
+    // Overlay the raw pocket volume in the same depth-buffered scene as protein and ligand.
+    void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2);
+    void setPocketAppearance(bool visible, double opacity, double specular);
     bool hasData() const { return hasData_; }
     bool hasProtein() const { return protein_ && !protein_->backbone.empty(); }
 
@@ -57,6 +64,7 @@ public:
 signals:
     void styleChanged();
     void busyChanged(bool busy);
+    void importLigandPicked(int index);
 
 public slots:
     void resetView();        // initial orientation, framing the ligand
@@ -76,8 +84,8 @@ private:
     using Mat3 = std::array<double, 9>;
 
     struct Pieces {
-        std::shared_ptr<const MeshPiece> cartoon, surface;
-        std::shared_ptr<const AtomsPiece> ligand, residues, water;
+        std::shared_ptr<const MeshPiece> cartoon, surface, pocket;
+        std::shared_ptr<const AtomsPiece> ligand, residues, water, previewLigands;
     };
     struct Frame {                                   // result of a render
         QImage image;
@@ -105,10 +113,18 @@ private:
     std::size_t triangleCount() const;
 
     ligint::LigandResult data_;
-    std::shared_ptr<ligint::Result> protein_;        // backbone and atoms only
+    std::shared_ptr<ligint::Result> protein_;
+    std::vector<ligint::LigandResult> importedLigands_;
+    QPoint pressPoint_;
+    bool previewDonorHydrogens_ = false;        // backbone and atoms only
     bool hasData_ = false;
     ViewStyle style_;
     Pieces pieces_;
+    std::vector<ligint::PocketPoint> pocketPoints_;
+    double pocketSpacing_=1.0;
+    int pocketSmoothing_=2;
+    bool pocketVisible_=true;
+    double pocketOpacity_=0.38, pocketSpecular_=0.12;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
