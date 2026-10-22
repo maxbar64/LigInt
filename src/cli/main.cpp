@@ -24,7 +24,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
+         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
@@ -135,6 +135,10 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        else if (s == "--exclude-pdb-ligand") {
+            if (i + 1 >= argc || argv[i + 1][0] == '-') { cerr << "--exclude-pdb-ligand requires a residue name\n"; return 1; }
+            opt.excludePdbLigand = argv[++i];
+        }
         else if (s == "--sdf" || s == "--mol2") {
             if (i + 1 >= argc) { cerr << s << " requires a file\n"; return 1; }
             if (!ifstream(argv[i + 1])) { cerr << "Cannot open " << argv[i + 1] << "\n"; return 1; }
@@ -187,6 +191,9 @@ int main(int argc, char** argv) {
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     if (pa.size() == 1 && !opt.templates.empty()) opt.externalLigandIndex = 0;
+    if (!opt.excludePdbLigand.empty() && opt.externalLigandIndex < 0) {
+        cerr << "--exclude-pdb-ligand requires an external SDF/MOL2 ligand pose (omit RESNAME)\n"; return 1;
+    }
     opt.chain = pa.size() > 2 ? pa[2] : "";
     if (pa.size() > 3) {
         // residue number with an optional insertion code: "501" (any code), "501A" (code A), "501-" (no code)
