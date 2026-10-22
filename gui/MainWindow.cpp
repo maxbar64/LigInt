@@ -45,6 +45,7 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QTableWidget>
+#include <QColor>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
@@ -162,6 +163,28 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
                 auto* cell = new QTableWidgetItem(pose.error.empty() ? codes.join(QStringLiteral("+")) : QStringLiteral("—"));
                 cell->setToolTip(descriptions.join(QStringLiteral("\n")));
                 cell->setTextAlignment(Qt::AlignCenter);
+                // Heatmap: color reflects interaction class, not strength or binding affinity.
+                // With multiple classes, use the priority below and retain every class in the text/tooltip.
+                if (!pose.error.empty()) {
+                    cell->setBackground(QColor(220, 220, 220));
+                } else if (codes.contains(QStringLiteral("HB"))) {
+                    cell->setBackground(QColor(175, 212, 245));
+                } else if (codes.contains(QStringLiteral("SB"))) {
+                    cell->setBackground(QColor(224, 182, 241));
+                } else if (codes.contains(QStringLiteral("PI"))) {
+                    cell->setBackground(QColor(248, 216, 154));
+                } else if (codes.contains(QStringLiteral("HY"))) {
+                    cell->setBackground(QColor(189, 225, 176));
+                } else if (codes.contains(QStringLiteral("WB"))) {
+                    cell->setBackground(QColor(175, 230, 232));
+                } else if (codes.contains(QStringLiteral("XB"))) {
+                    cell->setBackground(QColor(246, 192, 180));
+                } else if (codes.contains(QStringLiteral("ME"))) {
+                    cell->setBackground(QColor(223, 204, 161));
+                } else if (!codes.isEmpty()) {
+                    cell->setBackground(QColor(220, 220, 220));
+                }
+                if (!codes.isEmpty()) cell->setForeground(QColor(25, 35, 45));
                 poseResidueTable_->setItem(residueRow, 3 + pi, cell);
             }
             ++residueRow;
@@ -681,6 +704,9 @@ void MainWindow::buildUi() {
     poseSplit->setStretchFactor(0, 3);
     poseSplit->setStretchFactor(1, 2);
     poseLayout->addWidget(poseSplit);
+    auto* heatmapLegend = new QLabel(tr("Interaction heatmap: HB blue · HY green · PI orange · SB purple · WB cyan · XB coral · ME brown · OT gray. Multiple types: color follows HB > SB > PI > HY > WB > XB > ME > OT; see cell text/tooltip. Empty = no favorable contact; gray dash = failed pose."));
+    heatmapLegend->setWordWrap(true);
+    poseLayout->addWidget(heatmapLegend);
     connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
     connect(poseTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) { selectComparedPose(row); });
     connect(poseExportButton_, &QPushButton::clicked, this, [this] {
