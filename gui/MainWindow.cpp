@@ -260,11 +260,11 @@ void MainWindow::buildUi() {
     form->addRow(tr("π-stacking, max angle"), piAngle_);
     lv->addWidget(gThr);
 
-    auto* gTmpl = new QGroupBox(tr("Chemical templates (SDF / MOL2)"));
+    auto* gTmpl = new QGroupBox(tr("Ligand structures (SDF / MOL2)"));
     auto* tv = new QVBoxLayout(gTmpl);
-    templateLabel_ = new QLabel(tr("none: chemistry inferred from the geometry"));
+    templateLabel_ = new QLabel(tr("none: ligand chemistry inferred from geometry"));
     templateLabel_->setWordWrap(true);
-    auto* tbtn = new QPushButton(tr("Add template…"));
+    auto* tbtn = new QPushButton(tr("Add ligand structure…"));
     connect(tbtn, &QPushButton::clicked, this, &MainWindow::onAddTemplate);
     tv->addWidget(tbtn);
     tv->addWidget(templateLabel_);
@@ -896,21 +896,21 @@ bool MainWindow::addTemplate(const QString& path) {
     bool ok = mol2 ? ligint::loadMol2(path.toStdString(), t, warnings) : ligint::loadSdf(path.toStdString(), t, warnings);
     for (const auto& w : warnings) log(QString::fromStdString(w));
     if (!ok || t.empty()) {
-        showError(tr("Invalid template"), tr("No readable molecule in %1").arg(path));
+        showError(tr("Invalid ligand structure"), tr("No readable molecule in %1").arg(path));
         return false;
     }
     templates_.insert(templates_.end(), t.begin(), t.end());
     templatePaths_ << QFileInfo(path).absoluteFilePath();
     templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecules)").arg(t.size());
     templateLabel_->setText(templateNames_.join("\n"));
-    log(tr("Template loaded: %1").arg(path));
+    log(tr("Ligand structure loaded: %1").arg(path));
     refreshLigandCombo();
     return true;
 }
 
 void MainWindow::onAddTemplate() {
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getOpenFileName(this, tr("SDF or MOL2 template"), s.value("lastDir").toString(),
+    QString f = QFileDialog::getOpenFileName(this, tr("Ligand structure (SDF or MOL2)"), s.value("lastDir").toString(),
                                              tr("Molecules (*.sdf *.mol2);;All files (*)"));
     if (!f.isEmpty()) addTemplate(f);
 }
