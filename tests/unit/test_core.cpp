@@ -1524,6 +1524,21 @@ static void testExternalLigandPose() {
         auto fp = ligint::makeFingerprint(lig, nullptr);
         CHECK(fp.ligandId == lig.id);
     }
+    // A crystallographic copy at the external pose coordinates must be excluded only on request.
+    const std::string withDuplicate =
+        atomLine("ATOM", 1, "OD1", "ASN", 'A', 10, 2.83, 2.4248, 0, "O") + "\n" +
+        atomLine("HETATM", 2, "C1", "DUP", 'B', 20, 0, 0, 0, "C") + "\n" +
+        atomLine("HETATM", 3, "O1", "DUP", 'B', 20, 1.43, 0, 0, "O") + "\nEND\n";
+    auto duplicated = run(withDuplicate, opt);
+    CHECK(duplicated.ligands.size() == 1);
+    if (!duplicated.ligands.empty()) CHECK(hasType(duplicated.ligands.front(), ligint::type::PossibleCovalentBond));
+    opt.excludePdbLigand = "DUP";
+    auto cleaned = run(withDuplicate, opt);
+    CHECK(cleaned.ligands.size() == 1);
+    if (!cleaned.ligands.empty()) {
+        CHECK(!hasType(cleaned.ligands.front(), ligint::type::PossibleCovalentBond));
+        CHECK(hasType(cleaned.ligands.front(), ligint::type::HydrogenBond));
+    }
     ligint::Options listing;
     listing.templates = opt.templates;
     CHECK(run(pdb.str(), listing).listingOnly);
