@@ -1518,7 +1518,7 @@ static void testExternalLigandPose() {
         CHECK(std::fabs(lig.atoms[1].pos[0] - 1.43) < 0.001);
         CHECK(hasType(lig, ligint::type::HydrogenBond));
         auto fp = ligint::makeFingerprint(lig, nullptr);
-        CHECK(!fp.ligand.empty());
+        CHECK(fp.ligandId == lig.id);
     }
     ligint::Options listing;
     listing.templates = opt.templates;
