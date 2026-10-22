@@ -74,6 +74,10 @@ By default, ligand donors, acceptors and charges are inferred from geometry. **A
 
 In the **Ligand to analyze** selector, **Crystal:** identifies a ligand already present as a HETATM residue in the receptor, while **External pose N:** identifies a specific imported SDF/MOL2 molecule used directly for analysis. Multiple structures and poses from one or more imported files can be selected individually. Tooltips describe the difference. For external poses, **Exclude PDB ligand** optionally removes HETATM residues of the specified three-letter residue name (for example `BZC`) from receptor-contact calculations. Waters and other ligand/cofactor names are retained. This option has no effect when a crystallographic ligand is selected. The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
 
+## Pose Comparison
+
+The **Pose Comparison** tab summarizes all imported SDF/MOL2 molecules against the current receptor. Select **Analyze all imported poses** to run the analysis in the background. The table reports favorable contacts, hydrogen bonds, hydrophobic interactions, aromatic interactions, water bridges, clashes and interacting residues. **Double-click a pose** to select it and run its normal analysis in the 3D viewer, Interactions and Fingerprint tabs. **Export CSV...** saves the full batch summary including salt bridges, repulsions and possible covalent contacts. The optional **Exclude PDB ligand** value also applies to this batch. Counts are descriptive, not affinity scores. The imported ligand coordinates must already be aligned with the receptor; no automatic docking alignment is performed.
+
 ## Pocket definition
 
 The **Pocket definition (fingerprint)** group loads a text file that maps residues to positions and regions of a binding pocket, used to
