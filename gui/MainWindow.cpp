@@ -268,6 +268,12 @@ void MainWindow::buildUi() {
     connect(tbtn, &QPushButton::clicked, this, &MainWindow::onAddTemplate);
     tv->addWidget(tbtn);
     tv->addWidget(templateLabel_);
+    excludePdbLigand_ = new QLineEdit;
+    excludePdbLigand_->setPlaceholderText(tr("e.g. BZC (optional)"));
+    excludePdbLigand_->setToolTip(tr("When analyzing an external pose, omit all HETATM atoms with this residue name from receptor interactions. Other cofactors and waters remain."));
+    auto* excludeForm = new QFormLayout;
+    excludeForm->addRow(tr("Exclude PDB ligand:"), excludePdbLigand_);
+    tv->addLayout(excludeForm);
     lv->addWidget(gTmpl);
 
     auto* gPocket = new QGroupBox(tr("Pocket definition (fingerprint)"));
@@ -952,6 +958,7 @@ ligint::Options MainWindow::buildOptions() const {
         opt.altloc = alt.isEmpty() ? 0 : alt[0].toLatin1();
     }
     opt.templates = templates_;
+    if (opt.externalLigandIndex >= 0) opt.excludePdbLigand = excludePdbLigand_->text().trimmed().toStdString();
     auto& p = opt.params;
     p.hbMax = hbMax_->value();
     p.hbLong = hbLong_->value();
@@ -1117,6 +1124,10 @@ QStringList MainWindow::optionArgs() const {
     thr("pi-angle", piAngle_->value(), d.piAngle);
     if (plipLike_->isChecked()) thr("hal-max", 4.0, d.halMax);     // the preset also lowers the halogen distance
     for (const QString& t : templatePaths_) a << (t.endsWith(".mol2", Qt::CaseInsensitive) ? "--mol2" : "--sdf") << t;
+    const int idx = ligandCombo_->currentIndex();
+    if (idx >= 0 && idx < static_cast<int>(shownLigands_.size()) &&
+        shownLigands_[idx].chain == "__EXTERNAL__" && !excludePdbLigand_->text().trimmed().isEmpty())
+        a << "--exclude-pdb-ligand" << excludePdbLigand_->text().trimmed();
     return a;
 }
 
