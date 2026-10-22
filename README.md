@@ -189,7 +189,7 @@ Crystallographic PDB files have no hydrogens, so the ligand chemistry is inferre
 
 `--sdf` / `--mol2` load a **ligand structure** containing coordinates, bond orders, explicit hydrogens and formal charges. With a ligand residue specified on the command line, the PDB/mmCIF ligand is chemically annotated by matching heavy atoms **by coordinates** (tolerance 0.6 Å, same number of heavy atoms). If matching fails, geometric heuristics are used.
 
-Without a ligand residue argument, the **first molecule** from the imported SDF/MOL2 is analyzed directly as an **external ligand pose**, even when no corresponding ligand is present in the receptor file. Its coordinates must share the receptor coordinate frame. Explicit hydrogens can improve donor/acceptor assignments and D–H···A geometry. SDF V3000 is not supported.
+Without a ligand residue argument, the **first molecule** from the imported SDF/MOL2 is analyzed directly by default; `--external-index N` selects another molecule (1-based) as an **external ligand pose**, even when no corresponding ligand is present in the receptor file. Its coordinates must share the receptor coordinate frame. Explicit hydrogens can improve donor/acceptor assignments and D–H···A geometry. SDF V3000 is not supported.
 
 ### Presets and options for the comparison with PLIP
 
