@@ -2,6 +2,7 @@
 #pragma once
 #include "ligint/ligint.hpp"
 #include <iomanip>
+#include <map>
 #include <ostream>
 #include <set>
 #include <sstream>
@@ -13,6 +14,7 @@ struct Row {
     size_t index = 0, atoms = 0, favorable = 0, hbonds = 0, hydrophobic = 0;
     size_t pi = 0, salt = 0, water = 0, clashes = 0, repulsions = 0, covalent = 0, residues = 0;
     std::string name, error;
+    std::map<std::string, std::set<std::string>> residueTypes;
     std::set<std::string> contactResidues; // unique favorable protein residues per pose
 };
 inline std::string csvQuote(const std::string& s) {
@@ -59,12 +61,72 @@ inline Row analyze(const std::string& receptor, const ligint::Options& base, siz
             if (h.type == ligint::type::PossibleCovalent) ++row.covalent;
             if (!h.residue.empty()) {
                 residues.insert(h.residue);
-                if (h.favorable) row.contactResidues.insert(h.residue);
+                if (h.favorable) {
+                    row.contactResidues.insert(h.residue);
+                    row.residueTypes[h.residue].insert(h.type);
+                }
             }
         }
         row.residues = residues.size();
     } catch (const std::exception& e) { row.error = e.what(); }
     return row;
+}
+inline void writeResidueMatrix(std::ostream& o, const std::vector<Row>& rows, const std::string& format) {
+    std::map<std::string, size_t> counts;
+    size_t successful = 0;
+    for (const auto& row : rows) {
+        if (!row.error.empty()) continue;
+        ++successful;
+        for (const auto& pair : row.residueTypes) ++counts[pair.first];
+    }
+    if (format == "csv") {
+        o << "residue,pose_count,frequency_percent";
+        for (const auto& row : rows) o << ',' << csvQuote("pose_" + std::to_string(row.index));
+        o << '\n';
+        for (const auto& [residue, count] : counts) {
+            o << csvQuote(residue) << ',' << count << ',' << (successful ? 100.0 * count / successful : 0.0);
+            for (const auto& row : rows) {
+                std::string types;
+                if (!row.error.empty()) types = "ERROR";
+                else {
+                    auto found = row.residueTypes.find(residue);
+                    if (found != row.residueTypes.end())
+                        for (const auto& type : found->second) {
+                            if (!types.empty()) types += "; ";
+                            types += type;
+                        }
+                }
+                o << ',' << csvQuote(types);
+            }
+            o << '\n';
+        }
+    } else {
+        o << "{\n  \"successful_poses\":" << successful << ",\n  \"residues\":[\n";
+        bool firstResidue = true;
+        for (const auto& [residue, count] : counts) {
+            if (!firstResidue) o << ",\n";
+            firstResidue = false;
+            o << "    {\"residue\":" << jsonQuote(residue) << ",\"pose_count\":" << count
+              << ",\"frequency_percent\":" << (successful ? 100.0 * count / successful : 0.0) << ",\"poses\":[";
+            for (size_t i = 0; i < rows.size(); ++i) {
+                if (i) o << ',';
+                const auto& row = rows[i];
+                o << "{\"index\":" << row.index << ",\"status\":" << jsonQuote(row.error.empty() ? "ok" : "error") << ",\"types\":[";
+                auto found = row.residueTypes.find(residue);
+                if (row.error.empty() && found != row.residueTypes.end()) {
+                    bool firstType = true;
+                    for (const auto& type : found->second) {
+                        if (!firstType) o << ',';
+                        firstType = false;
+                        o << jsonQuote(type);
+                    }
+                }
+                o << "]}";
+            }
+            o << "]}";
+        }
+        o << "\n  ]\n}\n";
+    }
 }
 inline void write(std::ostream& o, const std::vector<Row>& rows, const std::string& format) {
     if (format == "csv") {
