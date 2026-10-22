@@ -189,6 +189,7 @@ QString HelpWindow::topicForTab(const QString& tab) {
     if (tab == QLatin1String("Residues")) return QStringLiteral("gui.html#the-residues-table");
     if (tab == QLatin1String("Fingerprint")) return QStringLiteral("gui.html#the-fingerprint-tab");
     if (tab == QLatin1String("Matrix")) return QStringLiteral("gui.html#the-matrix-tab");
+    if (tab == QLatin1String("Pose Comparison")) return QStringLiteral("gui.html#pose-comparison");
     if (tab == QLatin1String("Log")) return QStringLiteral("gui.html#the-log");
     return QStringLiteral("index.html");
 }
