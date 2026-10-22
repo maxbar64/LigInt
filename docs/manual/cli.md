@@ -138,11 +138,13 @@ writes in its log.
 
 ## External ligand poses (docking)
 
-When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule by default (or the 1-based molecule selected using `--external-index N`) in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
+Batch summaries (`--batch-poses csv|json`) analyze every imported molecule independently and report per-pose favorable contact counts, hydrogen bonds, hydrophobic and aromatic contacts, salt and water bridges, clashes, repulsions, possible covalent contacts and the number of interacting residues. These are descriptive counts, **not a calibrated affinity or docking score**. A failed pose is recorded with an error and the process returns a nonzero status. Batch mode cannot be combined with `--fingerprint`, `--csv` or a specified crystallographic ligand.\n\nWhen no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule by default (or the 1-based molecule selected using `--external-index N`) in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
 
 ```sh
 ligint receptor.pdb --sdf docked_pose.sdf --csv
 ligint receptor.pdb --mol2 docked_pose.mol2 --fingerprint json
 ligint receptor.pdb --sdf multiple_poses.sdf --external-index 2 --fingerprint json
+ligint receptor.pdb --sdf multiple_poses.sdf --batch-poses csv > pose_summary.csv
+ligint receptor.pdb --sdf multiple_poses.sdf --batch-poses json > pose_summary.json
 ligint complex_with_original_ligand.pdb --sdf docked_pose.sdf --exclude-pdb-ligand BZC --csv
 ```
