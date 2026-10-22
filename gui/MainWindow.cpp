@@ -102,6 +102,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     poseWatcher_ = new QFutureWatcher<std::vector<ligand_pose_batch::Row>>(this);
     connect(poseWatcher_, &QFutureWatcher<std::vector<ligand_pose_batch::Row>>::finished, this, [this] {
         poseRows_ = poseWatcher_->result();
+        poseTable_->setSortingEnabled(true);
         poseTable_->setRowCount(static_cast<int>(poseRows_.size()));
         for (int i = 0; i < static_cast<int>(poseRows_.size()); ++i) {
             const auto& r = poseRows_[i];
@@ -116,6 +117,30 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             }
             if (!r.error.empty()) poseTable_->item(i, 2)->setToolTip(QString::fromStdString(r.error));
         }
+        poseTable_->setSortingEnabled(true);
+        std::map<std::string, int> frequency;
+        int successful = 0;
+        for (const auto& r : poseRows_) {
+            if (!r.error.empty()) continue;
+            ++successful;
+            for (const auto& residue : r.contactResidues) ++frequency[residue];
+        }
+        poseResidueTable_->setSortingEnabled(false);
+        poseResidueTable_->setRowCount(static_cast<int>(frequency.size()));
+        int residueRow = 0;
+        for (const auto& entry : frequency) {
+            auto* name = new QTableWidgetItem(QString::fromStdString(entry.first));
+            auto* count = new QTableWidgetItem;
+            count->setData(Qt::EditRole, entry.second);
+            auto* percent = new QTableWidgetItem;
+            percent->setData(Qt::EditRole, successful ? 100.0 * entry.second / successful : 0.0);
+            poseResidueTable_->setItem(residueRow, 0, name);
+            poseResidueTable_->setItem(residueRow, 1, count);
+            poseResidueTable_->setItem(residueRow, 2, percent);
+            ++residueRow;
+        }
+        poseResidueTable_->setSortingEnabled(true);
+        poseResidueTable_->sortItems(1, Qt::DescendingOrder);
         poseRunButton_->setEnabled(true);
         poseExportButton_->setEnabled(!poseRows_.empty());
         statusBar()->showMessage(tr("Pose comparison: %1 poses analyzed").arg(poseRows_.size()));
@@ -614,7 +639,17 @@ void MainWindow::buildUi() {
     poseTable_->setSelectionMode(QAbstractItemView::SingleSelection);
     poseTable_->setSortingEnabled(false);
     poseTable_->horizontalHeader()->setStretchLastSection(true);
-    poseLayout->addWidget(poseTable_);
+    auto* poseSplit = new QSplitter(Qt::Vertical);
+    poseSplit->addWidget(poseTable_);
+    poseResidueTable_ = new QTableWidget(0, 3);
+    poseResidueTable_->setHorizontalHeaderLabels({tr("Residue"), tr("Poses"), tr("Frequency (%)")});
+    poseResidueTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    poseResidueTable_->setSortingEnabled(true);
+    poseResidueTable_->horizontalHeader()->setStretchLastSection(true);
+    poseSplit->addWidget(poseResidueTable_);
+    poseSplit->setStretchFactor(0, 3);
+    poseSplit->setStretchFactor(1, 2);
+    poseLayout->addWidget(poseSplit);
     connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
     connect(poseTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) { selectComparedPose(row); });
     connect(poseExportButton_, &QPushButton::clicked, this, [this] {
@@ -959,6 +994,7 @@ void MainWindow::runPoseComparison() {
     poseExportButton_->setEnabled(false);
     poseRows_.clear();
     poseTable_->setRowCount(0);
+    poseResidueTable_->setRowCount(0);
     ligint::Options opt = buildOptions();
     opt.protein3d = false;
     opt.excludePdbLigand = excludePdbLigand_->text().trimmed().toStdString();
@@ -973,8 +1009,11 @@ void MainWindow::runPoseComparison() {
 }
 
 void MainWindow::selectComparedPose(int row) {
-    if (row < 0 || row >= static_cast<int>(poseRows_.size()) || !poseRows_[row].error.empty()) return;
-    const int index = static_cast<int>(poseRows_[row].index) - 1;
+    if (row < 0 || row >= poseTable_->rowCount()) return;
+    const auto* indexItem = poseTable_->item(row, 0);
+    if (!indexItem) return;
+    const int index = indexItem->data(Qt::EditRole).toInt() - 1;
+    if (index < 0 || index >= static_cast<int>(poseRows_.size()) || !poseRows_[index].error.empty()) return;
     for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i) {
         if (shownLigands_[i].chain == "__EXTERNAL__" && shownLigands_[i].resi == index) {
             ligandCombo_->setCurrentIndex(i);
