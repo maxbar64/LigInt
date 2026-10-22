@@ -1531,12 +1531,12 @@ static void testExternalLigandPose() {
         atomLine("HETATM", 3, "O1", "DUP", 'B', 20, 1.43, 0, 0, "O") + "\nEND\n";
     auto duplicated = run(withDuplicate, opt);
     CHECK(duplicated.ligands.size() == 1);
-    if (!duplicated.ligands.empty()) CHECK(hasType(duplicated.ligands.front(), ligint::type::PossibleCovalentBond));
+    if (!duplicated.ligands.empty()) CHECK(hasType(duplicated.ligands.front(), ligint::type::PossibleCovalent));
     opt.excludePdbLigand = "DUP";
     auto cleaned = run(withDuplicate, opt);
     CHECK(cleaned.ligands.size() == 1);
     if (!cleaned.ligands.empty()) {
-        CHECK(!hasType(cleaned.ligands.front(), ligint::type::PossibleCovalentBond));
+        CHECK(!hasType(cleaned.ligands.front(), ligint::type::PossibleCovalent));
         CHECK(hasType(cleaned.ligands.front(), ligint::type::HydrogenBond));
     }
     ligint::Options listing;
