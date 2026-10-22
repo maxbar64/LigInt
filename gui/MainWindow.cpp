@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     poseWatcher_ = new QFutureWatcher<std::vector<ligand_pose_batch::Row>>(this);
     connect(poseWatcher_, &QFutureWatcher<std::vector<ligand_pose_batch::Row>>::finished, this, [this] {
         poseRows_ = poseWatcher_->result();
-        poseTable_->setSortingEnabled(true);
+        poseTable_->setSortingEnabled(false);
         poseTable_->setRowCount(static_cast<int>(poseRows_.size()));
         for (int i = 0; i < static_cast<int>(poseRows_.size()); ++i) {
             const auto& r = poseRows_[i];
@@ -637,7 +637,7 @@ void MainWindow::buildUi() {
     poseTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     poseTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
     poseTable_->setSelectionMode(QAbstractItemView::SingleSelection);
-    poseTable_->setSortingEnabled(false);
+    poseTable_->setSortingEnabled(true);
     poseTable_->horizontalHeader()->setStretchLastSection(true);
     auto* poseSplit = new QSplitter(Qt::Vertical);
     poseSplit->addWidget(poseTable_);
