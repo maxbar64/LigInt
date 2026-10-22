@@ -875,6 +875,14 @@ void MainWindow::refreshLigandCombo() {
                                   .arg(l.resi)
                                   .arg(l.icode == ' ' ? QString() : QString(QChar(l.icode)))
                                   .arg(l.atoms));
+    if (!templates_.empty()) {
+        ligint::LigandId ext;
+        ext.res = "EXT"; ext.chain = "__EXTERNAL__"; ext.resi = 0;
+        for (const auto& atom : templates_.front().at) if (atom.el != "H" && atom.el != "D") ++ext.atoms;
+        shownLigands_.push_back(ext);
+        ligandCombo_->addItem(tr("External: %1 (%2 heavy atoms)")
+                                  .arg(QString::fromStdString(templates_.front().name)).arg(ext.atoms));
+    }
     runButton_->setEnabled(ligandCombo_->count() > 0 && !path_.isEmpty());
 }
 
@@ -896,6 +904,7 @@ bool MainWindow::addTemplate(const QString& path) {
     templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecules)").arg(t.size());
     templateLabel_->setText(templateNames_.join("\n"));
     log(tr("Template loaded: %1").arg(path));
+    refreshLigandCombo();
     return true;
 }
 
@@ -921,10 +930,13 @@ ligint::Options MainWindow::buildOptions() const {
     const int idx = ligandCombo_->currentIndex();
     if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
         const auto& l = shownLigands_[idx];
-        opt.ligName = l.res;
-        opt.chain = l.chain;
-        opt.resi = l.resi;
-        opt.icode = l.icode;
+        if (l.chain == "__EXTERNAL__") opt.externalLigandIndex = 0;
+        else {
+            opt.ligName = l.res;
+            opt.chain = l.chain;
+            opt.resi = l.resi;
+            opt.icode = l.icode;
+        }
     }
     opt.useWater = water_->isChecked();
     opt.mergeLinked = merge_->isChecked();
@@ -1063,6 +1075,7 @@ QStringList MainWindow::currentArgs() const {
     const int idx = ligandCombo_->currentIndex();
     if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
         const auto& l = shownLigands_[idx];
+        if (l.chain != "__EXTERNAL__") {
         a << QString::fromStdString(l.res) << QString::fromStdString(l.chain);
         // the insertion code is written only when it is needed to tell this residue from another one with the same number
         bool ambiguous = false;
@@ -1071,6 +1084,7 @@ QStringList MainWindow::currentArgs() const {
         QString number = QString::number(l.resi);
         if (ambiguous) number += l.icode == ' ' ? QStringLiteral("-") : QString(QChar(l.icode));
         a << number;
+        }
     }
     a << optionArgs();
     return a;

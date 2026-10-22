@@ -135,3 +135,12 @@ Keep only the hydrogen bonds of a CSV: `ligint 1abc.pdb LIG --csv | awk -F, 'NR 
 
 To repeat an analysis made in the [graphical interface](gui.md#reproducing-an-analysis-on-the-command-line), copy the command line that it
 writes in its log.
+
+## External ligand poses (docking)
+
+When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
+
+```sh
+ligint receptor.pdb --sdf docked_pose.sdf --csv
+ligint receptor.pdb --mol2 docked_pose.mol2 --fingerprint json
+```

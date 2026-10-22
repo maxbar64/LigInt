@@ -212,6 +212,11 @@
      "level": 2,
      "text": "Examples",
      "id": "examples"
+    },
+    {
+     "level": 2,
+     "text": "External ligand poses (docking)",
+     "id": "external-ligand-poses-docking"
     }
    ]
   },
