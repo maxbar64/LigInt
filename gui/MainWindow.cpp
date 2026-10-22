@@ -103,6 +103,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     poseWatcher_ = new QFutureWatcher<std::vector<ligand_pose_batch::Row>>(this);
     connect(poseWatcher_, &QFutureWatcher<std::vector<ligand_pose_batch::Row>>::finished, this, [this] {
         poseRows_ = poseWatcher_->result();
+        const auto poseGroups = ligand_pose_batch::exactFingerprintGroups(poseRows_);
         poseTable_->setSortingEnabled(false);
         poseTable_->setRowCount(static_cast<int>(poseRows_.size()));
         for (int i = 0; i < static_cast<int>(poseRows_.size()); ++i) {
@@ -110,7 +111,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             const QStringList fields = {QString::number(r.index), QString::fromStdString(r.name),
                 r.error.empty() ? tr("OK") : tr("Error"), QString::number(r.favorable),
                 QString::number(r.hbonds), QString::number(r.hydrophobic), QString::number(r.pi),
-                QString::number(r.water), QString::number(r.clashes), QString::number(r.residues)};
+                QString::number(r.water), QString::number(r.clashes), QString::number(r.residues),
+                poseGroups[i] ? tr("G%1").arg(poseGroups[i]) : tr("Error")};
             for (int j = 0; j < fields.size(); ++j) {
                 auto* item = new QTableWidgetItem(fields[j]);
                 if (j != 1 && j != 2) item->setData(Qt::EditRole, j == 0 ? QVariant(static_cast<int>(r.index)) : QVariant(fields[j].toInt()));
@@ -686,8 +688,8 @@ void MainWindow::buildUi() {
     poseTools->addWidget(poseExportButton_);
     poseTools->addWidget(poseMatrixExportButton_);
     poseLayout->addLayout(poseTools);
-    poseTable_ = new QTableWidget(0, 10);
-    poseTable_->setHorizontalHeaderLabels({tr("Index"), tr("Pose"), tr("Status"), tr("Favorable"), tr("H-bonds"), tr("Hydrophobic"), tr("Pi"), tr("Water"), tr("Clashes"), tr("Residues")});
+    poseTable_ = new QTableWidget(0, 11);
+    poseTable_->setHorizontalHeaderLabels({tr("Index"), tr("Pose"), tr("Status"), tr("Favorable"), tr("H-bonds"), tr("Hydrophobic"), tr("Pi"), tr("Water"), tr("Clashes"), tr("Residues"), tr("IFP group")});
     poseTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
     poseTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
     poseTable_->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -707,6 +709,9 @@ void MainWindow::buildUi() {
     auto* heatmapLegend = new QLabel(tr("Interaction abbreviations: HB = Hydrogen bond; HY = Hydrophobic contact; PI = Pi-stacking / cation-pi; SB = Salt bridge; WB = Water bridge; XB = Halogen bond; ME = Metal coordination; OT = Other favorable contact. Multiple codes indicate multiple types. Empty = no favorable contact; dash = failed pose."));
     heatmapLegend->setWordWrap(true);
     poseLayout->addWidget(heatmapLegend);
+    auto* groupNote = new QLabel(tr("IFP group: poses with identical residue + favorable-interaction-type fingerprints share a group (G1, G2, ...). Groups do not imply identical geometry or binding affinity."));
+    groupNote->setWordWrap(true);
+    poseLayout->addWidget(groupNote);
     connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
     connect(poseTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) { selectComparedPose(row); });
     connect(poseExportButton_, &QPushButton::clicked, this, [this] {
