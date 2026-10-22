@@ -217,6 +217,7 @@ private:
     QFutureWatcher<MatrixOutcome>* matrixWatcher_ = nullptr;
     QFutureWatcher<std::vector<ligand_pose_batch::Row>>* poseWatcher_ = nullptr;
     QTableWidget* poseTable_ = nullptr;
+    QTableWidget* poseResidueTable_ = nullptr;
     QPushButton* poseRunButton_ = nullptr;
     QPushButton* poseExportButton_ = nullptr;
     std::vector<ligand_pose_batch::Row> poseRows_;
