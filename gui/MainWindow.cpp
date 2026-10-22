@@ -704,7 +704,7 @@ void MainWindow::buildUi() {
     poseSplit->setStretchFactor(0, 3);
     poseSplit->setStretchFactor(1, 2);
     poseLayout->addWidget(poseSplit);
-    auto* heatmapLegend = new QLabel(tr("Interaction heatmap: HB blue · HY green · PI orange · SB purple · WB cyan · XB coral · ME brown · OT gray. Multiple types: color follows HB > SB > PI > HY > WB > XB > ME > OT; see cell text/tooltip. Empty = no favorable contact; gray dash = failed pose."));
+    auto* heatmapLegend = new QLabel(tr("Interaction abbreviations: HB = Hydrogen bond; HY = Hydrophobic contact; PI = Pi-stacking / cation-pi; SB = Salt bridge; WB = Water bridge; XB = Halogen bond; ME = Metal coordination; OT = Other favorable contact. Multiple codes indicate multiple types. Empty = no favorable contact; dash = failed pose."));
     heatmapLegend->setWordWrap(true);
     poseLayout->addWidget(heatmapLegend);
     connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
