@@ -1539,6 +1539,21 @@ static void testExternalLigandPose() {
         CHECK(!hasType(cleaned.ligands.front(), ligint::type::PossibleCovalent));
         CHECK(hasType(cleaned.ligands.front(), ligint::type::HydrogenBond));
     }
+    // Selecting a second imported molecule must use its own coordinates and topology.
+    ligint::Tmpl second = molecule;
+    second.name = "pose_2";
+    second.at[0].p = {10, 0, 0};
+    second.at[1].p = {11.43, 0, 0};
+    opt.templates.push_back(second);
+    opt.excludePdbLigand.clear();
+    opt.externalLigandIndex = 1;
+    auto selected = run(pdb.str(), opt);
+    CHECK(selected.ligands.size() == 1);
+    if (!selected.ligands.empty()) {
+        CHECK(selected.ligands.front().atoms.size() == 2);
+        CHECK(std::fabs(selected.ligands.front().atoms[0].pos[0] - 10.0) < 0.001);
+        CHECK(std::fabs(selected.ligands.front().atoms[1].pos[0] - 11.43) < 0.001);
+    }
     ligint::Options listing;
     listing.templates = opt.templates;
     CHECK(run(pdb.str(), listing).listingOnly);
