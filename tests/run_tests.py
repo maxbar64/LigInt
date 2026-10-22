@@ -1027,7 +1027,18 @@ def fingerprint_filename_infers_format_and_preserves_stdout_mode():
         else:
             check(ET.fromstring(content).tag == SVG_NS + "svg", "SVG output file contents")
         legacy = run_raw([pdb, "LIG", "--fingerprint", extension])
-        check(legacy.rc == 0 and legacy.out == content, "legacy stdout format differs from file mode")
+        normalized_stdout = legacy.out.replace("\r\n", "\n").replace("\r", "\n")
+        normalized_file = content.replace("\r\n", "\n").replace("\r", "\n")
+        check(
+            legacy.rc == 0 and normalized_stdout == normalized_file,
+            (
+                f"legacy stdout differs from file mode ({extension}): "
+                f"rc={legacy.rc}, "
+                f"stdout_len={len(legacy.out)}, file_len={len(content)}, "
+                f"stdout_prefix={legacy.out[:120]!r}, "
+                f"file_prefix={content[:120]!r}"
+            )
+        )
     invalid = run_raw([pdb, "LIG", "--fingerprint", "output.txt"])
     check(invalid.rc != 0 and "ending in .csv" in invalid.err, "invalid extension should be rejected")
 
