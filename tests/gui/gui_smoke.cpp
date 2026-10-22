@@ -441,7 +441,7 @@ int main(int argc, char** argv) {
         CHECK(h.search("zzzqqqxxx").isEmpty() && h.search("fingerprint zzzqqqxxx").isEmpty() && h.search("   ").isEmpty());
         CHECK(h.search("hb-long").contains("cli.html"));
         // context help: every tab has a target that exists, also an unknown tab
-        for (const char* tab : {"Interactions", "Residues", "Fingerprint", "Log", "Unknown"})
+        for (const char* tab : {"Interactions", "Residues", "Fingerprint", "Pose Comparison", "Log", "Unknown"})
             CHECK(gui::HelpWindow::topicExists(gui::HelpWindow::topicForTab(tab)));
         CHECK(!gui::HelpWindow::topicExists("gui.html#there-is-no-such-section"));
         // F1 in the main window opens the manual at the page of the current tab
