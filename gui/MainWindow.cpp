@@ -115,7 +115,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
                 poseGroups[i] ? tr("G%1").arg(poseGroups[i]) : tr("Error")};
             for (int j = 0; j < fields.size(); ++j) {
                 auto* item = new QTableWidgetItem(fields[j]);
-                if (j != 1 && j != 2) item->setData(Qt::EditRole, j == 0 ? QVariant(static_cast<int>(r.index)) : QVariant(fields[j].toInt()));
+                if (j != 1 && j != 2 && j != 10) item->setData(Qt::EditRole, j == 0 ? QVariant(static_cast<int>(r.index)) : QVariant(fields[j].toInt()));
                 poseTable_->setItem(i, j, item);
             }
             if (!r.error.empty()) poseTable_->item(i, 2)->setToolTip(QString::fromStdString(r.error));
