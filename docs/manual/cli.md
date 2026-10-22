@@ -138,10 +138,11 @@ writes in its log.
 
 ## External ligand poses (docking)
 
-When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
+When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule by default (or the 1-based molecule selected using `--external-index N`) in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
 
 ```sh
 ligint receptor.pdb --sdf docked_pose.sdf --csv
 ligint receptor.pdb --mol2 docked_pose.mol2 --fingerprint json
+ligint receptor.pdb --sdf multiple_poses.sdf --external-index 2 --fingerprint json
 ligint complex_with_original_ligand.pdb --sdf docked_pose.sdf --exclude-pdb-ligand BZC --csv
 ```
