@@ -105,11 +105,40 @@ int main(int argc, char** argv) {
     CHECK(!w.openStructure("/no/such.pdb"));       // error handled without crashing
     CHECK(w.openStructure(argv[1]));
     CHECK(w.ligandCount() > 0);
-    CHECK(!w.viewer()->hasData());                    // nothing to show before the analysis
-
+    CHECK(w.viewer()->hasData());                     // imported protein preview is immediately visible
+    if (auto* aromatic = w.findChild<QComboBox*>("graphics_aromatic_style")) {
+        CHECK(aromatic->count() == 3);
+        aromatic->setCurrentIndex(1);
+        CHECK(w.viewer()->style().aromaticDisplay == gui::AromaticDisplay::KekuleLike);
+        aromatic->setCurrentIndex(0);
+    } else CHECK(false);
+    CHECK(w.viewer()->hasProtein());
+    CHECK(w.viewer()->cartoonTriangles() > 0);
+    CHECK(w.result().ligands.empty());                // preview must not trigger interaction analysis
+    CHECK(!w.viewer()->renderImage(QSize(320, 240)).isNull());
     w.selectLigand(0);
+    CHECK(w.viewer()->hasData());
+    CHECK(w.result().ligands.empty());                // selection is still only a preview
+    if(auto* estimated=w.findChild<QCheckBox*>("preview_donor_hydrogens")){
+        CHECK(!estimated->isChecked());
+        estimated->setChecked(true);
+        CHECK(w.viewer()->previewDonorHydrogens());
+        CHECK(w.viewer()->hasData());
+        estimated->setChecked(false);
+    }else CHECK(false);
     w.analyze(true);
     CHECK(!w.result().ligands.empty());
+    // The automatic CCD subprocess can complete after Analyze. Process
+    // events and verify that its callback never replaces the analyzed scene.
+    {
+        QElapsedTimer elapsed;
+        elapsed.start();
+        while (elapsed.elapsed() < 300) {
+            QApplication::processEvents(QEventLoop::AllEvents, 20);
+        }
+        CHECK(!w.result().ligands.empty());
+        CHECK(w.viewer()->hasData());
+    }
     CHECK(w.hitsModel()->rowCount() > 0);
     CHECK(w.hitsProxy()->rowCount() == w.hitsModel()->rowCount());
     CHECK(w.viewer()->hasData());

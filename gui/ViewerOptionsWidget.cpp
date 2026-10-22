@@ -101,6 +101,11 @@ ViewerOptionsWidget::ViewerOptionsWidget(ViewerWidget* viewer, QWidget* parent) 
     addCheck(ligand, tr("Show ligand"), "graphics_show_ligand", d.showLigand, [](ViewStyle& s, bool on) { s.showLigand = on; });
     addCombo(ligand, tr("Ligand style"), "graphics_ligand_style", {tr("Ball and stick"), tr("Sticks"), tr("Spheres")}, 0, false,
              [](ViewStyle& s, int i) { static const LigandStyle v[] = {LigandStyle::BallStick, LigandStyle::Sticks, LigandStyle::Spheres}; s.ligand = v[i]; });
+    addCombo(ligand, tr("Aromatic bonds"), "graphics_aromatic_style",
+             {tr("Aromatic dashed"), tr("Pseudo-Kekule"), tr("Simple bonds")}, 0, false,
+             [](ViewStyle& s,int i) { static const AromaticDisplay modes[]={
+                 AromaticDisplay::Dashed,AromaticDisplay::KekuleLike,AromaticDisplay::Single
+             }; s.aromaticDisplay=modes[i]; });
     addCheck(ligand, tr("Residues in contact"), "graphics_show_residues", d.residues == ResidueStyle::Sticks,
              [](ViewStyle& s, bool on) { s.residues = on ? ResidueStyle::Sticks : ResidueStyle::Off; });
     addCheck(ligand, tr("Waters of the bridges"), "graphics_show_waters", d.showWaters, [](ViewStyle& s, bool on) { s.showWaters = on; });

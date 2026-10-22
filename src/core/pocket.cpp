@@ -1,0 +1,642 @@
+#include "ligint/pocket.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <deque>
+#include <limits>
+#include <queue>
+#include <stdexcept>
+
+namespace ligint {
+namespace {
+struct Grid {
+    V3 origin{0,0,0};
+    int nx=0,ny=0,nz=0;
+    double step=1;
+    std::size_t index(int x,int y,int z) const {
+        return (static_cast<std::size_t>(z)*ny+y)*nx+x;
+    }
+    bool inside(int x,int y,int z) const {
+        return x>=0 && y>=0 && z>=0 && x<nx && y<ny && z<nz;
+    }
+    V3 coord(int x,int y,int z) const {
+        return {origin[0]+step*x,origin[1]+step*y,origin[2]+step*z};
+    }
+};
+std::vector<V3> sphereDirections(int n) {
+    std::vector<V3> dirs;
+    dirs.reserve(static_cast<std::size_t>(n));
+    constexpr double pi=3.14159265358979323846;
+    const double golden=pi*(3.0-std::sqrt(5.0));
+    for(int k=0;k<n;k++) {
+        double y=1.0-2.0*(k+0.5)/n;
+        double r=std::sqrt(std::max(0.0,1.0-y*y));
+        double t=k*golden;
+        dirs.push_back({r*std::cos(t),y,r*std::sin(t)});
+    }
+    return dirs;
+}
+}
+PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const PocketOptions& o) {
+    if(!(std::isfinite(o.spacing) && o.spacing>0 &&
+         std::isfinite(o.solventProbeRadius) && o.solventProbeRadius>=0 && std::isfinite(o.rayLength) && o.rayLength>0 &&
+         std::isfinite(o.maxSurfaceDistance) && o.maxSurfaceDistance>0 &&
+         std::isfinite(o.minBuriedness) && o.minBuriedness>=0 && o.minBuriedness<=1 &&
+         o.directions>=6 && o.directions<=4096 && o.maxGridPoints>0 &&
+         std::isfinite(o.seedSpacing) && o.seedSpacing>0 &&
+         std::isfinite(o.seedProminence) && o.seedProminence>=0 && o.seedProminence<=1 && o.maxSeeds>0 &&
+         std::isfinite(o.mergeSaddleDrop) && o.mergeSaddleDrop>=0 && o.mergeSaddleDrop<=1 &&
+         std::isfinite(o.mergeMaxSeedDistance) && o.mergeMaxSeedDistance>0 &&
+         std::isfinite(o.mergeMinContactArea) && o.mergeMinContactArea>=0 &&
+         o.morphologyRadius>=0 && o.morphologyRadius<=2 &&
+         o.regrowSteps>=0 && o.regrowSteps<=5 &&
+         (o.regrowSteps==0 || (o.morphologyRadius>0 && (o.morphology=="opening" || o.morphology=="open-close"))) &&
+         (o.morphology=="none" || o.morphology=="opening" || o.morphology=="closing" || o.morphology=="open-close") &&
+         std::isfinite(o.neckClearance) && o.neckClearance>=0))
+        throw std::invalid_argument("Invalid pocket search options");
+    std::vector<PocketAtom> atoms;
+    for(const auto& a:input) {
+        if(!o.chains.empty() && std::find(o.chains.begin(),o.chains.end(),a.chain)==o.chains.end()) continue;
+        if(!std::isfinite(a.radius) || a.radius<=0) continue;
+        bool valid=true;
+        for(double v:a.pos) if(!std::isfinite(v)) valid=false;
+        if(valid) atoms.push_back(a);
+    }
+    PocketSearchResult out;
+    out.selectedAtoms=atoms.size();
+    if(atoms.empty()) return out;
+    V3 lo=atoms.front().pos,hi=lo;
+    double maxRadius=0;
+    for(const auto& a:atoms) {
+        maxRadius=std::max(maxRadius,a.radius);
+        for(int d=0;d<3;d++){lo[d]=std::min(lo[d],a.pos[d]);hi[d]=std::max(hi[d],a.pos[d]);}
+    }
+    Grid g;
+    g.step=o.spacing;
+    const double margin=maxRadius+std::max(o.maxSurfaceDistance,o.solventProbeRadius)+o.spacing;
+    int dims[3];
+    for(int d=0;d<3;d++) {
+        g.origin[d]=lo[d]-margin;
+        double len=hi[d]-lo[d]+2*margin;
+        if(len/o.spacing>1000000) throw std::length_error("Pocket grid too large");
+        dims[d]=static_cast<int>(std::ceil(len/o.spacing))+1;
+    }
+    g.nx=dims[0];g.ny=dims[1];g.nz=dims[2];
+    const std::size_t xy=static_cast<std::size_t>(g.nx)*g.ny;
+    if(xy>o.maxGridPoints/static_cast<std::size_t>(g.nz))
+        throw std::length_error("Pocket grid exceeds maxGridPoints");
+    const std::size_t count=xy*g.nz;
+    // Occupied grid sites approximate a van der Waals union.
+    std::vector<std::uint8_t> occupied(count,0);
+    for(const auto& a:atoms) {
+        int low[3],high[3];
+        for(int d=0;d<3;d++) {
+            low[d]=std::max(0,static_cast<int>(std::floor((a.pos[d]-a.radius-g.origin[d])/g.step)));
+            high[d]=std::min(dims[d]-1,static_cast<int>(std::ceil((a.pos[d]+a.radius-g.origin[d])/g.step)));
+        }
+        for(int z=low[2];z<=high[2];z++)for(int y=low[1];y<=high[1];y++)for(int x=low[0];x<=high[0];x++){
+            const V3 p=g.coord(x,y,z);
+            const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+            if(dx*dx+dy*dy+dz*dz<=a.radius*a.radius)occupied[g.index(x,y,z)]=1;
+        }
+    }
+    // Multi-source distance in 26-neighborhood: candidate pruning only.
+    // Dijkstra-like distances are not required for buriedness: keep a conservative
+    // Euclidean cutoff using atom centers for each sampled voxel instead.
+    std::vector<float> score(count,-1);
+    const auto dirs=sphereDirections(o.directions);
+    const double rayStep=std::min(o.spacing*0.5,0.5);
+    const int nsteps=static_cast<int>(std::ceil(o.rayLength/rayStep));
+    for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+        const std::size_t id=g.index(x,y,z);
+        if(occupied[id])continue;
+        const V3 p=g.coord(x,y,z);
+        bool near=false;
+        for(const auto& a:atoms){
+            double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+            double lim=a.radius+o.maxSurfaceDistance;
+            if(dx*dx+dy*dy+dz*dz<=lim*lim){near=true;break;}
+        }
+        if(!near)continue;
+        out.sampledPoints++;
+        int blocked=0;
+        for(const auto& u:dirs){
+            bool hit=false;
+            for(int t=1;t<=nsteps;t++){
+                double s=std::min(t*rayStep,o.rayLength);
+                int xx=static_cast<int>(std::llround((p[0]+s*u[0]-g.origin[0])/g.step));
+                int yy=static_cast<int>(std::llround((p[1]+s*u[1]-g.origin[1])/g.step));
+                int zz=static_cast<int>(std::llround((p[2]+s*u[2]-g.origin[2])/g.step));
+                if(!g.inside(xx,yy,zz))break;
+                if(occupied[g.index(xx,yy,zz)]){hit=true;break;}
+            }
+            if(hit)blocked++;
+        }
+        float b=static_cast<float>(blocked)/static_cast<float>(dirs.size());
+        score[id]=b; // retain computed scalar for threshold-aware closing
+    }
+    const std::vector<float> originalScore = o.regrowSteps>0 ? score : std::vector<float>{};
+    // Optional binary morphology, keeping original score values untouched.
+    // The mask, not the buriedness field, is changed for region connectivity.
+    if(o.morphology!="none" && o.morphologyRadius>0) {
+        std::vector<std::array<int,3>> offsets;
+        for(int z=-o.morphologyRadius;z<=o.morphologyRadius;z++)
+            for(int y=-o.morphologyRadius;y<=o.morphologyRadius;y++)
+                for(int x=-o.morphologyRadius;x<=o.morphologyRadius;x++)
+                    if(x*x+y*y+z*z<=o.morphologyRadius*o.morphologyRadius)
+                        offsets.push_back({x,y,z});
+        auto transform=[&](const std::vector<std::uint8_t>& src,bool dilate){
+            std::vector<std::uint8_t> dst(count,0);
+            for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+                const auto id=g.index(x,y,z);
+                // Never create a candidate inside atomic van der Waals volume.
+                if(occupied[id])continue;
+                bool value=!dilate;
+                for(const auto& offset:offsets){
+                    int xx=x+offset[0],yy=y+offset[1],zz=z+offset[2];
+                    bool inside=g.inside(xx,yy,zz);
+                    bool present=inside && src[g.index(xx,yy,zz)] && !occupied[g.index(xx,yy,zz)];
+                    if(dilate && present){value=true;break;}
+                    if(!dilate && !present){value=false;break;}
+                }
+                dst[id]=static_cast<std::uint8_t>(value);
+            }
+            return dst;
+        };
+        std::vector<std::uint8_t> mask(count,0);
+        for(std::size_t id=0;id<count;id++)if(score[id]>=o.minBuriedness)mask[id]=1;
+        if(o.morphology=="opening"||o.morphology=="open-close")
+            mask=transform(transform(mask,false),true);
+        if(o.morphology=="closing"||o.morphology=="open-close")
+            mask=transform(transform(mask,true),false);
+        // Closing can recover sampled below-threshold voxels with actual measured B.
+        // Unsampled voxels remain invalid and are never assigned synthetic B.
+        for(std::size_t id=0;id<count;id++)
+            if(!mask[id] || score[id]<0)score[id]=-1;
+    }
+    else {
+        for(auto& b:score)if(b<o.minBuriedness)b=-1;
+    }
+    if(o.neckClearance>0) {
+        // Remove narrow free-space centers (van der Waals clearance below threshold).
+        // This does not alter the original scalar buriedness values for retained sites.
+        for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+            const auto id=g.index(x,y,z);
+            if(score[id]<0)continue;
+            const auto p=g.coord(x,y,z);
+            bool narrow=false;
+            for(const auto& a:atoms){
+                const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                const double rr=a.radius+o.neckClearance;
+                if(dx*dx+dy*dy+dz*dz<rr*rr){narrow=true;break;}
+            }
+            if(narrow)score[id]=-1;
+        }
+    }
+    std::vector<std::uint8_t> seen(count,0);
+    // 6-connected components; subsequent refinement can split wide pockets.
+    for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+        const auto start=g.index(x,y,z);
+        if(seen[start] || score[start]<0)continue;
+        seen[start]=1;
+        std::deque<std::array<int,3>> queue;
+        queue.push_back({x,y,z});
+        PocketCandidate pocket;
+        while(!queue.empty()){
+            auto q=queue.front();queue.pop_front();
+            const auto id=g.index(q[0],q[1],q[2]);
+            const V3 p=g.coord(q[0],q[1],q[2]);
+            pocket.points.push_back({p,score[id]});
+            pocket.peakBuriedness=std::max(pocket.peakBuriedness,static_cast<double>(score[id]));
+            for(int d=0;d<3;d++)pocket.center[d]+=p[d];
+            const int dx[6]={1,-1,0,0,0,0};
+            const int dy[6]={0,0,1,-1,0,0};
+            const int dz[6]={0,0,0,0,1,-1};
+            for(int k=0;k<6;k++){
+                int xx=q[0]+dx[k],yy=q[1]+dy[k],zz=q[2]+dz[k];
+                if(!g.inside(xx,yy,zz))continue;
+                auto j=g.index(xx,yy,zz);
+                if(!seen[j] && score[j]>=0){seen[j]=1;queue.push_back({xx,yy,zz});}
+            }
+        }
+        pocket.pointCount=pocket.points.size();
+        if(pocket.pointCount<o.minClusterPoints)continue;
+        for(auto& c:pocket.center)c/=static_cast<double>(pocket.pointCount);
+        pocket.volume=pocket.pointCount*g.step*g.step*g.step;
+        out.pockets.push_back(std::move(pocket));
+    }
+    // Seeded 3D watershed on the precomputed buriedness grid. Smooth only for seed
+    // selection/propagation: keep the original buriedness on exported pseudoatoms.
+    if(o.segment) {
+        std::vector<PocketCandidate> separated;
+        for(const auto& connected:out.pockets) {
+            if(connected.points.size()<2*o.minClusterPoints) {
+                separated.push_back(connected);
+                continue;
+            }
+            std::vector<std::size_t> ids;
+            ids.reserve(connected.points.size());
+            for(const auto& pt:connected.points) {
+                int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+                int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+                int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+                ids.push_back(g.index(x,y,z));
+            }
+            // Six-neighbor averaging is deterministic and removes single-voxel peaks.
+            std::vector<float> smooth(ids.size(),0);
+            const int dx[6]={1,-1,0,0,0,0},dy[6]={0,0,1,-1,0,0},dz[6]={0,0,0,0,1,-1};
+            for(std::size_t i=0;i<ids.size();i++) {
+                auto id=ids[i];
+                int x=static_cast<int>(id%g.nx);
+                int y=static_cast<int>((id/g.nx)%g.ny);
+                int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                double sum=score[id]*2.0,weight=2.0;
+                for(int k=0;k<6;k++){
+                    if(!g.inside(x+dx[k],y+dy[k],z+dz[k]))continue;
+                    const auto j=g.index(x+dx[k],y+dy[k],z+dz[k]);
+                    if(score[j]<0)continue;
+                    sum+=score[j];weight+=1;
+                }
+                smooth[i]=static_cast<float>(sum/weight);
+            }
+            std::vector<std::size_t> order(ids.size());
+            for(std::size_t i=0;i<order.size();i++)order[i]=i;
+            std::sort(order.begin(),order.end(),[&](std::size_t a,std::size_t b){
+                if(smooth[a]!=smooth[b])return smooth[a]>smooth[b];
+                return ids[a]<ids[b];
+            });
+            std::vector<std::size_t> seeds;
+            const double minDist2=o.seedSpacing*o.seedSpacing;
+            // Greedy nonmaximum suppression. A separation radius avoids a seed
+            // for each voxel in a broad plateau with buriedness exactly 1.
+            for(auto i:order){
+                if(smooth[i]<o.minBuriedness+o.seedProminence)break;
+                bool near=false;
+                for(auto s:seeds){
+                    const auto& a=connected.points[i].pos;
+                    const auto& b=connected.points[s].pos;
+                    double d2=0;
+                    for(int k=0;k<3;k++){double d=a[k]-b[k];d2+=d*d;}
+                    if(d2<minDist2){near=true;break;}
+                }
+                if(!near)seeds.push_back(i);
+                if(seeds.size()>=o.maxSeeds)break;
+            }
+            if(seeds.size()<2){separated.push_back(connected);continue;}
+            std::vector<int> belongs(count,-1);
+            for(std::size_t i=0;i<ids.size();i++)belongs[ids[i]]=static_cast<int>(i);
+            std::vector<int> labels(ids.size(),-1);
+            struct Node {float score; std::size_t idx; int label;};
+            auto cmp=[](const Node& a,const Node& b){
+                if(a.score!=b.score)return a.score<b.score;
+                if(a.label!=b.label)return a.label>b.label;
+                return a.idx>b.idx;
+            };
+            std::priority_queue<Node,std::vector<Node>,decltype(cmp)> frontier(cmp);
+            for(std::size_t k=0;k<seeds.size();k++)
+                frontier.push({smooth[seeds[k]],seeds[k],static_cast<int>(k)});
+            while(!frontier.empty()){
+                auto node=frontier.top();frontier.pop();
+                if(labels[node.idx]!=-1)continue;
+                labels[node.idx]=node.label;
+                auto id=ids[node.idx];
+                int x=static_cast<int>(id%g.nx);
+                int y=static_cast<int>((id/g.nx)%g.ny);
+                int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                for(int k=0;k<6;k++){
+                    if(!g.inside(x+dx[k],y+dy[k],z+dz[k]))continue;
+                    int j=belongs[g.index(x+dx[k],y+dy[k],z+dz[k])];
+                    if(j>=0 && labels[static_cast<std::size_t>(j)]<0)
+                        frontier.push({std::min(node.score,smooth[static_cast<std::size_t>(j)]),
+                                       static_cast<std::size_t>(j),node.label});
+                }
+            }
+            // Measure the strongest shared saddle between adjacent watershed basins.
+            // Merge only when the saddle is near the weaker basin's maximum.
+            if(o.mergeBasins) {
+                const std::size_t ns=seeds.size();
+                std::vector<float> peak(ns,0.f);
+                std::vector<std::size_t> sizes(ns,0);
+                for(std::size_t i=0;i<labels.size();i++)if(labels[i]>=0){
+                    const auto k=static_cast<std::size_t>(labels[i]);
+                    peak[k]=std::max(peak[k],smooth[i]);
+                    ++sizes[k];
+                }
+                std::vector<float> saddle(ns*ns,-1.f);
+                std::vector<std::size_t> contact(ns*ns,0);
+                for(std::size_t i=0;i<ids.size();i++){
+                    const int a=labels[i];
+                    if(a<0)continue;
+                    const auto id=ids[i];
+                    const int x=static_cast<int>(id%g.nx);
+                    const int y=static_cast<int>((id/g.nx)%g.ny);
+                    const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+                    for(int k=0;k<6;k+=2){
+                        const int xx=x+dx[k],yy=y+dy[k],zz=z+dz[k];
+                        if(!g.inside(xx,yy,zz))continue;
+                        const int j=belongs[g.index(xx,yy,zz)];
+                        if(j<0)continue;
+                        const int b=labels[static_cast<std::size_t>(j)];
+                        if(b<0||a==b)continue;
+                        const float v=std::min(smooth[i],smooth[static_cast<std::size_t>(j)]);
+                        ++contact[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)];
+                        ++contact[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)];
+                        saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)]=
+                            std::max(saddle[static_cast<std::size_t>(a)*ns+static_cast<std::size_t>(b)],v);
+                        saddle[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)]=
+                            std::max(saddle[static_cast<std::size_t>(b)*ns+static_cast<std::size_t>(a)],v);
+                    }
+                }
+                std::vector<std::size_t> parent(ns);
+                std::vector<std::vector<std::size_t>> members(ns);
+                for(std::size_t i=0;i<ns;i++)members[i].push_back(i);
+                for(std::size_t i=0;i<ns;i++)parent[i]=i;
+                auto root=[&](std::size_t x){while(parent[x]!=x)x=parent[x]=parent[parent[x]];return x;};
+                struct Edge{std::size_t a,b;float level;};
+                std::vector<Edge> edges;
+                for(std::size_t a=0;a<ns;a++)for(std::size_t b=a+1;b<ns;b++){
+                    const float s=saddle[a*ns+b];
+                    if(s>=0)edges.push_back({a,b,s});
+                }
+                std::sort(edges.begin(),edges.end(),[](const Edge& a,const Edge& b){
+                    if(a.level!=b.level)return a.level>b.level;
+                    if(a.a!=b.a)return a.a<b.a;
+                    return a.b<b.b;
+                });
+                for(const auto& edge:edges) {
+                    auto a=root(edge.a),b=root(edge.b);
+                    if(a==b)continue;
+                    const float weaker=std::min(peak[a],peak[b]);
+                    if(weaker-edge.level>o.mergeSaddleDrop)continue;
+                    if(static_cast<double>(contact[edge.a*ns+edge.b])*g.step*g.step < o.mergeMinContactArea)continue;
+                    bool close=true;
+                    const double maxD2=o.mergeMaxSeedDistance*o.mergeMaxSeedDistance;
+                    for(auto ia:members[a])for(auto ib:members[b]){
+                        const auto& pa=connected.points[seeds[ia]].pos;
+                        const auto& pb=connected.points[seeds[ib]].pos;
+                        double d2=0;
+                        for(int k=0;k<3;k++){const double d=pa[k]-pb[k];d2+=d*d;}
+                        if(d2>maxD2)close=false;
+                    }
+                    if(!close)continue;
+                    // The stronger maximum remains the representative seed.
+                    if(peak[a]<peak[b] || (peak[a]==peak[b]&&a>b))std::swap(a,b);
+                    parent[b]=a;
+                    members[a].insert(members[a].end(),members[b].begin(),members[b].end());
+                    members[b].clear();
+                    sizes[a]+=sizes[b];
+                    peak[a]=std::max(peak[a],peak[b]);
+                }
+                for(auto& label:labels)if(label>=0)
+                    label=static_cast<int>(root(static_cast<std::size_t>(label)));
+            }
+            std::vector<PocketCandidate> basins(seeds.size());
+            for(std::size_t i=0;i<ids.size();i++){
+                const int label=labels[i];
+                if(label<0)continue;
+                auto& pocket=basins[static_cast<std::size_t>(label)];
+                const auto& pt=connected.points[i];
+                pocket.points.push_back(pt);
+                for(int k=0;k<3;k++)pocket.center[k]+=pt.pos[k];
+                pocket.peakBuriedness=std::max(pocket.peakBuriedness,static_cast<double>(pt.buriedness));
+            }
+            for(auto& pocket:basins){
+                pocket.pointCount=pocket.points.size();
+                if(pocket.pointCount<o.minClusterPoints)continue;
+                for(auto& v:pocket.center)v/=static_cast<double>(pocket.pointCount);
+                pocket.volume=pocket.pointCount*g.step*g.step*g.step;
+                separated.push_back(std::move(pocket));
+            }
+        }
+        out.pockets=std::move(separated);
+    }
+    // Grow final, already-separated opening basins into measured original voxels.
+    // A shared FIFO assigns each eligible position to the nearest initial basin
+    // in 6-neighbor path steps. Equal-distance conflicts remain unassigned,
+    // avoiding first-pocket-wins bridges and order-dependent basin fusion.
+    if(o.regrowSteps>0 && !out.pockets.empty()) {
+        std::vector<int> owner(count,-1),distance(count,-1);
+        std::deque<std::size_t> frontier;
+        auto voxelId=[&](const V3& p){
+            const int x=static_cast<int>(std::llround((p[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((p[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((p[2]-g.origin[2])/g.step));
+            return g.index(x,y,z);
+        };
+        for(std::size_t i=0;i<out.pockets.size();i++)
+            for(const auto& pt:out.pockets[i].points){
+                const auto id=voxelId(pt.pos);
+                if(distance[id]<0){distance[id]=0;owner[id]=static_cast<int>(i);frontier.push_back(id);}
+            }
+        const int ddx[6]={1,-1,0,0,0,0},ddy[6]={0,0,1,-1,0,0},ddz[6]={0,0,0,0,1,-1};
+        // Resolve one layer at a time so competing basins reach a tie together.
+        while(!frontier.empty()){
+            const auto id=frontier.front();frontier.pop_front();
+            if(distance[id]>=o.regrowSteps || owner[id]<0)continue;
+            const int x=static_cast<int>(id%g.nx);
+            const int y=static_cast<int>((id/g.nx)%g.ny);
+            const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+            for(int k=0;k<6;k++){
+                const int xx=x+ddx[k],yy=y+ddy[k],zz=z+ddz[k];
+                if(!g.inside(xx,yy,zz))continue;
+                const auto neighbor=g.index(xx,yy,zz);
+                if(originalScore[neighbor]<o.minBuriedness)continue;
+                if(distance[neighbor]<0){
+                    distance[neighbor]=distance[id]+1;
+                    owner[neighbor]=owner[id];
+                    frontier.push_back(neighbor);
+                } else if(distance[neighbor]==distance[id]+1 &&
+                          owner[neighbor]!=owner[id]){
+                    owner[neighbor]=-2; // disputed watershed boundary
+                }
+            }
+        }
+        // A disputed position is never assigned to a pocket. Recompute
+        // geometry from the complete, unique point sets after growing.
+        for(std::size_t id=0;id<count;id++){
+            if(distance[id]<=0 || owner[id]<0)continue;
+            auto& pocket=out.pockets[static_cast<std::size_t>(owner[id])];
+            const int x=static_cast<int>(id%g.nx);
+            const int y=static_cast<int>((id/g.nx)%g.ny);
+            const int z=static_cast<int>(id/(static_cast<std::size_t>(g.nx)*g.ny));
+            pocket.points.push_back({g.coord(x,y,z),originalScore[id]});
+        }
+        for(auto& pocket:out.pockets){
+            pocket.pointCount=pocket.points.size();
+            pocket.volume=static_cast<double>(pocket.pointCount)*g.step*g.step*g.step;
+            pocket.center={0,0,0};
+            pocket.peakBuriedness=0;
+            for(const auto& pt:pocket.points){
+                for(int d=0;d<3;d++)pocket.center[d]+=pt.pos[d];
+                pocket.peakBuriedness=std::max(pocket.peakBuriedness,static_cast<double>(pt.buriedness));
+            }
+            for(int d=0;d<3;d++)pocket.center[d]/=static_cast<double>(pocket.pointCount);
+        }
+    }
+    // Solvent-probe-center accessibility on the same grid. Inflate van der Waals
+    // radii by the probe radius, then flood from the exterior grid boundary.
+    // The geodesic distance is to the exterior grid, NOT to a molecular mouth;
+    // the quantity is reported explicitly as solvent path depth proxy.
+    std::vector<std::uint8_t> blocked(count,0);
+    for(const auto& a:atoms) {
+        const double radius=a.radius+o.solventProbeRadius;
+        int lower[3],upper[3];
+        for(int d=0;d<3;d++){
+            lower[d]=std::max(0,static_cast<int>(std::floor((a.pos[d]-radius-g.origin[d])/g.step)));
+            upper[d]=std::min(dims[d]-1,static_cast<int>(std::ceil((a.pos[d]+radius-g.origin[d])/g.step)));
+        }
+        for(int z=lower[2];z<=upper[2];z++)for(int y=lower[1];y<=upper[1];y++)
+            for(int x=lower[0];x<=upper[0];x++){
+                const V3 p=g.coord(x,y,z);
+                const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                if(dx*dx+dy*dy+dz*dz<=radius*radius)
+                    blocked[g.index(x,y,z)]=1;
+            }
+    }
+    std::vector<int> steps(count,-1);
+    std::deque<std::array<int,3>> flood;
+    auto seedBoundary=[&](int x,int y,int z){
+        const auto id=g.index(x,y,z);
+        if(!blocked[id] && steps[id]<0){
+            steps[id]=0;flood.push_back({x,y,z});
+        }
+    };
+    for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++){
+        seedBoundary(0,y,z);seedBoundary(g.nx-1,y,z);
+    }
+    for(int z=0;z<g.nz;z++)for(int x=0;x<g.nx;x++){
+        seedBoundary(x,0,z);seedBoundary(x,g.ny-1,z);
+    }
+    for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){
+        seedBoundary(x,y,0);seedBoundary(x,y,g.nz-1);
+    }
+    const int fx[6]={1,-1,0,0,0,0},fy[6]={0,0,1,-1,0,0},fz[6]={0,0,0,0,1,-1};
+    while(!flood.empty()){
+        const auto q=flood.front();flood.pop_front();
+        const int distance=steps[g.index(q[0],q[1],q[2])];
+        for(int k=0;k<6;k++){
+            const int x=q[0]+fx[k],y=q[1]+fy[k],z=q[2]+fz[k];
+            if(!g.inside(x,y,z))continue;
+            const auto id=g.index(x,y,z);
+            if(blocked[id]||steps[id]>=0)continue;
+            steps[id]=distance+1;flood.push_back({x,y,z});
+        }
+    }
+    // Multi-probe accessibility: independent binary reachability masks for
+    // small and large probes. The 1.4 A (configurable) path grid remains above.
+    auto accessibleForProbe=[&](double probe) {
+        std::vector<std::uint8_t> obstacle(count,0),reachable(count,0);
+        for(const auto& a:atoms){
+            const double radius=a.radius+probe;
+            int lower[3],upper[3];
+            for(int d=0;d<3;d++){
+                lower[d]=std::max(0,static_cast<int>(std::floor((a.pos[d]-radius-g.origin[d])/g.step)));
+                upper[d]=std::min(dims[d]-1,static_cast<int>(std::ceil((a.pos[d]+radius-g.origin[d])/g.step)));
+            }
+            for(int z=lower[2];z<=upper[2];z++)for(int y=lower[1];y<=upper[1];y++)
+                for(int x=lower[0];x<=upper[0];x++){
+                    const auto p=g.coord(x,y,z);
+                    const double dx=p[0]-a.pos[0],dy=p[1]-a.pos[1],dz=p[2]-a.pos[2];
+                    if(dx*dx+dy*dy+dz*dz<=radius*radius)obstacle[g.index(x,y,z)]=1;
+                }
+        }
+        std::deque<std::array<int,3>> queue;
+        auto seed=[&](int x,int y,int z){
+            auto id=g.index(x,y,z);
+            if(!obstacle[id]&&!reachable[id]){reachable[id]=1;queue.push_back({x,y,z});}
+        };
+        for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++){seed(0,y,z);seed(g.nx-1,y,z);}
+        for(int z=0;z<g.nz;z++)for(int x=0;x<g.nx;x++){seed(x,0,z);seed(x,g.ny-1,z);}
+        for(int y=0;y<g.ny;y++)for(int x=0;x<g.nx;x++){seed(x,y,0);seed(x,y,g.nz-1);}
+        while(!queue.empty()){
+            auto p=queue.front();queue.pop_front();
+            for(int k=0;k<6;k++){
+                const int x=p[0]+fx[k],y=p[1]+fy[k],z=p[2]+fz[k];
+                if(!g.inside(x,y,z))continue;
+                auto id=g.index(x,y,z);
+                if(obstacle[id]||reachable[id])continue;
+                reachable[id]=1;queue.push_back({x,y,z});
+            }
+        }
+        return reachable;
+    };
+    const auto reachable08=accessibleForProbe(0.8);
+    const auto reachable20=accessibleForProbe(2.0);
+    // Descriptors are evaluated after segmentation/merging so exported geometry
+    // and point membership remain unchanged. No trained or ligand-informed score.
+    for(auto& pocket:out.pockets) {
+        if(pocket.points.empty())continue;
+        V3 low=pocket.points.front().pos,high=low;
+        double sumB=0,highB=0,sumDepth=0,solventSteps=0,maxSteps=0;
+        std::size_t solventCount=0,probe08Count=0,probe20Count=0;
+        std::vector<std::uint8_t> inPocket(count,0);
+        for(const auto& pt:pocket.points) {
+            sumB+=pt.buriedness;
+            if(pt.buriedness>=0.8f)highB+=1;
+            for(int d=0;d<3;d++){
+                low[d]=std::min(low[d],pt.pos[d]);
+                high[d]=std::max(high[d],pt.pos[d]);
+            }
+            const int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+            inPocket[g.index(x,y,z)]=1;
+            const auto gridId=g.index(x,y,z);
+            probe08Count+=reachable08[gridId];
+            probe20Count+=reachable20[gridId];
+            const int pathSteps=steps[gridId];
+            if(pathSteps>=0) {
+                ++solventCount;
+                solventSteps+=pathSteps;
+                maxSteps=std::max(maxSteps,static_cast<double>(pathSteps));
+            }
+            double nearest=std::numeric_limits<double>::infinity();
+            for(const auto& atom:atoms) {
+                const double dx=pt.pos[0]-atom.pos[0],dy=pt.pos[1]-atom.pos[1],dz=pt.pos[2]-atom.pos[2];
+                nearest=std::min(nearest,std::sqrt(dx*dx+dy*dy+dz*dz)-atom.radius);
+            }
+            sumDepth+=std::max(0.0,nearest);
+        }
+        const double n=static_cast<double>(pocket.points.size());
+        pocket.meanBuriedness=sumB/n;
+        pocket.accessibilityProbe08=probe08Count/n;
+        pocket.accessibilityProbe20=probe20Count/n;
+        pocket.solventAccessibleFraction=static_cast<double>(solventCount)/n;
+        if(solventCount){pocket.meanSolventPathDepth=g.step*solventSteps/solventCount;
+            pocket.maxSolventPathDepth=g.step*maxSteps;}
+        pocket.highBuriednessFraction=highB/n;
+        pocket.meanAtomSurfaceDistance=sumDepth/n;
+        double extent[3];
+        for(int d=0;d<3;d++)extent[d]=high[d]-low[d]+g.step;
+        const auto mm=std::minmax_element(extent,extent+3);
+        pocket.elongation=*mm.second/std::max(g.step,*mm.first);
+        std::size_t faces=0;
+        for(const auto& pt:pocket.points) {
+            const int x=static_cast<int>(std::llround((pt.pos[0]-g.origin[0])/g.step));
+            const int y=static_cast<int>(std::llround((pt.pos[1]-g.origin[1])/g.step));
+            const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
+            const int dx[6]={1,-1,0,0,0,0},dy[6]={0,0,1,-1,0,0},dz[6]={0,0,0,0,1,-1};
+            for(int k=0;k<6;k++) {
+                const int xx=x+dx[k], yy=y+dy[k], zz=z+dz[k];
+                if(!g.inside(xx,yy,zz)||!inPocket[g.index(xx,yy,zz)])++faces;
+            }
+        }
+        pocket.exposedFaceArea=static_cast<double>(faces)*g.step*g.step;
+        constexpr double pi=3.14159265358979323846;
+        if(pocket.exposedFaceArea>0)
+            pocket.compactness=36*pi*pocket.volume*pocket.volume/
+                std::pow(pocket.exposedFaceArea,3);
+        // Bounded, transparent heuristic; coefficients are NOT fitted against MK1.
+        // Discourage tiny isolated basins and sprawling, weakly buried regions.
+        const double sizeTerm=1-std::exp(-pocket.volume/300.0);
+        pocket.heuristicScore=sizeTerm*(0.65*pocket.meanBuriedness+
+            0.35*pocket.highBuriednessFraction)*
+            std::sqrt(std::max(0.0,std::min(1.0,pocket.compactness)));
+    }
+    std::sort(out.pockets.begin(),out.pockets.end(),[](const PocketCandidate& a,const PocketCandidate& b){
+        if(a.volume!=b.volume)return a.volume>b.volume;
+        return a.peakBuriedness>b.peakBuriedness;
+    });
+    return out;
+}
+} // namespace ligint

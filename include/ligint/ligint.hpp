@@ -103,6 +103,7 @@ struct Options {
     bool metalDonors = false;       // O/N coordinated to a metal remain possible donors
     bool backboneHyd = false;       // apolar contacts with backbone CA/C
     bool mergeLinked = true;        // merge covalently linked HETATM residues into one ligand
+    bool previewLigands3d = false; // listing-only: retain raw HETATM coordinates for the GUI; no analysis
     bool protein3d = false;         // also return the backbone and the atoms of the protein for the 3D graphics (see scene3d.hpp)
     std::vector<Tmpl> templates;    // chemical annotation of the ligands (matched by coordinates)
 };
@@ -145,6 +146,7 @@ struct LigandResult {
     std::vector<std::string> info;          // informational lines (composite, annotation, B-factor)
     std::vector<AtomRecord> atoms;          // heavy atoms of the ligand
     std::vector<BondRecord> bonds;
+    std::vector<std::pair<int,int>> ccdDonorHydrogens; // heavy atom index, explicit CCD H count; 3D estimated only
     std::size_t nRings = 0;
     std::vector<HitRecord> hits;            // sorted by type, atom, distance
     std::vector<AtomRecord> contactAtoms;   // all atoms of the protein residues that interact

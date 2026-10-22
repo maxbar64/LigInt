@@ -1,4 +1,6 @@
 #include "ViewerWidget.h"
+#include "PocketSmoothMesh.h"
+#include <map>
 
 #include <QFontMetricsF>
 #include <QMouseEvent>
@@ -124,6 +126,8 @@ ViewerWidget::~ViewerWidget() {
 
 // ---- data ----------------------------------------------------------------------------------------
 void ViewerWidget::setLigand(const ligint::LigandResult& r) {
+    importedLigands_.clear();
+    pieces_.previewLigands.reset();
     data_ = r;
     protein_.reset();
     hasData_ = !data_.atoms.empty();
@@ -134,22 +138,204 @@ void ViewerWidget::setLigand(const ligint::LigandResult& r) {
 }
 
 void ViewerWidget::setStructure(const ligint::Result& result, int ligandIndex) {
-    if (ligandIndex < 0 || ligandIndex >= static_cast<int>(result.ligands.size())) { clear(); return; }
-    data_ = result.ligands[ligandIndex];
+    importedLigands_.clear();
+    pieces_.previewLigands.reset();
+    const bool withLigand = ligandIndex >= 0 && ligandIndex < static_cast<int>(result.ligands.size());
+    data_ = withLigand ? result.ligands[ligandIndex] : ligint::LigandResult();
     protein_ = std::make_shared<ligint::Result>();
     protein_->backbone = result.backbone;
     protein_->proteinAtoms = result.proteinAtoms;
-    hasData_ = !data_.atoms.empty();
+    hasData_ = !data_.atoms.empty() || !protein_->backbone.empty();
     highlight_ = -1;
     rebuildAll();
-    orient();
+    if (withLigand) orient();
+    else { rot_ = Mat3{1,0,0,0,1,0,0,0,1}; fitProtein(); }
+    invalidate(false);
+}
+
+void ViewerWidget::setImportPreview(const ligint::Result& result,int selectedIndex) {
+    setStructure(result,-1);
+    importedLigands_=result.ligands;
+    hasData_=!importedLigands_.empty() || hasProtein();
+    if(selectedIndex>=0 && selectedIndex<static_cast<int>(importedLigands_.size()))
+        data_=importedLigands_[selectedIndex];
+    else data_=ligint::LigandResult();
+    // Draw geometry-inferred heavy-atom connectivity. Bond orders and protonation
+    // are unknown here: this is visualization, not chemical annotation.
+    ligint::LigandResult combined;
+    for(const auto& ligand:importedLigands_){
+        const int offset=static_cast<int>(combined.atoms.size());
+        combined.atoms.insert(combined.atoms.end(),ligand.atoms.begin(),ligand.atoms.end());
+        for(const auto& bond:ligand.bonds)
+            combined.bonds.push_back({bond.a+offset,bond.b+offset,bond.order});
+        if(previewDonorHydrogens_){
+            std::vector<std::vector<int>> neighbors(ligand.atoms.size());
+            for(const auto& bond:ligand.bonds){
+                if(bond.a>=0&&bond.b>=0&&bond.a<static_cast<int>(neighbors.size())&&
+                   bond.b<static_cast<int>(neighbors.size())){
+                    neighbors[bond.a].push_back(bond.b);
+                    neighbors[bond.b].push_back(bond.a);
+                }
+            }
+            for(const auto& site:ligand.ccdDonorHydrogens){
+                const int i=site.first,count=site.second;
+                if(i<0 || i>=static_cast<int>(ligand.atoms.size()) ||
+                   count<1 || count>3 || neighbors[i].empty())continue;
+                const auto& donor=ligand.atoms[i];
+                if(donor.element!="N"&&donor.element!="O")continue;
+                ligint::V3 outward{0,0,0};
+                for(int j:neighbors[i]){
+                    if(ligand.atoms[j].element=="H")continue;
+                    const auto& q=ligand.atoms[j].pos;
+                    ligint::V3 v{donor.pos[0]-q[0],donor.pos[1]-q[1],donor.pos[2]-q[2]};
+                    const double length=std::sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+                    if(length>0.2)for(int k=0;k<3;++k)outward[k]+=v[k]/length;
+                }
+                double len=std::sqrt(outward[0]*outward[0]+outward[1]*outward[1]+outward[2]*outward[2]);
+                if(len<0.1)continue; // local orientation underdetermined
+                for(double& x:outward)x/=len;
+                const ligint::V3 basis=std::abs(outward[2])<0.85?
+                    ligint::V3{0,0,1}:ligint::V3{0,1,0};
+                ligint::V3 transverse{outward[1]*basis[2]-outward[2]*basis[1],
+                                      outward[2]*basis[0]-outward[0]*basis[2],
+                                      outward[0]*basis[1]-outward[1]*basis[0]};
+                len=std::sqrt(transverse[0]*transverse[0]+transverse[1]*transverse[1]+transverse[2]*transverse[2]);
+                if(len<0.1)continue;
+                for(double& x:transverse)x/=len;
+                const ligint::V3 second{outward[1]*transverse[2]-outward[2]*transverse[1],
+                                        outward[2]*transverse[0]-outward[0]*transverse[2],
+                                        outward[0]*transverse[1]-outward[1]*transverse[0]};
+                for(int h=0;h<count;++h){
+                    const double theta=6.283185307179586*h/count;
+                    const double spread=count==1?0.0:0.65;
+                    ligint::V3 direction;
+                    for(int k=0;k<3;++k)
+                        direction[k]=outward[k]*std::sqrt(1-spread*spread)+
+                            spread*(transverse[k]*std::cos(theta)+second[k]*std::sin(theta));
+                    ligint::AtomRecord hydrogen;
+                    hydrogen.name="H_CCD_EST";hydrogen.element="H";hydrogen.res=donor.res;
+                    hydrogen.chain=donor.chain;hydrogen.resi=donor.resi;
+                    hydrogen.icode=donor.icode;hydrogen.hetero=true;
+                    hydrogen.pos={donor.pos[0]+0.99*direction[0],
+                                  donor.pos[1]+0.99*direction[1],
+                                  donor.pos[2]+0.99*direction[2]};
+                    const int index=static_cast<int>(combined.atoms.size());
+                    combined.atoms.push_back(hydrogen);
+                    combined.bonds.push_back({offset+i,index,1});
+                }
+            }
+        }
+    }
+    const auto stylePreview = style_.ligand == LigandStyle::Spheres ? LigandStyle::BallStick : style_.ligand;
+    auto piece=makeLigandPiece(combined, [&] {
+        ViewStyle preview=style_;
+        preview.ligand=stylePreview;
+        return preview;
+    }());
+    pieces_.previewLigands=piece;
+    pieces_.ligand.reset(); // spheres are drawn by the shared import-preview layer
+    pieces_.residues.reset();
+    pieces_.water.reset();
+    if(selectedIndex>=0 && !data_.atoms.empty()) focusLigand();
+    else if(hasProtein()) fitProtein();
+    else {
+        std::vector<ligint::V3> points;
+        for(const auto& lig:importedLigands_)
+            for(const auto& atom:lig.atoms)points.push_back(atom.pos);
+        if(!points.empty()){
+            ligint::V3 lo=points.front(),hi=points.front();
+            for(const auto& p:points)for(int axis=0;axis<3;++axis){
+                lo[axis]=std::min(lo[axis],p[axis]);
+                hi[axis]=std::max(hi[axis],p[axis]);
+            }
+            ligint::V3 center{(lo[0]+hi[0])*0.5,(lo[1]+hi[1])*0.5,(lo[2]+hi[2])*0.5};
+            double extent=4.0;
+            for(const auto& p:points)extent=std::max(extent,dist3(p,center));
+            setFrame(center,extent+3.0);
+        }
+    }
+    invalidate(false);
+}
+
+void ViewerWidget::setPreviewDonorHydrogens(bool enabled) {
+    if(previewDonorHydrogens_==enabled)return;
+    previewDonorHydrogens_=enabled;
+    if(!importedLigands_.empty()){
+        ligint::Result preview;
+        preview.ligands=importedLigands_;
+        if(protein_){preview.backbone=protein_->backbone;preview.proteinAtoms=protein_->proteinAtoms;}
+        int chosen=-1;
+        for(int i=0;i<static_cast<int>(importedLigands_.size());++i)
+            if(importedLigands_[i].chain==data_.chain &&
+               importedLigands_[i].resi==data_.resi &&
+               importedLigands_[i].icode==data_.icode &&
+               importedLigands_[i].resName==data_.resName){chosen=i;break;}
+        setImportPreview(preview,chosen);
+    }
+}
+
+void ViewerWidget::setPocketAppearance(bool visible,double opacity,double specular){
+    pocketVisible_=visible;
+    pocketOpacity_=std::clamp(opacity,0.05,1.0);
+    pocketSpecular_=std::clamp(specular,0.0,1.0);
+    invalidate(false);
+}
+
+void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& points,
+                                    double spacing,int smoothing) {
+    pocketPoints_=points;
+    pocketSpacing_=spacing;
+    pocketSmoothing_=smoothing;
+    pieces_.pocket.reset();
+    if(!points.empty()){
+        const auto triangles=makeSmoothPocketMesh(points,spacing,smoothing);
+        auto piece=std::make_shared<MeshPiece>();
+        auto& mesh=piece->mesh;
+        // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
+        using Key=std::array<long long,3>;
+        std::map<Key,int> vertices;
+        for(const auto& tri:triangles){
+            ligint::Tri indices{};
+            for(int j=0;j<3;j++){
+                const auto& v=tri.vertices[j];
+                Key key={std::llround(v[0]*100000),std::llround(v[1]*100000),
+                         std::llround(v[2]*100000)};
+                auto it=vertices.find(key);
+                if(it==vertices.end()){
+                    const int id=static_cast<int>(mesh.pos.size());
+                    vertices.emplace(key,id);
+                    mesh.pos.push_back({static_cast<float>(v[0]),static_cast<float>(v[1]),
+                                        static_cast<float>(v[2])});
+                    mesh.nrm.push_back({0,0,0});
+                    indices[j]=id;
+                }else indices[j]=it->second;
+            }
+            const auto& a=mesh.pos[indices[0]];
+            const auto& b=mesh.pos[indices[1]];
+            const auto& d=mesh.pos[indices[2]];
+            const float ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2];
+            const float vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+            const ligint::V3f normal={uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx};
+            for(int id:indices)for(int k=0;k<3;k++)mesh.nrm[id][k]+=normal[k];
+            mesh.tri.push_back(indices);
+        }
+        for(auto& n:mesh.nrm){
+            const float norm=std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+            if(norm>1e-8f)for(auto& x:n)x/=norm;
+            else n={0,0,1};
+        }
+        piece->colors.assign(mesh.pos.size(),0x40c4df);
+        pieces_.pocket=std::move(piece);
+    }
     invalidate(false);
 }
 
 void ViewerWidget::clear() {
+    importedLigands_.clear();
     data_ = ligint::LigandResult();
     protein_.reset();
     pieces_ = Pieces();
+    pocketPoints_.clear();
     hasData_ = false;
     highlight_ = -1;
     surfaceWatcher_->setFuture(QFuture<std::shared_ptr<const MeshPiece>>());
@@ -191,7 +377,21 @@ void ViewerWidget::setStyle(const ViewStyle& n) {
     const ViewStyle o = style_;
     style_ = n;
     if (n.protein != o.protein || n.proteinColor != o.proteinColor) rebuildCartoon();
-    if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues || n.showWaters != o.showWaters) rebuildAtoms();
+    if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues ||
+        n.showWaters != o.showWaters || n.aromaticDisplay != o.aromaticDisplay) {
+        if (!importedLigands_.empty()) {
+            ligint::Result preview;
+            preview.ligands=importedLigands_;
+            if(protein_){preview.backbone=protein_->backbone;preview.proteinAtoms=protein_->proteinAtoms;}
+            int selected=-1;
+            for(int i=0;i<static_cast<int>(importedLigands_.size());++i)
+                if(importedLigands_[i].chain==data_.chain &&
+                   importedLigands_[i].resi==data_.resi &&
+                   importedLigands_[i].icode==data_.icode &&
+                   importedLigands_[i].resName==data_.resName){selected=i;break;}
+            setImportPreview(preview,selected);
+        }else rebuildAtoms();
+    }
     if (n.surface != o.surface || n.surfaceType != o.surfaceType || n.surfaceColor != o.surfaceColor ||
         (n.surfaceColor == SurfaceColor::Protein && n.proteinColor != o.proteinColor))
         startSurface();
@@ -219,6 +419,7 @@ std::size_t ViewerWidget::triangleCount() const {
     std::size_t n = 0;
     if (pieces_.cartoon) n += pieces_.cartoon->mesh.tri.size();
     if (pieces_.surface) n += pieces_.surface->mesh.tri.size();
+    if (pieces_.pocket) n += pieces_.pocket->mesh.tri.size();
     return n;
 }
 
@@ -267,7 +468,8 @@ void ViewerWidget::fitProtein() {
 }
 
 void ViewerWidget::resetView() {
-    if (hasData_) orient();
+    if (!data_.atoms.empty()) orient();
+    else if (hasProtein()) { rot_ = Mat3{1,0,0,0,1,0,0,0,1}; fitProtein(); }
     invalidate(false);
 }
 
@@ -324,8 +526,22 @@ ViewerWidget::Frame ViewerWidget::renderScene(const Pieces& pieces, const ViewSt
         mv.specular = 0.18f;
         ren->drawMesh(mv);
     }
-    ren->setCamera(full);                          // ...but the ligand and its residues never are
-    for (const auto& piece : {pieces.residues, pieces.ligand, pieces.water}) {
+    // The pocket shares the protein's world coordinates, camera and z-buffer.
+    // Render with the full camera to preserve the selected cavity.
+    ren->setCamera(full);
+    if(pieces.pocket && style.pocketVisible){
+        raster::MeshView pv;
+        pv.mesh=&pieces.pocket->mesh;
+        pv.colors=&pieces.pocket->colors;
+        pv.alpha=static_cast<float>(style.pocketOpacity);
+        // Display only the front shell: avoids double blending of entry/exit walls.
+        pv.cullBack=pv.alpha<0.999f;
+        pv.specular=static_cast<float>(style.pocketSpecular);
+        ren->drawMesh(pv);
+    }
+    // ...ligand and residues remain in the same depth-buffered composition.
+
+    for (const auto& piece : {pieces.residues, pieces.ligand, pieces.water, pieces.previewLigands}) {
         if (!piece) continue;
         if (!piece->sticks.empty()) {
             raster::MeshView mv;
@@ -351,7 +567,11 @@ ViewerWidget::Frame ViewerWidget::renderCurrent(const QSize& logicalSize, double
     const raster::Camera full = makeCamera(logicalSize, ratio, false);
     const raster::Camera clipped = makeCamera(logicalSize, ratio, true);
     const double base = style_.perspective ? 5.0 * radius_ : 1000.0;
-    Frame f = renderScene(pieces_, style_, full, clipped, QSize(full.width, full.height), supersample, base - radius_, base + 2.5 * radius_);
+    ViewStyle renderStyle=style_;
+    renderStyle.pocketVisible=pocketVisible_;
+    renderStyle.pocketOpacity=pocketOpacity_;
+    renderStyle.pocketSpecular=pocketSpecular_;
+    Frame f = renderScene(pieces_, renderStyle, full, clipped, QSize(full.width, full.height), supersample, base - radius_, base + 2.5 * radius_);
     f.size = logicalSize;
     f.ratio = ratio;
     f.key = stateKey_;
@@ -370,7 +590,10 @@ void ViewerWidget::startHighQuality() {
     if (frame_.key == stateKey_ && frame_.highQuality && frame_.size == size()) return;
     if (hqWatcher_->isRunning()) { hqPending_ = true; return; }
     const Pieces pieces = pieces_;
-    const ViewStyle style = style_;
+    ViewStyle style = style_;
+    style.pocketVisible=pocketVisible_;
+    style.pocketOpacity=pocketOpacity_;
+    style.pocketSpecular=pocketSpecular_;
     const double ratio = devicePixelRatioF();
     const QSize sz = size();
     const raster::Camera full = makeCamera(sz, ratio, false);
@@ -559,7 +782,7 @@ void ViewerWidget::drawOverlay(QPainter& p, const QRectF& rect, const Frame& fra
 }
 
 // ---- mouse ---------------------------------------------------------------------------------------
-void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint(); }
+void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint(); pressPoint_=last_; }
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     const QPoint cur = eventPos(e).toPoint();
@@ -577,7 +800,27 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     invalidate(true);
 }
 
-void ViewerWidget::mouseReleaseEvent(QMouseEvent*) {
+void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
+    if(e->button()==Qt::LeftButton && !importedLigands_.empty() &&
+       (eventPos(e).toPoint()-pressPoint_).manhattanLength()<5) {
+        const auto camera=makeCamera(size(),1.0,false);
+        const QPointF click=eventPos(e);
+        int best=-1;
+        double bestDist2=144.0;
+        double bestDepth=1e30;
+        for(int i=0;i<static_cast<int>(importedLigands_.size());++i) {
+            for(const auto& a:importedLigands_[i].atoms){
+                const auto pt=camera.project(a.pos);
+                if(!pt.ok)continue;
+                const double dx=pt.x-click.x(),dy=pt.y-click.y();
+                const double d2=dx*dx+dy*dy;
+                if(d2<bestDist2 || (d2==bestDist2 && pt.w<bestDepth)) {
+                    best=i;bestDist2=d2;bestDepth=pt.w;
+                }
+            }
+        }
+        if(best>=0)emit importLigandPicked(best);
+    }
     if (interacting_) {
         interacting_ = false;
         stateKey_++;          // a fresh frame at the normal size, then the high quality one
