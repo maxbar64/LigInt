@@ -46,6 +46,9 @@
 #include <QTableView>
 #include <QTableWidget>
 #include <QColor>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QToolButton>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
@@ -201,7 +204,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
-    resize(1280, 820);
+    // Keep the initial window within the usable desktop area (including display scaling).
+    const QRect desktop = QGuiApplication::primaryScreen() ? QGuiApplication::primaryScreen()->availableGeometry() : QRect(0, 0, 1280, 800);
+    resize(qMin(1280, qMax(640, desktop.width() - 40)), qMin(820, qMax(480, desktop.height() - 60)));
     statusBar()->showMessage(tr("Open a structure file, PDB or mmCIF (File → Open, or drag it here)"));
 }
 
@@ -562,8 +567,21 @@ void MainWindow::buildUi() {
     auto* viewerLayout = new QHBoxLayout(viewerArea);
     viewerLayout->setContentsMargins(0, 0, 0, 0);
     viewerLayout->setSpacing(4);
-    viewerLayout->addWidget(viewer_, 1);
+    auto* graphicsToggle = new QToolButton;
+    graphicsToggle->setText(tr("3D options"));
+    graphicsToggle->setCheckable(true);
+    graphicsToggle->setChecked(false);
+    graphicsToggle->setToolTip(tr("Show or hide the 3D appearance controls to enlarge the viewer"));
+    graphicsToggle->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    auto* viewerColumn = new QVBoxLayout;
+    viewerColumn->setContentsMargins(0, 0, 0, 0);
+    viewerColumn->setSpacing(2);
+    viewerColumn->addWidget(graphicsToggle, 0, Qt::AlignRight);
+    viewerColumn->addWidget(viewer_, 1);
+    viewerLayout->addLayout(viewerColumn, 1);
+    graphicsScroll->setVisible(false);
     viewerLayout->addWidget(graphicsScroll);
+    connect(graphicsToggle, &QToolButton::toggled, graphicsScroll, &QWidget::setVisible);
     auto* modes3d = new QTabWidget;
     auto* pocketWorkspace = new PocketWorkspace;
     pocketWorkspace->setObjectName("pocketWorkspace");
@@ -751,7 +769,10 @@ void MainWindow::buildUi() {
     split->addWidget(leftScroll);
     split->addWidget(right);
     split->setStretchFactor(1, 1);
+    leftScroll->setMinimumWidth(200);
     leftScroll->setMaximumWidth(380);
+    split->setChildrenCollapsible(false);
+    split->setSizes({300, 980});
     setCentralWidget(split);
 
     // object names: used by the tests to drive the controls
