@@ -126,6 +126,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             for (const auto& residue : r.contactResidues) ++frequency[residue];
         }
         poseResidueTable_->setSortingEnabled(false);
+        poseResidueTable_->setColumnCount(3 + static_cast<int>(poseRows_.size()));
+        QStringList headers = {tr("Residue"), tr("Poses"), tr("Frequency (%)")};
+        for (const auto& pose : poseRows_) headers << tr("Pose %1").arg(pose.index);
+        poseResidueTable_->setHorizontalHeaderLabels(headers);
         poseResidueTable_->setRowCount(static_cast<int>(frequency.size()));
         int residueRow = 0;
         for (const auto& entry : frequency) {
@@ -137,6 +141,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
             poseResidueTable_->setItem(residueRow, 0, name);
             poseResidueTable_->setItem(residueRow, 1, count);
             poseResidueTable_->setItem(residueRow, 2, percent);
+            for (int pi = 0; pi < static_cast<int>(poseRows_.size()); ++pi) {
+                const auto& pose = poseRows_[pi];
+                auto* cell = new QTableWidgetItem(pose.error.empty() ? (pose.contactResidues.count(entry.first) ? QStringLiteral("●") : QString()) : QStringLiteral("—"));
+                cell->setTextAlignment(Qt::AlignCenter);
+                poseResidueTable_->setItem(residueRow, 3 + pi, cell);
+            }
             ++residueRow;
         }
         poseResidueTable_->setSortingEnabled(true);
