@@ -99,10 +99,8 @@ model, together with a few chemical assumptions that the next sections list. Eve
   (as in PLIP); <code>--no-merge</code> keeps them separate.</li>
 </ul>
 <h3 id="sdf-and-mol2"><a name="sdf-and-mol2"></a>SDF and MOL2</h3>
-<p><code>--sdf</code> / <code>--mol2</code> provide bond orders, explicit hydrogens and formal charges. The PDB ligand is matched to the
-template <strong>by coordinates</strong> (tolerance 0.6 Å, same number of heavy atoms): the file must have the same coordinates as
-the PDB. With hydrogens in the template, donors/acceptors and D–H···A angles are real; without H, or if the matching
-fails, the geometric heuristics are used (the program says so). SDF V3000 is not supported.</p>
+<p><code>--sdf</code> / <code>--mol2</code> load a <strong>ligand structure</strong> containing coordinates, bond orders, explicit hydrogens and formal charges. With a ligand residue specified on the command line, the PDB/mmCIF ligand is chemically annotated by matching heavy atoms <strong>by coordinates</strong> (tolerance 0.6 Å, same number of heavy atoms). If matching fails, geometric heuristics are used.</p>
+<p>Without a ligand residue argument, the <strong>first molecule</strong> from the imported SDF/MOL2 is analyzed directly by default; <code>--external-index N</code> selects another molecule (1-based) as an <strong>external ligand pose</strong>, even when no corresponding ligand is present in the receptor file. Its coordinates must share the receptor coordinate frame. Explicit hydrogens can improve donor/acceptor assignments and D–H···A geometry. SDF V3000 is not supported.</p>
 <h3 id="presets-and-options-for-the-comparison-with-plip"><a name="presets-and-options-for-the-comparison-with-plip"></a>Presets and options for the comparison with PLIP</h3>
 <ul>
 <li><code>--hb-long 4.1</code>: H-bonds with D···A up to 4.1 Å only if the H (real or ideal) can point to the acceptor.</li>

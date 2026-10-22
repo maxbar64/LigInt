@@ -363,9 +363,11 @@ ligint numbered.pdb CAU --fingerprint svg --gpcrdb-positions 3x32,3x33,6x48 &gt;
 <p>To repeat an analysis made in the <a href="gui.html#reproducing-an-analysis-on-the-command-line">graphical interface</a>, copy the command line that it
 writes in its log.</p>
 <h2 id="external-ligand-poses-docking"><a name="external-ligand-poses-docking"></a>External ligand poses (docking)</h2>
-<p>When no ligand residue is supplied, <code>--sdf</code> or <code>--mol2</code> analyzes the <strong>first</strong> molecule in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.</p>
+<p>When no ligand residue is supplied, <code>--sdf</code> or <code>--mol2</code> analyzes the <strong>first</strong> molecule by default (or the 1-based molecule selected using <code>--external-index N</code>) in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.</p>
 <pre><code class="language-sh">ligint receptor.pdb --sdf docked_pose.sdf --csv
 ligint receptor.pdb --mol2 docked_pose.mol2 --fingerprint json
+ligint receptor.pdb --sdf multiple_poses.sdf --external-index 2 --fingerprint json
+ligint complex_with_original_ligand.pdb --sdf docked_pose.sdf --exclude-pdb-ligand BZC --csv
 </code></pre>
 <p class="nav"><a href="index.html">Home</a> &middot; <a href="index.html#contents">Contents</a> &middot; &laquo; <a href="gui.html">The graphical interface</a> &middot; <a href="interactions.html">Interactions and assumptions</a> &raquo;</p>
 <p class="foot">ligint 0.10.1 manual</p>
