@@ -6,6 +6,11 @@
 #include "ligint/matrix.hpp"
 #include "ligint/rcsb.hpp"
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -233,6 +238,14 @@ int main(int argc, char** argv) {
     try {
         Result r = analyzeFile(pa[0], opt);
         for (auto& w : r.warnings) cerr << w << "\n";
+        #ifdef _WIN32
+        if (fpOutput.empty()) {
+            if (_setmode(_fileno(stdout), _O_BINARY) == -1) {
+                cerr << "Cannot set binary stdout mode\n";
+                return 1;
+            }
+        }
+        #endif
         if (!fpFormat.empty() && !r.listingOnly) {
             vector<Fingerprint> fps;
             for (auto& lig : r.ligands) {
