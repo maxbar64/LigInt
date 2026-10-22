@@ -181,6 +181,7 @@ int main(int argc, char** argv) {
     if (pa.empty() && !useKlifs && !useGpcrdb) { usage(argv[0], P); return 1; }
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
+    if (pa.size() == 1 && !opt.templates.empty()) opt.externalLigandIndex = 0;
     opt.chain = pa.size() > 2 ? pa[2] : "";
     if (pa.size() > 3) {
         // residue number with an optional insertion code: "501" (any code), "501A" (code A), "501-" (no code)
