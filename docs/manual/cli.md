@@ -143,4 +143,5 @@ When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** m
 ```sh
 ligint receptor.pdb --sdf docked_pose.sdf --csv
 ligint receptor.pdb --mol2 docked_pose.mol2 --fingerprint json
+ligint complex_with_original_ligand.pdb --sdf docked_pose.sdf --exclude-pdb-ligand BZC --csv
 ```
