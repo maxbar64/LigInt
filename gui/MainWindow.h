@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ligint/fingerprint.hpp"
+#include "ligint/pose_batch.hpp"
 #include "ligint/gpcrdb.hpp"
 #include "ligint/matrix.hpp"
 #include <QPointer>
@@ -20,6 +21,7 @@ class QProcess;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
+class QLineEdit;
 class QListWidget;
 class QPlainTextEdit;
 class QPushButton;
@@ -157,6 +159,8 @@ private slots:
     void onTypeFilterChanged();
     void onRowChanged();
     void onFinished();
+    void runPoseComparison();
+    void selectComparedPose(int row);
 
 private:
     void buildUi();
@@ -192,6 +196,7 @@ private:
     QCheckBox *water_ = nullptr, *merge_ = nullptr, *plipLike_ = nullptr, *backbone_ = nullptr, *metalDonors_ = nullptr;
     QDoubleSpinBox *hbMax_ = nullptr, *hbLong_ = nullptr, *saltMax_ = nullptr, *saltCentroid_ = nullptr,
                    *hydMax_ = nullptr, *piMax_ = nullptr, *piOffset_ = nullptr, *piAngle_ = nullptr;
+    QLineEdit* excludePdbLigand_ = nullptr;
     QLabel* templateLabel_ = nullptr;
     QLabel* pocketLabel_ = nullptr;
     QComboBox* altlocCombo_ = nullptr;
@@ -210,6 +215,13 @@ private:
     QFutureWatcher<AnalysisOutcome>* watcher_ = nullptr;
     QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
     QFutureWatcher<MatrixOutcome>* matrixWatcher_ = nullptr;
+    QFutureWatcher<std::vector<ligand_pose_batch::Row>>* poseWatcher_ = nullptr;
+    QTableWidget* poseTable_ = nullptr;
+    QTableWidget* poseResidueTable_ = nullptr;
+    QPushButton* poseRunButton_ = nullptr;
+    QPushButton* poseExportButton_ = nullptr;
+    QPushButton* poseMatrixExportButton_ = nullptr;
+    std::vector<ligand_pose_batch::Row> poseRows_;
     QString matrixListPath_;
     std::vector<ligint::MatrixEntry> matrixEntries_;
     ligint::InteractionMatrix matrix_;

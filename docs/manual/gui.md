@@ -8,7 +8,7 @@ reproduces it ([see below](#reproducing-an-analysis-on-the-command-line)).
 
 ![The window](img/gui-1HSG-window.png)
 
-- The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Chemical templates** and
+- The **control panel** on the left has the groups **Structure**, **Options**, **Thresholds**, **Ligand structures** and
   **Pocket definition (fingerprint)**, the **Analyze** button and the list of **Interaction types**. It scrolls when the window is too small.
 - The **3D view** is at the top right, with the **Graphics** panel on its side (protein, surface, ligand, interactions, camera).
 - The tabs below the view show the results: **Interactions**, **Residues**, **Fingerprint**, **Matrix** (several ligands at once) and **Log**.
@@ -65,13 +65,18 @@ All the other thresholds have fixed defaults in the window; they can be changed 
 [command line](cli.md#thresholds), and the window shows the command that corresponds to your settings. The meaning of each criterion is in
 [Interactions and assumptions](interactions.md).
 
-## Chemical templates
+## Ligand structures (SDF/MOL2)
 
-By default the donors, acceptors and charges of the ligand are inferred from its geometry. **Add template...** loads an **SDF** or **MOL2**
-file of the ligand with its bond orders, explicit hydrogens and formal charges, which makes the chemistry exact. The ligand of the structure is
-matched to the molecule **by coordinates**, so the file must have the same coordinates as the structure (for example, a ligand file
-prepared from the same complex). The label below the button shows what was loaded; the **Log** says whether the template was applied or why
-not. Templates stay loaded when you open another structure. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
+By default, ligand donors, acceptors and charges are inferred from geometry. **Add ligand structure...** loads an **SDF** or **MOL2** file containing ligand coordinates, bond orders, explicit hydrogens and formal charges. The imported molecule can serve two purposes:
+
+- **Ligand already in the PDB/mmCIF:** select the crystallographic ligand to transfer chemical information from the imported structure. The heavy atoms must match by coordinates.
+- **External ligand pose:** select **External: ...** from the ligand selector to analyze the imported molecule directly, without requiring its presence in the receptor PDB/mmCIF. The imported ligand and receptor must be in the same coordinate frame.
+
+In the **Ligand to analyze** selector, **Crystal:** identifies a ligand already present as a HETATM residue in the receptor, while **External pose N:** identifies a specific imported SDF/MOL2 molecule used directly for analysis. Multiple structures and poses from one or more imported files can be selected individually. Tooltips describe the difference. For external poses, **Exclude PDB ligand** optionally removes HETATM residues of the specified three-letter residue name (for example `BZC`) from receptor-contact calculations. Waters and other ligand/cofactor names are retained. This option has no effect when a crystallographic ligand is selected. The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See [Interactions and assumptions](interactions.md#sdf-and-mol2).
+
+## Pose Comparison
+
+The **Pose Comparison** tab summarizes all imported SDF/MOL2 molecules against the current receptor. Select **Analyze all imported poses** to run the analysis in the background. The table reports favorable contacts, hydrogen bonds, hydrophobic interactions, aromatic interactions, water bridges, clashes and interacting residues. **Double-click a pose** to select it and run its normal analysis in the 3D viewer, Interactions and Fingerprint tabs. **Export CSV...** saves the full batch summary including salt bridges, repulsions and possible covalent contacts. The optional **Exclude PDB ligand** value also applies to this batch. Click a column heading to sort poses numerically by the selected interaction count. The lower **conserved contacts** matrix lists protein residues against individual poses: a compact code identifies the favorable interaction type(s) in that pose (HB hydrogen bond, HY hydrophobic, PI aromatic/cation-pi, SB salt bridge, WB water bridge, XB halogen, ME metal, OT other), while the percentage is calculated over successfully analyzed poses only. Failed poses are shown separately and excluded from the frequency denominator. Hover over a cell to read the full interaction names. The on-screen legend explains interaction abbreviations (HB hydrogen bond, HY hydrophobic, PI aromatic/cation-pi, SB salt bridge, WB water bridge, XB halogen, ME metal and OT other) rather than explaining color names. The **IFP group** column assigns the same identifier (G1, G2, ...) to poses with exactly identical sets of contacting protein residues and favorable interaction types. These are exact interaction-fingerprint families, not spatial clusters or energetic rankings; failed analyses are ungrouped. Cell backgrounds form a categorical heatmap: HB blue, HY green, PI orange, SB purple, WB cyan, XB coral, ME brown, OT gray. When a cell contains multiple types, the first class in the displayed priority order determines its background color while the text and tooltip preserve all classes. White indicates no favorable contact, and a gray dash indicates a failed pose. Colors do not encode affinity or interaction energy. **Export residue matrix…** saves a separate typed residue-by-pose matrix as CSV or JSON; CSV uses semicolon-separated type names in each cell, JSON uses arrays. Failed poses are marked as errors. These frequencies describe recurrence, not energetic importance. Counts are descriptive, not affinity scores. The imported ligand coordinates must already be aligned with the receptor; no automatic docking alignment is performed.
 
 ## Pocket definition
 

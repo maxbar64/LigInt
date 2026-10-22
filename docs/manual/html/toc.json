@@ -93,8 +93,8 @@
     },
     {
      "level": 2,
-     "text": "Chemical templates",
-     "id": "chemical-templates"
+     "text": "Ligand structures (SDF/MOL2)",
+     "id": "ligand-structures-sdfmol2"
     },
     {
      "level": 2,
@@ -212,6 +212,11 @@
      "level": 2,
      "text": "Examples",
      "id": "examples"
+    },
+    {
+     "level": 2,
+     "text": "External ligand poses (docking)",
+     "id": "external-ligand-poses-docking"
     }
    ]
   },

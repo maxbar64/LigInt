@@ -165,6 +165,8 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                      (wantChain.empty() || a.chain == wantChain) &&
                      (wantResi == INT_MIN || a.resi == wantResi) &&
                      (wantIcode == 0 || a.icode == wantIcode);
+        if (opt.externalLigandIndex >= 0 && !opt.excludePdbLigand.empty() && r.het &&
+            a.res == opt.excludePdbLigand) return;
         if (isH) { hatoms.push_back({a, isLig}); return; }
         if (r.het) { hetNames[a.res].insert({a.chain, a.resi, a.icode}); hetRes[{a.chain, a.resi, a.icode}].push_back(a); }
         if (isLig) ligs[{a.chain, a.resi, a.icode}].push_back(a);
@@ -187,7 +189,10 @@ Result analyzeStream(std::istream& in, const Options& opt) {
                                to_string(altResidues.size()) + " residues with alternate conformations; the others use their first conformation.");
         }
     }
-    if (ligName.empty() || ligs.empty()) {
+    if (opt.externalLigandIndex < -1 || (opt.externalLigandIndex >= 0 &&
+        static_cast<size_t>(opt.externalLigandIndex) >= templates.size()))
+        throw std::runtime_error("External ligand index is outside the loaded SDF/MOL2 molecules");
+    if (opt.externalLigandIndex < 0 && (ligName.empty() || ligs.empty())) {
         // A listing can still provide protein geometry for the 3D preview.
         if (opt.protein3d) buildProteinScene(prot, res);
         res.listingOnly = true;
@@ -444,7 +449,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
     if (!templates.empty()) res.info.push_back("Templates loaded: " + to_string(templates.size()));
 
     // composite ligands: covalently linked HETATM residues (glycans, dipeptides) form a single ligand, as in PLIP
-    struct Work { LKey key; vector<Atom> L; set<LKey> comp; };
+    struct Work { LKey key; vector<Atom> L; set<LKey> comp; bool external = false; int templateIndex = -1; };
     vector<Work> works;
     {
         set<LKey> done;
@@ -459,6 +464,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             return false;
         };
         for (auto& [key0, L0] : ligs) {
+            if (opt.externalLigandIndex >= 0) break;
             if (done.count(key0)) continue;
             Work w; w.key = key0; w.L = L0; w.comp.insert(key0);
             if (mergeLinked) {
@@ -477,6 +483,26 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         }
     }
 
+    if (opt.externalLigandIndex >= 0) {
+        const Tmpl& t = templates[static_cast<size_t>(opt.externalLigandIndex)];
+        Work w;
+        w.external = true;
+        w.templateIndex = opt.externalLigandIndex;
+        w.key = LKey("", 0, ' ');
+        int count = 0;
+        for (const auto& ta : t.at) {
+            if (isHel(ta.el)) continue;
+            Atom a;
+            a.name = ta.el + to_string(++count);
+            a.res = "EXT"; a.chain = ""; a.resi = 0; a.icode = ' ';
+            a.el = ta.el; a.het = true;
+            a.x = ta.p[0]; a.y = ta.p[1]; a.z = ta.p[2];
+            w.L.push_back(a);
+        }
+        if (w.L.empty()) throw std::runtime_error("External ligand has no heavy atoms");
+        works.push_back(std::move(w));
+    }
+
     for (auto& wk : works) {
         const LKey& key = wk.key;
         vector<Atom>& L = wk.L;
@@ -486,9 +512,17 @@ Result analyzeStream(std::istream& in, const Options& opt) {
         // connectivity: from the template (by coordinates) or geometric
         string annot;
         bool tmplOK = false, tmplH = false;
-        for (auto& t : templates) {
+        if (wk.external) {
             vector<Atom> cp = L;
-            if (applyTemplate(t, cp, annot, tmplH)) { L = cp; tmplOK = true; break; }
+            if (!applyTemplate(templates[static_cast<size_t>(wk.templateIndex)], cp, annot, tmplH))
+                throw std::runtime_error("Cannot apply chemical connectivity to the external ligand");
+            L = std::move(cp); tmplOK = true;
+            annot = "external SDF/MOL2 ligand; " + annot;
+        } else {
+            for (auto& t : templates) {
+                vector<Atom> cp = L;
+                if (applyTemplate(t, cp, annot, tmplH)) { L = cp; tmplOK = true; break; }
+            }
         }
         bool hKnown = tmplOK && tmplH;
         if (!tmplOK) {
@@ -517,7 +551,7 @@ Result analyzeStream(std::istream& in, const Options& opt) {
             lres.info.push_back("Composite ligand of " + to_string(wk.comp.size()) + " linked residues (" + names + ")");
         }
         lres.info.push_back("Ligand annotation " + lid + ": " + annot);
-        {
+        if (!wk.external) {
             double lb = 0;
             for (auto& a : L) lb += a.bf;
             lb /= L.size();

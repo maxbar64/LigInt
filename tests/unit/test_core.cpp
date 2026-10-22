@@ -1497,7 +1497,70 @@ static void testPocketInterfaces() {
     b.points[1].pos={12,1,0};
     CHECK(ligint::analyzePocketInterfaces({a,b},atoms,1.0).empty());
 }
+
+static void testExternalLigandPose() {
+    ligint::Options opt;
+    ligint::Tmpl molecule;
+    molecule.name = "docked_pose";
+    ligint::TAtom carbon; carbon.el = "C"; carbon.p = {0, 0, 0};
+    ligint::TAtom oxygen; oxygen.el = "O"; oxygen.p = {1.43, 0, 0};
+    molecule.at = {carbon, oxygen};
+    molecule.bd.push_back({0, 1, 1});
+    opt.templates.push_back(molecule);
+    opt.externalLigandIndex = 0;
+    opt.protein3d = true;
+    std::ostringstream pdb;
+    pdb << atomLine("ATOM", 1, "OD1", "ASN", 'A', 10, 2.83, 2.4248, 0, "O") << "\nEND\n";
+    auto result = run(pdb.str(), opt);
+    CHECK(!result.listingOnly);
+    CHECK(result.ligands.size() == 1);
+    if (result.ligands.size() == 1) {
+        const auto& lig = result.ligands.front();
+        CHECK(lig.atoms.size() == 2);
+        CHECK(lig.bonds.size() == 1);
+        CHECK(lig.annotation.find("external SDF/MOL2") != std::string::npos);
+        CHECK(std::fabs(lig.atoms[1].pos[0] - 1.43) < 0.001);
+        CHECK(hasType(lig, ligint::type::HydrogenBond));
+        auto fp = ligint::makeFingerprint(lig, nullptr);
+        CHECK(fp.ligandId == lig.id);
+    }
+    // A crystallographic copy at the external pose coordinates must be excluded only on request.
+    const std::string withDuplicate =
+        atomLine("ATOM", 1, "OD1", "ASN", 'A', 10, 2.83, 2.4248, 0, "O") + "\n" +
+        atomLine("HETATM", 2, "C1", "DUP", 'B', 20, 0, 0, 0, "C") + "\n" +
+        atomLine("HETATM", 3, "O1", "DUP", 'B', 20, 1.43, 0, 0, "O") + "\nEND\n";
+    auto duplicated = run(withDuplicate, opt);
+    CHECK(duplicated.ligands.size() == 1);
+    if (!duplicated.ligands.empty()) CHECK(hasType(duplicated.ligands.front(), ligint::type::PossibleCovalent));
+    opt.excludePdbLigand = "DUP";
+    auto cleaned = run(withDuplicate, opt);
+    CHECK(cleaned.ligands.size() == 1);
+    if (!cleaned.ligands.empty()) {
+        CHECK(!hasType(cleaned.ligands.front(), ligint::type::PossibleCovalent));
+        CHECK(hasType(cleaned.ligands.front(), ligint::type::HydrogenBond));
+    }
+    // Selecting a second imported molecule must use its own coordinates and topology.
+    ligint::Tmpl second = molecule;
+    second.name = "pose_2";
+    second.at[0].p = {10, 0, 0};
+    second.at[1].p = {11.43, 0, 0};
+    opt.templates.push_back(second);
+    opt.excludePdbLigand.clear();
+    opt.externalLigandIndex = 1;
+    auto selected = run(pdb.str(), opt);
+    CHECK(selected.ligands.size() == 1);
+    if (!selected.ligands.empty()) {
+        CHECK(selected.ligands.front().atoms.size() == 2);
+        CHECK(std::fabs(selected.ligands.front().atoms[0].pos[0] - 10.0) < 0.001);
+        CHECK(std::fabs(selected.ligands.front().atoms[1].pos[0] - 11.43) < 0.001);
+    }
+    ligint::Options listing;
+    listing.templates = opt.templates;
+    CHECK(run(pdb.str(), listing).listingOnly);
+}
+
 int main() {
+    testExternalLigandPose();
     testListing();
     testHydrogenBondAndPositions();
     testParams();

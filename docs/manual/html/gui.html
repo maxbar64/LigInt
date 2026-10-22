@@ -27,7 +27,7 @@ reproduces it (<a href="#reproducing-an-analysis-on-the-command-line">see below<
 <h2 id="the-window"><a name="the-window"></a>The window</h2>
 <p><img width="760" alt="The window" src="img/gui-1HSG-window.png" /></p>
 <ul>
-<li>The <strong>control panel</strong> on the left has the groups <strong>Structure</strong>, <strong>Options</strong>, <strong>Thresholds</strong>, <strong>Chemical templates</strong> and
+<li>The <strong>control panel</strong> on the left has the groups <strong>Structure</strong>, <strong>Options</strong>, <strong>Thresholds</strong>, <strong>Ligand structures</strong> and
   <strong>Pocket definition (fingerprint)</strong>, the <strong>Analyze</strong> button and the list of <strong>Interaction types</strong>. It scrolls when the window is too small.</li>
 <li>The <strong>3D view</strong> is at the top right, with the <strong>Graphics</strong> panel on its side (protein, surface, ligand, interactions, camera).</li>
 <li>The tabs below the view show the results: <strong>Interactions</strong>, <strong>Residues</strong>, <strong>Fingerprint</strong>, <strong>Matrix</strong> (several ligands at once) and <strong>Log</strong>.</li>
@@ -129,12 +129,13 @@ transfer fails, the message is shown and written in the <strong>Log</strong>. Se
 <p>All the other thresholds have fixed defaults in the window; they can be changed with options on the
 <a href="cli.html#thresholds">command line</a>, and the window shows the command that corresponds to your settings. The meaning of each criterion is in
 <a href="interactions.html">Interactions and assumptions</a>.</p>
-<h2 id="chemical-templates"><a name="chemical-templates"></a>Chemical templates</h2>
-<p>By default the donors, acceptors and charges of the ligand are inferred from its geometry. <strong>Add template...</strong> loads an <strong>SDF</strong> or <strong>MOL2</strong>
-file of the ligand with its bond orders, explicit hydrogens and formal charges, which makes the chemistry exact. The ligand of the structure is
-matched to the molecule <strong>by coordinates</strong>, so the file must have the same coordinates as the structure (for example, a ligand file
-prepared from the same complex). The label below the button shows what was loaded; the <strong>Log</strong> says whether the template was applied or why
-not. Templates stay loaded when you open another structure. See <a href="interactions.html#sdf-and-mol2">Interactions and assumptions</a>.</p>
+<h2 id="ligand-structures-sdfmol2"><a name="ligand-structures-sdfmol2"></a>Ligand structures (SDF/MOL2)</h2>
+<p>By default, ligand donors, acceptors and charges are inferred from geometry. <strong>Add ligand structure...</strong> loads an <strong>SDF</strong> or <strong>MOL2</strong> file containing ligand coordinates, bond orders, explicit hydrogens and formal charges. The imported molecule can serve two purposes:</p>
+<ul>
+<li><strong>Ligand already in the PDB/mmCIF:</strong> select the crystallographic ligand to transfer chemical information from the imported structure. The heavy atoms must match by coordinates.</li>
+<li><strong>External ligand pose:</strong> select <strong>External: ...</strong> from the ligand selector to analyze the imported molecule directly, without requiring its presence in the receptor PDB/mmCIF. The imported ligand and receptor must be in the same coordinate frame.</li>
+</ul>
+<p>In the <strong>Ligand to analyze</strong> selector, <strong>Crystal:</strong> identifies a ligand already present as a HETATM residue in the receptor, while <strong>External pose N:</strong> identifies a specific imported SDF/MOL2 molecule used directly for analysis. Multiple structures and poses from one or more imported files can be selected individually. Tooltips describe the difference. For external poses, <strong>Exclude PDB ligand</strong> optionally removes HETATM residues of the specified three-letter residue name (for example <code>BZC</code>) from receptor-contact calculations. Waters and other ligand/cofactor names are retained. This option has no effect when a crystallographic ligand is selected. The label below the button lists the imported files. Ligand structures stay loaded when you open another receptor. See <a href="interactions.html#sdf-and-mol2">Interactions and assumptions</a>.</p>
 <h2 id="pocket-definition"><a name="pocket-definition"></a>Pocket definition</h2>
 <p>The <strong>Pocket definition (fingerprint)</strong> group loads a text file that maps residues to positions and regions of a binding pocket, used to
 draw the <a href="fingerprint.html">fingerprint</a>. <strong>Load definition...</strong> reads it, <strong>Clear</strong> removes it. Without a definition the fingerprint

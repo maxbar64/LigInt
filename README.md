@@ -114,14 +114,14 @@ The 3D view (drag: rotate; right or middle button: pan; wheel: zoom; double clic
 (cartoon, optional molecular surface), the residues in contact, ions and waters, with the interactions colored by type,
 distances, labels and a legend. It is drawn by the program itself, without a graphics card or a web engine.
 Selecting a row of the table highlights the interaction in the view. You can filter the types, add SDF/MOL2
-templates, export the interactions to CSV and save the image as PNG. The **Fingerprint** tab shows the figure and the
+ligand structures, export the interactions to CSV and save the image as PNG. The **Fingerprint** tab shows the figure and the
 table (pocket definition loaded from the control panel; export to SVG, CSV or JSON). The analysis runs in a separate thread.
 
 **Reproducing a GUI analysis outside the GUI.** After each analysis the *Log* tab shows the equivalent `ligint` command, and
 *File > Copy command line* (Ctrl+Shift+C) copies it; *Copy fingerprint command line* gives the same analysis with
 `--fingerprint svg` and the pocket definition currently loaded. The command contains only the settings that differ from the
 defaults, with the PLIP-like preset written out as the explicit options it sets. It is quoted for POSIX shells (bash, zsh);
-for `cmd` or PowerShell the quoting must be adapted. Template and pocket files appear with their absolute paths, so the command
+for `cmd` or PowerShell the quoting must be adapted. Ligand structure and pocket files appear with their absolute paths, so the command
 works as long as the files stay where they are. A ligand with a blank chain ID is selected with the chain `' '`. The tests run
 the generated commands through a shell with the real CLI and compare the result with the one shown by the GUI.
 
@@ -187,10 +187,9 @@ Crystallographic PDB files have no hydrogens, so the ligand chemistry is inferre
 
 ### SDF and MOL2
 
-`--sdf` / `--mol2` provide bond orders, explicit hydrogens and formal charges. The PDB ligand is matched to the
-template **by coordinates** (tolerance 0.6 Å, same number of heavy atoms): the file must have the same coordinates as
-the PDB. With hydrogens in the template, donors/acceptors and D–H···A angles are real; without H, or if the matching
-fails, the geometric heuristics are used (the program says so). SDF V3000 is not supported.
+`--sdf` / `--mol2` load a **ligand structure** containing coordinates, bond orders, explicit hydrogens and formal charges. With a ligand residue specified on the command line, the PDB/mmCIF ligand is chemically annotated by matching heavy atoms **by coordinates** (tolerance 0.6 Å, same number of heavy atoms). If matching fails, geometric heuristics are used.
+
+Without a ligand residue argument, the **first molecule** from the imported SDF/MOL2 is analyzed directly by default; `--external-index N` selects another molecule (1-based) as an **external ligand pose**, even when no corresponding ligand is present in the receptor file. Its coordinates must share the receptor coordinate frame. Explicit hydrogens can improve donor/acceptor assignments and D–H···A geometry. SDF V3000 is not supported.
 
 ### Presets and options for the comparison with PLIP
 

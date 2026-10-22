@@ -45,6 +45,7 @@
 #include <QTabWidget>
 #include <QTableView>
 #include <QTableWidget>
+#include <QColor>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QtConcurrent/QtConcurrent>
@@ -99,6 +100,104 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     connect(taskWatcher_, &QFutureWatcher<TaskOutcome>::finished, this, [this] { applyTask(taskWatcher_->result()); });
     matrixWatcher_ = new QFutureWatcher<MatrixOutcome>(this);
     connect(matrixWatcher_, &QFutureWatcher<MatrixOutcome>::finished, this, [this] { applyMatrix(matrixWatcher_->result()); });
+    poseWatcher_ = new QFutureWatcher<std::vector<ligand_pose_batch::Row>>(this);
+    connect(poseWatcher_, &QFutureWatcher<std::vector<ligand_pose_batch::Row>>::finished, this, [this] {
+        poseRows_ = poseWatcher_->result();
+        const auto poseGroups = ligand_pose_batch::exactFingerprintGroups(poseRows_);
+        poseTable_->setSortingEnabled(false);
+        poseTable_->setRowCount(static_cast<int>(poseRows_.size()));
+        for (int i = 0; i < static_cast<int>(poseRows_.size()); ++i) {
+            const auto& r = poseRows_[i];
+            const QStringList fields = {QString::number(r.index), QString::fromStdString(r.name),
+                r.error.empty() ? tr("OK") : tr("Error"), QString::number(r.favorable),
+                QString::number(r.hbonds), QString::number(r.hydrophobic), QString::number(r.pi),
+                QString::number(r.water), QString::number(r.clashes), QString::number(r.residues),
+                poseGroups[i] ? tr("G%1").arg(poseGroups[i]) : tr("Error")};
+            for (int j = 0; j < fields.size(); ++j) {
+                auto* item = new QTableWidgetItem(fields[j]);
+                if (j != 1 && j != 2 && j != 10) item->setData(Qt::EditRole, j == 0 ? QVariant(static_cast<int>(r.index)) : QVariant(fields[j].toInt()));
+                poseTable_->setItem(i, j, item);
+            }
+            if (!r.error.empty()) poseTable_->item(i, 2)->setToolTip(QString::fromStdString(r.error));
+        }
+        poseTable_->setSortingEnabled(true);
+        std::map<std::string, int> frequency;
+        int successful = 0;
+        for (const auto& r : poseRows_) {
+            if (!r.error.empty()) continue;
+            ++successful;
+            for (const auto& residue : r.contactResidues) ++frequency[residue];
+        }
+        poseResidueTable_->setSortingEnabled(false);
+        poseResidueTable_->setColumnCount(3 + static_cast<int>(poseRows_.size()));
+        QStringList headers = {tr("Residue"), tr("Poses"), tr("Frequency (%)")};
+        for (const auto& pose : poseRows_) headers << tr("Pose %1").arg(pose.index);
+        poseResidueTable_->setHorizontalHeaderLabels(headers);
+        poseResidueTable_->setRowCount(static_cast<int>(frequency.size()));
+        int residueRow = 0;
+        for (const auto& entry : frequency) {
+            auto* name = new QTableWidgetItem(QString::fromStdString(entry.first));
+            auto* count = new QTableWidgetItem;
+            count->setData(Qt::EditRole, entry.second);
+            auto* percent = new QTableWidgetItem;
+            percent->setData(Qt::EditRole, successful ? 100.0 * entry.second / successful : 0.0);
+            poseResidueTable_->setItem(residueRow, 0, name);
+            poseResidueTable_->setItem(residueRow, 1, count);
+            poseResidueTable_->setItem(residueRow, 2, percent);
+            for (int pi = 0; pi < static_cast<int>(poseRows_.size()); ++pi) {
+                const auto& pose = poseRows_[pi];
+                QStringList codes, descriptions;
+                const auto typesIt = pose.residueTypes.find(entry.first);
+                if (pose.error.empty() && typesIt != pose.residueTypes.end()) {
+                    for (const auto& type : typesIt->second) {
+                        descriptions << QString::fromStdString(type);
+                        if (type == ligint::type::HydrogenBond) codes << QStringLiteral("HB");
+                        else if (type == ligint::type::Hydrophobic || type == ligint::type::BackboneApolar) codes << QStringLiteral("HY");
+                        else if (type == ligint::type::PiStackingParallel || type == ligint::type::PiStackingT || type == ligint::type::CationPi) codes << QStringLiteral("PI");
+                        else if (type == ligint::type::SaltBridge) codes << QStringLiteral("SB");
+                        else if (type == ligint::type::WaterBridge) codes << QStringLiteral("WB");
+                        else if (type == ligint::type::HalogenBond) codes << QStringLiteral("XB");
+                        else if (type == ligint::type::MetalCoordination) codes << QStringLiteral("ME");
+                        else codes << QStringLiteral("OT");
+                    }
+                    codes.removeDuplicates();
+                }
+                auto* cell = new QTableWidgetItem(pose.error.empty() ? codes.join(QStringLiteral("+")) : QStringLiteral("—"));
+                cell->setToolTip(descriptions.join(QStringLiteral("\n")));
+                cell->setTextAlignment(Qt::AlignCenter);
+                // Heatmap: color reflects interaction class, not strength or binding affinity.
+                // With multiple classes, use the priority below and retain every class in the text/tooltip.
+                if (!pose.error.empty()) {
+                    cell->setBackground(QColor(220, 220, 220));
+                } else if (codes.contains(QStringLiteral("HB"))) {
+                    cell->setBackground(QColor(175, 212, 245));
+                } else if (codes.contains(QStringLiteral("SB"))) {
+                    cell->setBackground(QColor(224, 182, 241));
+                } else if (codes.contains(QStringLiteral("PI"))) {
+                    cell->setBackground(QColor(248, 216, 154));
+                } else if (codes.contains(QStringLiteral("HY"))) {
+                    cell->setBackground(QColor(189, 225, 176));
+                } else if (codes.contains(QStringLiteral("WB"))) {
+                    cell->setBackground(QColor(175, 230, 232));
+                } else if (codes.contains(QStringLiteral("XB"))) {
+                    cell->setBackground(QColor(246, 192, 180));
+                } else if (codes.contains(QStringLiteral("ME"))) {
+                    cell->setBackground(QColor(223, 204, 161));
+                } else if (!codes.isEmpty()) {
+                    cell->setBackground(QColor(220, 220, 220));
+                }
+                if (!codes.isEmpty()) cell->setForeground(QColor(25, 35, 45));
+                poseResidueTable_->setItem(residueRow, 3 + pi, cell);
+            }
+            ++residueRow;
+        }
+        poseResidueTable_->setSortingEnabled(true);
+        poseResidueTable_->sortItems(1, Qt::DescendingOrder);
+        poseRunButton_->setEnabled(true);
+        poseExportButton_->setEnabled(!poseRows_.empty());
+        poseMatrixExportButton_->setEnabled(!poseRows_.empty());
+        statusBar()->showMessage(tr("Pose comparison: %1 poses analyzed").arg(poseRows_.size()));
+    });
     watcher_ = new QFutureWatcher<AnalysisOutcome>(this);
     connect(watcher_, &QFutureWatcher<AnalysisOutcome>::finished, this, &MainWindow::onFinished);
     buildUi();
@@ -121,6 +220,7 @@ MainWindow::~MainWindow() {
     if (watcher_ && watcher_->isRunning()) watcher_->waitForFinished();
     if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
     if (matrixWatcher_ && matrixWatcher_->isRunning()) matrixWatcher_->waitForFinished();
+    if (poseWatcher_ && poseWatcher_->isRunning()) poseWatcher_->waitForFinished();
 }
 
 void MainWindow::buildUi() {
@@ -183,7 +283,7 @@ void MainWindow::buildUi() {
     auto* openBtn = new QPushButton(tr("Open structure…"));
     connect(openBtn, &QPushButton::clicked, this, &MainWindow::onOpen);
     ligandCombo_ = new QComboBox;
-    ligandCombo_->setToolTip(tr("Ligands (HETATM residues) present in the file"));
+    ligandCombo_->setToolTip(tr("Choose a crystallographic ligand from the receptor or an external SDF/MOL2 ligand pose."));
     showSmall_ = new QCheckBox(tr("Also show ions and small molecules"));
     connect(showSmall_, &QCheckBox::toggled, this, [this] { refreshLigandCombo(); });
     sv->addWidget(openBtn);
@@ -191,7 +291,7 @@ void MainWindow::buildUi() {
     connect(rcsbBtn, &QPushButton::clicked, this, &MainWindow::onDownloadRcsb);
     sv->addWidget(rcsbBtn);
     sv->addWidget(fileLabel_);
-    sv->addWidget(new QLabel(tr("Ligand:")));
+    sv->addWidget(new QLabel(tr("Ligand to analyze:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
     auto* previewHydrogens=new QCheckBox(tr("Preview: CCD-defined donor H (estimated geometry)"));
@@ -260,14 +360,20 @@ void MainWindow::buildUi() {
     form->addRow(tr("π-stacking, max angle"), piAngle_);
     lv->addWidget(gThr);
 
-    auto* gTmpl = new QGroupBox(tr("Chemical templates (SDF / MOL2)"));
+    auto* gTmpl = new QGroupBox(tr("Ligand structures (SDF / MOL2)"));
     auto* tv = new QVBoxLayout(gTmpl);
-    templateLabel_ = new QLabel(tr("none: chemistry inferred from the geometry"));
+    templateLabel_ = new QLabel(tr("none: ligand chemistry inferred from geometry"));
     templateLabel_->setWordWrap(true);
-    auto* tbtn = new QPushButton(tr("Add template…"));
+    auto* tbtn = new QPushButton(tr("Add ligand structure…"));
     connect(tbtn, &QPushButton::clicked, this, &MainWindow::onAddTemplate);
     tv->addWidget(tbtn);
     tv->addWidget(templateLabel_);
+    excludePdbLigand_ = new QLineEdit;
+    excludePdbLigand_->setPlaceholderText(tr("e.g. BZC (optional)"));
+    excludePdbLigand_->setToolTip(tr("When analyzing an external pose, omit all HETATM atoms with this residue name from receptor interactions. Other cofactors and waters remain."));
+    auto* excludeForm = new QFormLayout;
+    excludeForm->addRow(tr("Exclude PDB ligand:"), excludePdbLigand_);
+    tv->addLayout(excludeForm);
     lv->addWidget(gTmpl);
 
     auto* gPocket = new QGroupBox(tr("Pocket definition (fingerprint)"));
@@ -570,6 +676,62 @@ void MainWindow::buildUi() {
         connect(matrixRunButton_, &QPushButton::clicked, this, [this] { runMatrix(); });
     }
     tabs_->addTab(matrixTab_, tr("Matrix"));
+    auto* posePanel = new QWidget;
+    auto* poseLayout = new QVBoxLayout(posePanel);
+    auto* poseTools = new QHBoxLayout;
+    poseRunButton_ = new QPushButton(tr("Analyze all imported poses"));
+    poseExportButton_ = new QPushButton(tr("Export CSV…"));
+    poseExportButton_->setEnabled(false);
+    poseMatrixExportButton_ = new QPushButton(tr("Export residue matrix…"));
+    poseMatrixExportButton_->setEnabled(false);
+    poseTools->addWidget(poseRunButton_);
+    poseTools->addWidget(poseExportButton_);
+    poseTools->addWidget(poseMatrixExportButton_);
+    poseLayout->addLayout(poseTools);
+    poseTable_ = new QTableWidget(0, 11);
+    poseTable_->setHorizontalHeaderLabels({tr("Index"), tr("Pose"), tr("Status"), tr("Favorable"), tr("H-bonds"), tr("Hydrophobic"), tr("Pi"), tr("Water"), tr("Clashes"), tr("Residues"), tr("IFP group")});
+    poseTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    poseTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
+    poseTable_->setSelectionMode(QAbstractItemView::SingleSelection);
+    poseTable_->setSortingEnabled(true);
+    poseTable_->horizontalHeader()->setStretchLastSection(true);
+    auto* poseSplit = new QSplitter(Qt::Vertical);
+    poseSplit->addWidget(poseTable_);
+    poseResidueTable_ = new QTableWidget(0, 3);
+    poseResidueTable_->setHorizontalHeaderLabels({tr("Residue"), tr("Poses"), tr("Frequency (%)")});
+    poseResidueTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    poseResidueTable_->setSortingEnabled(true);
+    poseResidueTable_->horizontalHeader()->setStretchLastSection(true);
+    poseSplit->addWidget(poseResidueTable_);
+    poseSplit->setStretchFactor(0, 3);
+    poseSplit->setStretchFactor(1, 2);
+    poseLayout->addWidget(poseSplit);
+    auto* heatmapLegend = new QLabel(tr("Interaction abbreviations: HB = Hydrogen bond; HY = Hydrophobic contact; PI = Pi-stacking / cation-pi; SB = Salt bridge; WB = Water bridge; XB = Halogen bond; ME = Metal coordination; OT = Other favorable contact. Multiple codes indicate multiple types. Empty = no favorable contact; dash = failed pose."));
+    heatmapLegend->setWordWrap(true);
+    poseLayout->addWidget(heatmapLegend);
+    auto* groupNote = new QLabel(tr("IFP group: poses with identical residue + favorable-interaction-type fingerprints share a group (G1, G2, ...). Groups do not imply identical geometry or binding affinity."));
+    groupNote->setWordWrap(true);
+    poseLayout->addWidget(groupNote);
+    connect(poseRunButton_, &QPushButton::clicked, this, &MainWindow::runPoseComparison);
+    connect(poseTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) { selectComparedPose(row); });
+    connect(poseExportButton_, &QPushButton::clicked, this, [this] {
+        const QString file = QFileDialog::getSaveFileName(this, tr("Export pose comparison"), QStringLiteral("pose_comparison.csv"), tr("CSV (*.csv)"));
+        if (file.isEmpty()) return;
+        std::ofstream out(file.toStdString(), std::ios::binary | std::ios::trunc);
+        if (!out) { showError(tr("Export failed"), tr("Cannot open output file")); return; }
+        ligand_pose_batch::write(out, poseRows_, "csv");
+        if (!out) showError(tr("Export failed"), tr("Could not write comparison table"));
+    });
+    connect(poseMatrixExportButton_, &QPushButton::clicked, this, [this] {
+        const QString file = QFileDialog::getSaveFileName(this, tr("Export conserved residue matrix"), QStringLiteral("pose_residue_matrix.csv"), tr("CSV (*.csv);;JSON (*.json)"));
+        if (file.isEmpty()) return;
+        const std::string format = file.endsWith(QStringLiteral(".json"), Qt::CaseInsensitive) ? "json" : "csv";
+        std::ofstream out(file.toStdString(), std::ios::binary | std::ios::trunc);
+        if (!out) { showError(tr("Export failed"), tr("Cannot open output file")); return; }
+        ligand_pose_batch::writeResidueMatrix(out, poseRows_, format);
+        if (!out) showError(tr("Export failed"), tr("Could not write residue matrix"));
+    });
+    tabs_->addTab(posePanel, tr("Pose Comparison"));
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
@@ -869,17 +1031,69 @@ void MainWindow::refreshLigandCombo() {
     std::stable_sort(shownLigands_.begin(), shownLigands_.end(), [](const ligint::LigandId& a, const ligint::LigandId& b) { return a.atoms > b.atoms; });
     ligandCombo_->clear();
     for (const auto& l : shownLigands_)
-        ligandCombo_->addItem(tr("%1 %2 %3%4  (%5 atoms)")
+        ligandCombo_->addItem(tr("Crystal: %1 %2 %3%4  (%5 atoms)")
                                   .arg(QString::fromStdString(l.res))
                                   .arg(QString::fromStdString(l.chain))
                                   .arg(l.resi)
                                   .arg(l.icode == ' ' ? QString() : QString(QChar(l.icode)))
                                   .arg(l.atoms));
+    for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i)
+        ligandCombo_->setItemData(i, tr("Crystallographic ligand (HETATM) from the receptor structure."), Qt::ToolTipRole);
+    for (size_t ti = 0; ti < templates_.size(); ++ti) {
+        ligint::LigandId ext;
+        ext.res = "EXT"; ext.chain = "__EXTERNAL__"; ext.resi = static_cast<int>(ti);
+        for (const auto& atom : templates_[ti].at) if (atom.el != "H" && atom.el != "D") ++ext.atoms;
+        shownLigands_.push_back(ext);
+        ligandCombo_->addItem(tr("External pose %1: %2 (%3 heavy atoms)")
+                                  .arg(ti + 1).arg(QString::fromStdString(templates_[ti].name)).arg(ext.atoms));
+        ligandCombo_->setItemData(ligandCombo_->count() - 1,
+                                  tr("Imported SDF/MOL2 molecule %1. Coordinates must share the receptor frame.").arg(ti + 1),
+                                  Qt::ToolTipRole);
+    }
     runButton_->setEnabled(ligandCombo_->count() > 0 && !path_.isEmpty());
 }
 
 int MainWindow::ligandCount() const { return ligandCombo_->count(); }
 void MainWindow::selectLigand(int index) { ligandCombo_->setCurrentIndex(index); }
+
+void MainWindow::runPoseComparison() {
+    if (path_.isEmpty() || templates_.empty() || poseWatcher_->isRunning()) {
+        if (path_.isEmpty() || templates_.empty()) showError(tr("Pose comparison"), tr("Load a receptor and one or more SDF/MOL2 ligand structures first."));
+        return;
+    }
+    poseRunButton_->setEnabled(false);
+    poseExportButton_->setEnabled(false);
+    poseMatrixExportButton_->setEnabled(false);
+    poseRows_.clear();
+    poseTable_->setRowCount(0);
+    poseResidueTable_->setRowCount(0);
+    ligint::Options opt = buildOptions();
+    opt.protein3d = false;
+    opt.excludePdbLigand = excludePdbLigand_->text().trimmed().toStdString();
+    const std::string receptor = path_.toStdString();
+    statusBar()->showMessage(tr("Analyzing imported poses…"));
+    poseWatcher_->setFuture(QtConcurrent::run([receptor, opt]() {
+        std::vector<ligand_pose_batch::Row> rows;
+        rows.reserve(opt.templates.size());
+        for (size_t i = 0; i < opt.templates.size(); ++i) rows.push_back(ligand_pose_batch::analyze(receptor, opt, i));
+        return rows;
+    }));
+}
+
+void MainWindow::selectComparedPose(int row) {
+    if (row < 0 || row >= poseTable_->rowCount()) return;
+    const auto* indexItem = poseTable_->item(row, 0);
+    if (!indexItem) return;
+    const int index = indexItem->data(Qt::EditRole).toInt() - 1;
+    if (index < 0 || index >= static_cast<int>(poseRows_.size()) || !poseRows_[index].error.empty()) return;
+    for (int i = 0; i < static_cast<int>(shownLigands_.size()); ++i) {
+        if (shownLigands_[i].chain == "__EXTERNAL__" && shownLigands_[i].resi == index) {
+            ligandCombo_->setCurrentIndex(i);
+            analyze(false);
+            return;
+        }
+    }
+}
 
 bool MainWindow::addTemplate(const QString& path) {
     std::vector<ligint::Tmpl> t;
@@ -888,20 +1102,21 @@ bool MainWindow::addTemplate(const QString& path) {
     bool ok = mol2 ? ligint::loadMol2(path.toStdString(), t, warnings) : ligint::loadSdf(path.toStdString(), t, warnings);
     for (const auto& w : warnings) log(QString::fromStdString(w));
     if (!ok || t.empty()) {
-        showError(tr("Invalid template"), tr("No readable molecule in %1").arg(path));
+        showError(tr("Invalid ligand structure"), tr("No readable molecule in %1").arg(path));
         return false;
     }
     templates_.insert(templates_.end(), t.begin(), t.end());
     templatePaths_ << QFileInfo(path).absoluteFilePath();
     templateNames_ << QFileInfo(path).fileName() + tr(" (%1 molecules)").arg(t.size());
     templateLabel_->setText(templateNames_.join("\n"));
-    log(tr("Template loaded: %1").arg(path));
+    log(tr("Ligand structure loaded: %1").arg(path));
+    refreshLigandCombo();
     return true;
 }
 
 void MainWindow::onAddTemplate() {
     QSettings s("ligint", "ligint-gui");
-    QString f = QFileDialog::getOpenFileName(this, tr("SDF or MOL2 template"), s.value("lastDir").toString(),
+    QString f = QFileDialog::getOpenFileName(this, tr("Ligand structure (SDF or MOL2)"), s.value("lastDir").toString(),
                                              tr("Molecules (*.sdf *.mol2);;All files (*)"));
     if (!f.isEmpty()) addTemplate(f);
 }
@@ -921,10 +1136,13 @@ ligint::Options MainWindow::buildOptions() const {
     const int idx = ligandCombo_->currentIndex();
     if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
         const auto& l = shownLigands_[idx];
-        opt.ligName = l.res;
-        opt.chain = l.chain;
-        opt.resi = l.resi;
-        opt.icode = l.icode;
+        if (l.chain == "__EXTERNAL__") opt.externalLigandIndex = l.resi;
+        else {
+            opt.ligName = l.res;
+            opt.chain = l.chain;
+            opt.resi = l.resi;
+            opt.icode = l.icode;
+        }
     }
     opt.useWater = water_->isChecked();
     opt.mergeLinked = merge_->isChecked();
@@ -935,6 +1153,7 @@ ligint::Options MainWindow::buildOptions() const {
         opt.altloc = alt.isEmpty() ? 0 : alt[0].toLatin1();
     }
     opt.templates = templates_;
+    if (opt.externalLigandIndex >= 0) opt.excludePdbLigand = excludePdbLigand_->text().trimmed().toStdString();
     auto& p = opt.params;
     p.hbMax = hbMax_->value();
     p.hbLong = hbLong_->value();
@@ -1063,6 +1282,7 @@ QStringList MainWindow::currentArgs() const {
     const int idx = ligandCombo_->currentIndex();
     if (idx >= 0 && idx < static_cast<int>(shownLigands_.size())) {
         const auto& l = shownLigands_[idx];
+        if (l.chain != "__EXTERNAL__") {
         a << QString::fromStdString(l.res) << QString::fromStdString(l.chain);
         // the insertion code is written only when it is needed to tell this residue from another one with the same number
         bool ambiguous = false;
@@ -1071,6 +1291,7 @@ QStringList MainWindow::currentArgs() const {
         QString number = QString::number(l.resi);
         if (ambiguous) number += l.icode == ' ' ? QStringLiteral("-") : QString(QChar(l.icode));
         a << number;
+        }
     }
     a << optionArgs();
     return a;
@@ -1098,6 +1319,12 @@ QStringList MainWindow::optionArgs() const {
     thr("pi-angle", piAngle_->value(), d.piAngle);
     if (plipLike_->isChecked()) thr("hal-max", 4.0, d.halMax);     // the preset also lowers the halogen distance
     for (const QString& t : templatePaths_) a << (t.endsWith(".mol2", Qt::CaseInsensitive) ? "--mol2" : "--sdf") << t;
+    const int idx = ligandCombo_->currentIndex();
+    if (idx >= 0 && idx < static_cast<int>(shownLigands_.size()) && shownLigands_[idx].chain == "__EXTERNAL__") {
+        a << "--external-index" << QString::number(shownLigands_[idx].resi + 1);
+        if (!excludePdbLigand_->text().trimmed().isEmpty())
+            a << "--exclude-pdb-ligand" << excludePdbLigand_->text().trimmed();
+    }
     return a;
 }
 
