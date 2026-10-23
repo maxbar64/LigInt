@@ -23,7 +23,7 @@ check the output, not only the exit code, in scripts.
 
 | Option | Meaning |
 |---|---|
-| `--csv` | write the interactions as CSV on standard output; the service information (annotation, B-factor, warnings) goes to standard error |
+| `--csv [OUTPUT.csv]` | write interactions as CSV to the named file, or to standard output without a filename; diagnostic information goes to standard error |
 | `--sdf FILE`, `--mol2 FILE` | chemical annotation of the ligand (bond orders, explicit hydrogens, formal charges); the ligand is matched to the molecule by coordinates ([details](interactions.md#sdf-and-mol2)) |
 | `--no-water` | ignore the water molecules (no water bridges) |
 | `--no-merge` | do not merge covalently linked `HETATM` residues (glycans, dipeptides) into one ligand |
@@ -32,7 +32,7 @@ check the output, not only the exit code, in scripts.
 | `--backbone-hyd` | also count apolar contacts with the protein backbone |
 | `--altloc X` | use the alternate conformation `X` for the residues that have it; the others keep their first conformation. The program reports for how many residues `X` was used and warns if the file has no conformation `X` |
 | `--format F` | `auto` (default: recognized from the content), `pdb` or `cif` |
-| `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`) instead of the interaction table, optionally with a pocket definition |
+| `--fingerprint FORMAT`, `--pocket FILE` | write the [interaction fingerprint](fingerprint.md) (`csv`, `json` or `svg`), optionally with a pocket definition; can be combined with named CSV and text reports |
 | `--download-pdb ID` | download the structure from the RCSB instead of giving a file: the arguments after the options are then the ligand. `--download-format pdb\|cif`, `--download-output FILE`, `--download-cache DIR`, `--download-refresh` and `--download-only` (stop after the download and print the path; it requires `--download-pdb`) complete it ([Downloading from the RCSB](rcsb.md)) |
 | `--gpcrdb-positions LIST`, `--gpcrdb-pdb FILE`, `--gpcrdb-mapping FILE`, `--gpcrdb-chain C`, `--gpcrdb-name TEXT`, `--gpcrdb-output FILE` | build the pocket definition of a GPCR from generic residue numbers (the positions that you list), for `--fingerprint` or to save ([GPCR pockets](gpcrdb.md)) |
 | `--matrix LIST` | the [interaction matrix](matrix.md) of the ligands of a list file instead of a structure: one row for each ligand, one column for each pocket position and class. `--matrix-format csv\|json\|svg` (default `csv`), `--matrix-classes klifs\|all\|NAMES`, `--matrix-hide-empty`, `--matrix-title TEXT` and `--pocket FILE` (the common pocket definition) complete it |
@@ -83,6 +83,19 @@ metals, their coordination sphere (see the example in the [Quick start](quicksta
 interaction, **Fav** (`+` favorable, `-` clash or repulsion), the **ligand atom**, the **protein atom** (as `RES numberCHAIN:ATOM`), the
 distance **d(A)** and **Notes**. A chain of several characters (mmCIF) is written in brackets: `ASP 189 [AA]:OD1`.
 
+### Multiple output reports
+
+The three reports are independent. Use `--text OUTPUT.txt` for the complete readable analysis, `--csv OUTPUT.csv` for detailed interaction records, and `--fingerprint OUTPUT.csv|OUTPUT.json|OUTPUT.svg` for the interaction fingerprint. They can be requested in a **single analysis**:
+
+```bash
+ligint receptor.pdb --mol2 ligand.mol2 \
+  --text interactions.txt \
+  --csv interactions.csv \
+  --fingerprint fingerprint.json
+```
+
+With no report option, the readable text report is printed to stdout as before. Bare `--csv` continues to print CSV to stdout; bare `--fingerprint csv|json|svg` also prints to stdout when selected by itself. When several reports are requested, at most one may target stdout; the remaining reports need distinct file paths. `--text` always requires a filename. The optional filename following `--csv` must end in `.csv`.
+
 ### CSV (`--csv`)
 
 One header line and one row per interaction, with these columns:
@@ -101,7 +114,7 @@ standard output gives a clean file.
 
 ### Fingerprints
 
-`--fingerprint csv|json|svg` replaces the table: see [Interaction fingerprints](fingerprint.md).
+`--fingerprint csv|json|svg` selects the fingerprint stream: see [Interaction fingerprints](fingerprint.md).
 
 ## Exit status
 
