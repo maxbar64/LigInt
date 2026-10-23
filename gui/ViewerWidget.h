@@ -44,6 +44,7 @@ public:
     void setPocketDistinctColors(bool enabled);
     void setPocketColorMode(int mode);
     void setPocketDepthProbe(int index);
+    void setPocketUnreachableMode(int mode);
     void highlightPocket(int visibleGroupIndex);
     QColor pocketDisplayColor(const std::vector<ligint::PocketPoint>& source) const;
     void setPocketAppearance(bool visible, double opacity, double specular);
@@ -138,6 +139,7 @@ private:
     bool pocketDistinctColors_=false;
     int pocketColorMode_=0;
     int pocketDepthProbe_=1;
+    int pocketUnreachableMode_=0;
     std::vector<std::vector<ligint::PocketPoint>> pocketGroups_;
     std::vector<std::vector<SmoothTriangle>> pocketPickMeshes_;
     int highlightedPocket_=-1;
