@@ -102,3 +102,5 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
     });
     return result;
 }
+
+} // namespace ligint
