@@ -296,10 +296,10 @@ int main(int argc, char** argv) {
         for (auto& w : r.warnings) cerr << w << "\n";
         // One stream may go to stdout. Multiple reports must name their own files
         // to avoid interleaving incompatible CSV, text and fingerprint formats.
-        const bool wantText = !textOutput.empty() || (!csv && fpFormat.empty());
+        const bool wantText = !textOutput.empty() || (!csv && (fpFormat.empty() || r.listingOnly));
         const int stdoutCount = (wantText && textOutput.empty() ? 1 : 0)
             + (csv && csvOutput.empty() ? 1 : 0)
-            + (!fpFormat.empty() && fpOutput.empty() ? 1 : 0);
+            + (!fpFormat.empty() && !r.listingOnly && fpOutput.empty() ? 1 : 0);
         if (stdoutCount > 1) {
             cerr << "Multiple reports cannot share stdout: specify filenames for all but one\n";
             return 1;
