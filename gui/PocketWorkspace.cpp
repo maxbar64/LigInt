@@ -414,7 +414,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         QTextStream stream(&file);
         stream<<"pocket,voxels,reachable,reachable_fraction,probe_blocked,probe_blocked_fraction,"
                  "unreachable_unblocked,unreachable_unblocked_fraction,min_A,p50_A,p90_A,max_A,"
-                 "mean_A,mean_buriedness,reported_mean_A,reported_max_A\\n";
+                 "mean_A,mean_buriedness,reported_mean_A,reported_max_A\n";
         auto format=[](double v){return QString::number(v,'f',4);};
         for(std::size_t i=0;i<result_.pockets.size();++i) {
             const auto& pocket=result_.pockets[i];
@@ -446,7 +446,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
                   <<(depths.empty()?QString():format(sum/depths.size()))<<','
                   <<format(pocket.meanBuriedness)<<','
                   <<format(pocket.meanSolventPathDepth)<<','
-                  <<format(pocket.maxSolventPathDepth)<<'\\n';
+                  <<format(pocket.maxSolventPathDepth)<<'\n';
         }
         status_->setText(QString("Depth audit exported: %1 pockets").arg(result_.pockets.size()));
     });
