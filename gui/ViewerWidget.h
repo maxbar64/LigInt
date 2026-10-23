@@ -70,7 +70,7 @@ signals:
     void styleChanged();
     void busyChanged(bool busy);
     void importLigandPicked(int index);
-    void pocketSurfacePicked(int visibleGroupIndex, bool additive);
+    void pocketSurfacePicked(int visibleGroupIndex, Qt::KeyboardModifiers modifiers, bool isolate);
 
 public slots:
     void resetView();        // initial orientation, framing the ligand
@@ -84,7 +84,7 @@ protected:
     void mouseMoveEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
     void wheelEvent(QWheelEvent* e) override;
-    void mouseDoubleClickEvent(QMouseEvent*) override { resetView(); }
+    void mouseDoubleClickEvent(QMouseEvent* e) override;
 
 private:
     using Mat3 = std::array<double, 9>;
