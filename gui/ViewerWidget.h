@@ -37,7 +37,9 @@ public:
     bool previewDonorHydrogens() const { return previewDonorHydrogens_; }
     void clear();
     // Overlay the raw pocket volume in the same depth-buffered scene as protein and ligand.
-    void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2);
+    void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2,
+                          const std::vector<std::vector<ligint::PocketPoint>>& groups = {});
+    void setPocketDistinctColors(bool enabled);
     void setPocketAppearance(bool visible, double opacity, double specular);
     bool hasData() const { return hasData_; }
     bool hasProtein() const { return protein_ && !protein_->backbone.empty(); }
@@ -125,6 +127,8 @@ private:
     int pocketSmoothing_=2;
     bool pocketVisible_=true;
     double pocketOpacity_=0.38, pocketSpecular_=0.12;
+    bool pocketDistinctColors_=false;
+    std::vector<std::vector<ligint::PocketPoint>> pocketGroups_;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
