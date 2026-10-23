@@ -400,8 +400,10 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                 if(pocketColorMode_==2)piece->colors[i]=static_cast<unsigned int>(base.rgb() & 0xffffff);
                 else {
                     const double depth=normalizedDepth(p);
-                    if (depth < 0) { piece->colors[i]=0x808080; continue; }
-                    const double factor=0.55+0.45*depth;
+                    // Preserve the perceptual buriedness palette. Depth is a
+                    // restrained secondary cue; inaccessible voxels keep their
+                    // buriedness color rather than forming large gray patches.
+                    const double factor = depth < 0 ? 1.0 : 0.90 + 0.10*depth;
                     const QColor mixed=QColor::fromRgbF(base.redF()*factor,base.greenF()*factor,base.blueF()*factor);
                     piece->colors[i]=static_cast<unsigned int>(mixed.rgb() & 0xffffff);
                 }
