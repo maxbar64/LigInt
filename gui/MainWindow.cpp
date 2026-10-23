@@ -789,9 +789,9 @@ void MainWindow::buildUi() {
             });
     connect(viewer_, &ViewerWidget::pocketBuriednessHovered,
             this, [buriedReadout, pocketColorMode](int index, double value, double depth) {
-                if (index < 0) buriedReadout->setText(QObject::tr("0 → 1"));
+                if (index < 0) buriedReadout->setText(pocketColorMode->currentIndex() == 3 ? QObject::tr("0 → max Å") : QObject::tr("0 → 1"));
                 else if (pocketColorMode->currentIndex() == 3)
-                    buriedReadout->setText(QObject::tr("Depth: %2")
+                    buriedReadout->setText(QObject::tr("Depth: %1")
                          .arg(depth >= 0 ? QString::number(depth,'f',1)+QStringLiteral(" Å") : QObject::tr("unreachable")));
                 else buriedReadout->setText(QObject::tr("Buried: %1").arg(value,0,'f',2));
             });
