@@ -29,6 +29,8 @@ class QTableView;
 class QTableWidget;
 class QTabWidget;
 class QScrollArea;
+class QSplitter;
+class QToolButton;
 
 namespace gui {
 
@@ -216,6 +218,10 @@ private:
     QFutureWatcher<TaskOutcome>* taskWatcher_ = nullptr;
     QFutureWatcher<MatrixOutcome>* matrixWatcher_ = nullptr;
     QFutureWatcher<std::vector<ligand_pose_batch::Row>>* poseWatcher_ = nullptr;
+    QSplitter* mainSplitter_ = nullptr;
+    QSplitter* resultsSplitter_ = nullptr;
+    QToolButton* graphicsToggle_ = nullptr;
+    QTabWidget* controlPages_ = nullptr;
     QTableWidget* poseTable_ = nullptr;
     QTableWidget* poseResidueTable_ = nullptr;
     QPushButton* poseRunButton_ = nullptr;
