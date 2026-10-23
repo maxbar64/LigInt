@@ -36,6 +36,7 @@ struct PocketOptions {
 struct PocketPoint {
     V3 pos{0,0,0};
     float buriedness = 0;
+    float solventPathDepth = -1; // shortest solvent-accessible grid path from exterior, Å; -1 if unreachable
 };
 struct PocketCandidate {
     V3 center{0,0,0};
