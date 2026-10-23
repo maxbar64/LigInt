@@ -25,7 +25,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --batch-poses csv|json  --csv  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
+         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --batch-poses csv|json  --csv [OUTPUT.csv]  --text OUTPUT.txt  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
          << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
          << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
          << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
         if (string(argv[i]) == "--plip-like") P.applyPlipLike();
     vector<string> pa;
     bool csv = false;
+    string csvOutput, textOutput;
     std::string batchFormat;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
     string fpFormat, fpOutput, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
@@ -53,7 +54,19 @@ int main(int argc, char** argv) {
         string s = argv[i];
         if (s == "--help" || s == "-h") { usage(argv[0], P); return 0; }
         else if (s == "--version") { cout << "ligint " << LIGINT_VERSION << "\n"; return 0; }
-        else if (s == "--csv") csv = true;
+        else if (s == "--csv") {
+            csv = true;
+            // Optional filename is recognized by its .csv suffix; otherwise the
+            // following token remains a positional structure/ligand argument.
+            if (i + 1 < argc) {
+                const string next = argv[i + 1];
+                if (next.size() >= 4 && next.substr(next.size() - 4) == ".csv") csvOutput = argv[++i];
+            }
+        }
+        else if (s == "--text") {
+            if (i + 1 >= argc || argv[i + 1][0] == '-') { cerr << "--text requires an output filename\n"; return 1; }
+            textOutput = argv[++i];
+        }
         else if (s == "--no-water") opt.useWater = false;
         else if (s == "--metal-donors") opt.metalDonors = true;
         else if (s == "--backbone-hyd") opt.backboneHyd = true;
@@ -178,7 +191,7 @@ int main(int argc, char** argv) {
     if (!matrixPath.empty()) {
         // the matrix: one row for each ligand of the list, the structures are in the list
         if (!pa.empty()) { cerr << "--matrix takes no structure argument: the structures are in the list\n"; return 1; }
-        if (useRcsb || useKlifs || useGpcrdb || !fpFormat.empty() || csv) { cerr << "--matrix cannot be combined with --download-pdb, --klifs-*, --gpcrdb-*, --fingerprint or --csv\n"; return 1; }
+        if (useRcsb || useKlifs || useGpcrdb || !fpFormat.empty() || csv || !textOutput.empty()) { cerr << "--matrix cannot be combined with --download-pdb, --klifs-*, --gpcrdb-*, --fingerprint or --csv\n"; return 1; }
         for (auto& w : P.clampToGrid()) cerr << w << "\n";
         try {
             MatrixOptions mo;
@@ -208,7 +221,7 @@ int main(int argc, char** argv) {
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     if (pa.size() == 1 && !opt.templates.empty() && opt.externalLigandIndex < 0) opt.externalLigandIndex = 0;
-    if (!batchFormat.empty() && (pa.size() != 1 || opt.templates.empty() || csv || !fpFormat.empty() || !matrixPath.empty() || useKlifs || useGpcrdb || useRcsb || opt.externalLigandIndex > 0)) {
+    if (!batchFormat.empty() && (pa.size() != 1 || opt.templates.empty() || csv || !textOutput.empty() || !fpFormat.empty() || !matrixPath.empty() || useKlifs || useGpcrdb || useRcsb || opt.externalLigandIndex > 0)) {
         cerr << "--batch-poses requires a receptor and SDF/MOL2 molecules without RESNAME, --external-index > 1, --csv, --fingerprint or matrix/pocket generation options\n"; return 1;
     }
     if (opt.externalLigandIndex >= 0 && (pa.size() != 1 || static_cast<size_t>(opt.externalLigandIndex) >= opt.templates.size())) {
@@ -281,14 +294,47 @@ int main(int argc, char** argv) {
     try {
         Result r = analyzeFile(pa[0], opt);
         for (auto& w : r.warnings) cerr << w << "\n";
+        // One stream may go to stdout. Multiple reports must name their own files
+        // to avoid interleaving incompatible CSV, text and fingerprint formats.
+        const bool wantText = !textOutput.empty() || (!csv && fpFormat.empty());
+        const int stdoutCount = (wantText && textOutput.empty() ? 1 : 0)
+            + (csv && csvOutput.empty() ? 1 : 0)
+            + (!fpFormat.empty() && fpOutput.empty() ? 1 : 0);
+        if (stdoutCount > 1) {
+            cerr << "Multiple reports cannot share stdout: specify filenames for all but one\n";
+            return 1;
+        }
+        if ((!csvOutput.empty() && csvOutput == textOutput) ||
+            (!fpOutput.empty() && (fpOutput == csvOutput || fpOutput == textOutput))) {
+            cerr << "Report output filenames must be distinct\n"; return 1;
+        }
         #ifdef _WIN32
-        if (fpOutput.empty()) {
-            if (_setmode(_fileno(stdout), _O_BINARY) == -1) {
-                cerr << "Cannot set binary stdout mode\n";
-                return 1;
-            }
+        if (stdoutCount && _setmode(_fileno(stdout), _O_BINARY) == -1) {
+            cerr << "Cannot set binary stdout mode\n"; return 1;
         }
         #endif
+        if (wantText) {
+            ofstream file;
+            ostream* out = &cout;
+            if (!textOutput.empty()) {
+                file.open(textOutput, ios::binary | ios::trunc);
+                if (!file) { cerr << "Cannot open text output file: " << textOutput << "\n"; return 1; }
+                out = &file;
+            }
+            printText(*out, r);
+            if (!*out) { cerr << "Failed to write text report\n"; return 1; }
+        }
+        if (csv) {
+            ofstream file;
+            ostream* out = &cout;
+            if (!csvOutput.empty()) {
+                file.open(csvOutput, ios::binary | ios::trunc);
+                if (!file) { cerr << "Cannot open CSV output file: " << csvOutput << "\n"; return 1; }
+                out = &file;
+            }
+            printCsv(*out, cerr, r);
+            if (!*out) { cerr << "Failed to write CSV report\n"; return 1; }
+        }
         if (!fpFormat.empty() && !r.listingOnly) {
             vector<Fingerprint> fps;
             for (auto& lig : r.ligands) {
@@ -312,8 +358,7 @@ int main(int argc, char** argv) {
                 *destination << fingerprintSvg(fps.front());
             }
             if (!*destination) { cerr << "Failed to write fingerprint output" << (fpOutput.empty() ? "" : ": " + fpOutput) << "\n"; return 1; }
-        } else if (csv) printCsv(cout, cerr, r);
-        else printText(cout, r);
+        }
     } catch (const exception& e) {
         cerr << e.what() << "\n";
         return 1;
