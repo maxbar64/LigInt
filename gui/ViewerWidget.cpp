@@ -366,6 +366,8 @@ void ViewerWidget::clear() {
     protein_.reset();
     pieces_ = Pieces();
     pocketPoints_.clear();
+    pocketGroups_.clear();
+    pocketPickMeshes_.clear();
     hasData_ = false;
     highlight_ = -1;
     surfaceWatcher_->setFuture(QFuture<std::shared_ptr<const MeshPiece>>());
