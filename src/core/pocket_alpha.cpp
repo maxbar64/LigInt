@@ -46,7 +46,7 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
     // Neighbor-limited tetrahedra avoid cubic scanning of the whole structure.
     // The sphere must be empty in the VdW-adjusted sense; atom centers define
     // the circumcenter candidates, with the smallest atom clearance as radius.
-    constexpr std::size_t nearestLimit=10;
+    constexpr std::size_t nearestLimit=7;
     for(std::size_t i=0;i<atoms.size();++i){
         std::vector<std::pair<double,std::size_t>> neighbors;
         for(std::size_t j=0;j<atoms.size();++j)if(i!=j){
