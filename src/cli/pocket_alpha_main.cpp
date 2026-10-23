@@ -16,7 +16,7 @@ int main(int argc,char**argv){
   std::string input,output,pdb,audit,mergeAuditFile;
   for(int i=1;i<argc;++i){
    const std::string key=argv[i];
-   if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 0;}
+   if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--min-spheres N] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 0;}
    if(key=="--no-macro-merge"){o.mergeMicroclusters=false;continue;}
    if(key.rfind("--",0)!=0){if(!input.empty())throw std::invalid_argument("Only one input structure");input=key;continue;}
    if(i+1>=argc)throw std::invalid_argument("Missing value for "+key);
@@ -44,14 +44,14 @@ int main(int argc,char**argv){
   if(!mergeAuditFile.empty()){
    std::ofstream f(mergeAuditFile);
    if(!f)throw std::runtime_error("Unable to open merge audit CSV");
-   f<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,merged_center_diameter_A,accepted,reason\\n";
+   f<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,merged_center_diameter_A,accepted,reason\n";
    f<<std::fixed<<std::setprecision(3);
    for(const auto& d:mergeAudit.decisions)
      f<<d.first<<','<<d.second<<','<<d.linkDistance<<','<<d.minClearance<<','
-      <<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\\n';
+      <<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\n';
   }
   std::cerr<<"Alpha pocket microclusters: "<<mergeAudit.microclusters
-           <<", macropockets: "<<pockets.size()<<"\\n";
+           <<", macropockets: "<<pockets.size()<<"\n";
   std::ofstream file;
   if(!output.empty()){file.open(output);if(!file)throw std::runtime_error("Unable to open CSV output");}
   std::ostream& out=output.empty()?std::cout:file;
