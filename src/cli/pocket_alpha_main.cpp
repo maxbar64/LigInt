@@ -10,9 +10,9 @@
 using namespace ligint;
 int main(int argc,char**argv){
  try{
-  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 1;}
+  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 1;}
   AlphaPocketOptions o;
-  std::string input,output,pdb;
+  std::string input,output,pdb,audit;
   for(int i=1;i<argc;++i){
    const std::string key=argv[i];
    if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 0;}
@@ -23,6 +23,9 @@ int main(int argc,char**argv){
    else if(key=="--max-radius")o.maxRadius=std::stod(value);
    else if(key=="--neighbor-cutoff")o.neighborCutoff=std::stod(value);
    else if(key=="--cluster-distance")o.clusterDistance=std::stod(value);
+   else if(key=="--max-cluster-radius")o.maxClusterRadius=std::stod(value);
+   else if(key=="--min-contact-atoms")o.minContactAtoms=std::stoull(value);
+   else if(key=="--audit")audit=value;
    else if(key=="--min-spheres")o.minSpheres=std::stoull(value);
    else if(key=="--output")output=value;
    else if(key=="--pdb")pdb=value;
@@ -40,6 +43,23 @@ int main(int argc,char**argv){
    const auto& p=pockets[i];
    out<<i+1<<','<<p.center[0]<<','<<p.center[1]<<','<<p.center[2]<<','
       <<p.spheres.size()<<','<<p.volume<<'\n';
+  }
+  if(!audit.empty()){
+   std::ofstream f(audit);if(!f)throw std::runtime_error("Unable to open audit CSV");
+   f<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,volume_sum_A3\n";
+   for(std::size_t i=0;i<pockets.size();++i){
+    const auto& p=pockets[i];
+    std::vector<double> radii;
+    double extent=0;
+    for(const auto& sp:p.spheres){
+     radii.push_back(sp.radius);
+     const double dx=sp.center[0]-p.center[0],dy=sp.center[1]-p.center[1],dz=sp.center[2]-p.center[2];
+     extent=std::max(extent,std::sqrt(dx*dx+dy*dy+dz*dz));
+    }
+    std::sort(radii.begin(),radii.end());
+    f<<i+1<<','<<radii.size()<<','<<radii.front()<<','<<radii[radii.size()/2]<<','
+     <<radii.back()<<','<<extent<<','<<p.volume<<'\n';
+   }
   }
   if(!pdb.empty()){
    std::ofstream f(pdb);if(!f)throw std::runtime_error("Unable to open PDB output");
