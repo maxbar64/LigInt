@@ -1,5 +1,6 @@
 #include "ligint/pocket_alpha.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
