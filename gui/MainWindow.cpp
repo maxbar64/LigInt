@@ -304,17 +304,17 @@ void MainWindow::buildUi() {
     connect(openBtn, &QPushButton::clicked, this, &MainWindow::onOpen);
     ligandCombo_ = new QComboBox;
     ligandCombo_->setToolTip(tr("Choose a crystallographic ligand from the receptor or an external SDF/MOL2 ligand pose."));
-    showSmall_ = new QCheckBox(tr("Also show ions and small molecules"));
+    showSmall_ = new QCheckBox(tr("Show ions / small molecules"));
     connect(showSmall_, &QCheckBox::toggled, this, [this] { refreshLigandCombo(); });
     sv->addWidget(openBtn);
-    auto* rcsbBtn = new QPushButton(tr("Download from RCSB…"));
+    auto* rcsbBtn = new QPushButton(tr("Get from RCSB…"));
     connect(rcsbBtn, &QPushButton::clicked, this, &MainWindow::onDownloadRcsb);
     sv->addWidget(rcsbBtn);
     sv->addWidget(fileLabel_);
     sv->addWidget(new QLabel(tr("Ligand to analyze:")));
     sv->addWidget(ligandCombo_);
     sv->addWidget(showSmall_);
-    auto* previewHydrogens=new QCheckBox(tr("Preview: CCD-defined donor H (estimated geometry)"));
+    auto* previewHydrogens=new QCheckBox(tr("Preview donor H (CCD)"));
     previewHydrogens->setObjectName("preview_donor_hydrogens");
     previewHydrogens->setToolTip(tr("Draw N-H/O-H only at sites explicitly defined by the selected CCD component; coordinates are estimated and do not establish experimental protonation."));
     connect(previewHydrogens,&QCheckBox::toggled,this,[this](bool checked){
@@ -322,7 +322,7 @@ void MainWindow::buildUi() {
     });
     sv->addWidget(previewHydrogens);
 
-    auto* ccdButton=new QPushButton(tr("Enrich ligand preview from CCD…"));
+    auto* ccdButton=new QPushButton(tr("Enrich from CCD…"));
     ccdButton->setObjectName("preview_ccd_enrich");
     ccdButton->setToolTip(tr("Fetch cached or official RCSB Chemical Component Dictionary bonds. Only exact, unambiguous atom-name matches are accepted."));
     connect(ccdButton,&QPushButton::clicked,this,&MainWindow::startCcdPreview);
@@ -380,7 +380,7 @@ void MainWindow::buildUi() {
     form->addRow(tr("π-stacking, max angle"), piAngle_);
     lv->addWidget(gThr);
 
-    auto* gTmpl = new QGroupBox(tr("Ligand structures (SDF / MOL2)"));
+    auto* gTmpl = new QGroupBox(tr("Ligand poses (SDF/MOL2)"));
     auto* tv = new QVBoxLayout(gTmpl);
     templateLabel_ = new QLabel(tr("none: ligand chemistry inferred from geometry"));
     templateLabel_->setWordWrap(true);
@@ -392,7 +392,7 @@ void MainWindow::buildUi() {
     excludePdbLigand_->setPlaceholderText(tr("e.g. BZC (optional)"));
     excludePdbLigand_->setToolTip(tr("When analyzing an external pose, omit all HETATM atoms with this residue name from receptor interactions. Other cofactors and waters remain."));
     auto* excludeForm = new QFormLayout;
-    excludeForm->addRow(tr("Exclude PDB ligand:"), excludePdbLigand_);
+    excludeForm->addRow(tr("Exclude PDB:"), excludePdbLigand_);
     tv->addLayout(excludeForm);
     lv->addWidget(gTmpl);
 
@@ -823,13 +823,13 @@ void MainWindow::buildUi() {
     split->addWidget(controlPages);
     split->addWidget(right);
     split->setStretchFactor(1, 1);
-    controlPages->setMinimumWidth(240);
-    controlPages->setMaximumWidth(380);
+    controlPages->setMinimumWidth(215);
+    controlPages->setMaximumWidth(340);
     split->setChildrenCollapsible(false);
     right->setChildrenCollapsible(false);
     split->setMinimumHeight(0);
     right->setMinimumHeight(0);
-    split->setSizes({300, 980});
+    split->setSizes({265, 1015});
     setCentralWidget(split);
 
     // object names: used by the tests to drive the controls
