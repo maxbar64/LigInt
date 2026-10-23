@@ -1195,6 +1195,7 @@ bool MainWindow::openStructure(const QString& path) {
     refreshLigandCombo();
     // Keep the full-structure framing initially; combo selection can focus a ligand later.
     if (viewer_->hasData()) viewer_->setImportPreview(importPreview_, -1);
+    graphicsOptions_->updateAvailability();
     runButton_->setEnabled(ligandCombo_->count() > 0);
     exportAct_->setEnabled(false);
     imageAct_->setEnabled(viewer_->hasData());
