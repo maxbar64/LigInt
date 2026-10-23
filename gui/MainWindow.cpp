@@ -773,9 +773,13 @@ void MainWindow::buildUi() {
                 buriedReadout->setVisible(mode >= 2);
             });
     connect(viewer_, &ViewerWidget::pocketBuriednessHovered,
-            this, [buriedReadout](int index, double value) {
-                buriedReadout->setText(index < 0 ? QObject::tr("0 → 1")
-                    : QObject::tr("Buried: %1").arg(value,0,'f',2));
+            this, [buriedReadout, pocketColorMode](int index, double value, double depth) {
+                if (index < 0) buriedReadout->setText(QObject::tr("0 → 1"));
+                else if (pocketColorMode->currentIndex() == 3)
+                    buriedReadout->setText(QObject::tr("B: %1 | Depth: %2")
+                        .arg(value,0,'f',2)
+                        .arg(depth >= 0 ? QString::number(depth,'f',1)+QStringLiteral(" Å") : QObject::tr("unreachable")));
+                else buriedReadout->setText(QObject::tr("Buried: %1").arg(value,0,'f',2));
             });
     pocketQuickLayout->addWidget(quickVisible);
     viewerColumn->insertWidget(1, pocketQuickBar);
