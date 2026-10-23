@@ -23,6 +23,8 @@
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QScrollArea>
+#include <QToolButton>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -321,7 +323,9 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     palette_=new QComboBox;palette_->addItems({"Cool palette","Warm palette"});
     opacity_=new QSpinBox;opacity_->setRange(10,100);opacity_->setValue(80);opacity_->setSuffix("%");
     pointSize_=new QSpinBox;pointSize_->setRange(2,12);pointSize_->setValue(5);
-    form->addRow("Protein chain",chain_);
+    // Primary selection remains visible; advanced detection parameters are collapsible.
+    column->addWidget(new QLabel("Protein chain"));
+    column->addWidget(chain_);
     form->addRow("Grid spacing (Å)",spacing_);form->addRow("Min buriedness",buried_);
     form->addRow("Ray length (Å)",ray_);form->addRow("Surface distance (Å)",surface_);
     form->addRow("Solvent probe (Å)",probe_);form->addRow("Morphology",morph_);
@@ -351,24 +355,44 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     shine_=new QSpinBox;shine_->setRange(0,100);shine_->setValue(30);shine_->setSuffix("%");
     form->addRow("Diffuse light",lightStrength_);
     form->addRow("Specular highlight",shine_);
-    form->addRow("Render mode",renderMode_);
     form->addRow("Ligand overlay",ligand_);
-    form->addRow("Pocket colors",palette_);
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
     overlayMaterial_=new QComboBox;
     overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
-    form->addRow("3D pocket material",overlayMaterial_);
     overlayVisible_=new QCheckBox("Show pocket in Interactions 3D");
     overlayVisible_->setChecked(true);
     overlayOpacity_=new QSpinBox;overlayOpacity_->setRange(5,100);
     overlayOpacity_->setValue(38);overlayOpacity_->setSuffix("%");
     overlaySpecular_=new QSpinBox;overlaySpecular_->setRange(0,100);
     overlaySpecular_->setValue(12);overlaySpecular_->setSuffix("%");
-    form->addRow(overlayVisible_);
     form->addRow("3D overlay opacity",overlayOpacity_);
     form->addRow("3D overlay specular",overlaySpecular_);
-    column->addLayout(form);
+    auto* advancedToggle = new QToolButton;
+    advancedToggle->setObjectName("pocketAdvancedToggle");
+    advancedToggle->setText("Detection and display parameters");
+    advancedToggle->setCheckable(true);
+    advancedToggle->setChecked(false);
+    advancedToggle->setArrowType(Qt::RightArrow);
+    advancedToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    column->addWidget(advancedToggle);
+    auto* advancedArea = new QScrollArea;
+    advancedArea->setObjectName("pocketAdvancedScroll");
+    advancedArea->setWidgetResizable(true);
+    advancedArea->setFrameShape(QFrame::StyledPanel);
+    advancedArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    advancedArea->setMaximumHeight(260);
+    auto* advancedContent = new QWidget;
+    auto* advancedLayout = new QVBoxLayout(advancedContent);
+    advancedLayout->setContentsMargins(5,5,5,5);
+    advancedLayout->addLayout(form);
+    advancedArea->setWidget(advancedContent);
+    advancedArea->setVisible(false);
+    column->addWidget(advancedArea);
+    connect(advancedToggle,&QToolButton::toggled,this,[advancedToggle,advancedArea](bool visible){
+        advancedArea->setVisible(visible);
+        advancedToggle->setArrowType(visible ? Qt::DownArrow : Qt::RightArrow);
+    });
     run_=new QPushButton("Find pockets");column->addWidget(run_);
     status_=new QLabel("Open a structure to start");status_->setWordWrap(true);column->addWidget(status_);
     display_=new QComboBox;display_->addItems({"Subpockets","Candidate groups"});
@@ -377,7 +401,24 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     entries_->setToolTip("Ctrl-click or Shift-click to select multiple pockets or candidate groups");
     column->addWidget(entries_,1);
     auto* canvas=new PocketCanvas(this);canvas_=canvas;
-    outer->addWidget(controls);outer->addWidget(canvas,1);
+    // Frequent appearance controls stay directly above the pocket viewport.
+    auto* viewport = new QWidget;
+    auto* viewportLayout = new QVBoxLayout(viewport);
+    viewportLayout->setContentsMargins(0,0,0,0);
+    viewportLayout->setSpacing(4);
+    auto* quickBar = new QHBoxLayout;
+    quickBar->setSpacing(6);
+    quickBar->addWidget(new QLabel("Render"));
+    quickBar->addWidget(renderMode_,1);
+    quickBar->addWidget(new QLabel("Colors"));
+    quickBar->addWidget(palette_);
+    quickBar->addWidget(new QLabel("Material"));
+    quickBar->addWidget(overlayMaterial_);
+    quickBar->addWidget(overlayVisible_);
+    viewportLayout->addLayout(quickBar);
+    viewportLayout->addWidget(canvas,1);
+    outer->addWidget(controls);
+    outer->addWidget(viewport,1);
     connect(display_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
         entries_->clear();
         if(display_->currentIndex()==0){
