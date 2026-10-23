@@ -961,7 +961,7 @@ void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     // Read local voxel buriedness on hover; never interfere with dragging.
-    if (e->buttons() == Qt::NoButton && pocketVisible_ && pocketColorMode_ == 2) {
+    if (e->buttons() == Qt::NoButton && pocketVisible_ && pocketColorMode_ >= 2) {
         const auto camera = makeCamera(size(), 1.0, false);
         const QPointF cursor = eventPos(e);
         double bestD2 = 64.0, bestDepth = 1e30, value = 0;
