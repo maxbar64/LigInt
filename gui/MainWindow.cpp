@@ -241,8 +241,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         visible->setChecked(layoutSettings.value("graphics/pocketVisible", true).toBool());
-    if (auto* colors = findChild<QCheckBox*>("quickPocketColors"))
-        colors->setChecked(layoutSettings.value("graphics/pocketColors", false).toBool());
+    if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
+        colors->setCurrentIndex(layoutSettings.value("graphics/pocketColorMode",
+            layoutSettings.value("graphics/pocketColors", false).toBool() ? 1 : 0).toInt());
     if (auto* opacity = findChild<QSpinBox*>("quickPocketOpacity"))
         opacity->setValue(layoutSettings.value("graphics/pocketOpacity", 38).toInt());
     if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
@@ -290,8 +291,8 @@ MainWindow::~MainWindow() {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         layoutSettings.setValue("graphics/pocketVisible", visible->isChecked());
-    if (auto* colors = findChild<QCheckBox*>("quickPocketColors"))
-        layoutSettings.setValue("graphics/pocketColors", colors->isChecked());
+    if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
+        layoutSettings.setValue("graphics/pocketColorMode", colors->currentIndex());
     if (auto* opacity = findChild<QSpinBox*>("quickPocketOpacity"))
         layoutSettings.setValue("graphics/pocketOpacity", opacity->value());
     if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
@@ -712,8 +713,9 @@ void MainWindow::buildUi() {
     quickOpacity->setSuffix("%");
     quickOpacity->setValue(pocketWorkspace->pocketOpacityPercent());
     quickOpacity->setToolTip(tr("3D pocket opacity"));
-    auto* distinctColors = new QCheckBox(tr("Different colors"));
-    distinctColors->setObjectName("quickPocketColors");
+    auto* pocketColorMode = new QComboBox;
+    pocketColorMode->setObjectName("quickPocketColorMode");
+    pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness")});
     pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
     pocketQuickLayout->addWidget(quickPocket);
     auto* showAllPockets = new QToolButton;
@@ -739,7 +741,8 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(quickMaterial);
     pocketQuickLayout->addWidget(new QLabel(tr("Opacity")));
     pocketQuickLayout->addWidget(quickOpacity);
-    pocketQuickLayout->addWidget(distinctColors);
+    pocketQuickLayout->addWidget(new QLabel(tr("Color")));
+    pocketQuickLayout->addWidget(pocketColorMode);
     pocketQuickLayout->addWidget(quickVisible);
     viewerColumn->insertWidget(1, pocketQuickBar);
     // Collapsible interactive legend: checked items mirror the Pocket Finder selection.
@@ -798,7 +801,7 @@ void MainWindow::buildUi() {
                         ? Qt::Checked : Qt::Unchecked);
             });
     connect(viewer_, &ViewerWidget::styleChanged, this, updateLegend);
-    connect(distinctColors, &QCheckBox::toggled, this, updateLegend);
+    connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [updateLegend](int){ updateLegend(); });
 
     auto updateQuickPockets = [pocketWorkspace, quickPocket, pocketMenu]() {
         pocketMenu->clear();
@@ -841,8 +844,8 @@ void MainWindow::buildUi() {
                 const QSignalBlocker blocker(quickOpacity);
                 quickOpacity->setValue(value);
             });
-    connect(distinctColors, &QCheckBox::toggled,
-            viewer_, &ViewerWidget::setPocketDistinctColors);
+    connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            viewer_, &ViewerWidget::setPocketColorMode);
     connect(quickVisible, &QCheckBox::toggled,
             pocketWorkspace, &PocketWorkspace::setPocketOverlayVisible);
     connect(pocketWorkspace, &PocketWorkspace::pocketVisibilityChanged,
