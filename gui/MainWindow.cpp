@@ -30,6 +30,8 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QMenu>
+#include <QActionGroup>
+#include <QSpinBox>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
@@ -605,8 +607,9 @@ void MainWindow::buildUi() {
     connect(pocketWorkspace,&PocketWorkspace::pocketAppearanceChanged,viewer_,
         &ViewerWidget::setPocketAppearance);
     connect(pocketWorkspace,&PocketWorkspace::pocketOverlayChanged,viewer_,
-        [this](const std::vector<ligint::PocketPoint>& points,double spacing,int smoothing){
-            viewer_->setPocketOverlay(points,spacing,smoothing);
+        [this](const std::vector<ligint::PocketPoint>& points,double spacing,int smoothing,
+               const std::vector<std::vector<ligint::PocketPoint>>& groups){
+            viewer_->setPocketOverlay(points,spacing,smoothing,groups);
         });
     // Compact shared controls: change pocket, material and visibility without tab switching.
     auto* pocketQuickBar = new QWidget;
@@ -614,39 +617,70 @@ void MainWindow::buildUi() {
     auto* pocketQuickLayout = new QHBoxLayout(pocketQuickBar);
     pocketQuickLayout->setContentsMargins(2, 0, 2, 0);
     pocketQuickLayout->setSpacing(5);
-    auto* quickPocket = new QComboBox;
+    auto* quickPocket = new QToolButton;
     quickPocket->setObjectName("quickPocketSelector");
-    quickPocket->setMinimumContentsLength(13);
-    quickPocket->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    quickPocket->setText(tr("Select pockets"));
+    quickPocket->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    quickPocket->setPopupMode(QToolButton::InstantPopup);
+    auto* pocketMenu = new QMenu(quickPocket);
+    quickPocket->setMenu(pocketMenu);
     auto* quickMaterial = new QComboBox;
     quickMaterial->setObjectName("quickPocketMaterial");
     quickMaterial->addItems({"Satin translucent", "Matte", "Glossy", "Custom"});
     auto* quickVisible = new QCheckBox(tr("Show pocket"));
     quickVisible->setObjectName("quickPocketVisible");
     quickVisible->setChecked(pocketWorkspace->pocketOverlayVisible());
-    pocketQuickLayout->addWidget(new QLabel(tr("Pocket")));
-    pocketQuickLayout->addWidget(quickPocket, 1);
+    auto* quickOpacity = new QSpinBox;
+    quickOpacity->setObjectName("quickPocketOpacity");
+    quickOpacity->setRange(5, 100);
+    quickOpacity->setSuffix("%");
+    quickOpacity->setValue(pocketWorkspace->pocketOpacityPercent());
+    quickOpacity->setToolTip(tr("3D pocket opacity"));
+    auto* distinctColors = new QCheckBox(tr("Different colors"));
+    distinctColors->setObjectName("quickPocketColors");
+    pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
+    pocketQuickLayout->addWidget(quickPocket);
     pocketQuickLayout->addWidget(new QLabel(tr("Material")));
     pocketQuickLayout->addWidget(quickMaterial);
+    pocketQuickLayout->addWidget(new QLabel(tr("Opacity")));
+    pocketQuickLayout->addWidget(quickOpacity);
+    pocketQuickLayout->addWidget(distinctColors);
     pocketQuickLayout->addWidget(quickVisible);
-    // Keep this toolbar visible immediately above the 3D canvas.
     viewerColumn->insertWidget(1, pocketQuickBar);
-    auto updateQuickPockets = [pocketWorkspace, quickPocket]() {
-        const QSignalBlocker blocker(quickPocket);
-        quickPocket->clear();
-        quickPocket->addItems(pocketWorkspace->pocketChoices());
-        quickPocket->setEnabled(quickPocket->count() > 0);
-        quickPocket->setCurrentIndex(pocketWorkspace->selectedPocketRow());
+    auto updateQuickPockets = [pocketWorkspace, quickPocket, pocketMenu]() {
+        pocketMenu->clear();
+        const QStringList choices = pocketWorkspace->pocketChoices();
+        const QList<int> selected = pocketWorkspace->selectedPocketRows();
+        for (int i = 0; i < choices.size(); ++i) {
+            QAction* action = pocketMenu->addAction(choices[i]);
+            action->setCheckable(true);
+            action->setChecked(selected.contains(i));
+            connect(action, &QAction::toggled, pocketWorkspace,
+                    [pocketWorkspace, i](bool checked) {
+                        QList<int> rows = pocketWorkspace->selectedPocketRows();
+                        if (checked && !rows.contains(i)) rows.append(i);
+                        else if (!checked) rows.removeAll(i);
+                        pocketWorkspace->setSelectedPocketRows(rows);
+                    });
+        }
+        quickPocket->setEnabled(!choices.isEmpty());
+        quickPocket->setText(choices.isEmpty()
+            ? QObject::tr("No pockets")
+            : QObject::tr("Pockets (%1)").arg(selected.size()));
     };
     connect(pocketWorkspace, &PocketWorkspace::pocketChoicesChanged,
             this, updateQuickPockets);
-    connect(pocketWorkspace, &PocketWorkspace::pocketSelectionChanged,
-            this, [quickPocket](int row) {
-                const QSignalBlocker blocker(quickPocket);
-                quickPocket->setCurrentIndex(row);
+    connect(pocketWorkspace, &PocketWorkspace::pocketSelectedRowsChanged,
+            this, [updateQuickPockets](const QList<int>&) { updateQuickPockets(); });
+    connect(quickOpacity, QOverload<int>::of(&QSpinBox::valueChanged),
+            pocketWorkspace, &PocketWorkspace::setPocketOpacityPercent);
+    connect(pocketWorkspace, &PocketWorkspace::pocketOpacityPercentChanged,
+            this, [quickOpacity](int value) {
+                const QSignalBlocker blocker(quickOpacity);
+                quickOpacity->setValue(value);
             });
-    connect(quickPocket, QOverload<int>::of(&QComboBox::activated),
-            pocketWorkspace, &PocketWorkspace::selectPocketRow);
+    connect(distinctColors, &QCheckBox::toggled,
+            viewer_, &ViewerWidget::setPocketDistinctColors);
     connect(quickVisible, &QCheckBox::toggled,
             pocketWorkspace, &PocketWorkspace::setPocketOverlayVisible);
     connect(pocketWorkspace, &PocketWorkspace::pocketVisibilityChanged,
