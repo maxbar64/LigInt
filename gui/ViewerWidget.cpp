@@ -360,6 +360,9 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             return static_cast<unsigned int>((rgb[0]<<16)|(rgb[1]<<8)|rgb[2]);
         };
         const auto triangles=makeSmoothPocketMesh(source,spacing,smoothing);
+        // Keep an accessibility flag per generated vertex. Transparent mode
+        // removes only triangles without any reachable vertex.
+        std::vector<unsigned char> reachableVertices;
         const std::size_t firstVertex=mesh.pos.size();
         // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
         using Key=std::array<long long,3>;
@@ -377,6 +380,10 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                     mesh.pos.push_back({static_cast<float>(v[0]),static_cast<float>(v[1]),
                                         static_cast<float>(v[2])});
                     mesh.nrm.push_back({0,0,0});
+                    if (pocketColorMode_ == 3) {
+                        const double local=normalizedDepth(v);
+                        reachableVertices.push_back(local >= 0 ? 1 : 0);
+                    }
                     indices[j]=id;
                 }else indices[j]=it->second;
             }
@@ -387,7 +394,11 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             const float vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
             const ligint::V3f normal={uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx};
             for(int id:indices)for(int k=0;k<3;k++)mesh.nrm[id][k]+=normal[k];
-            mesh.tri.push_back(indices);
+            if (!(pocketColorMode_ == 3 && pocketUnreachableMode_ == 1 &&
+                !reachableVertices[indices[0]-static_cast<int>(firstVertex)] &&
+                !reachableVertices[indices[1]-static_cast<int>(firstVertex)] &&
+                !reachableVertices[indices[2]-static_cast<int>(firstVertex)]))
+                mesh.tri.push_back(indices);
         }
         for(auto& n:mesh.nrm){
             const float norm=std::sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
@@ -408,7 +419,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                     // Per-pocket maximum determines the normalization; unreachable
                     // cells are explicitly gray, not assigned an invented depth.
                     const double depth=normalizedDepth(p);
-                    if (depth < 0) { piece->colors[i]=0x858585; continue; }
+                    if (depth < 0) { piece->colors[i]=pocketUnreachableMode_ == 2 ? 0xb8bec4 : 0x858585; continue; }
                     const double t=std::clamp(depth,0.0,1.0);
                     const QColor low(40,105,210), mid(62,207,174), high(250,125,40);
                     const QColor a=t<0.5 ? low : mid;
@@ -448,6 +459,14 @@ void ViewerWidget::highlightPocket(int index) {
         QTimer::singleShot(1800, this, [this, index] {
             if (highlightedPocket_ == index) { highlightedPocket_ = -1; update(); }
         });
+}
+
+void ViewerWidget::setPocketUnreachableMode(int mode) {
+    mode=std::clamp(mode,0,2);
+    if (pocketUnreachableMode_ == mode) return;
+    pocketUnreachableMode_=mode;
+    if (pocketColorMode_ == 3)
+        setPocketOverlay(pocketPoints_,pocketSpacing_,pocketSmoothing_,pocketGroups_);
 }
 
 void ViewerWidget::setPocketDepthProbe(int index) {
