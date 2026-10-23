@@ -760,7 +760,7 @@ void MainWindow::buildUi() {
 
     // Compact navigation: keep primary workflow controls visible without scrolling
     // through thresholds, pocket tools and interaction filters.
-    for (QWidget* widget : {static_cast<QWidget*>(gStruct), gOpt, gThr, gTmpl, gPocket, runButton_, gTypes})
+    for (QWidget* widget : std::initializer_list<QWidget*>{gStruct, gOpt, gThr, gTmpl, gPocket, runButton_, gTypes})
         lv->removeWidget(widget);
     auto* inputPage = new QWidget;
     auto* inputLayout = new QVBoxLayout(inputPage);
