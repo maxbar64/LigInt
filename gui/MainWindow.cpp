@@ -28,6 +28,8 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QPixmap>
+#include <QIcon>
 #include <QListWidget>
 #include <QMenu>
 #include <QActionGroup>
@@ -696,6 +698,64 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(distinctColors);
     pocketQuickLayout->addWidget(quickVisible);
     viewerColumn->insertWidget(1, pocketQuickBar);
+    // Collapsible interactive legend: checked items mirror the Pocket Finder selection.
+    auto* legendToggle = new QToolButton;
+    legendToggle->setObjectName("pocketLegendToggle");
+    legendToggle->setText(tr("Pocket legend"));
+    legendToggle->setCheckable(true);
+    legendToggle->setArrowType(Qt::RightArrow);
+    legendToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    auto* pocketLegend = new QListWidget;
+    pocketLegend->setObjectName("pocketLegend");
+    pocketLegend->setMaximumHeight(175);
+    pocketLegend->setVisible(false);
+    pocketLegend->setSelectionMode(QAbstractItemView::NoSelection);
+    pocketLegend->setToolTip(tr("Check pocket candidates to display; the color swatch matches the 3D surface."));
+    viewerColumn->insertWidget(2, legendToggle);
+    viewerColumn->insertWidget(3, pocketLegend);
+    connect(legendToggle, &QToolButton::toggled, this, [legendToggle, pocketLegend](bool on) {
+        pocketLegend->setVisible(on);
+        legendToggle->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
+    });
+    auto updateLegend = [pocketWorkspace, pocketLegend, viewer = viewer_]() {
+        const QSignalBlocker blocker(pocketLegend);
+        pocketLegend->clear();
+        const QStringList choices = pocketWorkspace->pocketChoices();
+        const QList<int> selected = pocketWorkspace->selectedPocketRows();
+        for (int i = 0; i < choices.size(); ++i) {
+            auto* item = new QListWidgetItem(choices[i], pocketLegend);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+            item->setCheckState(selected.contains(i) ? Qt::Checked : Qt::Unchecked);
+            const QColor color = viewer->pocketDisplayColor(pocketWorkspace->pocketColorSample(i));
+            QPixmap swatch(18, 14);
+            swatch.fill(color);
+            item->setIcon(QIcon(swatch));
+            item->setToolTip(choices[i]);
+        }
+        pocketLegend->setEnabled(!choices.isEmpty());
+    };
+    connect(pocketLegend, &QListWidget::itemChanged, pocketWorkspace,
+            [pocketLegend, pocketWorkspace](QListWidgetItem* item) {
+                const int index = pocketLegend->row(item);
+                QList<int> selected = pocketWorkspace->selectedPocketRows();
+                if (item->checkState() == Qt::Checked && !selected.contains(index))
+                    selected.append(index);
+                else if (item->checkState() != Qt::Checked)
+                    selected.removeAll(index);
+                pocketWorkspace->setSelectedPocketRows(selected);
+            });
+    connect(pocketWorkspace, &PocketWorkspace::pocketChoicesChanged,
+            this, updateLegend);
+    connect(pocketWorkspace, &PocketWorkspace::pocketSelectedRowsChanged,
+            this, [pocketLegend](const QList<int>& selected) {
+                const QSignalBlocker blocker(pocketLegend);
+                for (int i = 0; i < pocketLegend->count(); ++i)
+                    pocketLegend->item(i)->setCheckState(selected.contains(i)
+                        ? Qt::Checked : Qt::Unchecked);
+            });
+    connect(viewer_, &ViewerWidget::styleChanged, this, updateLegend);
+    connect(distinctColors, &QCheckBox::toggled, this, updateLegend);
+
     auto updateQuickPockets = [pocketWorkspace, quickPocket, pocketMenu]() {
         pocketMenu->clear();
         const QStringList choices = pocketWorkspace->pocketChoices();
@@ -758,6 +818,7 @@ void MainWindow::buildUi() {
         quickMaterial->setCurrentIndex(pocketWorkspace->pocketMaterialIndex());
     }
     updateQuickPockets();
+    updateLegend();
     modes3d->addTab(viewerArea, tr("Interactions 3D"));
     modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
