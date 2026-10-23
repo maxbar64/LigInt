@@ -904,6 +904,28 @@ void ViewerWidget::drawOverlay(QPainter& p, const QRectF& rect, const Frame& fra
 void ViewerWidget::mousePressEvent(QMouseEvent* e) { last_ = eventPos(e).toPoint(); pressPoint_=last_; }
 
 void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
+    // Read local voxel buriedness on hover; never interfere with dragging.
+    if (e->buttons() == Qt::NoButton && pocketVisible_ && pocketColorMode_ == 2) {
+        const auto camera = makeCamera(size(), 1.0, false);
+        const QPointF cursor = eventPos(e);
+        double bestD2 = 64.0, bestDepth = 1e30, value = 0;
+        int bestPocket = -1;
+        for (int i = 0; i < static_cast<int>(pocketGroups_.size()); ++i) {
+            const auto& voxels = pocketGroups_[i];
+            const std::size_t stride = std::max<std::size_t>(1, voxels.size()/2500);
+            for (std::size_t j=0; j<voxels.size(); j+=stride) {
+                const auto q = camera.project(voxels[j].pos);
+                if (!q.ok) continue;
+                const double dx=q.x-cursor.x(), dy=q.y-cursor.y();
+                const double d2=dx*dx+dy*dy;
+                if (d2<bestD2 || (std::abs(d2-bestD2)<1e-6 && q.w<bestDepth)) {
+                    bestD2=d2; bestDepth=q.w; bestPocket=i;
+                    value=voxels[j].buriedness;
+                }
+            }
+        }
+        emit pocketBuriednessHovered(bestPocket,value);
+    }
     const QPoint cur = eventPos(e).toPoint();
     const QPoint d = cur - last_;
     last_ = cur;
