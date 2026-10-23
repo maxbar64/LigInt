@@ -90,7 +90,7 @@ bool darkBackground(Background b) { return b == Background::Dark; }
 // ------------------------------------------------------------------------------------------------
 ViewerWidget::ViewerWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(320, 240);
-    setMouseTracking(false);
+    setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setToolTip(tr("Drag: rotate · right/middle button: pan · wheel: zoom · double click: reset"));
     hqTimer_.setSingleShot(true);
