@@ -22,9 +22,15 @@ public:
     QStringList pocketChoices() const;
     int selectedPocketRow() const;
     void selectPocketRow(int row);
+    bool pocketOverlayVisible() const;
+    void setPocketOverlayVisible(bool visible);
+    int pocketMaterialIndex() const;
+    void setPocketMaterialIndex(int index);
 signals:
     void pocketChoicesChanged();
     void pocketSelectionChanged(int row);
+    void pocketMaterialChanged(int index);
+    void pocketVisibilityChanged(bool visible);
     void pocketAppearanceChanged(bool visible,double opacity,double specular);
     void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing);
 private:
