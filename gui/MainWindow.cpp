@@ -607,6 +607,64 @@ void MainWindow::buildUi() {
         [this](const std::vector<ligint::PocketPoint>& points,double spacing,int smoothing){
             viewer_->setPocketOverlay(points,spacing,smoothing);
         });
+    // Compact shared controls: change pocket, material and visibility without tab switching.
+    auto* pocketQuickBar = new QWidget;
+    pocketQuickBar->setObjectName("pocketQuickBar");
+    auto* pocketQuickLayout = new QHBoxLayout(pocketQuickBar);
+    pocketQuickLayout->setContentsMargins(2, 0, 2, 0);
+    pocketQuickLayout->setSpacing(5);
+    auto* quickPocket = new QComboBox;
+    quickPocket->setObjectName("quickPocketSelector");
+    quickPocket->setMinimumContentsLength(13);
+    quickPocket->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    auto* quickMaterial = new QComboBox;
+    quickMaterial->setObjectName("quickPocketMaterial");
+    quickMaterial->addItems({"Satin translucent", "Matte", "Glossy", "Custom"});
+    auto* quickVisible = new QCheckBox(tr("Show pocket"));
+    quickVisible->setObjectName("quickPocketVisible");
+    quickVisible->setChecked(pocketWorkspace->pocketOverlayVisible());
+    pocketQuickLayout->addWidget(new QLabel(tr("Pocket")));
+    pocketQuickLayout->addWidget(quickPocket, 1);
+    pocketQuickLayout->addWidget(new QLabel(tr("Material")));
+    pocketQuickLayout->addWidget(quickMaterial);
+    pocketQuickLayout->addWidget(quickVisible);
+    // Keep this toolbar visible immediately above the 3D canvas.
+    viewerColumn->insertWidget(1, pocketQuickBar);
+    auto updateQuickPockets = [pocketWorkspace, quickPocket]() {
+        const QSignalBlocker blocker(quickPocket);
+        quickPocket->clear();
+        quickPocket->addItems(pocketWorkspace->pocketChoices());
+        quickPocket->setEnabled(quickPocket->count() > 0);
+        quickPocket->setCurrentIndex(pocketWorkspace->selectedPocketRow());
+    };
+    connect(pocketWorkspace, &PocketWorkspace::pocketChoicesChanged,
+            this, updateQuickPockets);
+    connect(pocketWorkspace, &PocketWorkspace::pocketSelectionChanged,
+            this, [quickPocket](int row) {
+                const QSignalBlocker blocker(quickPocket);
+                quickPocket->setCurrentIndex(row);
+            });
+    connect(quickPocket, QOverload<int>::of(&QComboBox::activated),
+            pocketWorkspace, &PocketWorkspace::selectPocketRow);
+    connect(quickVisible, &QCheckBox::toggled,
+            pocketWorkspace, &PocketWorkspace::setPocketOverlayVisible);
+    connect(pocketWorkspace, &PocketWorkspace::pocketVisibilityChanged,
+            this, [quickVisible](bool visible) {
+                const QSignalBlocker blocker(quickVisible);
+                quickVisible->setChecked(visible);
+            });
+    connect(quickMaterial, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            pocketWorkspace, &PocketWorkspace::setPocketMaterialIndex);
+    connect(pocketWorkspace, &PocketWorkspace::pocketMaterialChanged,
+            this, [quickMaterial](int index) {
+                const QSignalBlocker blocker(quickMaterial);
+                quickMaterial->setCurrentIndex(index);
+            });
+    {
+        const QSignalBlocker blocker(quickMaterial);
+        quickMaterial->setCurrentIndex(pocketWorkspace->pocketMaterialIndex());
+    }
+    updateQuickPockets();
     modes3d->addTab(viewerArea, tr("Interactions 3D"));
     modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
