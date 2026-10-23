@@ -434,6 +434,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             }
         }
         if(entries_->count())entries_->setCurrentRow(0);
+        emit pocketChoicesChanged();
         canvas_->update();
         publishSelection();
     });
@@ -543,6 +544,7 @@ void PocketWorkspace::setStructurePath(const QString& path){
     path_=path;run_->setEnabled(!path.isEmpty());
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
     result_={};groups_.clear();atoms_.clear();entries_->clear();
+    emit pocketChoicesChanged();
     canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
     chain_->clear();chain_->addItem("All chains",QString());
     ligand_->clear();ligand_->addItem("None",QString());ligandCoords_.clear();
@@ -582,6 +584,20 @@ std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
     }
     return {ids.begin(),ids.end()};
 }
+QStringList PocketWorkspace::pocketChoices() const {
+    QStringList choices;
+    for (int i = 0; i < entries_->count(); ++i) choices << entries_->item(i)->text();
+    return choices;
+}
+int PocketWorkspace::selectedPocketRow() const {
+    return entries_->currentRow();
+}
+void PocketWorkspace::selectPocketRow(int row) {
+    if (row < 0 || row >= entries_->count()) return;
+    entries_->setCurrentRow(row);
+    canvas_->update();
+    publishSelection();
+}
 void PocketWorkspace::publishSelection(){
     std::vector<ligint::PocketPoint> points;
     for(const auto id:visibleMembers())if(id<result_.pockets.size()){
@@ -589,5 +605,6 @@ void PocketWorkspace::publishSelection(){
         points.insert(points.end(),source.begin(),source.end());
     }
     emit pocketOverlayChanged(points,spacing_->value(),smoothSteps_->value());
+    emit pocketSelectionChanged(entries_->currentRow());
 }
 } // namespace gui
