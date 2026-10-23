@@ -743,13 +743,39 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(quickOpacity);
     pocketQuickLayout->addWidget(new QLabel(tr("Color")));
     pocketQuickLayout->addWidget(pocketColorMode);
-    auto* buriedScale = new QLabel(tr("Low  ●━━━━●  High"));
+    auto* buriedScale = new QLabel;
     buriedScale->setObjectName("pocketBuriednessScale");
-    buriedScale->setToolTip(tr("Local voxel buriedness: purple (0, exposed) to yellow (1, buried)"));
+    QImage gradient(150, 12, QImage::Format_RGB32);
+    const QColor stops[] = {QColor(68,1,84),QColor(59,82,139),QColor(33,145,140),
+                            QColor(94,201,98),QColor(253,231,37)};
+    for (int x=0;x<gradient.width();++x) {
+        const double scaled=4.0*x/(gradient.width()-1);
+        const int k=std::min(3,static_cast<int>(scaled));
+        const double t=scaled-k;
+        const QColor c(static_cast<int>(stops[k].red()*(1-t)+stops[k+1].red()*t),
+                       static_cast<int>(stops[k].green()*(1-t)+stops[k+1].green()*t),
+                       static_cast<int>(stops[k].blue()*(1-t)+stops[k+1].blue()*t));
+        for (int y=0;y<gradient.height();++y) gradient.setPixelColor(x,y,c);
+    }
+    buriedScale->setPixmap(QPixmap::fromImage(gradient));
+    buriedScale->setToolTip(tr("Local voxel buriedness: 0 (exposed) to 1 (buried)"));
     buriedScale->setVisible(false);
+    auto* buriedReadout = new QLabel(tr("0 → 1"));
+    buriedReadout->setObjectName("pocketBuriednessReadout");
+    buriedReadout->setMinimumWidth(90);
+    buriedReadout->setVisible(false);
     pocketQuickLayout->addWidget(buriedScale);
+    pocketQuickLayout->addWidget(buriedReadout);
     connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            buriedScale, [buriedScale](int mode) { buriedScale->setVisible(mode == 2); });
+            this, [buriedScale, buriedReadout](int mode) {
+                buriedScale->setVisible(mode == 2);
+                buriedReadout->setVisible(mode == 2);
+            });
+    connect(viewer_, &ViewerWidget::pocketBuriednessHovered,
+            this, [buriedReadout](int index, double value) {
+                buriedReadout->setText(index < 0 ? QObject::tr("0 → 1")
+                    : QObject::tr("Buried: %1").arg(value,0,'f',2));
+            });
     pocketQuickLayout->addWidget(quickVisible);
     viewerColumn->insertWidget(1, pocketQuickBar);
     // Collapsible interactive legend: checked items mirror the Pocket Finder selection.
