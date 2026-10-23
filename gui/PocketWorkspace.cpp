@@ -415,7 +415,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         stream<<"pocket,voxels,reachable,reachable_fraction,probe_blocked,probe_blocked_fraction,"
                  "unreachable_unblocked,unreachable_unblocked_fraction,min_A,p50_A,p90_A,max_A,"
                  "mean_A,mean_buriedness,reported_mean_A,reported_max_A,"
-                 "reachable_0p8_A,reachable_fraction_0p8_A,reachable_1p4_A,reachable_fraction_1p4_A,"
+                 "reachable_0p8_A,reachable_fraction_0p8_A,configured_probe_radius_A,reachable_configured,reachable_fraction_configured,"
                  "reachable_2p0_A,reachable_fraction_2p0_A\n";
         auto format=[](double v){return QString::number(v,'f',4);};
         for(std::size_t i=0;i<result_.pockets.size();++i) {
@@ -452,7 +452,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
                   <<format(pocket.meanSolventPathDepth)<<','
                   <<format(pocket.maxSolventPathDepth)<<','
                   <<reachable08<<','<<format(reachable08/n)<<','
-                  <<depths.size()<<','<<format(depths.size()/n)<<','
+                  <<format(probe_->value())<<','<<depths.size()<<','<<format(depths.size()/n)<<','
                   <<reachable20<<','<<format(reachable20/n)<<'\n';
         }
         status_->setText(QString("Depth audit exported: %1 pockets").arg(result_.pockets.size()));
