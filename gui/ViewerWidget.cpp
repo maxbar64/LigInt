@@ -285,6 +285,10 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                                     double spacing,int smoothing,
                                     const std::vector<std::vector<ligint::PocketPoint>>& groups) {
     pocketGroups_ = groups;
+    pocketPickMeshes_.clear();
+    pocketPickMeshes_.reserve(groups.size());
+    for (const auto& group : groups)
+        pocketPickMeshes_.push_back(makeSmoothPocketMesh(group, spacing, smoothing));
     pocketPoints_=points;
     pocketSpacing_=spacing;
     pocketSmoothing_=smoothing;
@@ -829,27 +833,31 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
-    // Pick the closest projected pocket surface voxel. Use a short click, not a drag.
-    if (e->button() == Qt::LeftButton && pocketVisible_ && !pocketGroups_.empty() &&
+    // Triangle-accurate surface picking: choose the foremost intersected shell,
+    // rather than the nearest projected voxel center.
+    if (e->button() == Qt::LeftButton && pocketVisible_ && !pocketPickMeshes_.empty() &&
         (eventPos(e).toPoint() - pressPoint_).manhattanLength() < 5) {
         const auto camera = makeCamera(size(), 1.0, false);
         const QPointF click = eventPos(e);
         int best = -1;
-        double bestDistance = 100.0; // 10 pixel selection tolerance
-        double bestDepth = 1e30;
-        for (int i = 0; i < static_cast<int>(pocketGroups_.size()); ++i) {
-            const auto& points = pocketGroups_[i];
-            // Surface voxels are spatially dense; use all points for reliable hit testing.
-            for (const auto& voxel : points) {
-                const auto pt = camera.project(voxel.pos);
-                if (!pt.ok) continue;
-                const double dx = pt.x - click.x(), dy = pt.y - click.y();
-                const double d2 = dx * dx + dy * dy;
-                if (d2 < bestDistance || (std::abs(d2 - bestDistance) < 1e-6 && pt.w < bestDepth)) {
-                    best = i;
-                    bestDistance = d2;
-                    bestDepth = pt.w;
-                }
+        double closestDepth = 1e30;
+        for (int i = 0; i < static_cast<int>(pocketPickMeshes_.size()); ++i) {
+            for (const auto& triangle : pocketPickMeshes_[i]) {
+                const auto a = camera.project(triangle.vertices[0]);
+                const auto b = camera.project(triangle.vertices[1]);
+                const auto c = camera.project(triangle.vertices[2]);
+                if (!a.ok || !b.ok || !c.ok) continue;
+                const double cross = (b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);
+                if (std::abs(cross) < 1e-10) continue;
+                const double wa = ((b.y-c.y)*(click.x()-c.x)+(c.x-b.x)*(click.y()-c.y))/cross;
+                const double wb = ((c.y-a.y)*(click.x()-c.x)+(a.x-c.x)*(click.y()-c.y))/cross;
+                const double wc = 1.0-wa-wb;
+                if (wa < -1e-6 || wb < -1e-6 || wc < -1e-6) continue;
+                // Perspective-correct depth: Camera::Point::w is linear in view
+                // space, so reciprocal interpolation is required after projection.
+                const double invDepth = wa/a.w + wb/b.w + wc/c.w;
+                const double depth = invDepth > 0 ? 1.0/invDepth : wa*a.w+wb*b.w+wc*c.w;
+                if (depth < closestDepth) { closestDepth = depth; best = i; }
             }
         }
         if (best >= 0) {
