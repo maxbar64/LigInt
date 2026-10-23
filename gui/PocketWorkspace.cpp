@@ -19,6 +19,9 @@
 #include <QListWidget>
 #include <QLabel>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -394,6 +397,59 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         advancedToggle->setArrowType(visible ? Qt::DownArrow : Qt::RightArrow);
     });
     run_=new QPushButton("Find pockets");column->addWidget(run_);
+    auto* exportAudit=new QPushButton("Export solvent depth audit (CSV)");
+    exportAudit->setEnabled(false);
+    exportAudit->setToolTip("Export per-pocket reachability, probe blockage and solvent path depth percentiles.");
+    column->addWidget(exportAudit);
+    connect(exportAudit,&QPushButton::clicked,this,[this] {
+        if(result_.pockets.empty())return;
+        const QString path=QFileDialog::getSaveFileName(this,"Save solvent depth audit",
+            "pocket_solvent_depth_audit.csv","CSV files (*.csv)");
+        if(path.isEmpty())return;
+        QFile file(path);
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            status_->setText("Could not write audit: "+file.errorString());
+            return;
+        }
+        QTextStream stream(&file);
+        stream<<"pocket,voxels,reachable,reachable_fraction,probe_blocked,probe_blocked_fraction,"
+                 "unreachable_unblocked,unreachable_unblocked_fraction,min_A,p50_A,p90_A,max_A,"
+                 "mean_A,mean_buriedness,reported_mean_A,reported_max_A\\n";
+        auto format=[](double v){return QString::number(v,'f',4);};
+        for(std::size_t i=0;i<result_.pockets.size();++i) {
+            const auto& pocket=result_.pockets[i];
+            const auto count=pocket.points.size();
+            std::size_t blocked=0,unreachableUnblocked=0;
+            std::vector<double> depths;
+            double sum=0;
+            for(const auto& pt:pocket.points) {
+                if(pt.solventProbeBlocked)++blocked;
+                if(pt.solventPathDepth>=0) {
+                    depths.push_back(pt.solventPathDepth);
+                    sum+=pt.solventPathDepth;
+                } else if(!pt.solventProbeBlocked)++unreachableUnblocked;
+            }
+            std::sort(depths.begin(),depths.end());
+            auto percentile=[&](double p) {
+                if(depths.empty())return QString();
+                const double index=p*(depths.size()-1);
+                const auto lo=static_cast<std::size_t>(std::floor(index));
+                const auto hi=static_cast<std::size_t>(std::ceil(index));
+                return format(depths[lo]+(depths[hi]-depths[lo])*(index-lo));
+            };
+            const double n=count?static_cast<double>(count):1.0;
+            stream<<i+1<<','<<count<<','<<depths.size()<<','<<format(depths.size()/n)<<','
+                  <<blocked<<','<<format(blocked/n)<<','
+                  <<unreachableUnblocked<<','<<format(unreachableUnblocked/n)<<','
+                  <<percentile(0)<<','<<percentile(0.5)<<','<<percentile(0.9)<<','
+                  <<percentile(1)<<','
+                  <<(depths.empty()?QString():format(sum/depths.size()))<<','
+                  <<format(pocket.meanBuriedness)<<','
+                  <<format(pocket.meanSolventPathDepth)<<','
+                  <<format(pocket.maxSolventPathDepth)<<'\\n';
+        }
+        status_->setText(QString("Depth audit exported: %1 pockets").arg(result_.pockets.size()));
+    });
     status_=new QLabel("Open a structure to start");status_->setWordWrap(true);column->addWidget(status_);
     display_=new QComboBox;display_->addItems({"Subpockets","Candidate groups"});
     column->addWidget(display_);
@@ -529,10 +585,11 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             return out;
         }));
     });
-    connect(&watcher_,&QFutureWatcher<PocketGuiOutcome>::finished,this,[this]{
+    connect(&watcher_,&QFutureWatcher<PocketGuiOutcome>::finished,this,[this,exportAudit]{
         auto out=watcher_.result();run_->setEnabled(true);
         if(!out.error.isEmpty()){status_->setText("Error: "+out.error);return;}
         result_=std::move(out.result);groups_=std::move(out.groups);
+        exportAudit->setEnabled(!result_.pockets.empty());
         canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
         atoms_=std::move(out.atoms);
         status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
