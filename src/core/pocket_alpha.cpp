@@ -145,6 +145,13 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
                     minClearance=std::min(minClearance,std::sqrt(dist2(p,atom.pos))-atom.radius);
             }
             decision.minClearance=minClearance;
+            decision.endpointClearance=1e30;
+            for(const auto& atom:atoms) {
+                decision.endpointClearance=std::min(decision.endpointClearance,
+                    std::sqrt(dist2(e.from,atom.pos))-atom.radius);
+                decision.endpointClearance=std::min(decision.endpointClearance,
+                    std::sqrt(dist2(e.to,atom.pos))-atom.radius);
+            }
             if(minClearance<o.macroMinClearance){
                 decision.reason="insufficient_clearance";
             }else{
