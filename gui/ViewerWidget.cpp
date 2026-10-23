@@ -292,11 +292,11 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
     if(!points.empty()){
         const auto& sources = pocketDistinctColors_ && !groups.empty() ? groups : std::vector<std::vector<ligint::PocketPoint>>{points};
         static constexpr unsigned int colors[] = {0x40c4df,0xed9c40,0x91d477,0xd58be8,0xf26b85,0x76b3e5};
+        auto piece=std::make_shared<MeshPiece>();
+        auto& mesh=piece->mesh;
         std::size_t groupIndex = 0;
         for (const auto& source : sources) {
         const auto triangles=makeSmoothPocketMesh(source,spacing,smoothing);
-        auto piece=std::make_shared<MeshPiece>();
-        auto& mesh=piece->mesh;
         // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
         using Key=std::array<long long,3>;
         std::map<Key,int> vertices;
