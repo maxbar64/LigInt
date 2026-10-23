@@ -666,6 +666,23 @@ void MainWindow::buildUi() {
                const std::vector<std::vector<ligint::PocketPoint>>& groups){
             viewer_->setPocketOverlay(points,spacing,smoothing,groups);
         });
+    connect(viewer_, &ViewerWidget::pocketSurfacePicked, pocketWorkspace,
+            [pocketWorkspace](int visibleIndex, bool additive) {
+                const QList<int> selected = pocketWorkspace->selectedPocketRows();
+                // In subpocket mode, visible geometry follows the ascending selected rows.
+                // In candidate-group mode, several physical pockets may belong to a row;
+                // use the current selection as the closest available mapping.
+                if (visibleIndex < 0 || visibleIndex >= selected.size()) return;
+                const int target = selected[visibleIndex];
+                QList<int> next;
+                if (additive) {
+                    next = selected;
+                    next.removeAll(target);
+                } else {
+                    next.append(target);
+                }
+                pocketWorkspace->setSelectedPocketRows(next);
+            });
     // Compact shared controls: change pocket, material and visibility without tab switching.
     auto* pocketQuickBar = new QWidget;
     pocketQuickBar->setObjectName("pocketQuickBar");
