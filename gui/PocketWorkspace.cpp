@@ -611,6 +611,18 @@ void PocketWorkspace::setSelectedPocketRows(const QList<int>& rows) {
 }
 int PocketWorkspace::pocketOpacityPercent() const { return overlayOpacity_->value(); }
 void PocketWorkspace::setPocketOpacityPercent(int percent) { overlayOpacity_->setValue(percent); }
+std::vector<ligint::PocketPoint> PocketWorkspace::pocketColorSample(int row) const {
+    if (row < 0) return {};
+    if (display_->currentIndex() == 0) {
+        if (static_cast<std::size_t>(row) < result_.pockets.size())
+            return result_.pockets[static_cast<std::size_t>(row)].points;
+    } else if (static_cast<std::size_t>(row) < groups_.size()) {
+        const auto& members = groups_[static_cast<std::size_t>(row)].members;
+        if (!members.empty() && members.front() < result_.pockets.size())
+            return result_.pockets[members.front()].points;
+    }
+    return {};
+}
 QStringList PocketWorkspace::pocketChoices() const {
     QStringList choices;
     for (int i = 0; i < entries_->count(); ++i) choices << entries_->item(i)->text();
