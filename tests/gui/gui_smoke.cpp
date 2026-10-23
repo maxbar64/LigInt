@@ -452,7 +452,7 @@ int main(int argc, char** argv) {
         for (QAction* a : m.findChildren<QAction*>())
             if (a->shortcut() == QKeySequence(QKeySequence::HelpContents)) f1 = a;
         CHECK(f1 != nullptr);
-        QTabWidget* tabs = m.findChild<QTabWidget*>();
+        QTabWidget* tabs = m.findChild<QTabWidget*>(QStringLiteral("resultsTabs"));
         CHECK(tabs != nullptr);
         for (int i = 0; tabs && i < tabs->count(); i++) {
             tabs->setCurrentIndex(i);
@@ -557,7 +557,7 @@ int main(int argc, char** argv) {
         CHECK(!m.loadMatrixList(dir.filePath("matrix_bad.tsv")) && m.logText().contains("'structure' column"));    // a list that is not valid is refused
         CHECK(!m.loadMatrixList(dir.filePath("no_such_list.tsv")) && m.matrixTable()->rowCount() == 0);
         CHECK(m.loadMatrixList(list));
-        QTabWidget* tabs = m.findChild<QTabWidget*>();
+        QTabWidget* tabs = m.findChild<QTabWidget*>(QStringLiteral("resultsTabs"));
         CHECK(tabs && tabs->tabText(tabs->currentIndex()) == "Matrix");
         CHECK(m.matrixTable()->rowCount() == 3 && m.matrixTable()->item(0, 0)->text() == "indinavir" && m.matrixTable()->item(0, 3)->text() == QString::fromUtf8("—"));
         CHECK(m.matrixCommandLine().isEmpty());                                                                    // before the first computation
