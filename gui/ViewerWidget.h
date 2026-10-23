@@ -73,6 +73,7 @@ signals:
     void busyChanged(bool busy);
     void importLigandPicked(int index);
     void pocketSurfacePicked(int visibleGroupIndex, Qt::KeyboardModifiers modifiers, bool isolate);
+    void pocketBuriednessHovered(int pocketIndex, double value);
 
 public slots:
     void resetView();        // initial orientation, framing the ligand
