@@ -671,7 +671,16 @@ void MainWindow::buildUi() {
     connect(pocketWorkspace, &PocketWorkspace::pocketChoicesChanged,
             this, updateQuickPockets);
     connect(pocketWorkspace, &PocketWorkspace::pocketSelectedRowsChanged,
-            this, [updateQuickPockets](const QList<int>&) { updateQuickPockets(); });
+            this, [pocketMenu, quickPocket](const QList<int>& selected) {
+                const auto actions = pocketMenu->actions();
+                for (int i = 0; i < actions.size(); ++i) {
+                    const QSignalBlocker blocker(actions[i]);
+                    actions[i]->setChecked(selected.contains(i));
+                }
+                quickPocket->setText(actions.isEmpty()
+                    ? QObject::tr("No pockets")
+                    : QObject::tr("Pockets (%1)").arg(selected.size()));
+            });
     connect(quickOpacity, QOverload<int>::of(&QSpinBox::valueChanged),
             pocketWorkspace, &PocketWorkspace::setPocketOpacityPercent);
     connect(pocketWorkspace, &PocketWorkspace::pocketOpacityPercentChanged,
