@@ -25,7 +25,7 @@ using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
     cerr << "LigInt - protein-ligand interaction analysis\n\n"
-         << "USAGE\n"
+         << "Usage:\n"
          << "  " << prog << " STRUCTURE.pdb|STRUCTURE.cif [RESNAME [CHAIN [RESSEQ]]] [OPTIONS]\n"
          << "  " << prog << " STRUCTURE.pdb --sdf LIGAND.sdf [OPTIONS]\n"
          << "  " << prog << " STRUCTURE.pdb --mol2 LIGAND.mol2 [OPTIONS]\n"
@@ -80,7 +80,7 @@ static void usage(const char* prog, const Params& p) {
          << "  --download-cache DIR       Set structure download cache.\n"
          << "  --download-refresh         Refresh a cached structure.\n"
          << "  --download-only            Download without interaction analysis.\n\n"
-         << "GEOMETRIC THRESHOLDS (CURRENT DEFAULTS)\n"
+         << "Thresholds (defaults):\n"
          << "  Hydrogen bonds: --hb-min " << p.hbMin << "  --hb-max " << p.hbMax
          << "  --hb-ha " << p.hbHA << "  --hb-angle " << p.hbDHA << "\n"
          << "  Hydrophobic:    --hyd-min " << p.hydMin << "  --hyd-max " << p.hydMax << "\n"
