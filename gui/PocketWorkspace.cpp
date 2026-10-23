@@ -414,15 +414,19 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         QTextStream stream(&file);
         stream<<"pocket,voxels,reachable,reachable_fraction,probe_blocked,probe_blocked_fraction,"
                  "unreachable_unblocked,unreachable_unblocked_fraction,min_A,p50_A,p90_A,max_A,"
-                 "mean_A,mean_buriedness,reported_mean_A,reported_max_A\n";
+                 "mean_A,mean_buriedness,reported_mean_A,reported_max_A,"
+                 "reachable_0p8_A,reachable_fraction_0p8_A,reachable_1p4_A,reachable_fraction_1p4_A,"
+                 "reachable_2p0_A,reachable_fraction_2p0_A\n";
         auto format=[](double v){return QString::number(v,'f',4);};
         for(std::size_t i=0;i<result_.pockets.size();++i) {
             const auto& pocket=result_.pockets[i];
             const auto count=pocket.points.size();
-            std::size_t blocked=0,unreachableUnblocked=0;
+            std::size_t blocked=0,unreachableUnblocked=0,reachable08=0,reachable20=0;
             std::vector<double> depths;
             double sum=0;
             for(const auto& pt:pocket.points) {
+                reachable08 += pt.reachableProbe08;
+                reachable20 += pt.reachableProbe20;
                 if(pt.solventProbeBlocked)++blocked;
                 if(pt.solventPathDepth>=0) {
                     depths.push_back(pt.solventPathDepth);
@@ -446,7 +450,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
                   <<(depths.empty()?QString():format(sum/depths.size()))<<','
                   <<format(pocket.meanBuriedness)<<','
                   <<format(pocket.meanSolventPathDepth)<<','
-                  <<format(pocket.maxSolventPathDepth)<<'\n';
+                  <<format(pocket.maxSolventPathDepth)<<','
+                  <<reachable08<<','<<format(reachable08/n)<<','
+                  <<depths.size()<<','<<format(depths.size()/n)<<','
+                  <<reachable20<<','<<format(reachable20/n)<<'\n';
         }
         status_->setText(QString("Depth audit exported: %1 pockets").arg(result_.pockets.size()));
     });
