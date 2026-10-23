@@ -24,19 +24,83 @@ using namespace std;
 using namespace ligint;
 
 static void usage(const char* prog, const Params& p) {
-    cerr << "Usage: " << prog << " structure.pdb|structure.cif [RESNAME [chain [resseq[A|-]]]] [options]\n"
-         << "Options: --sdf F  --mol2 F  --exclude-pdb-ligand RESNAME  --external-index N (1-based)  --batch-poses csv|json  --csv [OUTPUT.csv]  --text OUTPUT.txt  --no-water  --no-merge  --plip-like  --metal-donors  --backbone-hyd  --altloc X  --format auto|pdb|cif  --version  --help\n"
-         << "RCSB: --download-pdb ID [--download-format pdb|cif] [--download-output FILE] [--download-cache DIR] [--download-refresh] [--download-only]\n"
-         << "Fingerprint: --fingerprint csv|json|svg|OUTPUT.csv|OUTPUT.json|OUTPUT.svg  --pocket FILE  --klifs-pdb ID --klifs-chain C [--klifs-model M] [--klifs-id N] [--klifs-mapping FILE] [--klifs-sequence S] [--klifs-output FILE]\n"
-         << "GPCR pocket: --gpcrdb-positions LIST|FILE [--gpcrdb-pdb FILE | --gpcrdb-mapping FILE] [--gpcrdb-chain C] [--gpcrdb-name TEXT] [--gpcrdb-output FILE]\n"
-         << "Matrix: --matrix LIST [--matrix-format csv|json|svg] [--matrix-classes klifs|all|NAMES] [--matrix-hide-empty] [--matrix-title TEXT] [--pocket FILE]\n"
-         << "Thresholds (defaults): --hb-min " << p.hbMin << " --hb-max " << p.hbMax << " --hb-ha " << p.hbHA
-         << " --hb-angle " << p.hbDHA << "\n  --hyd-min " << p.hydMin << " --hyd-max " << p.hydMax
-         << " --salt-max " << p.saltMax << " --rep-max " << p.repMax << "\n  --hal-max " << p.halMax
-         << " --hal-angle " << p.halAngle << " --metal-max " << p.metalMax << " --pi-max " << p.piMax
-         << " --pi-offset " << p.piOffset << " --pi-angle " << p.piAngle << " --cp-max " << p.cpMax << " --clash " << p.clash
-         << "\n  --wb-min " << p.wbMin << " --wb-max " << p.wbMax << " --hb-ante " << p.hbAnte
-         << " --hb-long " << p.hbLong << " --hb-long-tol " << p.hbLongTol << " --salt-centroid " << p.saltCentroid << "\n";
+    cerr << "LigInt - protein-ligand interaction analysis\n\n"
+         << "USAGE\n"
+         << "  " << prog << " STRUCTURE.pdb|STRUCTURE.cif [RESNAME [CHAIN [RESSEQ]]] [OPTIONS]\n"
+         << "  " << prog << " STRUCTURE.pdb --sdf LIGAND.sdf [OPTIONS]\n"
+         << "  " << prog << " STRUCTURE.pdb --mol2 LIGAND.mol2 [OPTIONS]\n"
+         << "  " << prog << " --download-pdb PDB_ID [RESNAME [CHAIN [RESSEQ]]] [OPTIONS]\n\n"
+         << "INPUT AND LIGAND SELECTION\n"
+         << "  --sdf FILE                 Load external ligand coordinates from SDF.\n"
+         << "  --mol2 FILE                Load external ligand coordinates from MOL2.\n"
+         << "  --external-index N         Select external pose (1-based).\n"
+         << "  --exclude-pdb-ligand NAME  Ignore a crystallographic ligand in the receptor.\n"
+         << "  --format auto|pdb|cif      Select structure format (default: auto).\n"
+         << "  --altloc X                 Select alternate atom location.\n\n"
+         << "REPORTS (can be combined when destinations are distinct)\n"
+         << "  --text FILE.txt            Save the full readable interaction report.\n"
+         << "  --csv [FILE.csv]           Save interaction rows to a CSV file; without a\n"
+         << "                             filename, write CSV to standard output.\n"
+         << "  --fingerprint FORMAT|FILE  Write interaction fingerprint: csv, json, svg or\n"
+         << "                             filename ending in .csv, .json or .svg.\n"
+         << "  --batch-poses csv|json     Summarize all external poses (separate mode).\n"
+         << "  With no report option, readable interactions are printed to standard output.\n"
+         << "  Multiple reports may be requested together; at most one uses stdout.\n\n"
+         << "INTERACTION OPTIONS\n"
+         << "  --no-water                 Exclude water-mediated interactions.\n"
+         << "  --no-merge                 Disable interaction merging.\n"
+         << "  --plip-like                Apply PLIP-like detection thresholds.\n"
+         << "  --metal-donors             Include metal donors.\n"
+         << "  --backbone-hyd             Include backbone hydrophobic contacts.\n\n"
+         << "POCKETS AND FINGERPRINT ANNOTATION\n"
+         << "  --pocket FILE              Use a defined pocket.\n"
+         << "  --klifs-pdb ID             Generate a KLIFS kinase pocket using a PDB ID.\n"
+         << "  --klifs-chain C            Chain for KLIFS mapping.\n"
+         << "  --klifs-model N            KLIFS model identifier.\n"
+         << "  --klifs-id N               KLIFS structure identifier.\n"
+         << "  --klifs-mapping FILE       Use a KLIFS mapping file.\n"
+         << "  --klifs-sequence S         Supply sequence for KLIFS alignment.\n"
+         << "  --klifs-output FILE        Save KLIFS pocket mapping.\n"
+         << "  --gpcrdb-positions LIST|FILE  Define GPCR pocket positions.\n"
+         << "  --gpcrdb-pdb FILE          Use GPCR PDB structure.\n"
+         << "  --gpcrdb-mapping FILE      Use GPCR residue mapping.\n"
+         << "  --gpcrdb-chain C           Select GPCR chain.\n"
+         << "  --gpcrdb-name TEXT         Set GPCR pocket name.\n"
+         << "  --gpcrdb-output FILE       Save GPCR pocket definition.\n\n"
+         << "INTERACTION MATRIX\n"
+         << "  --matrix LIST              Read a ligand/structure list for matrix analysis.\n"
+         << "  --matrix-format csv|json|svg   Output matrix format.\n"
+         << "  --matrix-classes klifs|all|NAMES  Select interaction classes.\n"
+         << "  --matrix-hide-empty        Hide empty matrix positions.\n"
+         << "  --matrix-title TEXT        Set matrix title.\n\n"
+         << "RCSB DOWNLOAD\n"
+         << "  --download-pdb ID          Download a structure from RCSB.\n"
+         << "  --download-format pdb|cif  Download file format.\n"
+         << "  --download-output FILE     Save downloaded structure.\n"
+         << "  --download-cache DIR       Set structure download cache.\n"
+         << "  --download-refresh         Refresh a cached structure.\n"
+         << "  --download-only            Download without interaction analysis.\n\n"
+         << "GEOMETRIC THRESHOLDS (CURRENT DEFAULTS)\n"
+         << "  Hydrogen bonds: --hb-min " << p.hbMin << "  --hb-max " << p.hbMax
+         << "  --hb-ha " << p.hbHA << "  --hb-angle " << p.hbDHA << "\n"
+         << "  Hydrophobic:    --hyd-min " << p.hydMin << "  --hyd-max " << p.hydMax << "\n"
+         << "  Ionic/repulsive: --salt-max " << p.saltMax << "  --rep-max " << p.repMax
+         << "  --salt-centroid " << p.saltCentroid << "\n"
+         << "  Halogen/metal:  --hal-max " << p.halMax << "  --hal-angle " << p.halAngle
+         << "  --metal-max " << p.metalMax << "\n"
+         << "  Aromatic:       --pi-max " << p.piMax << "  --pi-offset " << p.piOffset
+         << "  --pi-angle " << p.piAngle << "\n"
+         << "  Other:          --cp-max " << p.cpMax << "  --clash " << p.clash << "\n"
+         << "  Water/H-bond:   --wb-min " << p.wbMin << "  --wb-max " << p.wbMax
+         << "  --hb-ante " << p.hbAnte << "  --hb-long " << p.hbLong
+         << "  --hb-long-tol " << p.hbLongTol << "\n\n"
+         << "EXAMPLES\n"
+         << "  " << prog << " complex.pdb LIG --csv interactions.csv\n"
+         << "  " << prog << " receptor.pdb --mol2 ligand.mol2 --text report.txt --csv interactions.csv --fingerprint fp.json\n"
+         << "  " << prog << " receptor.pdb --sdf poses.sdf --batch-poses csv > poses.csv\n\n"
+         << "GENERAL\n"
+         << "  --help                     Show this help.\n"
+         << "  --version                  Show program version.\n";
 }
 
 int main(int argc, char** argv) {
