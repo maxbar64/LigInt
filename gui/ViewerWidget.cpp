@@ -323,12 +323,17 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                     }
             return std::clamp(value,0.0,1.0);
         };
+        auto probeDepth=[this](const ligint::PocketPoint& p) -> double {
+            if (pocketDepthProbe_ == 0) return p.solventPathDepth08;
+            if (pocketDepthProbe_ == 2) return p.solventPathDepth20;
+            return p.solventPathDepth;
+        };
         // Depth is computed by the core solvent-accessibility BFS, in Angstroms.
         // Unreachable voxels retain -1 and are rendered in neutral gray.
         double maxDepth=0;
         if (pocketColorMode_ == 3)
             for (const auto& voxel : source)
-                maxDepth=std::max(maxDepth,static_cast<double>(voxel.solventPathDepth));
+                maxDepth=std::max(maxDepth,probeDepth(voxel));
         auto normalizedDepth=[&](const ligint::V3& p) {
             const Cell c=cellOf(p);
             double nearest=1e30,value=-1;
@@ -338,7 +343,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                 if(it==voxelIndex.end())continue;
                 double dist=0;
                 for(int k=0;k<3;++k)dist+=std::pow(p[k]-it->second->pos[k],2);
-                if(dist<nearest){nearest=dist;value=it->second->solventPathDepth;}
+                if(dist<nearest){nearest=dist;value=probeDepth(*it->second);}
             }
             return value < 0 ? -1.0 : (maxDepth>0 ? value/maxDepth : 0.0);
         };
@@ -443,6 +448,14 @@ void ViewerWidget::highlightPocket(int index) {
         QTimer::singleShot(1800, this, [this, index] {
             if (highlightedPocket_ == index) { highlightedPocket_ = -1; update(); }
         });
+}
+
+void ViewerWidget::setPocketDepthProbe(int index) {
+    index=std::clamp(index,0,2);
+    if (index==pocketDepthProbe_) return;
+    pocketDepthProbe_=index;
+    if (pocketColorMode_==3)
+        setPocketOverlay(pocketPoints_,pocketSpacing_,pocketSmoothing_,pocketGroups_);
 }
 
 void ViewerWidget::setPocketColorMode(int mode) {
@@ -959,7 +972,8 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
                 if (d2<bestD2 || (std::abs(d2-bestD2)<1e-6 && q.w<bestDepth)) {
                     bestD2=d2; bestDepth=q.w; bestPocket=i;
                     value=voxels[j].buriedness;
-                    solventDepth=voxels[j].solventPathDepth;
+                    solventDepth=pocketDepthProbe_ == 0 ? voxels[j].solventPathDepth08 :
+                        (pocketDepthProbe_ == 2 ? voxels[j].solventPathDepth20 : voxels[j].solventPathDepth);
                 }
             }
         }
