@@ -490,6 +490,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(overlayVisible_,&QCheckBox::toggled,this,appearanceChanged);
     connect(overlayVisible_,&QCheckBox::toggled,this,&PocketWorkspace::pocketVisibilityChanged);
     connect(overlayMaterial_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,&PocketWorkspace::pocketMaterialChanged);
+    connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,&PocketWorkspace::pocketOpacityPercentChanged);
     connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this,appearanceChanged](int){
         if(overlayMaterial_->currentIndex()!=3)overlayMaterial_->setCurrentIndex(3);
         appearanceChanged();
@@ -592,6 +593,23 @@ int PocketWorkspace::pocketMaterialIndex() const { return overlayMaterial_->curr
 void PocketWorkspace::setPocketMaterialIndex(int index) {
     if (index >= 0 && index < overlayMaterial_->count()) overlayMaterial_->setCurrentIndex(index);
 }
+QList<int> PocketWorkspace::selectedPocketRows() const {
+    QList<int> rows;
+    for (auto* item : entries_->selectedItems()) rows.append(entries_->row(item));
+    std::sort(rows.begin(),rows.end());
+    return rows;
+}
+void PocketWorkspace::setSelectedPocketRows(const QList<int>& rows) {
+    const QSignalBlocker blocker(entries_);
+    entries_->clearSelection();
+    for (int row : rows)
+        if (row >= 0 && row < entries_->count())
+            entries_->item(row)->setSelected(true);
+    canvas_->update();
+    publishSelection();
+}
+int PocketWorkspace::pocketOpacityPercent() const { return overlayOpacity_->value(); }
+void PocketWorkspace::setPocketOpacityPercent(int percent) { overlayOpacity_->setValue(percent); }
 QStringList PocketWorkspace::pocketChoices() const {
     QStringList choices;
     for (int i = 0; i < entries_->count(); ++i) choices << entries_->item(i)->text();
@@ -608,11 +626,14 @@ void PocketWorkspace::selectPocketRow(int row) {
 }
 void PocketWorkspace::publishSelection(){
     std::vector<ligint::PocketPoint> points;
+    std::vector<std::vector<ligint::PocketPoint>> groups;
     for(const auto id:visibleMembers())if(id<result_.pockets.size()){
         const auto& source=result_.pockets[id].points;
         points.insert(points.end(),source.begin(),source.end());
+        groups.push_back(source);
     }
-    emit pocketOverlayChanged(points,spacing_->value(),smoothSteps_->value());
+    emit pocketOverlayChanged(points,spacing_->value(),smoothSteps_->value(),groups);
     emit pocketSelectionChanged(entries_->currentRow());
+    emit pocketSelectedRowsChanged(selectedPocketRows());
 }
 } // namespace gui
