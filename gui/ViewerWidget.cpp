@@ -863,7 +863,7 @@ void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
             }
         }
         if (best >= 0) {
-            emit pocketSurfacePicked(best, bool(e->modifiers() & Qt::ControlModifier));
+            emit pocketSurfacePicked(best, e->modifiers(), false);
             if (interacting_) { interacting_ = false; stateKey_++; update(); }
             return;
         }
@@ -893,6 +893,35 @@ void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
         stateKey_++;          // a fresh frame at the normal size, then the high quality one
         update();
     }
+}
+
+void ViewerWidget::mouseDoubleClickEvent(QMouseEvent* e) {
+    if (e->button() != Qt::LeftButton || !pocketVisible_ || pocketPickMeshes_.empty()) {
+        resetView();
+        return;
+    }
+    const auto camera = makeCamera(size(), 1.0, false);
+    const QPointF click = eventPos(e);
+    int best = -1;
+    double closestDepth = 1e30;
+    for (int i = 0; i < static_cast<int>(pocketPickMeshes_.size()); ++i)
+        for (const auto& triangle : pocketPickMeshes_[i]) {
+            const auto a = camera.project(triangle.vertices[0]);
+            const auto b = camera.project(triangle.vertices[1]);
+            const auto c = camera.project(triangle.vertices[2]);
+            if (!a.ok || !b.ok || !c.ok) continue;
+            const double det = (b.y-c.y)*(a.x-c.x)+(c.x-b.x)*(a.y-c.y);
+            if (std::abs(det) < 1e-10) continue;
+            const double wa = ((b.y-c.y)*(click.x()-c.x)+(c.x-b.x)*(click.y()-c.y))/det;
+            const double wb = ((c.y-a.y)*(click.x()-c.x)+(a.x-c.x)*(click.y()-c.y))/det;
+            const double wc = 1.0-wa-wb;
+            if (wa < 0 || wb < 0 || wc < 0) continue;
+            const double inv = wa/a.w + wb/b.w + wc/c.w;
+            const double depth = inv > 0 ? 1.0/inv : wa*a.w+wb*b.w+wc*c.w;
+            if (depth < closestDepth) { closestDepth = depth; best = i; }
+        }
+    if (best >= 0) emit pocketSurfacePicked(best, e->modifiers(), true);
+    else resetView();
 }
 
 void ViewerWidget::wheelEvent(QWheelEvent* e) {
