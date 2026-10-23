@@ -670,6 +670,7 @@ void MainWindow::buildUi() {
             [this, pocketWorkspace](int visibleIndex, Qt::KeyboardModifiers modifiers, bool isolate) {
                 const int target = pocketWorkspace->rowForVisiblePocket(visibleIndex);
                 if (target < 0) return;
+                viewer_->highlightPocket(visibleIndex);
                 QList<int> selected = pocketWorkspace->selectedPocketRows();
                 if (isolate) selected = {target};
                 else if (modifiers & Qt::ControlModifier) selected.removeAll(target);
