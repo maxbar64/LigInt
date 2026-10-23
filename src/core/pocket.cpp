@@ -570,7 +570,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         double sumB=0,highB=0,sumDepth=0,solventSteps=0,maxSteps=0;
         std::size_t solventCount=0,probe08Count=0,probe20Count=0;
         std::vector<std::uint8_t> inPocket(count,0);
-        for(const auto& pt:pocket.points) {
+        for(auto& pt:pocket.points) {
             sumB+=pt.buriedness;
             if(pt.buriedness>=0.8f)highB+=1;
             for(int d=0;d<3;d++){
@@ -585,6 +585,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             probe08Count+=reachable08[gridId];
             probe20Count+=reachable20[gridId];
             const int pathSteps=steps[gridId];
+            pt.solventPathDepth = pathSteps >= 0 ? static_cast<float>(g.step * pathSteps) : -1.0f;
             if(pathSteps>=0) {
                 ++solventCount;
                 solventSteps+=pathSteps;
