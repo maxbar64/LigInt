@@ -610,6 +610,7 @@ void MainWindow::buildUi() {
     modes3d->addTab(viewerArea, tr("Interactions 3D"));
     modes3d->addTab(pocketWorkspace, tr("Pocket Finder 3D"));
     tabs_ = new QTabWidget;
+    tabs_->setObjectName(QStringLiteral("resultsTabs"));
     table_ = new QTableView;
     table_->setModel(proxy_);
     table_->setSortingEnabled(true);
