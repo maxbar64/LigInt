@@ -743,6 +743,13 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(quickOpacity);
     pocketQuickLayout->addWidget(new QLabel(tr("Color")));
     pocketQuickLayout->addWidget(pocketColorMode);
+    auto* buriedScale = new QLabel(tr("Low  ●━━━━●  High"));
+    buriedScale->setObjectName("pocketBuriednessScale");
+    buriedScale->setToolTip(tr("Local voxel buriedness: purple (0, exposed) to yellow (1, buried)"));
+    buriedScale->setVisible(false);
+    pocketQuickLayout->addWidget(buriedScale);
+    connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            buriedScale, [buriedScale](int mode) { buriedScale->setVisible(mode == 2); });
     pocketQuickLayout->addWidget(quickVisible);
     viewerColumn->insertWidget(1, pocketQuickBar);
     // Collapsible interactive legend: checked items mirror the Pocket Finder selection.
