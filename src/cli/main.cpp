@@ -374,16 +374,16 @@ int main(int argc, char** argv) {
                 throw std::runtime_error("Batch summary path is a report directory");
 
             for (size_t i = 0; i < opt.templates.size(); ++i) {
-                auto row = ligand_pose_batch::analyze(pa[0], opt, i);
-                if (!row.error.empty()) {
-                    failed = true;
-                    cerr << "Pose " << row.index << ": " << row.error << "\n";
-                } else if (!batchReports.empty()) {
-                    try {
-                        Options poseOptions = opt;
-                        poseOptions.externalLigandIndex = static_cast<int>(i);
-                        const Result result = analyzeFile(pa[0], poseOptions);
-                        if (result.ligands.empty()) throw std::runtime_error("No ligand result");
+                ligand_pose_batch::Row row;
+                row.index = i + 1;
+                row.name = opt.templates[i].name;
+                try {
+                    Options poseOptions = opt;
+                    poseOptions.externalLigandIndex = static_cast<int>(i);
+                    const Result result = analyzeFile(pa[0], poseOptions);
+                    row = ligand_pose_batch::summarize(opt, i, result);
+                    if (!row.error.empty()) throw std::runtime_error(row.error);
+                    if (!batchReports.empty()) {
                         std::ostringstream prefix;
                         prefix << "pose_" << std::setw(3) << std::setfill('0') << (i + 1);
                         const fs::path base = fs::path(batchReports) / prefix.str();
@@ -404,11 +404,11 @@ int main(int argc, char** argv) {
                             for (const auto& lig : result.ligands) fps.push_back(makeFingerprint(lig));
                             writeFingerprintJson(out, fps);
                         });
-                    } catch (const std::exception& e) {
-                        row.error = std::string("Report generation: ") + e.what();
-                        failed = true;
-                        cerr << "Pose " << row.index << ": " << row.error << "\n";
                     }
+                } catch (const std::exception& e) {
+                    row.error = e.what();
+                    failed = true;
+                    cerr << "Pose " << row.index << ": " << row.error << "\n";
                 }
                 rows.push_back(std::move(row));
             }
