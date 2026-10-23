@@ -282,13 +282,19 @@ void ViewerWidget::setPocketAppearance(bool visible,double opacity,double specul
 }
 
 void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& points,
-                                    double spacing,int smoothing) {
+                                    double spacing,int smoothing,
+                                    const std::vector<std::vector<ligint::PocketPoint>>& groups) {
+    pocketGroups_ = groups;
     pocketPoints_=points;
     pocketSpacing_=spacing;
     pocketSmoothing_=smoothing;
     pieces_.pocket.reset();
     if(!points.empty()){
-        const auto triangles=makeSmoothPocketMesh(points,spacing,smoothing);
+        const auto& sources = pocketDistinctColors_ && !groups.empty() ? groups : std::vector<std::vector<ligint::PocketPoint>>{points};
+        static constexpr unsigned int colors[] = {0x40c4df,0xed9c40,0x91d477,0xd58be8,0xf26b85,0x76b3e5};
+        std::size_t groupIndex = 0;
+        for (const auto& source : sources) {
+        const auto triangles=makeSmoothPocketMesh(source,spacing,smoothing);
         auto piece=std::make_shared<MeshPiece>();
         auto& mesh=piece->mesh;
         // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
@@ -324,10 +330,19 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             if(norm>1e-8f)for(auto& x:n)x/=norm;
             else n={0,0,1};
         }
-        piece->colors.assign(mesh.pos.size(),0x40c4df);
+        piece->colors.resize(mesh.pos.size(),colors[groupIndex % 6]);
+        ++groupIndex;
+        }
         pieces_.pocket=std::move(piece);
     }
     invalidate(false);
+}
+
+void ViewerWidget::setPocketDistinctColors(bool enabled) {
+    if (pocketDistinctColors_ == enabled) return;
+    pocketDistinctColors_ = enabled;
+    // Rebuild from the original selected pocket volumes, preserving camera state.
+    setPocketOverlay(pocketPoints_, pocketSpacing_, pocketSmoothing_, pocketGroups_);
 }
 
 void ViewerWidget::clear() {
