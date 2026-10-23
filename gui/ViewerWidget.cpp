@@ -405,6 +405,8 @@ void ViewerWidget::setStyle(const ViewStyle& n) {
     const ViewStyle o = style_;
     style_ = n;
     if (n.protein != o.protein || n.proteinColor != o.proteinColor) rebuildCartoon();
+    if (n.background != o.background && pocketDistinctColors_ && !pocketPoints_.empty())
+        setPocketOverlay(pocketPoints_, pocketSpacing_, pocketSmoothing_, pocketGroups_);
     if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues ||
         n.showWaters != o.showWaters || n.aromaticDisplay != o.aromaticDisplay) {
         if (!importedLigands_.empty()) {
