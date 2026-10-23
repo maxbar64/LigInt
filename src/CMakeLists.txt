@@ -5,6 +5,7 @@ add_library(ligint_core
     core/cartoon.cpp
     core/surface.cpp
     core/pocket.cpp
+    core/pocket_alpha.cpp
     core/pocket_input.cpp
     core/chemistry.cpp
     core/mmcif.cpp
@@ -44,6 +45,13 @@ if(LIGINT_BUILD_CLI)
     add_executable(ligint-pocket cli/pocket_main.cpp)
     target_link_libraries(ligint-pocket PRIVATE ligint::core ligint_options)
     install(TARGETS ligint-pocket RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime)
+endif()
+
+# Independent experimental native empty-sphere pocket search.
+if(LIGINT_BUILD_CLI)
+    add_executable(ligint-pocket-alpha cli/pocket_alpha_main.cpp)
+    target_link_libraries(ligint-pocket-alpha PRIVATE ligint::core ligint_options)
+    install(TARGETS ligint-pocket-alpha RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime)
 endif()
 
 # Native KLIFS client (online HTTPS optional unless explicitly required).
