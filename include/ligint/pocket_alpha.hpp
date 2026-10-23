@@ -20,7 +20,7 @@ struct AlphaSphere { V3 center{0,0,0}; double radius=0; };
 struct AlphaPocket { V3 center{0,0,0}; double volume=0; std::vector<AlphaSphere> spheres; };
 struct AlphaMergeDecision {
     std::size_t first=0, second=0; // 1-based microcluster indices
-    double linkDistance=0, minClearance=0, mergedDiameter=0;
+    double linkDistance=0, minClearance=0, endpointClearance=0, mergedDiameter=0;
     bool accepted=false;
     const char* reason=""; // fixed static diagnostic string
 };
