@@ -241,6 +241,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         visible->setChecked(layoutSettings.value("graphics/pocketVisible", true).toBool());
+    if (auto* mode = findChild<QComboBox*>("quickPocketUnreachable"))
+        mode->setCurrentIndex(layoutSettings.value("graphics/pocketUnreachable",0).toInt());
     if (auto* probe = findChild<QComboBox*>("quickPocketDepthProbe"))
         probe->setCurrentIndex(layoutSettings.value("graphics/pocketDepthProbe",1).toInt());
     if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
@@ -293,6 +295,8 @@ MainWindow::~MainWindow() {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         layoutSettings.setValue("graphics/pocketVisible", visible->isChecked());
+    if (auto* mode = findChild<QComboBox*>("quickPocketUnreachable"))
+        layoutSettings.setValue("graphics/pocketUnreachable",mode->currentIndex());
     if (auto* probe = findChild<QComboBox*>("quickPocketDepthProbe"))
         layoutSettings.setValue("graphics/pocketDepthProbe", probe->currentIndex());
     if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
@@ -755,6 +759,16 @@ void MainWindow::buildUi() {
     depthProbe->setToolTip(tr("Solvent path depth probe radius; changes displayed depth, not pocket geometry"));
     depthProbe->setVisible(false);
     pocketQuickLayout->addWidget(depthProbe);
+    auto* unreachableMode = new QComboBox;
+    unreachableMode->setObjectName("quickPocketUnreachable");
+    unreachableMode->addItems({tr("Gray"), tr("Transparent"), tr("Muted")});
+    unreachableMode->setToolTip(tr("Display of voxels without a solvent-accessible path. Transparent hides fully unreachable surface triangles; Muted uses a lighter neutral color."));
+    unreachableMode->setVisible(false);
+    pocketQuickLayout->addWidget(unreachableMode);
+    connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            unreachableMode, [unreachableMode](int mode) { unreachableMode->setVisible(mode == 3); });
+    connect(unreachableMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            viewer_, &ViewerWidget::setPocketUnreachableMode);
     connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
             depthProbe, [depthProbe](int mode){ depthProbe->setVisible(mode==3); });
     connect(depthProbe, QOverload<int>::of(&QComboBox::currentIndexChanged),
