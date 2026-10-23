@@ -758,9 +758,43 @@ void MainWindow::buildUi() {
     right->setStretchFactor(0, 3);
     right->setStretchFactor(1, 2);
 
+    // Compact navigation: keep primary workflow controls visible without scrolling
+    // through thresholds, pocket tools and interaction filters.
+    for (QWidget* widget : {static_cast<QWidget*>(gStruct), gOpt, gThr, gTmpl, gPocket, runButton_, gTypes})
+        lv->removeWidget(widget);
+    delete left; // The widgets above have been detached from the layout, but remain alive.
+    auto* inputPage = new QWidget;
+    auto* inputLayout = new QVBoxLayout(inputPage);
+    inputLayout->addWidget(gStruct);
+    inputLayout->addWidget(gTmpl);
+    inputLayout->addWidget(runButton_);
+    inputLayout->addStretch(1);
+    auto* settingsPage = new QWidget;
+    auto* settingsLayout = new QVBoxLayout(settingsPage);
+    settingsLayout->addWidget(gOpt);
+    settingsLayout->addWidget(gThr);
+    settingsLayout->addStretch(1);
+    auto* advancedPage = new QWidget;
+    auto* advancedLayout = new QVBoxLayout(advancedPage);
+    advancedLayout->addWidget(gPocket);
+    advancedLayout->addWidget(gTypes);
+    advancedLayout->addStretch(1);
+    auto* controlPages = new QTabWidget;
+    controlPages->setObjectName("controlPages");
+    auto* makeScrollPage = [this](QWidget* content) {
+        auto* scroll = new QScrollArea;
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        scroll->setWidget(content);
+        return scroll;
+    };
+    controlPages->addTab(makeScrollPage(inputPage), tr("Input"));
+    controlPages->addTab(makeScrollPage(settingsPage), tr("Settings"));
+    controlPages->addTab(makeScrollPage(advancedPage), tr("Advanced"));
     // the control panel scrolls when the window is too small for all its groups
     auto* leftScroll = new QScrollArea;
-    leftScroll->setWidget(left);
+    leftScroll->setWidget(controlPages);
     leftScroll->setWidgetResizable(true);
     leftScroll->setFrameShape(QFrame::NoFrame);
     leftScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -769,7 +803,7 @@ void MainWindow::buildUi() {
     split->addWidget(leftScroll);
     split->addWidget(right);
     split->setStretchFactor(1, 1);
-    leftScroll->setMinimumWidth(200);
+    leftScroll->setMinimumWidth(260);
     leftScroll->setMaximumWidth(380);
     split->setChildrenCollapsible(false);
     split->setSizes({300, 980});
