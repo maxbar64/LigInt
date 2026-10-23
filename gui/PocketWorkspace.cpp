@@ -615,11 +615,13 @@ std::vector<ligint::PocketPoint> PocketWorkspace::pocketColorSample(int row) con
     if (row < 0) return {};
     if (display_->currentIndex() == 0) {
         if (static_cast<std::size_t>(row) < result_.pockets.size())
-            return result_.pockets[static_cast<std::size_t>(row)].points;
+            { const auto& pts = result_.pockets[static_cast<std::size_t>(row)].points;
+              return pts.empty() ? std::vector<ligint::PocketPoint>{} : std::vector<ligint::PocketPoint>{pts.front()}; }
     } else if (static_cast<std::size_t>(row) < groups_.size()) {
         const auto& members = groups_[static_cast<std::size_t>(row)].members;
         if (!members.empty() && members.front() < result_.pockets.size())
-            return result_.pockets[members.front()].points;
+            { const auto& pts = result_.pockets[members.front()].points;
+              return pts.empty() ? std::vector<ligint::PocketPoint>{} : std::vector<ligint::PocketPoint>{pts.front()}; }
     }
     return {};
 }
