@@ -667,19 +667,24 @@ void MainWindow::buildUi() {
             viewer_->setPocketOverlay(points,spacing,smoothing,groups);
         });
     connect(viewer_, &ViewerWidget::pocketSurfacePicked, pocketWorkspace,
-            [pocketWorkspace](int visibleIndex, bool additive) {
-                const QList<int> selected = pocketWorkspace->selectedPocketRows();
-                // Physical pocket indices and candidate-group rows are not interchangeable.
+            [this, pocketWorkspace](int visibleIndex, Qt::KeyboardModifiers modifiers, bool isolate) {
                 const int target = pocketWorkspace->rowForVisiblePocket(visibleIndex);
                 if (target < 0) return;
-                QList<int> next;
-                if (additive) {
-                    next = selected;
-                    next.removeAll(target);
-                } else {
-                    next.append(target);
+                QList<int> selected = pocketWorkspace->selectedPocketRows();
+                if (isolate) selected = {target};
+                else if (modifiers & Qt::ControlModifier) selected.removeAll(target);
+                else if ((modifiers & Qt::ShiftModifier) && !selected.contains(target))
+                    selected.append(target);
+                // Normal click highlights, but does not change pocket visibility.
+                if (isolate || (modifiers & (Qt::ControlModifier | Qt::ShiftModifier)))
+                    pocketWorkspace->setSelectedPocketRows(selected);
+                if (auto* legend = findChild<QListWidget*>("pocketLegend")) {
+                    legend->setCurrentRow(target);
+                    legend->scrollToItem(legend->item(target));
                 }
-                pocketWorkspace->setSelectedPocketRows(next);
+                statusBar()->showMessage(tr("Pocket %1 — %2")
+                    .arg(target + 1)
+                    .arg(isolate ? tr("isolated") : tr("selected")), 3500);
             });
     // Compact shared controls: change pocket, material and visibility without tab switching.
     auto* pocketQuickBar = new QWidget;
@@ -710,6 +715,25 @@ void MainWindow::buildUi() {
     distinctColors->setObjectName("quickPocketColors");
     pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
     pocketQuickLayout->addWidget(quickPocket);
+    auto* showAllPockets = new QToolButton;
+    showAllPockets->setObjectName("quickPocketShowAll");
+    showAllPockets->setText(tr("Show all"));
+    showAllPockets->setToolTip(tr("Display every pocket"));
+    auto* hideAllPockets = new QToolButton;
+    hideAllPockets->setObjectName("quickPocketHideAll");
+    hideAllPockets->setText(tr("Hide all"));
+    hideAllPockets->setToolTip(tr("Hide all pockets; restore them with Show all or the legend"));
+    pocketQuickLayout->addWidget(showAllPockets);
+    pocketQuickLayout->addWidget(hideAllPockets);
+    connect(showAllPockets, &QToolButton::clicked, pocketWorkspace, [pocketWorkspace] {
+        QList<int> rows;
+        const int count = pocketWorkspace->pocketChoices().size();
+        for (int i = 0; i < count; ++i) rows.append(i);
+        pocketWorkspace->setSelectedPocketRows(rows);
+    });
+    connect(hideAllPockets, &QToolButton::clicked, pocketWorkspace, [pocketWorkspace] {
+        pocketWorkspace->setSelectedPocketRows({});
+    });
     pocketQuickLayout->addWidget(new QLabel(tr("Material")));
     pocketQuickLayout->addWidget(quickMaterial);
     pocketQuickLayout->addWidget(new QLabel(tr("Opacity")));
