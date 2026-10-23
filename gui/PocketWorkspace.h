@@ -21,6 +21,7 @@ public:
     ~PocketWorkspace() override;
     void setStructurePath(const QString& path);
     QStringList pocketChoices() const;
+    std::vector<ligint::PocketPoint> pocketColorSample(int row) const;
     int selectedPocketRow() const;
     void selectPocketRow(int row);
     QList<int> selectedPocketRows() const;
