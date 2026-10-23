@@ -285,6 +285,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                                     double spacing,int smoothing,
                                     const std::vector<std::vector<ligint::PocketPoint>>& groups) {
     pocketGroups_ = groups;
+    highlightedPocket_ = -1;
     pocketPickMeshes_.clear();
     pocketPickMeshes_.reserve(groups.size());
     for (const auto& group : groups)
@@ -351,6 +352,15 @@ QColor ViewerWidget::pocketDisplayColor(const std::vector<ligint::PocketPoint>& 
     const bool dark = darkBackground(style_.background);
     return QColor::fromHsv(static_cast<int>(hash % 360u),
                            dark ? 180 : 195, dark ? 235 : 170);
+}
+
+void ViewerWidget::highlightPocket(int index) {
+    highlightedPocket_ = index >= 0 && index < static_cast<int>(pocketPickMeshes_.size()) ? index : -1;
+    update();
+    if (highlightedPocket_ >= 0)
+        QTimer::singleShot(1800, this, [this, index] {
+            if (highlightedPocket_ == index) { highlightedPocket_ = -1; update(); }
+        });
 }
 
 void ViewerWidget::setPocketDistinctColors(bool enabled) {
@@ -692,6 +702,28 @@ void ViewerWidget::resizeEvent(QResizeEvent* e) {
 }
 
 void ViewerWidget::drawOverlay(QPainter& p, const QRectF& rect, const Frame& frame) const {
+    if (highlightedPocket_ >= 0 &&
+        highlightedPocket_ < static_cast<int>(pocketPickMeshes_.size()) && pocketVisible_) {
+        const auto cam = makeCamera(rect.size(), 1.0, false);
+        p.save();
+        p.setPen(QPen(QColor(255, 235, 60, 225), 2.2));
+        p.setBrush(Qt::NoBrush);
+        const auto& triangles = pocketPickMeshes_[highlightedPocket_];
+        // Draw a sparse outline; geometry remains untouched and selection is temporary.
+        const std::size_t stride = std::max<std::size_t>(1, triangles.size() / 450);
+        for (std::size_t i = 0; i < triangles.size(); i += stride) {
+            QPolygonF poly;
+            bool ok = true;
+            for (const auto& v : triangles[i].vertices) {
+                const auto projected = cam.project(v);
+                if (!projected.ok) { ok = false; break; }
+                poly << QPointF(projected.x, projected.y);
+            }
+            if (ok) p.drawPolyline(poly);
+        }
+        p.restore();
+    }
+
     p.setRenderHint(QPainter::Antialiasing, true);
     p.setRenderHint(QPainter::TextAntialiasing, true);
     const bool dark = darkBackground(style_.background);
