@@ -781,7 +781,7 @@ void MainWindow::buildUi() {
     delete left; // All control widgets have been reparented to their new page layouts.
     auto* controlPages = new QTabWidget;
     controlPages->setObjectName("controlPages");
-    auto* makeScrollPage = [this](QWidget* content) {
+    auto makeScrollPage = [](QWidget* content) {
         auto* scroll = new QScrollArea;
         scroll->setWidgetResizable(true);
         scroll->setFrameShape(QFrame::NoFrame);
