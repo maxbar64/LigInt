@@ -715,7 +715,7 @@ void MainWindow::buildUi() {
     quickOpacity->setToolTip(tr("3D pocket opacity"));
     auto* pocketColorMode = new QComboBox;
     pocketColorMode->setObjectName("quickPocketColorMode");
-    pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness")});
+    pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness"), tr("Buriedness + depth")});
     pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
     pocketQuickLayout->addWidget(quickPocket);
     auto* showAllPockets = new QToolButton;
@@ -768,8 +768,8 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(buriedReadout);
     connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [buriedScale, buriedReadout](int mode) {
-                buriedScale->setVisible(mode == 2);
-                buriedReadout->setVisible(mode == 2);
+                buriedScale->setVisible(mode >= 2);
+                buriedReadout->setVisible(mode >= 2);
             });
     connect(viewer_, &ViewerWidget::pocketBuriednessHovered,
             this, [buriedReadout](int index, double value) {
