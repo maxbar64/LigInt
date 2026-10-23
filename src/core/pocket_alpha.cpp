@@ -61,12 +61,13 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
                 V3 center{};
                 if(!circumcenter(atoms[i].pos,atoms[neighbors[a].second].pos,
                     atoms[neighbors[b].second].pos,atoms[neighbors[c].second].pos,center))continue;
-                const double radius=std::sqrt(dist2(center,atoms[i].pos))-atoms[i].radius;
-                if(radius<o.minRadius||radius>o.maxRadius)continue;
-                bool empty=true;
+                // Local tetrahedral atoms identify a candidate Voronoi position.
+                // Use the minimum clearance from all atom VdW surfaces as the
+                // actual sphere radius, including mixed atomic radii.
+                double radius=o.maxRadius+1;
                 for(const auto& atom:atoms)
-                    if(dist2(center,atom.pos)<sq(radius+atom.radius-1e-5)){empty=false;break;}
-                if(!empty)continue;
+                    radius=std::min(radius,std::sqrt(dist2(center,atom.pos))-atom.radius);
+                if(radius<o.minRadius||radius>o.maxRadius)continue;
                 bool duplicate=false;
                 for(const auto& s:candidates)
                     if(dist2(center,s.center)<0.25){duplicate=true;break;}
