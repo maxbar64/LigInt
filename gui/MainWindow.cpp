@@ -669,11 +669,9 @@ void MainWindow::buildUi() {
     connect(viewer_, &ViewerWidget::pocketSurfacePicked, pocketWorkspace,
             [pocketWorkspace](int visibleIndex, bool additive) {
                 const QList<int> selected = pocketWorkspace->selectedPocketRows();
-                // In subpocket mode, visible geometry follows the ascending selected rows.
-                // In candidate-group mode, several physical pockets may belong to a row;
-                // use the current selection as the closest available mapping.
-                if (visibleIndex < 0 || visibleIndex >= selected.size()) return;
-                const int target = selected[visibleIndex];
+                // Physical pocket indices and candidate-group rows are not interchangeable.
+                const int target = pocketWorkspace->rowForVisiblePocket(visibleIndex);
+                if (target < 0) return;
                 QList<int> next;
                 if (additive) {
                     next = selected;
