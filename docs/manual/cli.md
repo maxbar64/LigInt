@@ -152,6 +152,12 @@ writes in its log.
 
 ## External ligand poses (docking)
 
+Batch files can now be written directly with `--batch-output FILE`. Use `--batch-reports DIR` to generate three independent files for every successful pose: `pose_001.txt` (full readable report), `pose_001.csv` (interaction table), and `pose_001_fingerprint.json` (fingerprint). The pose number is 1-based and filenames use at least three digits; failed poses remain in the summary with an error but do not receive reports. A batch run returns a nonzero code if any pose or report fails. Both options require `--batch-poses` and cannot be combined with single-pose reports.
+
+```bash
+ligint receptor.pdb --sdf poses.sdf --batch-poses csv --batch-output summary.csv --batch-reports reports/
+```
+
 Batch summaries (`--batch-poses csv|json`) analyze every imported molecule independently and report per-pose favorable contact counts, hydrogen bonds, hydrophobic and aromatic contacts, salt and water bridges, clashes, repulsions, possible covalent contacts and the number of interacting residues. These are descriptive counts, **not a calibrated affinity or docking score**. A failed pose is recorded with an error and the process returns a nonzero status. Batch mode cannot be combined with `--fingerprint`, `--csv` or a specified crystallographic ligand.
 
 When no ligand residue is supplied, `--sdf` or `--mol2` analyzes the **first** molecule by default (or the 1-based molecule selected using `--external-index N`) in the external file directly as a ligand, even if the receptor structure contains no matching HETATM residue. Coordinates, bonds, hydrogens and charges come from the external molecule; the receptor comes from the PDB/mmCIF file. The two inputs must use the same coordinate frame. When a ligand residue name is given, the existing coordinate-matched template behavior is unchanged.
