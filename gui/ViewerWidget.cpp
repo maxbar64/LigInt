@@ -373,9 +373,9 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
         if (pocketColorMode_ == 2) {
             for (std::size_t i=0;i<mesh.pos.size();++i) {
                 const auto& v=mesh.pos[i];
-                mesh.colors.push_back(buriedColor(buriednessAt({v[0],v[1],v[2]})));
+                piece->colors.push_back(buriedColor(buriednessAt({v[0],v[1],v[2]})));
             }
-        } else mesh.colors.resize(mesh.pos.size(),baseColor);
+        } else piece->colors.resize(mesh.pos.size(),baseColor);
         }
         pieces_.pocket=std::move(piece);
     }
