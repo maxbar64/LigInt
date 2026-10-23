@@ -630,6 +630,19 @@ QStringList PocketWorkspace::pocketChoices() const {
     for (int i = 0; i < entries_->count(); ++i) choices << entries_->item(i)->text();
     return choices;
 }
+int PocketWorkspace::rowForVisiblePocket(int visibleIndex) const {
+    const auto members = visibleMembers();
+    if (visibleIndex < 0 || static_cast<std::size_t>(visibleIndex) >= members.size()) return -1;
+    const auto id = members[static_cast<std::size_t>(visibleIndex)];
+    if (display_->currentIndex() == 0)
+        return id < static_cast<std::size_t>(entries_->count()) ? static_cast<int>(id) : -1;
+    for (int row = 0; row < entries_->count() && static_cast<std::size_t>(row) < groups_.size(); ++row) {
+        const auto& group = groups_[static_cast<std::size_t>(row)];
+        if (std::find(group.members.begin(), group.members.end(), id) != group.members.end())
+            return row;
+    }
+    return -1;
+}
 int PocketWorkspace::selectedPocketRow() const {
     return entries_->currentRow();
 }
