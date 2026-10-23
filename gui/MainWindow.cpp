@@ -715,8 +715,8 @@ void MainWindow::buildUi() {
     quickOpacity->setToolTip(tr("3D pocket opacity"));
     auto* pocketColorMode = new QComboBox;
     pocketColorMode->setObjectName("quickPocketColorMode");
-    pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness"), tr("Buriedness + depth")});
-    pocketColorMode->setItemData(3, tr("Hue: local buriedness. Brightness: shortest solvent-accessible path depth from grid exterior (relative to pocket maximum); gray means unreachable."), Qt::ToolTipRole);
+    pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness"), tr("Solvent path depth")});
+    pocketColorMode->setItemData(3, tr("Shortest connected solvent-accessible path from the exterior, in Å. Colors are normalized to the maximum of each pocket; gray means unreachable."), Qt::ToolTipRole);
     pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
     pocketQuickLayout->addWidget(quickPocket);
     auto* showAllPockets = new QToolButton;
@@ -759,6 +759,19 @@ void MainWindow::buildUi() {
         for (int y=0;y<gradient.height();++y) gradient.setPixelColor(x,y,c);
     }
     buriedScale->setPixmap(QPixmap::fromImage(gradient));
+    QImage depthGradient(150, 12, QImage::Format_RGB32);
+    const QColor depthStops[] = {QColor(40,105,210), QColor(62,207,174), QColor(250,125,40)};
+    for (int x=0; x<depthGradient.width(); ++x) {
+        const double scaled = 2.0*x/(depthGradient.width()-1);
+        const int k = std::min(1,static_cast<int>(scaled));
+        const double t=scaled-k;
+        const QColor color(static_cast<int>(depthStops[k].red()*(1-t)+depthStops[k+1].red()*t),
+            static_cast<int>(depthStops[k].green()*(1-t)+depthStops[k+1].green()*t),
+            static_cast<int>(depthStops[k].blue()*(1-t)+depthStops[k+1].blue()*t));
+        for (int y=0;y<depthGradient.height();++y)depthGradient.setPixelColor(x,y,color);
+    }
+    const QPixmap buriedGradientPixmap=QPixmap::fromImage(gradient);
+    const QPixmap depthGradientPixmap=QPixmap::fromImage(depthGradient);
     buriedScale->setToolTip(tr("Local voxel buriedness: 0 (exposed) to 1 (buried)"));
     buriedScale->setVisible(false);
     auto* buriedReadout = new QLabel(tr("0 → 1"));
@@ -768,7 +781,9 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(buriedScale);
     pocketQuickLayout->addWidget(buriedReadout);
     connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, [buriedScale, buriedReadout](int mode) {
+            this, [buriedScale, buriedReadout, buriedGradientPixmap, depthGradientPixmap](int mode) {
+                buriedScale->setPixmap(mode == 3 ? depthGradientPixmap : buriedGradientPixmap);
+                buriedScale->setToolTip(mode == 3 ? QObject::tr("Solvent path depth: 0 to maximum of the selected pocket (Å); gray: unreachable") : QObject::tr("Local voxel buriedness: 0 to 1"));
                 buriedScale->setVisible(mode >= 2);
                 buriedReadout->setVisible(mode >= 2);
             });
@@ -776,9 +791,8 @@ void MainWindow::buildUi() {
             this, [buriedReadout, pocketColorMode](int index, double value, double depth) {
                 if (index < 0) buriedReadout->setText(QObject::tr("0 → 1"));
                 else if (pocketColorMode->currentIndex() == 3)
-                    buriedReadout->setText(QObject::tr("B: %1 | Depth: %2")
-                        .arg(value,0,'f',2)
-                        .arg(depth >= 0 ? QString::number(depth,'f',1)+QStringLiteral(" Å") : QObject::tr("unreachable")));
+                    buriedReadout->setText(QObject::tr("Depth: %2")
+                         .arg(depth >= 0 ? QString::number(depth,'f',1)+QStringLiteral(" Å") : QObject::tr("unreachable")));
                 else buriedReadout->setText(QObject::tr("Buried: %1").arg(value,0,'f',2));
             });
     pocketQuickLayout->addWidget(quickVisible);
