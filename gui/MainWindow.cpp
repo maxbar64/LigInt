@@ -206,7 +206,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     buildUi();
     // Keep the initial window within the usable desktop area (including display scaling).
     const QRect desktop = QGuiApplication::primaryScreen() ? QGuiApplication::primaryScreen()->availableGeometry() : QRect(0, 0, 1280, 800);
-    resize(qMin(1280, qMax(640, desktop.width() - 40)), qMin(820, qMax(480, desktop.height() - 60)));
+    QSettings layoutSettings("ligint", "ligint-gui");
+    const QByteArray savedGeometry = layoutSettings.value("layout/geometry").toByteArray();
+    if (!savedGeometry.isEmpty()) restoreGeometry(savedGeometry);
+    else resize(qMin(1280, qMax(640, desktop.width() - 40)),
+                qMin(820, qMax(480, desktop.height() - 60)));
+    if (mainSplitter_ && !layoutSettings.value("layout/mainSplitter").toByteArray().isEmpty())
+        mainSplitter_->restoreState(layoutSettings.value("layout/mainSplitter").toByteArray());
+    if (resultsSplitter_ && !layoutSettings.value("layout/resultsSplitter").toByteArray().isEmpty())
+        resultsSplitter_->restoreState(layoutSettings.value("layout/resultsSplitter").toByteArray());
+    if (graphicsToggle_) graphicsToggle_->setChecked(layoutSettings.value("layout/graphicsVisible", false).toBool());
+    if (controlPages_) controlPages_->setCurrentIndex(0);
     statusBar()->showMessage(tr("Open a structure file, PDB or mmCIF (File → Open, or drag it here)"));
 }
 
@@ -226,6 +236,11 @@ MainWindow::~MainWindow() {
     if (taskWatcher_ && taskWatcher_->isRunning()) taskWatcher_->waitForFinished();
     if (matrixWatcher_ && matrixWatcher_->isRunning()) matrixWatcher_->waitForFinished();
     if (poseWatcher_ && poseWatcher_->isRunning()) poseWatcher_->waitForFinished();
+    QSettings layoutSettings("ligint", "ligint-gui");
+    layoutSettings.setValue("layout/geometry", saveGeometry());
+    if (mainSplitter_) layoutSettings.setValue("layout/mainSplitter", mainSplitter_->saveState());
+    if (resultsSplitter_) layoutSettings.setValue("layout/resultsSplitter", resultsSplitter_->saveState());
+    if (graphicsToggle_) layoutSettings.setValue("layout/graphicsVisible", graphicsToggle_->isChecked());
 }
 
 void MainWindow::buildUi() {
@@ -567,7 +582,8 @@ void MainWindow::buildUi() {
     auto* viewerLayout = new QHBoxLayout(viewerArea);
     viewerLayout->setContentsMargins(0, 0, 0, 0);
     viewerLayout->setSpacing(4);
-    auto* graphicsToggle = new QToolButton;
+    graphicsToggle_ = new QToolButton;
+    auto* graphicsToggle = graphicsToggle_;
     graphicsToggle->setText(tr("3D options"));
     graphicsToggle->setCheckable(true);
     graphicsToggle->setChecked(false);
@@ -753,6 +769,11 @@ void MainWindow::buildUi() {
     tabs_->addTab(log_, tr("Log"));
 
     auto* right = new QSplitter(Qt::Vertical);
+    resultsSplitter_ = right;
+    modes3d->setMinimumHeight(0);
+    tabs_->setMinimumHeight(0);
+    modes3d->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+    tabs_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     right->addWidget(modes3d);
     right->addWidget(tabs_);
     right->setStretchFactor(0, 3);
@@ -780,6 +801,7 @@ void MainWindow::buildUi() {
     advancedLayout->addStretch(1);
     delete left; // All control widgets have been reparented to their new page layouts.
     auto* controlPages = new QTabWidget;
+    controlPages_ = controlPages;
     controlPages->setObjectName("controlPages");
     auto makeScrollPage = [](QWidget* content) {
         auto* scroll = new QScrollArea;
@@ -792,20 +814,21 @@ void MainWindow::buildUi() {
     controlPages->addTab(makeScrollPage(inputPage), tr("Input"));
     controlPages->addTab(makeScrollPage(settingsPage), tr("Settings"));
     controlPages->addTab(makeScrollPage(advancedPage), tr("Advanced"));
-    // the control panel scrolls when the window is too small for all its groups
-    auto* leftScroll = new QScrollArea;
-    leftScroll->setWidget(controlPages);
-    leftScroll->setWidgetResizable(true);
-    leftScroll->setFrameShape(QFrame::NoFrame);
-    leftScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
+    // Each tab already owns its vertical scroll area: avoid another nested scroll
+    // widget, whose size hint previously inflated the window's minimum height.
+    controlPages->setMinimumSize(0, 0);
+    controlPages->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
     auto* split = new QSplitter(Qt::Horizontal);
-    split->addWidget(leftScroll);
+    mainSplitter_ = split;
+    split->addWidget(controlPages);
     split->addWidget(right);
     split->setStretchFactor(1, 1);
-    leftScroll->setMinimumWidth(260);
-    leftScroll->setMaximumWidth(380);
+    controlPages->setMinimumWidth(240);
+    controlPages->setMaximumWidth(380);
     split->setChildrenCollapsible(false);
+    right->setChildrenCollapsible(false);
+    split->setMinimumHeight(0);
+    right->setMinimumHeight(0);
     split->setSizes({300, 980});
     setCentralWidget(split);
 
