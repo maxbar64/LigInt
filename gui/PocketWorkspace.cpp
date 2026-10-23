@@ -478,6 +478,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         if(preset==0){overlayOpacity_->setValue(38);overlaySpecular_->setValue(12);}
         if(preset==1){overlayOpacity_->setValue(65);overlaySpecular_->setValue(0);}
         if(preset==2){overlayOpacity_->setValue(55);overlaySpecular_->setValue(55);}
+        emit pocketOpacityPercentChanged(overlayOpacity_->value());
         emit pocketAppearanceChanged(overlayVisible_->isChecked(),
                                      overlayOpacity_->value()/100.0,
                                      overlaySpecular_->value()/100.0);
