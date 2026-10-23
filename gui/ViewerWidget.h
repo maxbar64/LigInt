@@ -69,6 +69,7 @@ signals:
     void styleChanged();
     void busyChanged(bool busy);
     void importLigandPicked(int index);
+    void pocketSurfacePicked(int visibleGroupIndex, bool additive);
 
 public slots:
     void resetView();        // initial orientation, framing the ligand
