@@ -396,16 +396,23 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             for (std::size_t i=firstVertex;i<mesh.pos.size();++i) {
                 const auto& v=mesh.pos[i];
                 const ligint::V3 p={v[0],v[1],v[2]};
-                const QColor base=QColor::fromRgb(static_cast<QRgb>(buriedColor(buriednessAt(p))));
-                if(pocketColorMode_==2)piece->colors[i]=static_cast<unsigned int>(base.rgb() & 0xffffff);
-                else {
+                if (pocketColorMode_ == 2) {
+                    piece->colors[i]=buriedColor(buriednessAt(p));
+                } else {
+                    // Independent depth palette (near exterior: blue; deep: orange).
+                    // Per-pocket maximum determines the normalization; unreachable
+                    // cells are explicitly gray, not assigned an invented depth.
                     const double depth=normalizedDepth(p);
-                    // Preserve the perceptual buriedness palette. Depth is a
-                    // restrained secondary cue; inaccessible voxels keep their
-                    // buriedness color rather than forming large gray patches.
-                    const double factor = depth < 0 ? 1.0 : 0.90 + 0.10*depth;
-                    const QColor mixed=QColor::fromRgbF(base.redF()*factor,base.greenF()*factor,base.blueF()*factor);
-                    piece->colors[i]=static_cast<unsigned int>(mixed.rgb() & 0xffffff);
+                    if (depth < 0) { piece->colors[i]=0x858585; continue; }
+                    const double t=std::clamp(depth,0.0,1.0);
+                    const QColor low(40,105,210), mid(62,207,174), high(250,125,40);
+                    const QColor a=t<0.5 ? low : mid;
+                    const QColor b=t<0.5 ? mid : high;
+                    const double w=t<0.5 ? t*2.0 : (t-0.5)*2.0;
+                    const QColor color(static_cast<int>(std::lround(a.red()*(1-w)+b.red()*w)),
+                        static_cast<int>(std::lround(a.green()*(1-w)+b.green()*w)),
+                        static_cast<int>(std::lround(a.blue()*(1-w)+b.blue()*w)));
+                    piece->colors[i]=static_cast<unsigned int>(color.rgb() & 0xffffff);
                 }
             }
         } else piece->colors.resize(mesh.pos.size(),baseColor);
