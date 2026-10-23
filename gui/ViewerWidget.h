@@ -5,6 +5,7 @@
 
 #include <QFutureWatcher>
 #include <QImage>
+#include <QColor>
 #include <QPointF>
 #include <QSet>
 #include <QString>
@@ -40,6 +41,7 @@ public:
     void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2,
                           const std::vector<std::vector<ligint::PocketPoint>>& groups = {});
     void setPocketDistinctColors(bool enabled);
+    QColor pocketDisplayColor(const std::vector<ligint::PocketPoint>& source) const;
     void setPocketAppearance(bool visible, double opacity, double specular);
     bool hasData() const { return hasData_; }
     bool hasProtein() const { return protein_ && !protein_->backbone.empty(); }
