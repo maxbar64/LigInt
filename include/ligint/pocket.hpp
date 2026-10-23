@@ -39,6 +39,8 @@ struct PocketPoint {
     bool solventProbeBlocked = false;
     bool reachableProbe08 = false;
     bool reachableProbe20 = false; // voxel center overlaps protein inflated by solvent probe
+    float solventPathDepth08 = -1; // path depth for 0.8 Å probe
+    float solventPathDepth20 = -1; // path depth for 2.0 Å probe
     float solventPathDepth = -1; // shortest solvent-accessible grid path from exterior, Å; -1 if unreachable
 };
 struct PocketCandidate {
