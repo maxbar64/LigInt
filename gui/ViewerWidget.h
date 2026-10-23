@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "Raster.h"
+#include "PocketSmoothMesh.h"
 #include "SceneBuilder.h"
 #include "ViewStyle.h"
 #include "ligint/ligint.hpp"
@@ -132,6 +133,7 @@ private:
     double pocketOpacity_=0.38, pocketSpecular_=0.12;
     bool pocketDistinctColors_=false;
     std::vector<std::vector<ligint::PocketPoint>> pocketGroups_;
+    std::vector<std::vector<SmoothTriangle>> pocketPickMeshes_;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
