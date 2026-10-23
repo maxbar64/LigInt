@@ -2,6 +2,7 @@
 #include <QWidget>
 #include <QFutureWatcher>
 #include <QPoint>
+#include <QStringList>
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_groups.hpp"
 class QCheckBox;class QComboBox;class QDoubleSpinBox;class QSpinBox;class QListWidget;class QLabel;class QPushButton;
@@ -18,7 +19,12 @@ public:
     explicit PocketWorkspace(QWidget* parent=nullptr);
     ~PocketWorkspace() override;
     void setStructurePath(const QString& path);
+    QStringList pocketChoices() const;
+    int selectedPocketRow() const;
+    void selectPocketRow(int row);
 signals:
+    void pocketChoicesChanged();
+    void pocketSelectionChanged(int row);
     void pocketAppearanceChanged(bool visible,double opacity,double specular);
     void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing);
 private:
