@@ -23,6 +23,7 @@ public:
     QStringList pocketChoices() const;
     std::vector<ligint::PocketPoint> pocketColorSample(int row) const;
     int selectedPocketRow() const;
+    int rowForVisiblePocket(int visibleIndex) const;
     void selectPocketRow(int row);
     QList<int> selectedPocketRows() const;
     void setSelectedPocketRows(const QList<int>& rows);
