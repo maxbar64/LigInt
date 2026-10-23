@@ -24,6 +24,7 @@ check the output, not only the exit code, in scripts.
 | Option | Meaning |
 |---|---|
 | `--csv [OUTPUT.csv]` | write interactions as CSV to the named file, or to standard output without a filename; diagnostic information goes to standard error |
+| `--text OUTPUT.txt` | save the full human-readable interaction report to a text file; usable alongside `--csv` and `--fingerprint` |
 | `--sdf FILE`, `--mol2 FILE` | chemical annotation of the ligand (bond orders, explicit hydrogens, formal charges); the ligand is matched to the molecule by coordinates ([details](interactions.md#sdf-and-mol2)) |
 | `--no-water` | ignore the water molecules (no water bridges) |
 | `--no-merge` | do not merge covalently linked `HETATM` residues (glycans, dipeptides) into one ligand |
