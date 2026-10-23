@@ -3,6 +3,7 @@
 #include <QFutureWatcher>
 #include <QPoint>
 #include <QStringList>
+#include <QList>
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_groups.hpp"
 class QCheckBox;class QComboBox;class QDoubleSpinBox;class QSpinBox;class QListWidget;class QLabel;class QPushButton;
@@ -22,6 +23,10 @@ public:
     QStringList pocketChoices() const;
     int selectedPocketRow() const;
     void selectPocketRow(int row);
+    QList<int> selectedPocketRows() const;
+    void setSelectedPocketRows(const QList<int>& rows);
+    int pocketOpacityPercent() const;
+    void setPocketOpacityPercent(int percent);
     bool pocketOverlayVisible() const;
     void setPocketOverlayVisible(bool visible);
     int pocketMaterialIndex() const;
@@ -29,10 +34,12 @@ public:
 signals:
     void pocketChoicesChanged();
     void pocketSelectionChanged(int row);
+    void pocketSelectedRowsChanged(const QList<int>& rows);
+    void pocketOpacityPercentChanged(int percent);
     void pocketMaterialChanged(int index);
     void pocketVisibilityChanged(bool visible);
     void pocketAppearanceChanged(bool visible,double opacity,double specular);
-    void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing);
+    void pocketOverlayChanged(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing, const std::vector<std::vector<ligint::PocketPoint>>& groups);
 private:
     QWidget* canvas_=nullptr;
     QCheckBox* overlayVisible_=nullptr;
