@@ -716,7 +716,7 @@ void MainWindow::buildUi() {
     auto* pocketColorMode = new QComboBox;
     pocketColorMode->setObjectName("quickPocketColorMode");
     pocketColorMode->addItems({tr("Uniform"), tr("Distinct pockets"), tr("Buriedness"), tr("Buriedness + depth")});
-    pocketColorMode->setItemData(3, tr("Hue indicates local buriedness; brightness indicates approximate connected-path depth from exposed pocket boundary voxels."), Qt::ToolTipRole);
+    pocketColorMode->setItemData(3, tr("Hue: local buriedness. Brightness: shortest solvent-accessible path depth from grid exterior (relative to pocket maximum); gray means unreachable."), Qt::ToolTipRole);
     pocketQuickLayout->addWidget(new QLabel(tr("Pockets")));
     pocketQuickLayout->addWidget(quickPocket);
     auto* showAllPockets = new QToolButton;
