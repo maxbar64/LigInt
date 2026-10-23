@@ -525,7 +525,8 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
     // Multi-probe accessibility: independent binary reachability masks for
     // small and large probes. The 1.4 A (configurable) path grid remains above.
     auto accessibleForProbe=[&](double probe) {
-        std::vector<std::uint8_t> obstacle(count,0),reachable(count,0);
+        std::vector<std::uint8_t> obstacle(count,0);
+        std::vector<int> distances(count,-1);
         for(const auto& a:atoms){
             const double radius=a.radius+probe;
             int lower[3],upper[3];
@@ -543,7 +544,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
         std::deque<std::array<int,3>> queue;
         auto seed=[&](int x,int y,int z){
             auto id=g.index(x,y,z);
-            if(!obstacle[id]&&!reachable[id]){reachable[id]=1;queue.push_back({x,y,z});}
+            if(!obstacle[id]&&distances[id]<0){distances[id]=0;queue.push_back({x,y,z});}
         };
         for(int z=0;z<g.nz;z++)for(int y=0;y<g.ny;y++){seed(0,y,z);seed(g.nx-1,y,z);}
         for(int z=0;z<g.nz;z++)for(int x=0;x<g.nx;x++){seed(x,0,z);seed(x,g.ny-1,z);}
@@ -554,11 +555,12 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
                 const int x=p[0]+fx[k],y=p[1]+fy[k],z=p[2]+fz[k];
                 if(!g.inside(x,y,z))continue;
                 auto id=g.index(x,y,z);
-                if(obstacle[id]||reachable[id])continue;
-                reachable[id]=1;queue.push_back({x,y,z});
+                if(obstacle[id]||distances[id]>=0)continue;
+                distances[id]=distances[g.index(p[0],p[1],p[2])]+1;
+                queue.push_back({x,y,z});
             }
         }
-        return reachable;
+        return distances;
     };
     const auto reachable08=accessibleForProbe(0.8);
     const auto reachable20=accessibleForProbe(2.0);
@@ -582,10 +584,12 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             const int z=static_cast<int>(std::llround((pt.pos[2]-g.origin[2])/g.step));
             inPocket[g.index(x,y,z)]=1;
             const auto gridId=g.index(x,y,z);
-            probe08Count+=reachable08[gridId];
-            probe20Count+=reachable20[gridId];
-            pt.reachableProbe08 = reachable08[gridId] != 0;
-            pt.reachableProbe20 = reachable20[gridId] != 0;
+            probe08Count+=reachable08[gridId]>=0;
+            probe20Count+=reachable20[gridId]>=0;
+            pt.reachableProbe08 = reachable08[gridId] >= 0;
+            pt.solventPathDepth08 = reachable08[gridId] >= 0 ? static_cast<float>(g.step*reachable08[gridId]) : -1.0f;
+            pt.reachableProbe20 = reachable20[gridId] >= 0;
+            pt.solventPathDepth20 = reachable20[gridId] >= 0 ? static_cast<float>(g.step*reachable20[gridId]) : -1.0f;
             const int pathSteps=steps[gridId];
             pt.solventPathDepth = pathSteps >= 0 ? static_cast<float>(g.step * pathSteps) : -1.0f;
             pt.solventProbeBlocked = blocked[gridId] != 0;
