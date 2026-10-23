@@ -488,6 +488,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
                                      overlaySpecular_->value()/100.0);
     };
     connect(overlayVisible_,&QCheckBox::toggled,this,appearanceChanged);
+    connect(overlayVisible_,&QCheckBox::toggled,this,&PocketWorkspace::pocketVisibilityChanged);
+    connect(overlayMaterial_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,&PocketWorkspace::pocketMaterialChanged);
     connect(overlayOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),this,[this,appearanceChanged](int){
         if(overlayMaterial_->currentIndex()!=3)overlayMaterial_->setCurrentIndex(3);
         appearanceChanged();
@@ -583,6 +585,12 @@ std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
         }
     }
     return {ids.begin(),ids.end()};
+}
+bool PocketWorkspace::pocketOverlayVisible() const { return overlayVisible_->isChecked(); }
+void PocketWorkspace::setPocketOverlayVisible(bool visible) { overlayVisible_->setChecked(visible); }
+int PocketWorkspace::pocketMaterialIndex() const { return overlayMaterial_->currentIndex(); }
+void PocketWorkspace::setPocketMaterialIndex(int index) {
+    if (index >= 0 && index < overlayMaterial_->count()) overlayMaterial_->setCurrentIndex(index);
 }
 QStringList PocketWorkspace::pocketChoices() const {
     QStringList choices;
