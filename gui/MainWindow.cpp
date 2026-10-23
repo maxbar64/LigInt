@@ -247,6 +247,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         opacity->setValue(layoutSettings.value("graphics/pocketOpacity", 38).toInt());
     if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
         material->setCurrentIndex(layoutSettings.value("graphics/pocketMaterial", 0).toInt());
+    if (auto* legend = findChild<QToolButton*>("pocketLegendToggle"))
+        legend->setChecked(layoutSettings.value("graphics/pocketLegendVisible", false).toBool());
     if (controlPages_) controlPages_->setCurrentIndex(0);
     statusBar()->showMessage(tr("Open a structure file, PDB or mmCIF (File → Open, or drag it here)"));
 }
@@ -294,6 +296,8 @@ MainWindow::~MainWindow() {
         layoutSettings.setValue("graphics/pocketOpacity", opacity->value());
     if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
         layoutSettings.setValue("graphics/pocketMaterial", material->currentIndex());
+    if (auto* legend = findChild<QToolButton*>("pocketLegendToggle"))
+        layoutSettings.setValue("graphics/pocketLegendVisible", legend->isChecked());
 
 }
 
