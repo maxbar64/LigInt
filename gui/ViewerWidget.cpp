@@ -335,6 +335,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             return static_cast<unsigned int>((rgb[0]<<16)|(rgb[1]<<8)|rgb[2]);
         };
         const auto triangles=makeSmoothPocketMesh(source,spacing,smoothing);
+        const std::size_t firstVertex=mesh.pos.size();
         // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
         using Key=std::array<long long,3>;
         std::map<Key,int> vertices;
@@ -371,9 +372,10 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
         const unsigned int baseColor = pocketColorMode_ == 1
             ? static_cast<unsigned int>(pocketDisplayColor(source).rgb() & 0x00ffffff) : 0x40c4df;
         if (pocketColorMode_ == 2) {
-            for (std::size_t i=0;i<mesh.pos.size();++i) {
+            piece->colors.resize(mesh.pos.size());
+            for (std::size_t i=firstVertex;i<mesh.pos.size();++i) {
                 const auto& v=mesh.pos[i];
-                piece->colors.push_back(buriedColor(buriednessAt({v[0],v[1],v[2]})));
+                piece->colors[i]=buriedColor(buriednessAt({v[0],v[1],v[2]}));
             }
         } else piece->colors.resize(mesh.pos.size(),baseColor);
         }
