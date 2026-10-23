@@ -41,6 +41,7 @@
 #include <QTimer>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSlider>
 #include <QSettings>
 #include <QSignalBlocker>
 #include <QSplitter>
@@ -219,6 +220,31 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     if (resultsSplitter_ && !layoutSettings.value("layout/resultsSplitter").toByteArray().isEmpty())
         resultsSplitter_->restoreState(layoutSettings.value("layout/resultsSplitter").toByteArray());
     if (graphicsToggle_) graphicsToggle_->setChecked(layoutSettings.value("layout/graphicsVisible", false).toBool());
+    // Restore controls after they have been constructed. Every graphics widget
+    // has a stable objectName and updates the renderer through its normal signal.
+    if (graphicsOptions_) {
+        const auto controls = graphicsOptions_->findChildren<QWidget*>();
+        for (QWidget* w : controls) {
+            const QString name = w->objectName();
+            if (!name.startsWith("graphics_")) continue;
+            const QString key = "graphics/" + name;
+            if (!layoutSettings.contains(key)) continue;
+            if (auto* combo = qobject_cast<QComboBox*>(w))
+                combo->setCurrentIndex(layoutSettings.value(key).toInt());
+            else if (auto* check = qobject_cast<QCheckBox*>(w))
+                check->setChecked(layoutSettings.value(key).toBool());
+            else if (auto* slider = qobject_cast<QSlider*>(w))
+                slider->setValue(layoutSettings.value(key).toInt());
+        }
+    }
+    if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
+        visible->setChecked(layoutSettings.value("graphics/pocketVisible", true).toBool());
+    if (auto* colors = findChild<QCheckBox*>("quickPocketColors"))
+        colors->setChecked(layoutSettings.value("graphics/pocketColors", false).toBool());
+    if (auto* opacity = findChild<QSpinBox*>("quickPocketOpacity"))
+        opacity->setValue(layoutSettings.value("graphics/pocketOpacity", 38).toInt());
+    if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
+        material->setCurrentIndex(layoutSettings.value("graphics/pocketMaterial", 0).toInt());
     if (controlPages_) controlPages_->setCurrentIndex(0);
     statusBar()->showMessage(tr("Open a structure file, PDB or mmCIF (File → Open, or drag it here)"));
 }
@@ -244,6 +270,29 @@ MainWindow::~MainWindow() {
     if (mainSplitter_) layoutSettings.setValue("layout/mainSplitter", mainSplitter_->saveState());
     if (resultsSplitter_) layoutSettings.setValue("layout/resultsSplitter", resultsSplitter_->saveState());
     if (graphicsToggle_) layoutSettings.setValue("layout/graphicsVisible", graphicsToggle_->isChecked());
+    if (graphicsOptions_) {
+        const auto controls = graphicsOptions_->findChildren<QWidget*>();
+        for (QWidget* w : controls) {
+            const QString name = w->objectName();
+            if (!name.startsWith("graphics_")) continue;
+            const QString key = "graphics/" + name;
+            if (auto* combo = qobject_cast<QComboBox*>(w))
+                layoutSettings.setValue(key, combo->currentIndex());
+            else if (auto* check = qobject_cast<QCheckBox*>(w))
+                layoutSettings.setValue(key, check->isChecked());
+            else if (auto* slider = qobject_cast<QSlider*>(w))
+                layoutSettings.setValue(key, slider->value());
+        }
+    }
+    if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
+        layoutSettings.setValue("graphics/pocketVisible", visible->isChecked());
+    if (auto* colors = findChild<QCheckBox*>("quickPocketColors"))
+        layoutSettings.setValue("graphics/pocketColors", colors->isChecked());
+    if (auto* opacity = findChild<QSpinBox*>("quickPocketOpacity"))
+        layoutSettings.setValue("graphics/pocketOpacity", opacity->value());
+    if (auto* material = findChild<QComboBox*>("quickPocketMaterial"))
+        layoutSettings.setValue("graphics/pocketMaterial", material->currentIndex());
+
 }
 
 void MainWindow::buildUi() {
