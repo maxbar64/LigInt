@@ -11,12 +11,13 @@
 using namespace ligint;
 int main(int argc,char**argv){
  try{
-  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 1;}
+  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 1;}
   AlphaPocketOptions o;
-  std::string input,output,pdb,audit;
+  std::string input,output,pdb,audit,mergeAuditFile;
   for(int i=1;i<argc;++i){
    const std::string key=argv[i];
    if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--min-spheres N] [--output CSV] [--pdb FILE]\n";return 0;}
+   if(key=="--no-macro-merge"){o.mergeMicroclusters=false;continue;}
    if(key.rfind("--",0)!=0){if(!input.empty())throw std::invalid_argument("Only one input structure");input=key;continue;}
    if(i+1>=argc)throw std::invalid_argument("Missing value for "+key);
    const std::string value=argv[++i];
@@ -27,6 +28,10 @@ int main(int argc,char**argv){
    else if(key=="--max-cluster-radius")o.maxClusterRadius=std::stod(value);
    else if(key=="--min-contact-atoms")o.minContactAtoms=std::stoull(value);
    else if(key=="--audit")audit=value;
+   else if(key=="--merge-audit")mergeAuditFile=value;
+   else if(key=="--macro-link")o.macroLinkDistance=std::stod(value);
+   else if(key=="--macro-diameter")o.macroMaxDiameter=std::stod(value);
+   else if(key=="--macro-clearance")o.macroMinClearance=std::stod(value);
    else if(key=="--min-spheres")o.minSpheres=std::stoull(value);
    else if(key=="--output")output=value;
    else if(key=="--pdb")pdb=value;
@@ -34,7 +39,19 @@ int main(int argc,char**argv){
   }
   if(input.empty())throw std::invalid_argument("Missing PDB input");
   const auto atoms=readPocketAtoms(input);
-  const auto pockets=findAlphaPockets(atoms,o);
+  AlphaMergeAudit mergeAudit;
+  const auto pockets=findAlphaPockets(atoms,o,&mergeAudit);
+  if(!mergeAuditFile.empty()){
+   std::ofstream f(mergeAuditFile);
+   if(!f)throw std::runtime_error("Unable to open merge audit CSV");
+   f<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,merged_center_diameter_A,accepted,reason\\n";
+   f<<std::fixed<<std::setprecision(3);
+   for(const auto& d:mergeAudit.decisions)
+     f<<d.first<<','<<d.second<<','<<d.linkDistance<<','<<d.minClearance<<','
+      <<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\\n';
+  }
+  std::cerr<<"Alpha pocket microclusters: "<<mergeAudit.microclusters
+           <<", macropockets: "<<pockets.size()<<"\\n";
   std::ofstream file;
   if(!output.empty()){file.open(output);if(!file)throw std::runtime_error("Unable to open CSV output");}
   std::ostream& out=output.empty()?std::cout:file;
