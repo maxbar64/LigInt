@@ -37,16 +37,13 @@ inline std::string jsonQuote(const std::string& s) {
     o << '"';
     return o.str();
 }
-inline Row analyze(const std::string& receptor, const ligint::Options& base, size_t idx) {
+inline Row summarize(const ligint::Options& base, size_t idx, const ligint::Result& result) {
     Row row;
     row.index = idx + 1;
     row.name = base.templates[idx].name;
     for (const auto& a : base.templates[idx].at)
         if (a.el != "H" && a.el != "D") ++row.atoms;
     try {
-        ligint::Options opt = base;
-        opt.externalLigandIndex = static_cast<int>(idx);
-        const auto result = ligint::analyzeFile(receptor, opt);
         if (result.ligands.empty()) throw std::runtime_error("No ligand result");
         std::set<std::string> residues;
         for (const auto& h : result.ligands.front().hits) {
@@ -70,6 +67,19 @@ inline Row analyze(const std::string& receptor, const ligint::Options& base, siz
         row.residues = residues.size();
     } catch (const std::exception& e) { row.error = e.what(); }
     return row;
+}
+inline Row analyze(const std::string& receptor, const ligint::Options& base, size_t idx) {
+    Row row;
+    row.index = idx + 1;
+    row.name = base.templates[idx].name;
+    try {
+        ligint::Options opt = base;
+        opt.externalLigandIndex = static_cast<int>(idx);
+        return summarize(base, idx, ligint::analyzeFile(receptor, opt));
+    } catch (const std::exception& e) {
+        row.error = e.what();
+        return row;
+    }
 }
 // Exact residue/type fingerprint: geometry is intentionally not part of the signature.
 inline std::string interactionSignature(const Row& row) {
