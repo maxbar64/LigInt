@@ -112,6 +112,7 @@ int main(int argc, char** argv) {
     bool csv = false;
     string csvOutput, textOutput;
     std::string batchFormat;
+    bool externalIndexSpecified = false;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
     string fpFormat, fpOutput, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
     for (int i = 1; i < argc; i++) {
@@ -220,6 +221,7 @@ int main(int argc, char** argv) {
             if (batchFormat != "csv" && batchFormat != "json") { cerr << "--batch-poses expects csv or json\n"; return 1; }
         }
         else if (s == "--external-index") {
+            externalIndexSpecified = true;
             if (i + 1 >= argc) { cerr << "--external-index requires a positive integer\n"; return 1; }
             const std::string value = argv[++i];
             char* end = nullptr;
@@ -285,8 +287,8 @@ int main(int argc, char** argv) {
     for (auto& w : P.clampToGrid()) cerr << w << "\n";
     opt.ligName = pa.size() > 1 ? pa[1] : "";
     if (pa.size() == 1 && !opt.templates.empty() && opt.externalLigandIndex < 0) opt.externalLigandIndex = 0;
-    if (!batchFormat.empty() && (pa.size() != 1 || opt.templates.empty() || csv || !textOutput.empty() || !fpFormat.empty() || !matrixPath.empty() || useKlifs || useGpcrdb || useRcsb || opt.externalLigandIndex > 0)) {
-        cerr << "--batch-poses requires a receptor and SDF/MOL2 molecules without RESNAME, --external-index > 1, --csv, --fingerprint or matrix/pocket generation options\n"; return 1;
+    if (!batchFormat.empty() && (pa.size() != 1 || opt.templates.empty() || csv || !textOutput.empty() || !fpFormat.empty() || !matrixPath.empty() || useKlifs || useGpcrdb || useRcsb || externalIndexSpecified || !pocketPath.empty())) {
+        cerr << "--batch-poses requires a receptor and external SDF/MOL2 poses; do not combine with RESNAME, --external-index, --text, --csv, --fingerprint, --pocket, matrix, RCSB or pocket-generation options\n"; return 1;
     }
     if (opt.externalLigandIndex >= 0 && (pa.size() != 1 || static_cast<size_t>(opt.externalLigandIndex) >= opt.templates.size())) {
         cerr << "--external-index needs a receptor without a RESNAME argument and a valid loaded SDF/MOL2 molecule index\n"; return 1;
