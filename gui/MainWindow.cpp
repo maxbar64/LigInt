@@ -762,7 +762,6 @@ void MainWindow::buildUi() {
     // through thresholds, pocket tools and interaction filters.
     for (QWidget* widget : {static_cast<QWidget*>(gStruct), gOpt, gThr, gTmpl, gPocket, runButton_, gTypes})
         lv->removeWidget(widget);
-    delete left; // The widgets above have been detached from the layout, but remain alive.
     auto* inputPage = new QWidget;
     auto* inputLayout = new QVBoxLayout(inputPage);
     inputLayout->addWidget(gStruct);
@@ -779,6 +778,7 @@ void MainWindow::buildUi() {
     advancedLayout->addWidget(gPocket);
     advancedLayout->addWidget(gTypes);
     advancedLayout->addStretch(1);
+    delete left; // All control widgets have been reparented to their new page layouts.
     auto* controlPages = new QTabWidget;
     controlPages->setObjectName("controlPages");
     auto* makeScrollPage = [this](QWidget* content) {
