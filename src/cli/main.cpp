@@ -16,6 +16,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <filesystem>
+#include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,6 +47,9 @@ static void usage(const char* prog, const Params& p) {
          << "  --fingerprint FORMAT|FILE  Write interaction fingerprint: csv, json, svg or\n"
          << "                             filename ending in .csv, .json or .svg.\n"
          << "  --batch-poses csv|json     Summarize all external poses (separate mode).\n"
+         << "  --batch-output FILE        Save the batch summary rather than using stdout.\n"
+         << "  --batch-reports DIR        Save text, interaction CSV and fingerprint JSON\n"
+         << "                             for each pose in DIR/pose_001.*, etc.\n"
          << "  With no report option, readable interactions are printed to standard output.\n"
          << "  Multiple reports may be requested together; at most one uses stdout.\n\n"
          << "INTERACTION OPTIONS\n"
@@ -111,7 +117,7 @@ int main(int argc, char** argv) {
     vector<string> pa;
     bool csv = false;
     string csvOutput, textOutput;
-    std::string batchFormat;
+    std::string batchFormat, batchOutput, batchReports;
     bool externalIndexSpecified = false;
     string matrixPath, matrixFormat = "csv", matrixClasses, matrixTitle; bool matrixHide = false, matrixOptionGiven = false;
     string fpFormat, fpOutput, pocketPath, klifsOutput; KlifsOptions klifs; bool useKlifs=false; GpcrdbOptions gpcrdb; bool useGpcrdb=false; string gpcrdbOutput, gpcrdbPositions; RcsbDownloadOptions rcsb; bool useRcsb=false, downloadOnly=false;
@@ -215,6 +221,10 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        else if (s == "--batch-output" || s == "--batch-reports") {
+            if (i + 1 >= argc || argv[i + 1][0] == '-') { cerr << s << " requires a path\n"; return 1; }
+            (s == "--batch-output" ? batchOutput : batchReports) = argv[++i];
+        }
         else if (s == "--batch-poses") {
             if (i + 1 >= argc) { cerr << "--batch-poses expects csv or json\n"; return 1; }
             batchFormat = argv[++i];
@@ -252,6 +262,9 @@ int main(int argc, char** argv) {
             }
             i++;
         } else pa.push_back(s);
+    }
+    if (batchFormat.empty() && (!batchOutput.empty() || !batchReports.empty())) {
+        cerr << "--batch-output and --batch-reports require --batch-poses csv|json\n"; return 1;
     }
     if (matrixPath.empty() && matrixOptionGiven) { cerr << "--matrix-format, --matrix-classes, --matrix-title and --matrix-hide-empty require --matrix LIST\n"; return 1; }
     if (!matrixPath.empty()) {
@@ -346,15 +359,71 @@ int main(int argc, char** argv) {
     if (havePocket && fpFormat.empty() && !useKlifs && !useGpcrdb) { cerr << "--pocket requires --fingerprint\n"; return 1; }
 
     if (!batchFormat.empty()) {
+        namespace fs = std::filesystem;
         std::vector<ligand_pose_batch::Row> rows;
         rows.reserve(opt.templates.size());
         bool failed = false;
-        for (size_t i = 0; i < opt.templates.size(); ++i) {
-            auto row = ligand_pose_batch::analyze(pa[0], opt, i);
-            if (!row.error.empty()) { failed = true; cerr << "Pose " << row.index << ": " << row.error << "\n"; }
-            rows.push_back(std::move(row));
+        try {
+            if (!batchReports.empty()) {
+                fs::create_directories(fs::path(batchReports));
+                if (!fs::is_directory(fs::path(batchReports))) throw std::runtime_error("Batch report path is not a directory");
+            }
+            if (!batchOutput.empty() && !batchReports.empty() &&
+                fs::absolute(fs::path(batchOutput)).lexically_normal() ==
+                fs::absolute(fs::path(batchReports)).lexically_normal())
+                throw std::runtime_error("Batch summary path is a report directory");
+
+            for (size_t i = 0; i < opt.templates.size(); ++i) {
+                auto row = ligand_pose_batch::analyze(pa[0], opt, i);
+                if (!row.error.empty()) {
+                    failed = true;
+                    cerr << "Pose " << row.index << ": " << row.error << "\n";
+                } else if (!batchReports.empty()) {
+                    try {
+                        Options poseOptions = opt;
+                        poseOptions.externalLigandIndex = static_cast<int>(i);
+                        const Result result = analyzeFile(pa[0], poseOptions);
+                        if (result.ligands.empty()) throw std::runtime_error("No ligand result");
+                        std::ostringstream prefix;
+                        prefix << "pose_" << std::setw(3) << std::setfill('0') << (i + 1);
+                        const fs::path base = fs::path(batchReports) / prefix.str();
+                        auto writeReport = [](const fs::path& path, const auto& writer) {
+                            std::ofstream file(path, std::ios::binary | std::ios::trunc);
+                            if (!file) throw std::runtime_error("Cannot open " + path.string());
+                            writer(file);
+                            file.flush();
+                            if (!file) throw std::runtime_error("Cannot write " + path.string());
+                        };
+                        writeReport(base.string() + ".txt", [&](std::ostream& out) { printText(out, result); });
+                        writeReport(base.string() + ".csv", [&](std::ostream& out) {
+                            std::ostringstream info;
+                            printCsv(out, info, result);
+                        });
+                        writeReport(base.string() + "_fingerprint.json", [&](std::ostream& out) {
+                            std::vector<Fingerprint> fps;
+                            for (const auto& lig : result.ligands) fps.push_back(makeFingerprint(lig));
+                            writeFingerprintJson(out, fps);
+                        });
+                    } catch (const std::exception& e) {
+                        row.error = std::string("Report generation: ") + e.what();
+                        failed = true;
+                        cerr << "Pose " << row.index << ": " << row.error << "\n";
+                    }
+                }
+                rows.push_back(std::move(row));
+            }
+            if (batchOutput.empty()) ligand_pose_batch::write(cout, rows, batchFormat);
+            else {
+                std::ofstream out(batchOutput, std::ios::binary | std::ios::trunc);
+                if (!out) throw std::runtime_error("Cannot open batch output: " + batchOutput);
+                ligand_pose_batch::write(out, rows, batchFormat);
+                out.flush();
+                if (!out) throw std::runtime_error("Cannot write batch output: " + batchOutput);
+            }
+        } catch (const std::exception& e) {
+            cerr << "Batch: " << e.what() << "\n";
+            return 1;
         }
-        ligand_pose_batch::write(cout, rows, batchFormat);
         return failed ? 1 : 0;
     }
     try {
