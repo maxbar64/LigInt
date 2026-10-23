@@ -829,6 +829,35 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void ViewerWidget::mouseReleaseEvent(QMouseEvent* e) {
+    // Pick the closest projected pocket surface voxel. Use a short click, not a drag.
+    if (e->button() == Qt::LeftButton && pocketVisible_ && !pocketGroups_.empty() &&
+        (eventPos(e).toPoint() - pressPoint_).manhattanLength() < 5) {
+        const auto camera = makeCamera(size(), 1.0, false);
+        const QPointF click = eventPos(e);
+        int best = -1;
+        double bestDistance = 100.0; // 10 pixel selection tolerance
+        double bestDepth = 1e30;
+        for (int i = 0; i < static_cast<int>(pocketGroups_.size()); ++i) {
+            const auto& points = pocketGroups_[i];
+            // Surface voxels are spatially dense; use all points for reliable hit testing.
+            for (const auto& voxel : points) {
+                const auto pt = camera.project(voxel.pos);
+                if (!pt.ok) continue;
+                const double dx = pt.x - click.x(), dy = pt.y - click.y();
+                const double d2 = dx * dx + dy * dy;
+                if (d2 < bestDistance || (std::abs(d2 - bestDistance) < 1e-6 && pt.w < bestDepth)) {
+                    best = i;
+                    bestDistance = d2;
+                    bestDepth = pt.w;
+                }
+            }
+        }
+        if (best >= 0) {
+            emit pocketSurfacePicked(best, bool(e->modifiers() & Qt::ControlModifier));
+            if (interacting_) { interacting_ = false; stateKey_++; update(); }
+            return;
+        }
+    }
     if(e->button()==Qt::LeftButton && !importedLigands_.empty() &&
        (eventPos(e).toPoint()-pressPoint_).manhattanLength()<5) {
         const auto camera=makeCamera(size(),1.0,false);
