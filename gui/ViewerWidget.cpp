@@ -1,6 +1,7 @@
 #include "ViewerWidget.h"
 #include "PocketSmoothMesh.h"
 #include <map>
+#include <queue>
 
 #include <QFontMetricsF>
 #include <QMouseEvent>
@@ -306,7 +307,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             return {std::llround(v[0]/spacing),std::llround(v[1]/spacing),std::llround(v[2]/spacing)};
         };
         std::map<Cell, const ligint::PocketPoint*> voxelIndex;
-        if (pocketColorMode_ == 2)
+        if (pocketColorMode_ >= 2)
             for (const auto& voxel : source) voxelIndex.emplace(cellOf(voxel.pos), &voxel);
         auto buriednessAt = [&](const ligint::V3& v) {
             const Cell center = cellOf(v);
@@ -321,6 +322,54 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
                         if (d2<best) { best=d2; value=found->second->buriedness; }
                     }
             return std::clamp(value,0.0,1.0);
+        };
+        // Display-only approximate path depth from exposed boundary voxels.
+        std::map<Cell,double> depth;
+        double maxDepth=0;
+        if (pocketColorMode_ == 3 && !voxelIndex.empty()) {
+            const Cell dirs[]={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+            float minimum=1,maximum=0;
+            for (const auto& entry:voxelIndex) {
+                minimum=std::min(minimum,entry.second->buriedness);
+                maximum=std::max(maximum,entry.second->buriedness);
+            }
+            const double threshold=minimum+(maximum-minimum)*0.25;
+            std::queue<Cell> queue;
+            for (const auto& entry:voxelIndex) {
+                bool boundary=false;
+                for (const auto& d:dirs) {
+                    if (!voxelIndex.count({entry.first[0]+d[0],entry.first[1]+d[1],entry.first[2]+d[2]})) {
+                        boundary=true; break;
+                    }
+                }
+                if (boundary && entry.second->buriedness<=threshold) {
+                    depth[entry.first]=0;queue.push(entry.first);
+                }
+            }
+            while (!queue.empty()) {
+                const Cell c=queue.front();queue.pop();
+                for (const auto& d:dirs) {
+                    const Cell n={c[0]+d[0],c[1]+d[1],c[2]+d[2]};
+                    if (!voxelIndex.count(n) || depth.count(n)) continue;
+                    const double value=depth[c]+spacing;
+                    depth[n]=value;maxDepth=std::max(maxDepth,value);queue.push(n);
+                }
+            }
+        }
+        auto normalizedDepth=[&](const ligint::V3& p) {
+            if(maxDepth<=0)return 0.0;
+            const Cell c=cellOf(p);
+            double nearest=1e30,value=0;
+            for(int dx=-2;dx<=2;++dx)for(int dy=-2;dy<=2;++dy)for(int dz=-2;dz<=2;++dz) {
+                const Cell n={c[0]+dx,c[1]+dy,c[2]+dz};
+                const auto it=voxelIndex.find(n);
+                const auto d=depth.find(n);
+                if(it==voxelIndex.end()||d==depth.end())continue;
+                double dist=0;
+                for(int k=0;k<3;++k)dist+=std::pow(p[k]-it->second->pos[k],2);
+                if(dist<nearest){nearest=dist;value=d->second;}
+            }
+            return value/maxDepth;
         };
         auto buriedColor = [](double x) -> unsigned int {
             // Viridis-inspired, perceptually ordered anchors (low -> high).
@@ -371,11 +420,18 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
         }
         const unsigned int baseColor = pocketColorMode_ == 1
             ? static_cast<unsigned int>(pocketDisplayColor(source).rgb() & 0x00ffffff) : 0x40c4df;
-        if (pocketColorMode_ == 2) {
+        if (pocketColorMode_ >= 2) {
             piece->colors.resize(mesh.pos.size());
             for (std::size_t i=firstVertex;i<mesh.pos.size();++i) {
                 const auto& v=mesh.pos[i];
-                piece->colors[i]=buriedColor(buriednessAt({v[0],v[1],v[2]}));
+                const ligint::V3 p={v[0],v[1],v[2]};
+                const QColor base=QColor::fromRgb(static_cast<QRgb>(buriedColor(buriednessAt(p))));
+                if(pocketColorMode_==2)piece->colors[i]=static_cast<unsigned int>(base.rgb() & 0xffffff);
+                else {
+                    const double factor=0.55+0.45*normalizedDepth(p);
+                    const QColor mixed=QColor::fromRgbF(base.redF()*factor,base.greenF()*factor,base.blueF()*factor);
+                    piece->colors[i]=static_cast<unsigned int>(mixed.rgb() & 0xffffff);
+                }
             }
         } else piece->colors.resize(mesh.pos.size(),baseColor);
         }
@@ -408,7 +464,7 @@ void ViewerWidget::highlightPocket(int index) {
 }
 
 void ViewerWidget::setPocketColorMode(int mode) {
-    mode = std::clamp(mode,0,2);
+    mode = std::clamp(mode,0,3);
     if (mode == pocketColorMode_) return;
     pocketColorMode_ = mode;
     pocketDistinctColors_ = mode == 1;
