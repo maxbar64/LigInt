@@ -38,9 +38,9 @@ struct DSU{
  void join(std::size_t i,std::size_t j){i=find(i);j=find(j);if(i!=j)parent[j]=i;}
 };
 }
-std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,const AlphaPocketOptions& o){
+std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,const AlphaPocketOptions& o, AlphaMergeAudit* audit){
     if(o.minRadius<=0||o.maxRadius<=o.minRadius||o.neighborCutoff<=0||
-       o.clusterDistance<=0||o.maxClusterRadius<=0||o.minContactAtoms<4||o.minSpheres==0||o.maxCandidates==0)
+       o.clusterDistance<=0||o.maxClusterRadius<=0||o.macroLinkDistance<=0||o.macroMaxDiameter<=0||o.macroMinClearance<0||o.minContactAtoms<4||o.minSpheres==0||o.maxCandidates==0)
         throw std::invalid_argument("Invalid alpha pocket options");
     std::vector<AlphaSphere> candidates;
     // Neighbor-limited tetrahedra avoid cubic scanning of the whole structure.
@@ -109,6 +109,79 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
         for(const auto& s:p.spheres)p.volume+=4.1887902047863905*s.radius*s.radius*s.radius;
         return false;
     }),result.end());
+    if(audit){audit->microclusters=result.size();audit->decisions.clear();}
+    if(o.mergeMicroclusters && result.size()>1) {
+        // Evaluate candidate microcluster links from the closest pair of sphere
+        // centers, not solely centroid distances. Merge only if the path is free
+        // of atom VdW surfaces and the resulting center-span remains bounded.
+        struct Edge {std::size_t a,b;double distance;V3 from,to;};
+        std::vector<Edge> edges;
+        for(std::size_t i=0;i<result.size();++i)for(std::size_t j=i+1;j<result.size();++j){
+            double best=sq(o.macroLinkDistance);
+            V3 first{},second{};
+            bool found=false;
+            for(const auto& x:result[i].spheres)for(const auto& y:result[j].spheres){
+                const double d=dist2(x.center,y.center);
+                if(d<best){best=d;first=x.center;second=y.center;found=true;}
+            }
+            if(found)edges.push_back({i,j,std::sqrt(best),first,second});
+        }
+        std::sort(edges.begin(),edges.end(),[](const Edge& a,const Edge& b){return a.distance<b.distance;});
+        DSU components(result.size());
+        for(const auto& e:edges){
+            const auto a=components.find(e.a),b=components.find(e.b);
+            if(a==b)continue;
+            AlphaMergeDecision decision;
+            decision.first=e.a+1;decision.second=e.b+1;decision.linkDistance=e.distance;
+            // Geometric accessibility along the candidate bridge, sampled
+            // at 0.5 Å intervals. This is not a full channel traversal.
+            double minClearance=1e30;
+            const int steps=std::max(1,static_cast<int>(std::ceil(e.distance/0.5)));
+            for(int step=0;step<=steps;++step){
+                const double t=static_cast<double>(step)/steps;
+                V3 p{};
+                for(int k=0;k<3;++k)p[k]=e.from[k]*(1-t)+e.to[k]*t;
+                for(const auto& atom:atoms)
+                    minClearance=std::min(minClearance,std::sqrt(dist2(p,atom.pos))-atom.radius);
+            }
+            decision.minClearance=minClearance;
+            if(minClearance<o.macroMinClearance){
+                decision.reason="insufficient_clearance";
+            }else{
+                double diameter=0;
+                // Bound the span of ALL microcluster centers in the proposed
+                // union: prevents transitive chaining through many short links.
+                for(std::size_t i=0;i<result.size();++i){
+                    const auto ri=components.find(i);
+                    if(ri!=a && ri!=b)continue;
+                    for(std::size_t j=i+1;j<result.size();++j){
+                        const auto rj=components.find(j);
+                        if(rj!=a && rj!=b)continue;
+                        diameter=std::max(diameter,std::sqrt(dist2(result[i].center,result[j].center)));
+                    }
+                }
+                decision.mergedDiameter=diameter;
+                if(diameter>o.macroMaxDiameter)decision.reason="diameter_limit";
+                else {decision.accepted=true;decision.reason="accepted";components.join(a,b);}
+            }
+            if(audit)audit->decisions.push_back(decision);
+        }
+        std::vector<AlphaPocket> macro;
+        std::vector<std::size_t> labels;
+        for(std::size_t i=0;i<result.size();++i){
+            const auto root=components.find(i);
+            auto it=std::find(labels.begin(),labels.end(),root);
+            if(it==labels.end()){labels.push_back(root);macro.emplace_back();it=labels.end()-1;}
+            auto& dst=macro[static_cast<std::size_t>(it-labels.begin())];
+            const auto& src=result[i];
+            for(const auto& sphere:src.spheres)dst.spheres.push_back(sphere);
+            dst.volume+=src.volume;
+            for(int k=0;k<3;++k)dst.center[k]+=src.center[k]*src.spheres.size();
+        }
+        for(auto& pocket:macro)
+            for(int k=0;k<3;++k)pocket.center[k]/=pocket.spheres.size();
+        result=std::move(macro);
+    }
     std::sort(result.begin(),result.end(),[](const AlphaPocket&a,const AlphaPocket&b){
         return a.spheres.size()>b.spheres.size();
     });
