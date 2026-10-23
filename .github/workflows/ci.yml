@@ -2,16 +2,23 @@ name: CI
 
 on:
   pull_request:
-  workflow_dispatch:        # also from the Actions page ("Run workflow")
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Build, test and publish distribution packages'
+        type: boolean
+        required: true
+        default: false
 
 env:
   BUCKET_NAME: build.moldiscovery.com      # S3 bucket of the uploaded builds (moldiscovery/upload-build)
 
 jobs:
   # ---------------------------------------------------------------------------------------------
-  # Linux and Windows builds (command line and GUI). They are built, tested, packaged, tried and
-  # kept as artifacts; a version tag (v*) publishes them in a GitHub release.
+  # Pull requests run compilation and tests only; manual runs can opt into packaging.
+  # Keep job names stable to preserve existing branch-protection status checks.
   # ---------------------------------------------------------------------------------------------
+  # Package creation, S3 upload and notifications run only via manual dispatch (package=true).
   # Linux: built in the RHEL 8 image of moldiscovery (GCC from gcc-toolset-10, Qt 6 from moldiscovery/build-qt),
   # so the binaries run on RHEL 8 and on newer distributions.
   linux-rhel8:
@@ -58,25 +65,28 @@ jobs:
           QT_QPA_PLATFORM: offscreen
           PYTHONIOENCODING: utf-8
       - name: Package
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         run: cd build && scl enable gcc-toolset-10 "cpack -G TGZ"
 
       - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         with:
           name: linux-rhel8-package
           path: build/ligint-*-linux-*.tar.gz
 
       - name: Set package info
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         shell: bash
         run: echo "PKG_NAME=$(ls -t build/ligint-*-linux-*.tar.gz | head -n 1 | xargs basename)" >> $GITHUB_ENV
       - name: Upload build
         id: upload
-        if: ${{ success() }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package && success() }}
         uses: moldiscovery/upload-build@v1
         with:
           file: build/${{ env.PKG_NAME }}
           bucket: ${{ env.BUCKET_NAME }}
       - name: Send notification
-        if: ${{ success() }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package && success() }}
         uses: moldiscovery/notify-build@v1
         with:
           project-name: LigInt
@@ -106,6 +116,7 @@ jobs:
           cache: true
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Install NSIS
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         run: choco install nsis -y --no-progress
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -117,8 +128,10 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
       - name: Package
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         run: cd build && cpack
       - name: Try the installer (silent install, run, uninstall)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         shell: pwsh
         run: |
           $installer = (Get-ChildItem build\ligint-*-win64.exe | Select-Object -First 1).FullName
@@ -134,6 +147,7 @@ jobs:
           if (Test-Path 'C:\ligint-test\bin\ligint.exe') { throw "the uninstaller left ligint.exe behind" }
 
       - uses: actions/upload-artifact@v4
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         with:
           name: windows-installer
           path: |
@@ -141,17 +155,18 @@ jobs:
             build/ligint-*-win64.zip
 
       - name: Set package info
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package }}
         shell: bash
         run: echo "PKG_NAME=$(ls -t build/ligint-*-win64.exe | head -n 1 | xargs basename)" >> $GITHUB_ENV
       - name: Upload build
         id: upload
-        if: ${{ success() }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package && success() }}
         uses: moldiscovery/upload-build@v1
         with:
           file: build/${{ env.PKG_NAME }}
           bucket: ${{ env.BUCKET_NAME }}
       - name: Send notification
-        if: ${{ success() }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.package && success() }}
         uses: moldiscovery/notify-build@v1
         with:
           project-name: LigInt
@@ -159,19 +174,3 @@ jobs:
           download-url: ${{ steps.upload.outputs.download-url }}
           gchat-webhook: ${{ secrets.GCHAT_DEVTOOLS_WEBHOOK }}
 
-  release:
-    name: Publish release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux-rhel8, windows]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*
-          generate_release_notes: true
