@@ -42,6 +42,7 @@ public:
     void setPocketOverlay(const std::vector<ligint::PocketPoint>& points, double spacing, int smoothing=2,
                           const std::vector<std::vector<ligint::PocketPoint>>& groups = {});
     void setPocketDistinctColors(bool enabled);
+    void highlightPocket(int visibleGroupIndex);
     QColor pocketDisplayColor(const std::vector<ligint::PocketPoint>& source) const;
     void setPocketAppearance(bool visible, double opacity, double specular);
     bool hasData() const { return hasData_; }
@@ -134,6 +135,7 @@ private:
     bool pocketDistinctColors_=false;
     std::vector<std::vector<ligint::PocketPoint>> pocketGroups_;
     std::vector<std::vector<SmoothTriangle>> pocketPickMeshes_;
+    int highlightedPocket_=-1;
 
     // camera
     Mat3 rot_{1, 0, 0, 0, 1, 0, 0, 0, 1};
