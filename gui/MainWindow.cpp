@@ -241,6 +241,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         visible->setChecked(layoutSettings.value("graphics/pocketVisible", true).toBool());
+    if (auto* probe = findChild<QComboBox*>("quickPocketDepthProbe"))
+        probe->setCurrentIndex(layoutSettings.value("graphics/pocketDepthProbe",1).toInt());
     if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
         colors->setCurrentIndex(layoutSettings.value("graphics/pocketColorMode",
             layoutSettings.value("graphics/pocketColors", false).toBool() ? 1 : 0).toInt());
@@ -291,6 +293,8 @@ MainWindow::~MainWindow() {
     }
     if (auto* visible = findChild<QCheckBox*>("quickPocketVisible"))
         layoutSettings.setValue("graphics/pocketVisible", visible->isChecked());
+    if (auto* probe = findChild<QComboBox*>("quickPocketDepthProbe"))
+        layoutSettings.setValue("graphics/pocketDepthProbe", probe->currentIndex());
     if (auto* colors = findChild<QComboBox*>("quickPocketColorMode"))
         layoutSettings.setValue("graphics/pocketColorMode", colors->currentIndex());
     if (auto* opacity = findChild<QSpinBox*>("quickPocketOpacity"))
@@ -744,6 +748,17 @@ void MainWindow::buildUi() {
     pocketQuickLayout->addWidget(quickOpacity);
     pocketQuickLayout->addWidget(new QLabel(tr("Color")));
     pocketQuickLayout->addWidget(pocketColorMode);
+    auto* depthProbe = new QComboBox;
+    depthProbe->setObjectName("quickPocketDepthProbe");
+    depthProbe->addItems({tr("0.8 Å"), tr("Configured"), tr("2.0 Å")});
+    depthProbe->setCurrentIndex(1);
+    depthProbe->setToolTip(tr("Solvent path depth probe radius; changes displayed depth, not pocket geometry"));
+    depthProbe->setVisible(false);
+    pocketQuickLayout->addWidget(depthProbe);
+    connect(pocketColorMode, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            depthProbe, [depthProbe](int mode){ depthProbe->setVisible(mode==3); });
+    connect(depthProbe, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            viewer_, &ViewerWidget::setPocketDepthProbe);
     auto* buriedScale = new QLabel;
     buriedScale->setObjectName("pocketBuriednessScale");
     QImage gradient(150, 12, QImage::Format_RGB32);
