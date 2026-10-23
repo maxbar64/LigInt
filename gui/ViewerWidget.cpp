@@ -299,6 +299,41 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
         auto piece=std::make_shared<MeshPiece>();
         auto& mesh=piece->mesh;
         for (const auto& source : sources) {
+        // Local buriedness is recorded for each PocketPoint. Transfer it to the
+        // smoothed surface vertices using nearby lattice voxels, not pocket averages.
+        using Cell = std::array<long long,3>;
+        auto cellOf = [spacing](const ligint::V3& v) -> Cell {
+            return {std::llround(v[0]/spacing),std::llround(v[1]/spacing),std::llround(v[2]/spacing)};
+        };
+        std::map<Cell, const ligint::PocketPoint*> voxelIndex;
+        if (pocketColorMode_ == 2)
+            for (const auto& voxel : source) voxelIndex.emplace(cellOf(voxel.pos), &voxel);
+        auto buriednessAt = [&](const ligint::V3& v) {
+            const Cell center = cellOf(v);
+            double best = 1e30, value = 0.0;
+            for (int dx=-2; dx<=2; ++dx)
+                for (int dy=-2; dy<=2; ++dy)
+                    for (int dz=-2; dz<=2; ++dz) {
+                        const auto found = voxelIndex.find({center[0]+dx,center[1]+dy,center[2]+dz});
+                        if (found == voxelIndex.end()) continue;
+                        double d2=0;
+                        for (int k=0;k<3;++k) d2+=std::pow(found->second->pos[k]-v[k],2);
+                        if (d2<best) { best=d2; value=found->second->buriedness; }
+                    }
+            return std::clamp(value,0.0,1.0);
+        };
+        auto buriedColor = [](double x) -> unsigned int {
+            // Viridis-inspired, perceptually ordered anchors (low -> high).
+            static constexpr std::array<std::array<int,3>,5> stops = {{
+                {{68,1,84}},{{59,82,139}},{{33,145,140}},{{94,201,98}},{{253,231,37}}
+            }};
+            const double scaled=std::clamp(x,0.0,1.0)*4.0;
+            const int i=std::min(3,static_cast<int>(scaled));
+            const double t=scaled-i;
+            int rgb[3];
+            for (int k=0;k<3;++k) rgb[k]=static_cast<int>(std::lround(stops[i][k]*(1-t)+stops[i+1][k]*t));
+            return static_cast<unsigned int>((rgb[0]<<16)|(rgb[1]<<8)|rgb[2]);
+        };
         const auto triangles=makeSmoothPocketMesh(source,spacing,smoothing);
         // Shared position indices allow averaged vertex normals and smooth per-pixel lighting.
         using Key=std::array<long long,3>;
@@ -333,7 +368,14 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             if(norm>1e-8f)for(auto& x:n)x/=norm;
             else n={0,0,1};
         }
-        piece->colors.resize(mesh.pos.size(),pocketDistinctColors_ ? static_cast<unsigned int>(pocketDisplayColor(source).rgb() & 0x00ffffff) : 0x40c4df);
+        const unsigned int baseColor = pocketColorMode_ == 1
+            ? static_cast<unsigned int>(pocketDisplayColor(source).rgb() & 0x00ffffff) : 0x40c4df;
+        if (pocketColorMode_ == 2) {
+            for (std::size_t i=0;i<mesh.pos.size();++i) {
+                const auto& v=mesh.pos[i];
+                mesh.colors.push_back(buriedColor(buriednessAt({v[0],v[1],v[2]})));
+            }
+        } else mesh.colors.resize(mesh.pos.size(),baseColor);
         }
         pieces_.pocket=std::move(piece);
     }
@@ -341,7 +383,7 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
 }
 
 QColor ViewerWidget::pocketDisplayColor(const std::vector<ligint::PocketPoint>& source) const {
-    if (!pocketDistinctColors_ || source.empty()) return QColor(64,196,223);
+    if (pocketColorMode_ != 1 || source.empty()) return QColor(64,196,223);
     const auto& v = source.front().pos;
     const long long x = std::llround(v[0] * 10.0);
     const long long y = std::llround(v[1] * 10.0);
@@ -363,9 +405,18 @@ void ViewerWidget::highlightPocket(int index) {
         });
 }
 
+void ViewerWidget::setPocketColorMode(int mode) {
+    mode = std::clamp(mode,0,2);
+    if (mode == pocketColorMode_) return;
+    pocketColorMode_ = mode;
+    pocketDistinctColors_ = mode == 1;
+    setPocketOverlay(pocketPoints_, pocketSpacing_, pocketSmoothing_, pocketGroups_);
+}
+
 void ViewerWidget::setPocketDistinctColors(bool enabled) {
-    if (pocketDistinctColors_ == enabled) return;
+    if (pocketDistinctColors_ == enabled && pocketColorMode_ == (enabled ? 1 : 0)) return;
     pocketDistinctColors_ = enabled;
+    pocketColorMode_ = enabled ? 1 : 0;
     // Rebuild from the original selected pocket volumes, preserving camera state.
     setPocketOverlay(pocketPoints_, pocketSpacing_, pocketSmoothing_, pocketGroups_);
 }
@@ -419,7 +470,7 @@ void ViewerWidget::setStyle(const ViewStyle& n) {
     const ViewStyle o = style_;
     style_ = n;
     if (n.protein != o.protein || n.proteinColor != o.proteinColor) rebuildCartoon();
-    if (n.background != o.background && pocketDistinctColors_ && !pocketPoints_.empty())
+    if (n.background != o.background && pocketColorMode_ == 1 && !pocketPoints_.empty())
         setPocketOverlay(pocketPoints_, pocketSpacing_, pocketSmoothing_, pocketGroups_);
     if (n.ligand != o.ligand || n.showLigand != o.showLigand || n.residues != o.residues ||
         n.showWaters != o.showWaters || n.aromaticDisplay != o.aromaticDisplay) {
