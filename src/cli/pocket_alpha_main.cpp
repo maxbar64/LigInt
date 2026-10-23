@@ -44,11 +44,11 @@ int main(int argc,char**argv){
   if(!mergeAuditFile.empty()){
    std::ofstream f(mergeAuditFile);
    if(!f)throw std::runtime_error("Unable to open merge audit CSV");
-   f<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,merged_center_diameter_A,accepted,reason\n";
+   f<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,endpoint_clearance_A,merged_center_diameter_A,accepted,reason\n";
    f<<std::fixed<<std::setprecision(3);
    for(const auto& d:mergeAudit.decisions)
      f<<d.first<<','<<d.second<<','<<d.linkDistance<<','<<d.minClearance<<','
-      <<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\n';
+      <<d.endpointClearance<<','<<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\n';
   }
   std::cerr<<"Alpha pocket microclusters: "<<mergeAudit.microclusters
            <<", macropockets: "<<pockets.size()<<"\n";
@@ -64,19 +64,21 @@ int main(int argc,char**argv){
   }
   if(!audit.empty()){
    std::ofstream f(audit);if(!f)throw std::runtime_error("Unable to open audit CSV");
-   f<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,volume_sum_A3\n";
+   f<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3\n";
    for(std::size_t i=0;i<pockets.size();++i){
     const auto& p=pockets[i];
     std::vector<double> radii;
     double extent=0;
+    V3 low=p.spheres.front().center,high=low;
     for(const auto& sp:p.spheres){
      radii.push_back(sp.radius);
+     for(int k=0;k<3;++k){low[k]=std::min(low[k],sp.center[k]);high[k]=std::max(high[k],sp.center[k]);}
      const double dx=sp.center[0]-p.center[0],dy=sp.center[1]-p.center[1],dz=sp.center[2]-p.center[2];
      extent=std::max(extent,std::sqrt(dx*dx+dy*dy+dz*dz));
     }
     std::sort(radii.begin(),radii.end());
     f<<i+1<<','<<radii.size()<<','<<radii.front()<<','<<radii[radii.size()/2]<<','
-     <<radii.back()<<','<<extent<<','<<p.volume<<'\n';
+     <<radii.back()<<','<<extent<<','<<std::sqrt((high[0]-low[0])*(high[0]-low[0])+(high[1]-low[1])*(high[1]-low[1])+(high[2]-low[2])*(high[2]-low[2]))<<','<<p.volume<<'\n';
    }
   }
   if(!pdb.empty()){
