@@ -291,22 +291,6 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
     pieces_.pocket.reset();
     if(!points.empty()){
         const auto& sources = pocketDistinctColors_ && !groups.empty() ? groups : std::vector<std::vector<ligint::PocketPoint>>{points};
-        // Stable per-pocket hue from geometry rather than selection order.
-        // Adjust saturation and brightness to contrast with the viewer background.
-        const bool dark = darkBackground(style_.background);
-        auto pocketColor = [dark](const std::vector<ligint::PocketPoint>& source) -> unsigned int {
-            if (source.empty()) return 0x40c4df;
-            const auto& v = source.front().pos;
-            const long long x = std::llround(v[0] * 10.0);
-            const long long y = std::llround(v[1] * 10.0);
-            const long long z = std::llround(v[2] * 10.0);
-            std::size_t hash = std::hash<long long>{}(x);
-            hash ^= std::hash<long long>{}(y) + 0x9e3779b9u + (hash << 6) + (hash >> 2);
-            hash ^= std::hash<long long>{}(z) + 0x9e3779b9u + (hash << 6) + (hash >> 2);
-            const int hue = static_cast<int>(hash % 360u);
-            const QColor color = QColor::fromHsv(hue, dark ? 180 : 195, dark ? 235 : 170);
-            return static_cast<unsigned int>((color.red() << 16) | (color.green() << 8) | color.blue());
-        };
         auto piece=std::make_shared<MeshPiece>();
         auto& mesh=piece->mesh;
         for (const auto& source : sources) {
@@ -344,11 +328,25 @@ void ViewerWidget::setPocketOverlay(const std::vector<ligint::PocketPoint>& poin
             if(norm>1e-8f)for(auto& x:n)x/=norm;
             else n={0,0,1};
         }
-        piece->colors.resize(mesh.pos.size(),pocketDistinctColors_ ? pocketColor(source) : 0x40c4df);
+        piece->colors.resize(mesh.pos.size(),pocketDistinctColors_ ? static_cast<unsigned int>(pocketDisplayColor(source).rgb() & 0x00ffffff) : 0x40c4df);
         }
         pieces_.pocket=std::move(piece);
     }
     invalidate(false);
+}
+
+QColor ViewerWidget::pocketDisplayColor(const std::vector<ligint::PocketPoint>& source) const {
+    if (!pocketDistinctColors_ || source.empty()) return QColor(64,196,223);
+    const auto& v = source.front().pos;
+    const long long x = std::llround(v[0] * 10.0);
+    const long long y = std::llround(v[1] * 10.0);
+    const long long z = std::llround(v[2] * 10.0);
+    std::size_t hash = std::hash<long long>{}(x);
+    hash ^= std::hash<long long>{}(y) + 0x9e3779b9u + (hash << 6) + (hash >> 2);
+    hash ^= std::hash<long long>{}(z) + 0x9e3779b9u + (hash << 6) + (hash >> 2);
+    const bool dark = darkBackground(style_.background);
+    return QColor::fromHsv(static_cast<int>(hash % 360u),
+                           dark ? 180 : 195, dark ? 235 : 170);
 }
 
 void ViewerWidget::setPocketDistinctColors(bool enabled) {
