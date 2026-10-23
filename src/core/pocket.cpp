@@ -586,6 +586,7 @@ PocketSearchResult findPockets(const std::vector<PocketAtom>& input, const Pocke
             probe20Count+=reachable20[gridId];
             const int pathSteps=steps[gridId];
             pt.solventPathDepth = pathSteps >= 0 ? static_cast<float>(g.step * pathSteps) : -1.0f;
+            pt.solventProbeBlocked = blocked[gridId] != 0;
             if(pathSteps>=0) {
                 ++solventCount;
                 solventSteps+=pathSteps;
