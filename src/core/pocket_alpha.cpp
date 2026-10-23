@@ -40,7 +40,7 @@ struct DSU{
 }
 std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,const AlphaPocketOptions& o){
     if(o.minRadius<=0||o.maxRadius<=o.minRadius||o.neighborCutoff<=0||
-       o.clusterDistance<=0||o.minSpheres==0||o.maxCandidates==0)
+       o.clusterDistance<=0||o.maxClusterRadius<=0||o.minContactAtoms<4||o.minSpheres==0||o.maxCandidates==0)
         throw std::invalid_argument("Invalid alpha pocket options");
     std::vector<AlphaSphere> candidates;
     // Neighbor-limited tetrahedra avoid cubic scanning of the whole structure.
@@ -68,6 +68,10 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
                 for(const auto& atom:atoms)
                     radius=std::min(radius,std::sqrt(dist2(center,atom.pos))-atom.radius);
                 if(radius<o.minRadius||radius>o.maxRadius)continue;
+                std::size_t contacts=0;
+                for(const auto& atom:atoms)
+                    if(std::sqrt(dist2(center,atom.pos))-atom.radius<=radius+2.0)++contacts;
+                if(contacts<o.minContactAtoms)continue;
                 bool duplicate=false;
                 for(const auto& s:candidates)
                     if(dist2(center,s.center)<0.25){duplicate=true;break;}
@@ -76,24 +80,32 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
             }
         if(candidates.size()>=o.maxCandidates)break;
     }
-    DSU groups(candidates.size());
-    for(std::size_t i=0;i<candidates.size();++i)
-        for(std::size_t j=i+1;j<candidates.size();++j)
-            if(dist2(candidates[i].center,candidates[j].center)<=sq(o.clusterDistance))
-                groups.join(i,j);
+    // Bounded centroid clustering: no unrestricted single-link chaining.
+    std::sort(candidates.begin(),candidates.end(),[](const auto&a,const auto&b){return a.radius>b.radius;});
     std::vector<AlphaPocket> result;
-    std::vector<std::size_t> roots;
-    for(std::size_t i=0;i<candidates.size();++i){
-        const auto root=groups.find(i);
-        auto it=std::find(roots.begin(),roots.end(),root);
-        if(it==roots.end()){roots.push_back(root);result.emplace_back();it=roots.end()-1;}
-        auto& pocket=result[static_cast<std::size_t>(it-roots.begin())];
-        pocket.spheres.push_back(candidates[i]);
-        for(int k=0;k<3;++k)pocket.center[k]+=candidates[i].center[k];
+    for(const auto& sphere:candidates){
+        std::size_t best=result.size();
+        double bestDistance=sq(o.clusterDistance);
+        for(std::size_t i=0;i<result.size();++i){
+            const double d2=dist2(sphere.center,result[i].center);
+            if(d2>=bestDistance)continue;
+            bool bounded=true;
+            for(const auto& member:result[i].spheres)
+                if(dist2(sphere.center,member.center)>sq(o.maxClusterRadius*2)){bounded=false;break;}
+            if(bounded){best=i;bestDistance=d2;}
+        }
+        if(best==result.size()){
+            AlphaPocket p;p.center=sphere.center;p.spheres.push_back(sphere);
+            result.push_back(std::move(p));
+        }else{
+            auto& p=result[best];
+            const double n=static_cast<double>(p.spheres.size());
+            for(int k=0;k<3;++k)p.center[k]=(p.center[k]*n+sphere.center[k])/(n+1);
+            p.spheres.push_back(sphere);
+        }
     }
     result.erase(std::remove_if(result.begin(),result.end(),[&](AlphaPocket& p){
         if(p.spheres.size()<o.minSpheres)return true;
-        for(int k=0;k<3;++k)p.center[k]/=p.spheres.size();
         for(const auto& s:p.spheres)p.volume+=4.1887902047863905*s.radius*s.radius*s.radius;
         return false;
     }),result.end());
