@@ -937,7 +937,7 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
     if (e->buttons() == Qt::NoButton && pocketVisible_ && pocketColorMode_ >= 2) {
         const auto camera = makeCamera(size(), 1.0, false);
         const QPointF cursor = eventPos(e);
-        double bestD2 = 64.0, bestDepth = 1e30, value = 0;
+        double bestD2 = 64.0, bestDepth = 1e30, value = 0, solventDepth = -1;
         int bestPocket = -1;
         for (int i = 0; i < static_cast<int>(pocketGroups_.size()); ++i) {
             const auto& voxels = pocketGroups_[i];
@@ -950,10 +950,11 @@ void ViewerWidget::mouseMoveEvent(QMouseEvent* e) {
                 if (d2<bestD2 || (std::abs(d2-bestD2)<1e-6 && q.w<bestDepth)) {
                     bestD2=d2; bestDepth=q.w; bestPocket=i;
                     value=voxels[j].buriedness;
+                    solventDepth=voxels[j].solventPathDepth;
                 }
             }
         }
-        emit pocketBuriednessHovered(bestPocket,value);
+        emit pocketBuriednessHovered(bestPocket,value,solventDepth);
     }
     const QPoint cur = eventPos(e).toPoint();
     const QPoint d = cur - last_;
