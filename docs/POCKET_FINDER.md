@@ -25,6 +25,10 @@ residue-based fingerprint definitions.
 The Alpha controls mirror `ligint-pocket-alpha`: minimum/maximum sphere radius, neighbor
 cutoff, clustering distance and radius, minimum contact atoms and spheres, macrocluster link
 distance/diameter/clearance, and whether to merge microclusters. Defaults match the CLI.
+Candidate order defaults to sphere count. The experimental `sphere-volume` ranking orders
+by summed alpha-sphere volume, with sphere count as a tie breaker. The CLI accepts
+`--rank-by sphere-count` or `--rank-by sphere-volume`; the GUI exposes the same choice. The
+benchmark utility reports top-k ligand hits under both rankings for comparison.
 
 **Export Alpha results (CSV + PDB)** writes four files beside the selected CSV: candidate
 centers and sphere counts (`.csv`), sphere coordinates (`.pdb`), per-candidate geometry

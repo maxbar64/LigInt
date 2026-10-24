@@ -4,6 +4,7 @@
 #include "ligint/pocket.hpp"
 #include <vector>
 namespace ligint {
+enum class AlphaPocketRanking { SphereCount, SphereVolume };
 struct AlphaPocketOptions {
     double minRadius=2.0, maxRadius=5.5;
     double neighborCutoff=10.0;
@@ -15,6 +16,7 @@ struct AlphaPocketOptions {
     double macroMinClearance=1.0; // minimum VdW clearance on sphere-center connection, Å
     bool mergeMicroclusters=true;
     std::size_t minSpheres=3, maxCandidates=200000;
+    AlphaPocketRanking ranking=AlphaPocketRanking::SphereCount;
 };
 struct AlphaSphere { V3 center{0,0,0}; double radius=0; };
 struct AlphaPocket { V3 center{0,0,0}; double volume=0; std::vector<AlphaSphere> spheres; };

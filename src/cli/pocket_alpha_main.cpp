@@ -11,12 +11,12 @@
 using namespace ligint;
 int main(int argc,char**argv){
  try{
-  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--chain ID] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 1;}
+  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--rank-by sphere-count|sphere-volume] [--chain ID] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 1;}
   AlphaPocketOptions o;
   std::string input,output,pdb,audit,mergeAuditFile,chain;
   for(int i=1;i<argc;++i){
    const std::string key=argv[i];
-   if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--chain ID] [--min-spheres N] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 0;}
+   if(key=="--help"||key=="-h"){std::cout<<"Native experimental alpha-sphere-like pocket finder (not fpocket).\nUsage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--chain ID] [--min-spheres N] [--rank-by sphere-count|sphere-volume] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 0;}
    if(key=="--no-macro-merge"){o.mergeMicroclusters=false;continue;}
    if(key.rfind("--",0)!=0){if(!input.empty())throw std::invalid_argument("Only one input structure");input=key;continue;}
    if(i+1>=argc)throw std::invalid_argument("Missing value for "+key);
@@ -34,6 +34,11 @@ int main(int argc,char**argv){
    else if(key=="--macro-diameter")o.macroMaxDiameter=std::stod(value);
    else if(key=="--macro-clearance")o.macroMinClearance=std::stod(value);
    else if(key=="--min-spheres")o.minSpheres=std::stoull(value);
+   else if(key=="--rank-by"){
+    if(value=="sphere-count")o.ranking=AlphaPocketRanking::SphereCount;
+    else if(value=="sphere-volume")o.ranking=AlphaPocketRanking::SphereVolume;
+    else throw std::invalid_argument("Invalid --rank-by value: "+value);
+   }
    else if(key=="--output")output=value;
    else if(key=="--pdb")pdb=value;
    else throw std::invalid_argument("Unknown option "+key);

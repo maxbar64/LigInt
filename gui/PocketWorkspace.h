@@ -62,6 +62,7 @@ private:
                    *alphaMacroLink_=nullptr,*alphaMacroDiameter_=nullptr,*alphaMacroClearance_=nullptr;
     QSpinBox *alphaMinContacts_=nullptr,*alphaMinSpheres_=nullptr,*alphaOpacity_=nullptr;
     QCheckBox *alphaMerge_=nullptr;
+    QComboBox *alphaRank_=nullptr;
     QSpinBox *radius_=nullptr,*minPts_=nullptr,*opacity_=nullptr,*pointSize_=nullptr;
     QListWidget* entries_=nullptr;
     QLabel* status_=nullptr;

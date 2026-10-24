@@ -431,12 +431,14 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     alphaMacroDiameter_=new QDoubleSpinBox;alphaMacroDiameter_->setRange(1,40);alphaMacroDiameter_->setDecimals(1);alphaMacroDiameter_->setValue(18);alphaMacroDiameter_->setSuffix(" Å");
     alphaMacroClearance_=new QDoubleSpinBox;alphaMacroClearance_->setRange(0,5);alphaMacroClearance_->setDecimals(1);alphaMacroClearance_->setValue(1);alphaMacroClearance_->setSuffix(" Å");
     alphaMerge_=new QCheckBox("Merge connected microclusters");alphaMerge_->setChecked(true);
+    alphaRank_=new QComboBox;alphaRank_->addItems({"Sphere count (default)","Sphere volume sum"});
     alphaForm->addRow("Sphere radius min",alphaMinRadius_);alphaForm->addRow("Sphere radius max",alphaMaxRadius_);
     alphaForm->addRow("Neighbor cutoff",alphaNeighborCutoff_);alphaForm->addRow("Cluster distance",alphaClusterDistance_);
     alphaForm->addRow("Max cluster radius",alphaMaxClusterRadius_);alphaForm->addRow("Min contact atoms",alphaMinContacts_);
     alphaForm->addRow("Min spheres per pocket",alphaMinSpheres_);alphaForm->addRow("Macro link distance",alphaMacroLink_);
     alphaForm->addRow("Macro max diameter",alphaMacroDiameter_);alphaForm->addRow("Macro min clearance",alphaMacroClearance_);
     alphaForm->addRow(alphaMerge_);
+    alphaForm->addRow("Rank candidates by",alphaRank_);
     alphaForm->addRow("Sphere opacity",alphaOpacity_);
     overlayMaterial_=new QComboBox;
     overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
@@ -520,6 +522,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         args<<"--min-spheres"<<QString::number(alphaMinSpheres_->value());
         add("--macro-link",alphaMacroLink_->value());add("--macro-diameter",alphaMacroDiameter_->value());
         add("--macro-clearance",alphaMacroClearance_->value());
+        args<<"--rank-by"<<(alphaRank_->currentIndex()==1?"sphere-volume":"sphere-count");
         if(!alphaMerge_->isChecked())args<<"--no-macro-merge";
         const QString chain=chain_->currentData().toString();if(!chain.isEmpty())args<<"--chain"<<chain;
         QApplication::clipboard()->setText(joinCommand("ligint-pocket-alpha",args));
@@ -753,6 +756,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             options.minSpheres=static_cast<std::size_t>(alphaMinSpheres_->value());
             options.macroLinkDistance=alphaMacroLink_->value();options.macroMaxDiameter=alphaMacroDiameter_->value();
             options.macroMinClearance=alphaMacroClearance_->value();options.mergeMicroclusters=alphaMerge_->isChecked();
+            options.ranking=alphaRank_->currentIndex()==1?ligint::AlphaPocketRanking::SphereVolume:ligint::AlphaPocketRanking::SphereCount;
             run_->setEnabled(false);status_->setText("Computing Alpha-sphere pockets...");
             watcher_.setFuture(QtConcurrent::run([path,chain,options]{
                 PocketGuiOutcome out;out.alphaMode=true;

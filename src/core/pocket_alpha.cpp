@@ -189,8 +189,12 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
             for(int k=0;k<3;++k)pocket.center[k]/=pocket.spheres.size();
         result=std::move(macro);
     }
-    std::sort(result.begin(),result.end(),[](const AlphaPocket&a,const AlphaPocket&b){
-        return a.spheres.size()>b.spheres.size();
+    std::sort(result.begin(),result.end(),[&](const AlphaPocket&a,const AlphaPocket&b){
+        if(o.ranking==AlphaPocketRanking::SphereVolume && a.volume!=b.volume)
+            return a.volume>b.volume;
+        if(a.spheres.size()!=b.spheres.size())
+            return a.spheres.size()>b.spheres.size();
+        return a.volume>b.volume;
     });
     return result;
 }
