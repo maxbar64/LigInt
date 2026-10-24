@@ -895,8 +895,9 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         if(out.alphaMode) {
             alphaPockets_=std::move(out.alphaPockets);alphaAudit_=std::move(out.alphaAudit);
             exportAlpha_->setEnabled(!alphaPockets_.empty());
-            status_->setText(QString("%1 Alpha pockets; %2 spheres; %3 atoms")
-                .arg(alphaPockets_.size()).arg([this]{std::size_t n=0;for(const auto& p:alphaPockets_)n+=p.spheres.size();return n;}())
+            status_->setText(QString("%1 Alpha pockets after enclosure filter; %2/%3 sphere candidates rejected; %4 spheres; %5 atoms")
+                .arg(alphaPockets_.size()).arg(alphaAudit_.rejectedByEnclosure).arg(alphaAudit_.enclosureTested)
+                .arg([this]{std::size_t n=0;for(const auto& p:alphaPockets_)n+=p.spheres.size();return n;}())
                 .arg(atoms_.size()));
         } else {
             result_=std::move(out.result);groups_=std::move(out.groups);
