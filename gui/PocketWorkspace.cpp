@@ -60,7 +60,7 @@ protected:
     void paintEvent(QPaintEvent*) override {
         QPainter p(this);p.fillRect(rect(),QColor(16,23,34));p.setRenderHint(QPainter::Antialiasing);
         const auto members=owner_->visibleMembers();
-        if(owner_->algorithm_->currentIndex()==1) {
+        if(owner_->algorithm_->currentIndex()==1 && owner_->alphaRender_->currentIndex()==1) {
             if(members.empty()){p.setPen(Qt::white);p.drawText(rect(),Qt::AlignCenter,"Run Alpha-sphere search and select a candidate");return;}
             struct AlphaDraw {const ligint::AlphaSphere* sphere;std::size_t pocket;};
             std::vector<AlphaDraw> spheres;
@@ -107,11 +107,76 @@ protected:
                 QString("Alpha spheres: %1 | drag: rotate | wheel: zoom").arg(spheres.size()));
             return;
         }
-        if(members.empty()){p.setPen(Qt::white);p.drawText(rect(),Qt::AlignCenter,"Run Pocket Finder and select a candidate");return;}
+        const bool alphaMode=owner_->algorithm_->currentIndex()==1;
+        if(members.empty()){
+            p.setPen(Qt::white);
+            p.drawText(rect(),Qt::AlignCenter,alphaMode
+                ?"Run Alpha-sphere search and select a candidate"
+                :"Run Pocket Finder and select a candidate");
+            return;
+        }
+        const double alphaSpacing=owner_->spacing_->value();
+        if(alphaMode){
+            QString key=QString::number(owner_->canvas_->property("pocketGeneration").toInt())
+                +"|"+QString::number(alphaSpacing,'g',12);
+            for(const auto id:members)key+=":"+QString::number(id);
+            if(key!=alphaVoxelKey_){
+                alphaVoxelPockets_.assign(owner_->alphaPockets_.size(),{});
+                std::size_t totalCells=0;
+                for(const auto id:members){
+                    if(id>=owner_->alphaPockets_.size())continue;
+                    auto& pocket=alphaVoxelPockets_[id];
+                    const auto& source=owner_->alphaPockets_[id];
+                    pocket.center=source.center;
+                    std::set<std::array<long long,3>> cells;
+                    for(const auto& sphere:source.spheres){
+                        long long low[3],high[3];
+                        for(int k=0;k<3;k++){
+                            low[k]=static_cast<long long>(std::ceil((sphere.center[k]-sphere.radius)/alphaSpacing));
+                            high[k]=static_cast<long long>(std::floor((sphere.center[k]+sphere.radius)/alphaSpacing));
+                        }
+                        for(long long z=low[2];z<=high[2];++z)
+                            for(long long y=low[1];y<=high[1];++y)
+                                for(long long x=low[0];x<=high[0];++x){
+                                    const double px=x*alphaSpacing,py=y*alphaSpacing,pz=z*alphaSpacing;
+                                    const double dx=px-sphere.center[0],dy=py-sphere.center[1],dz=pz-sphere.center[2];
+                                    if(dx*dx+dy*dy+dz*dz>sphere.radius*sphere.radius)continue;
+                                    cells.insert({x,y,z});
+                                    if(cells.size()>1500000){
+                                        alphaVoxelKey_.clear();
+                                        p.setPen(QColor(255,220,150));
+                                        p.drawText(rect(),Qt::AlignCenter,
+                                            "Alpha voxel volume is too large; increase Grid spacing");
+                                        return;
+                                    }
+                                }
+                    }
+                    pocket.points.reserve(cells.size());
+                    for(const auto& cell:cells){
+                        ligint::PocketPoint point;
+                        point.pos={cell[0]*alphaSpacing,cell[1]*alphaSpacing,cell[2]*alphaSpacing};
+                        point.buriedness=1.0f; // occupied alpha-sphere union, not a buriedness measurement
+                        pocket.points.push_back(point);
+                    }
+                    pocket.pointCount=pocket.points.size();
+                    pocket.volume=pocket.pointCount*alphaSpacing*alphaSpacing*alphaSpacing;
+                    totalCells+=pocket.pointCount;
+                    if(totalCells>3000000){
+                        alphaVoxelKey_.clear();
+                        p.setPen(QColor(255,220,150));
+                        p.drawText(rect(),Qt::AlignCenter,
+                            "Selected alpha volumes exceed the display limit; select fewer pockets or increase Grid spacing");
+                        return;
+                    }
+                }
+                alphaVoxelKey_=key;
+            }
+        }
+        const auto& displayPockets=alphaMode?alphaVoxelPockets_:owner_->result_.pockets;
         std::vector<ligint::PocketPoint> points;
         ligint::V3 center{0,0,0};
-        for(auto id:members)if(id<owner_->result_.pockets.size()){
-            const auto& pocket=owner_->result_.pockets[id];
+        for(auto id:members)if(id<displayPockets.size()){
+            const auto& pocket=displayPockets[id];
             points.insert(points.end(),pocket.points.begin(),pocket.points.end());
         }
         if(points.empty())return;
@@ -232,8 +297,8 @@ protected:
             for(const auto& voxel:points)occupied.insert(key(voxel.pos));
         }
         for(std::size_t m=0;m<members.size();m++){
-            const auto id=members[m];if(id>=owner_->result_.pockets.size())continue;
-            for(const auto& voxel:owner_->result_.pockets[id].points){
+            const auto id=members[m];if(id>=displayPockets.size())continue;
+            for(const auto& voxel:displayPockets[id].points){
                 if(!visible.count(lattice(voxel.pos)))continue;
                 const double x=voxel.pos[0]-center[0],y=voxel.pos[1]-center[1],z=voxel.pos[2]-center[2];
                 const double rx=cy*x+sy*z,rz=-sy*x+cy*z;
@@ -291,7 +356,7 @@ protected:
             }
         }
         if(mode==3){
-            QString meshKey=QString::number(owner_->canvas_->property("pocketGeneration").toInt())+"|"+QString::number(spacing,'g',12)+"|"+
+            QString meshKey=QString::number(owner_->canvas_->property("pocketGeneration").toInt())+"|"+QString::number(alphaMode?1:0)+"|"+QString::number(spacing,'g',12)+"|"+
                 QString::number(owner_->smoothSteps_->value())+"|"+
                 QString::number(owner_->noiseNeighbors_->value())+"|"+
                 QString::number(owner_->noiseComponent_->value());
@@ -359,6 +424,8 @@ private:
     PocketWorkspace* owner_;QPoint last_;double yaw_=0.5,pitch_=0.4,zoom_=1;
     QString meshKey_;
     std::vector<SmoothTriangle> mesh_;
+    QString alphaVoxelKey_;
+    std::vector<ligint::PocketCandidate> alphaVoxelPockets_;
 };
 
 PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
@@ -419,6 +486,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
     auto* alphaForm=new QFormLayout;
+    alphaRender_=new QComboBox;alphaRender_->addItems({"Voxel volume","Alpha spheres"});
     alphaMinRadius_=new QDoubleSpinBox;alphaMinRadius_->setRange(0.5,10);alphaMinRadius_->setDecimals(2);alphaMinRadius_->setValue(2.0);alphaMinRadius_->setSuffix(" Å");
     alphaMaxRadius_=new QDoubleSpinBox;alphaMaxRadius_->setRange(1,15);alphaMaxRadius_->setDecimals(2);alphaMaxRadius_->setValue(5.5);alphaMaxRadius_->setSuffix(" Å");
     alphaNeighborCutoff_=new QDoubleSpinBox;alphaNeighborCutoff_->setRange(2,20);alphaNeighborCutoff_->setDecimals(1);alphaNeighborCutoff_->setValue(10);alphaNeighborCutoff_->setSuffix(" Å");
@@ -439,6 +507,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     alphaForm->addRow("Macro max diameter",alphaMacroDiameter_);alphaForm->addRow("Macro min clearance",alphaMacroClearance_);
     alphaForm->addRow(alphaMerge_);
     alphaForm->addRow("Rank candidates by",alphaRank_);
+    alphaForm->addRow("Geometry display",alphaRender_);
     alphaForm->addRow("Sphere opacity",alphaOpacity_);
     overlayMaterial_=new QComboBox;
     overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
@@ -684,6 +753,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(entries_,&QListWidget::itemSelectionChanged,this,&PocketWorkspace::publishSelection);
     connect(palette_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(renderMode_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(alphaRender_,QOverload<int>::of(&QComboBox::currentIndexChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(ligand_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
         ligandCoords_.clear();
         const QString token=ligand_->currentData().toString();
