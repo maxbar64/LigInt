@@ -57,7 +57,7 @@ private:
     std::vector<ligint::V3> ligandCoords_;
     QComboBox *algorithm_=nullptr,*morph_=nullptr,*display_=nullptr,*chain_=nullptr,*palette_=nullptr;
     QDoubleSpinBox *spacing_=nullptr,*buried_=nullptr,*ray_=nullptr,*surface_=nullptr,*probe_=nullptr;
-    QDoubleSpinBox *alphaMinRadius_=nullptr,*alphaMaxRadius_=nullptr,*alphaNeighborCutoff_=nullptr,
+    QDoubleSpinBox *alphaMinRadius_=nullptr,*alphaMaxRadius_=nullptr,*alphaNeighborCutoff_=nullptr,*alphaMinEnclosure_=nullptr,
                    *alphaClusterDistance_=nullptr,*alphaMaxClusterRadius_=nullptr,
                    *alphaMacroLink_=nullptr,*alphaMacroDiameter_=nullptr,*alphaMacroClearance_=nullptr;
     QSpinBox *alphaMinContacts_=nullptr,*alphaMinSpheres_=nullptr,*alphaOpacity_=nullptr;
