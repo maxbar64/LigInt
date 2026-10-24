@@ -361,3 +361,10 @@ In the **Pocket Finder 3D** panel, the shared molecular **Interactions 3D** scen
 ## Satin translucent material preset (phase 8)
 
 The integrated **Interactions 3D** pocket layer now defaults to **Satin translucent**: 38% opacity and 12% specular strength, intended to reduce bright hotspots and keep the ligand visible beneath the cavity shell. The Pocket Finder panel provides **Satin translucent**, **Matte** (65% opacity, 0% specular), **Glossy** (55% opacity, 55% specular), and **Custom** presets. Changing opacity/specular manually selects Custom. Presets affect only the integrated molecular scene's pocket overlay, not the independent Pocket Finder preview, pocket geometry, or protein/ligand scoring. This is a lighting/material preset, not physically based translucency, subsurface scattering, or order-independent transparency. Protein cartoon, ligand, and interaction overlays continue to use the shared software renderer.
+
+
+## Alpha pockets on the shared voxel renderer
+
+The GUI now rasterizes each selected alpha-pocket as the union of its original spheres on the configured **Grid spacing**. The resulting occupied voxel volume uses the existing buriedness Pocket Finder display pipeline: **Voxels**, **Voxel shell**, **Shell + Voxels**, and **Smooth isosurface**, with the same palette, opacity, smoothing, noise filters, ligand context, and rotation/zoom controls. The **Geometry display** selector switches between this shared voxel view and the original **Alpha spheres** view, which remains available as a source-geometry diagnostic.
+
+Rasterized alpha occupancy is a geometric union; its stored display value is marked as occupied and must not be interpreted as measured buriedness. Candidate generation and ranking are unchanged. The voxel volume is a grid approximation whose boundary and estimated volume depend on Grid spacing. A per-selection safety limit prevents excessive GUI allocations; if reached, increase Grid spacing or select fewer candidates. The alpha sphere list and its existing exports remain the source data.
