@@ -508,6 +508,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     alphaClusterDistance_=new QDoubleSpinBox;alphaClusterDistance_->setRange(0.5,10);alphaClusterDistance_->setDecimals(1);alphaClusterDistance_->setValue(3);alphaClusterDistance_->setSuffix(" Å");
     alphaMaxClusterRadius_=new QDoubleSpinBox;alphaMaxClusterRadius_->setRange(1,20);alphaMaxClusterRadius_->setDecimals(1);alphaMaxClusterRadius_->setValue(9);alphaMaxClusterRadius_->setSuffix(" Å");
     alphaMinContacts_=new QSpinBox;alphaMinContacts_->setRange(4,100);alphaMinContacts_->setValue(4);
+    alphaMinEnclosure_=new QDoubleSpinBox;alphaMinEnclosure_->setRange(0,100);alphaMinEnclosure_->setDecimals(0);alphaMinEnclosure_->setSingleStep(5);alphaMinEnclosure_->setValue(55);alphaMinEnclosure_->setSuffix("%");
+    alphaMinEnclosure_->setToolTip("Reject candidate spheres unless protein atoms enclose at least this fraction of 64 outward water-probe directions.");
     alphaOpacity_=new QSpinBox;alphaOpacity_->setRange(10,100);alphaOpacity_->setValue(72);alphaOpacity_->setSuffix("%");
     alphaMinSpheres_=new QSpinBox;alphaMinSpheres_->setRange(1,100);alphaMinSpheres_->setValue(3);
     alphaMacroLink_=new QDoubleSpinBox;alphaMacroLink_->setRange(0.5,15);alphaMacroLink_->setDecimals(1);alphaMacroLink_->setValue(5);alphaMacroLink_->setSuffix(" Å");
@@ -518,6 +520,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     alphaForm->addRow("Sphere radius min",alphaMinRadius_);alphaForm->addRow("Sphere radius max",alphaMaxRadius_);
     alphaForm->addRow("Neighbor cutoff",alphaNeighborCutoff_);alphaForm->addRow("Cluster distance",alphaClusterDistance_);
     alphaForm->addRow("Max cluster radius",alphaMaxClusterRadius_);alphaForm->addRow("Min contact atoms",alphaMinContacts_);
+    alphaForm->addRow("Min directional enclosure",alphaMinEnclosure_);
     alphaForm->addRow("Min spheres per pocket",alphaMinSpheres_);alphaForm->addRow("Macro link distance",alphaMacroLink_);
     alphaForm->addRow("Macro max diameter",alphaMacroDiameter_);alphaForm->addRow("Macro min clearance",alphaMacroClearance_);
     alphaForm->addRow(alphaMerge_);
@@ -571,8 +574,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         if(index==1) {
             for(std::size_t i=0;i<alphaPockets_.size();++i) {
                 const auto& pocket=alphaPockets_[i];
-                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
-                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | enclosure %4% | center (%5, %6, %7)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0).arg(pocket.enclosureFraction*100,0,'f',0)
                     .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
             }
         } else if(display_->currentIndex()==0) {
@@ -603,6 +606,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         add("--min-radius",alphaMinRadius_->value());add("--max-radius",alphaMaxRadius_->value());
         add("--neighbor-cutoff",alphaNeighborCutoff_->value());add("--cluster-distance",alphaClusterDistance_->value());
         add("--max-cluster-radius",alphaMaxClusterRadius_->value());args<<"--min-contact-atoms"<<QString::number(alphaMinContacts_->value());
+        add("--min-enclosure",alphaMinEnclosure_->value()/100.0);
         args<<"--min-spheres"<<QString::number(alphaMinSpheres_->value());
         add("--macro-link",alphaMacroLink_->value());add("--macro-diameter",alphaMacroDiameter_->value());
         add("--macro-clearance",alphaMacroClearance_->value());
@@ -625,12 +629,12 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         std::ofstream audit(stem.toStdString()+".audit.csv");
         std::ofstream mergeAudit(stem.toStdString()+".merge_audit.csv");
         if(!csv||!pdb||!audit||!mergeAudit){status_->setText("Could not write one or more Alpha result files.");return;}
-        csv<<"rank,center_x,center_y,center_z,sphere_count,sphere_volume_sum_A3\n"<<std::fixed<<std::setprecision(3);
-        audit<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3\n"<<std::fixed<<std::setprecision(3);
+        csv<<"rank,center_x,center_y,center_z,sphere_count,sphere_volume_sum_A3,mean_enclosure_fraction\n"<<std::fixed<<std::setprecision(3);
+        audit<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3,mean_enclosure_fraction\n"<<std::fixed<<std::setprecision(3);
         std::size_t serial=0;
         for(std::size_t i=0;i<alphaPockets_.size();++i){
             const auto& pocket=alphaPockets_[i];
-            csv<<i+1<<","<<pocket.center[0]<<","<<pocket.center[1]<<","<<pocket.center[2]<<","<<pocket.spheres.size()<<","<<pocket.volume<<"\n";
+            csv<<i+1<<","<<pocket.center[0]<<","<<pocket.center[1]<<","<<pocket.center[2]<<","<<pocket.spheres.size()<<","<<pocket.volume<<","<<pocket.enclosureFraction<<"\n";
             std::vector<double> radii;double extent=0;ligint::V3 low=pocket.spheres.front().center,high=low;
             for(const auto& sphere:pocket.spheres){
                 radii.push_back(sphere.radius);
@@ -640,7 +644,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             }
             std::sort(radii.begin(),radii.end());
             double box2=0;for(int k=0;k<3;++k)box2+=std::pow(high[k]-low[k],2);
-            audit<<i+1<<","<<radii.size()<<","<<radii.front()<<","<<radii[radii.size()/2]<<","<<radii.back()<<","<<extent<<","<<std::sqrt(box2)<<","<<pocket.volume<<"\n";
+            audit<<i+1<<","<<radii.size()<<","<<radii.front()<<","<<radii[radii.size()/2]<<","<<radii.back()<<","<<extent<<","<<std::sqrt(box2)<<","<<pocket.volume<<","<<pocket.enclosureFraction<<"\n";
             for(const auto& sphere:pocket.spheres){
                 if(++serial>99999)break;
                 char line[160];std::snprintf(line,sizeof(line),"HETATM%5zu  C   SPH A%4zu    %8.3f%8.3f%8.3f  1.00%6.2f           C\n",serial,(i+1)%10000,sphere.center[0],sphere.center[1],sphere.center[2],sphere.radius);
@@ -650,7 +654,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         pdb<<"END\n";
         mergeAudit<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,endpoint_clearance_A,merged_center_diameter_A,accepted,reason\n"<<std::fixed<<std::setprecision(3);
         for(const auto& d:alphaAudit_.decisions)mergeAudit<<d.first<<","<<d.second<<","<<d.linkDistance<<","<<d.minClearance<<","<<d.endpointClearance<<","<<d.mergedDiameter<<","<<(d.accepted?1:0)<<","<<d.reason<<"\n";
-        status_->setText(QString("Alpha results exported: %1 candidates; CSV, PDB and both audits saved.").arg(alphaPockets_.size()));
+        status_->setText(QString("Alpha results exported: %1 candidates; enclosure rejected %2/%3; CSV, PDB and both audits saved.")
+            .arg(alphaPockets_.size()).arg(alphaAudit_.rejectedByEnclosure).arg(alphaAudit_.enclosureTested));
     });
     auto* exportAudit=new QPushButton("Export solvent depth audit (CSV)");
     exportAudit->setEnabled(false);
@@ -743,8 +748,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         if(algorithm_->currentIndex()==1) {
             for(std::size_t i=0;i<alphaPockets_.size();++i) {
                 const auto& pocket=alphaPockets_[i];
-                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
-                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | enclosure %4% | center (%5, %6, %7)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0).arg(pocket.enclosureFraction*100,0,'f',0)
                     .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
             }
         } else if(display_->currentIndex()==0){
@@ -838,6 +843,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             options.neighborCutoff=alphaNeighborCutoff_->value();options.clusterDistance=alphaClusterDistance_->value();
             options.maxClusterRadius=alphaMaxClusterRadius_->value();
             options.minContactAtoms=static_cast<std::size_t>(alphaMinContacts_->value());
+            options.minEnclosureFraction=alphaMinEnclosure_->value()/100.0;
             options.minSpheres=static_cast<std::size_t>(alphaMinSpheres_->value());
             options.macroLinkDistance=alphaMacroLink_->value();options.macroMaxDiameter=alphaMacroDiameter_->value();
             options.macroMinClearance=alphaMacroClearance_->value();options.mergeMicroclusters=alphaMerge_->isChecked();
@@ -903,8 +909,8 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
             entries_->clear();
             for(std::size_t i=0;i<alphaPockets_.size();++i) {
                 const auto& pocket=alphaPockets_[i];
-                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
-                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | enclosure %4% | center (%5, %6, %7)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0).arg(pocket.enclosureFraction*100,0,'f',0)
                     .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
             }
         } else {
