@@ -498,6 +498,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Voxel size",pointSize_);
     auto* alphaForm=new QFormLayout;
     alphaRender_=new QComboBox;alphaRender_->addItems({"Voxel volume","Alpha spheres"});
+    alphaRender_->setToolTip("Choose the shared voxel volume or the original alpha-sphere geometry.");
+    auto* alphaRenderLabel=new QLabel("Alpha geometry");
+    alphaRenderLabel->setVisible(false);alphaRender_->setVisible(false);
+    column->addWidget(alphaRenderLabel);column->addWidget(alphaRender_);
     alphaMinRadius_=new QDoubleSpinBox;alphaMinRadius_->setRange(0.5,10);alphaMinRadius_->setDecimals(2);alphaMinRadius_->setValue(2.0);alphaMinRadius_->setSuffix(" Å");
     alphaMaxRadius_=new QDoubleSpinBox;alphaMaxRadius_->setRange(1,15);alphaMaxRadius_->setDecimals(2);alphaMaxRadius_->setValue(5.5);alphaMaxRadius_->setSuffix(" Å");
     alphaNeighborCutoff_=new QDoubleSpinBox;alphaNeighborCutoff_->setRange(2,20);alphaNeighborCutoff_->setDecimals(1);alphaNeighborCutoff_->setValue(10);alphaNeighborCutoff_->setSuffix(" Å");
@@ -518,7 +522,6 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     alphaForm->addRow("Macro max diameter",alphaMacroDiameter_);alphaForm->addRow("Macro min clearance",alphaMacroClearance_);
     alphaForm->addRow(alphaMerge_);
     alphaForm->addRow("Rank candidates by",alphaRank_);
-    alphaForm->addRow("Geometry display",alphaRender_);
     alphaForm->addRow("Sphere opacity",alphaOpacity_);
     overlayMaterial_=new QComboBox;
     overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
@@ -555,8 +558,9 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     advancedArea->setWidget(advancedContent);
     advancedArea->setVisible(false);
     column->addWidget(advancedArea);
-    connect(algorithm_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this,parameterPages,advancedToggle](int index){
+    connect(algorithm_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this,parameterPages,advancedToggle,alphaRenderLabel](int index){
         Q_UNUSED(advancedToggle);
+        alphaRenderLabel->setVisible(index==1);alphaRender_->setVisible(index==1);
         parameterPages->setCurrentIndex(index);
         display_->setVisible(index==0);
         run_->setText(index==0?"Find pockets":"Find Alpha pockets");
