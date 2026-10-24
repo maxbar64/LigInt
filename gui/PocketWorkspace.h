@@ -6,12 +6,16 @@
 #include <QList>
 #include "ligint/pocket.hpp"
 #include "ligint/pocket_groups.hpp"
+#include "ligint/pocket_alpha.hpp"
 class QCheckBox;class QComboBox;class QDoubleSpinBox;class QSpinBox;class QListWidget;class QLabel;class QPushButton;
 namespace gui {
 struct PocketGuiOutcome {
     ligint::PocketSearchResult result;
     std::vector<ligint::PocketGroup> groups;
     std::vector<ligint::PocketAtom> atoms;
+    std::vector<ligint::AlphaPocket> alphaPockets;
+    ligint::AlphaMergeAudit alphaAudit;
+    bool alphaMode = false;
     QString error;
 };
 class PocketWorkspace : public QWidget {
@@ -51,16 +55,23 @@ private:
     QDoubleSpinBox *seedSpacing_=nullptr,*seedProminence_=nullptr,*mergeDistance_=nullptr,*mergeDrop_=nullptr;
     QSpinBox *maxSeeds_=nullptr,*noiseNeighbors_=nullptr,*noiseComponent_=nullptr,*smoothSteps_=nullptr,*lightStrength_=nullptr,*shine_=nullptr;
     std::vector<ligint::V3> ligandCoords_;
-    QComboBox *morph_=nullptr,*display_=nullptr,*chain_=nullptr,*palette_=nullptr;
+    QComboBox *algorithm_=nullptr,*morph_=nullptr,*display_=nullptr,*chain_=nullptr,*palette_=nullptr;
     QDoubleSpinBox *spacing_=nullptr,*buried_=nullptr,*ray_=nullptr,*surface_=nullptr,*probe_=nullptr;
+    QDoubleSpinBox *alphaMinRadius_=nullptr,*alphaMaxRadius_=nullptr,*alphaNeighborCutoff_=nullptr,
+                   *alphaClusterDistance_=nullptr,*alphaMaxClusterRadius_=nullptr,
+                   *alphaMacroLink_=nullptr,*alphaMacroDiameter_=nullptr,*alphaMacroClearance_=nullptr;
+    QSpinBox *alphaMinContacts_=nullptr,*alphaMinSpheres_=nullptr,*alphaOpacity_=nullptr;
+    QCheckBox *alphaMerge_=nullptr;
     QSpinBox *radius_=nullptr,*minPts_=nullptr,*opacity_=nullptr,*pointSize_=nullptr;
     QListWidget* entries_=nullptr;
     QLabel* status_=nullptr;
-    QPushButton* run_=nullptr;
+    QPushButton *run_=nullptr,*exportAlpha_=nullptr,*copyAlphaCommand_=nullptr;
     QString path_;
     ligint::PocketSearchResult result_;
     std::vector<ligint::PocketAtom> atoms_;
     std::vector<ligint::PocketGroup> groups_;
+    std::vector<ligint::AlphaPocket> alphaPockets_;
+    ligint::AlphaMergeAudit alphaAudit_;
     QFutureWatcher<PocketGuiOutcome> watcher_;
     std::vector<std::size_t> visibleMembers() const;
     void publishSelection();

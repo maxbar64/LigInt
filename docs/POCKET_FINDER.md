@@ -13,6 +13,28 @@ The first version selects heavy atoms from `ATOM` records (not HETATM, including
 nonstandard amino acids). Chain IDs use the author's nomenclature; multi-character mmCIF
 chain IDs are accepted.
 
+## Alpha-sphere search and GUI (experimental)
+
+The GUI's **Pocket Finder 3D** now offers a second method, **Alpha spheres**, alongside
+directional buriedness. Select the method, optionally select one protein chain, adjust the
+Alpha parameters under **Detection and display parameters**, then run the search. Each
+candidate can be selected in the list and inspected as translucent spheres in the rotatable
+3D view. Switching methods keeps both result sets separate; Alpha results are not loaded as
+residue-based fingerprint definitions.
+
+The Alpha controls mirror `ligint-pocket-alpha`: minimum/maximum sphere radius, neighbor
+cutoff, clustering distance and radius, minimum contact atoms and spheres, macrocluster link
+distance/diameter/clearance, and whether to merge microclusters. Defaults match the CLI.
+
+**Export Alpha results (CSV + PDB)** writes four files beside the selected CSV: candidate
+centers and sphere counts (`.csv`), sphere coordinates (`.pdb`), per-candidate geometry
+audit (`.audit.csv`), and microcluster merge decisions (`.merge_audit.csv`). The export is
+independent of the currently loaded fingerprint pocket.
+
+The method uses approximate empty-sphere candidates and heuristic clustering. It is not a
+reimplementation of fpocket, and its ranked candidates are not validated binding-site or
+druggability predictions.
+
 ## Algorithm (experimental)
 
 1. Construct a union of atomic van der Waals volumes on a regular Cartesian grid.

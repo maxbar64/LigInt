@@ -1,8 +1,11 @@
 #include "PocketWorkspace.h"
 #include "ligint/pocket_interfaces.hpp"
 #include "PocketSmoothMesh.h"
+#include "CommandLine.h"
 #include <QComboBox>
 #include <QCheckBox>
+#include <QApplication>
+#include <QClipboard>
 #include <QStringList>
 #include <QPen>
 #include <QAbstractItemView>
@@ -27,6 +30,9 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QScrollArea>
+#include <QStackedWidget>
+#include <cstdio>
+#include <iomanip>
 #include <QToolButton>
 #include <QPainter>
 #include <QMouseEvent>
@@ -54,6 +60,53 @@ protected:
     void paintEvent(QPaintEvent*) override {
         QPainter p(this);p.fillRect(rect(),QColor(16,23,34));p.setRenderHint(QPainter::Antialiasing);
         const auto members=owner_->visibleMembers();
+        if(owner_->algorithm_->currentIndex()==1) {
+            if(members.empty()){p.setPen(Qt::white);p.drawText(rect(),Qt::AlignCenter,"Run Alpha-sphere search and select a candidate");return;}
+            struct AlphaDraw {const ligint::AlphaSphere* sphere;std::size_t pocket;};
+            std::vector<AlphaDraw> spheres;
+            for(const auto id:members)if(id<owner_->alphaPockets_.size())
+                for(const auto& sphere:owner_->alphaPockets_[id].spheres)spheres.push_back({&sphere,id});
+            if(spheres.empty())return;
+            ligint::V3 center{0,0,0};
+            for(const auto& item:spheres)for(int k=0;k<3;++k)center[k]+=item.sphere->center[k]/spheres.size();
+            double extent=1;
+            for(const auto& item:spheres)for(int k=0;k<3;++k)
+                extent=std::max(extent,std::fabs(item.sphere->center[k]-center[k])+item.sphere->radius);
+            const double scale=0.43*std::min(width(),height())*zoom_/extent;
+            const double cy=std::cos(yaw_),sy=std::sin(yaw_),cp=std::cos(pitch_),sp=std::sin(pitch_);
+            auto project=[&](const ligint::V3& v){
+                const double x=v[0]-center[0],y=v[1]-center[1],z=v[2]-center[2];
+                const double rx=cy*x+sy*z,rz=-sy*x+cy*z;
+                return std::pair<QPointF,double>{QPointF(width()/2.0+rx*scale,height()/2.0-(cp*y-sp*rz)*scale),sp*y+cp*rz};
+            };
+            for(std::size_t i=0;i<owner_->atoms_.size();i+=2){
+                const auto& atom=owner_->atoms_[i];double d2=0;
+                for(int k=0;k<3;++k)d2+=std::pow(atom.pos[k]-center[k],2);
+                if(d2>400)continue;
+                const auto screen=project(atom.pos);
+                p.setPen(Qt::NoPen);p.setBrush(QColor(148,159,171,75));p.drawEllipse(screen.first,1.3,1.3);
+            }
+            static const QColor colors[]={QColor(40,185,230),QColor(255,160,60),QColor(120,220,130),QColor(214,100,236)};
+            std::sort(spheres.begin(),spheres.end(),[&](const auto& a,const auto& b){
+                return project(a.sphere->center).second<project(b.sphere->center).second;
+            });
+            for(const auto& item:spheres){
+                const auto screen=project(item.sphere->center);
+                QColor fill=colors[item.pocket%4];fill.setAlpha(std::clamp(owner_->alphaOpacity_->value()/3,20,90));
+                QColor edge=colors[item.pocket%4].lighter(155);edge.setAlpha(230);
+                const double radius=std::clamp(item.sphere->radius*scale,2.0,100.0);
+                p.setPen(QPen(edge,1.4));p.setBrush(fill);p.drawEllipse(screen.first,radius,radius);
+                p.setPen(Qt::NoPen);p.setBrush(edge);p.drawEllipse(screen.first,2.0,2.0);
+            }
+            for(const auto& ligand:owner_->ligandCoords_){
+                const auto screen=project(ligand);p.setPen(Qt::NoPen);p.setBrush(QColor(250,244,125,240));
+                p.drawEllipse(screen.first,3.0,3.0);
+            }
+            p.setPen(QColor(230,238,248));
+            p.drawText(QRect(10,8,width()-20,24),Qt::AlignLeft,
+                QString("Alpha spheres: %1 | drag: rotate | wheel: zoom").arg(spheres.size()));
+            return;
+        }
         if(members.empty()){p.setPen(Qt::white);p.drawText(rect(),Qt::AlignCenter,"Run Pocket Finder and select a candidate");return;}
         std::vector<ligint::PocketPoint> points;
         ligint::V3 center{0,0,0};
@@ -313,6 +366,10 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     auto* controls=new QWidget;
     controls->setMaximumWidth(290);
     auto* column=new QVBoxLayout(controls);
+    algorithm_=new QComboBox;algorithm_->setObjectName("pocket_algorithm");
+    algorithm_->addItems({"Directional buriedness","Alpha spheres"});
+    column->addWidget(new QLabel("Pocket search method"));
+    column->addWidget(algorithm_);
     auto* form=new QFormLayout;
     spacing_=new QDoubleSpinBox;spacing_->setRange(0.5,3);spacing_->setValue(1);spacing_->setSingleStep(.25);
     buried_=new QDoubleSpinBox;buried_->setRange(.1,1);buried_->setSingleStep(.05);buried_->setValue(.5);
@@ -361,6 +418,26 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     form->addRow("Ligand overlay",ligand_);
     form->addRow("Voxel opacity",opacity_);
     form->addRow("Voxel size",pointSize_);
+    auto* alphaForm=new QFormLayout;
+    alphaMinRadius_=new QDoubleSpinBox;alphaMinRadius_->setRange(0.5,10);alphaMinRadius_->setDecimals(2);alphaMinRadius_->setValue(2.0);alphaMinRadius_->setSuffix(" Å");
+    alphaMaxRadius_=new QDoubleSpinBox;alphaMaxRadius_->setRange(1,15);alphaMaxRadius_->setDecimals(2);alphaMaxRadius_->setValue(5.5);alphaMaxRadius_->setSuffix(" Å");
+    alphaNeighborCutoff_=new QDoubleSpinBox;alphaNeighborCutoff_->setRange(2,20);alphaNeighborCutoff_->setDecimals(1);alphaNeighborCutoff_->setValue(10);alphaNeighborCutoff_->setSuffix(" Å");
+    alphaClusterDistance_=new QDoubleSpinBox;alphaClusterDistance_->setRange(0.5,10);alphaClusterDistance_->setDecimals(1);alphaClusterDistance_->setValue(3);alphaClusterDistance_->setSuffix(" Å");
+    alphaMaxClusterRadius_=new QDoubleSpinBox;alphaMaxClusterRadius_->setRange(1,20);alphaMaxClusterRadius_->setDecimals(1);alphaMaxClusterRadius_->setValue(9);alphaMaxClusterRadius_->setSuffix(" Å");
+    alphaMinContacts_=new QSpinBox;alphaMinContacts_->setRange(4,100);alphaMinContacts_->setValue(4);
+    alphaOpacity_=new QSpinBox;alphaOpacity_->setRange(10,100);alphaOpacity_->setValue(72);alphaOpacity_->setSuffix("%");
+    alphaMinSpheres_=new QSpinBox;alphaMinSpheres_->setRange(1,100);alphaMinSpheres_->setValue(3);
+    alphaMacroLink_=new QDoubleSpinBox;alphaMacroLink_->setRange(0.5,15);alphaMacroLink_->setDecimals(1);alphaMacroLink_->setValue(5);alphaMacroLink_->setSuffix(" Å");
+    alphaMacroDiameter_=new QDoubleSpinBox;alphaMacroDiameter_->setRange(1,40);alphaMacroDiameter_->setDecimals(1);alphaMacroDiameter_->setValue(18);alphaMacroDiameter_->setSuffix(" Å");
+    alphaMacroClearance_=new QDoubleSpinBox;alphaMacroClearance_->setRange(0,5);alphaMacroClearance_->setDecimals(1);alphaMacroClearance_->setValue(1);alphaMacroClearance_->setSuffix(" Å");
+    alphaMerge_=new QCheckBox("Merge connected microclusters");alphaMerge_->setChecked(true);
+    alphaForm->addRow("Sphere radius min",alphaMinRadius_);alphaForm->addRow("Sphere radius max",alphaMaxRadius_);
+    alphaForm->addRow("Neighbor cutoff",alphaNeighborCutoff_);alphaForm->addRow("Cluster distance",alphaClusterDistance_);
+    alphaForm->addRow("Max cluster radius",alphaMaxClusterRadius_);alphaForm->addRow("Min contact atoms",alphaMinContacts_);
+    alphaForm->addRow("Min spheres per pocket",alphaMinSpheres_);alphaForm->addRow("Macro link distance",alphaMacroLink_);
+    alphaForm->addRow("Macro max diameter",alphaMacroDiameter_);alphaForm->addRow("Macro min clearance",alphaMacroClearance_);
+    alphaForm->addRow(alphaMerge_);
+    alphaForm->addRow("Sphere opacity",alphaOpacity_);
     overlayMaterial_=new QComboBox;
     overlayMaterial_->addItems({"Satin translucent","Matte","Glossy","Custom"});
     overlayVisible_=new QCheckBox("Show pocket in Interactions 3D");
@@ -388,19 +465,111 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     auto* advancedContent = new QWidget;
     auto* advancedLayout = new QVBoxLayout(advancedContent);
     advancedLayout->setContentsMargins(5,5,5,5);
-    advancedLayout->addLayout(form);
+    auto* parameterPages=new QStackedWidget;
+    auto* buriednessPage=new QWidget;buriednessPage->setLayout(form);
+    auto* alphaPage=new QWidget;alphaPage->setLayout(alphaForm);
+    parameterPages->addWidget(buriednessPage);parameterPages->addWidget(alphaPage);
+    advancedLayout->addWidget(parameterPages);
     advancedArea->setWidget(advancedContent);
     advancedArea->setVisible(false);
     column->addWidget(advancedArea);
+    connect(algorithm_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this,parameterPages,advancedToggle](int index){
+        Q_UNUSED(advancedToggle);
+        parameterPages->setCurrentIndex(index);
+        display_->setVisible(index==0);
+        run_->setText(index==0?"Find pockets":"Find Alpha pockets");
+        exportAlpha_->setVisible(index==1);
+        copyAlphaCommand_->setVisible(index==1);
+        overlayVisible_->setVisible(index==0);
+        entries_->clear();
+        if(index==1) {
+            for(std::size_t i=0;i<alphaPockets_.size();++i) {
+                const auto& pocket=alphaPockets_[i];
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                    .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
+            }
+        } else if(display_->currentIndex()==0) {
+            for(std::size_t i=0;i<result_.pockets.size();++i)
+                entries_->addItem(QString("#%1 | %2 Å³ | buried %3").arg(i+1)
+                    .arg(result_.pockets[i].volume,0,'f',0).arg(result_.pockets[i].meanBuriedness,0,'f',2));
+        } else {
+            for(const auto& g:groups_) {
+                QStringList ids;for(auto id:g.members)ids<<QString::number(id+1);
+                entries_->addItem(QString("[%1] | %2 Å³ | score %3")
+                    .arg(ids.join("+")).arg(g.volume,0,'f',0).arg(g.score,0,'f',3));
+            }
+        }
+        if(entries_->count())entries_->setCurrentRow(0);
+        emit pocketChoicesChanged();
+        canvas_->update();publishSelection();
+    });
     connect(advancedToggle,&QToolButton::toggled,this,[advancedToggle,advancedArea](bool visible){
         advancedArea->setVisible(visible);
         advancedToggle->setArrowType(visible ? Qt::DownArrow : Qt::RightArrow);
     });
     run_=new QPushButton("Find pockets");column->addWidget(run_);
+    copyAlphaCommand_=new QPushButton("Copy Alpha command line");copyAlphaCommand_->setVisible(false);
+    column->addWidget(copyAlphaCommand_);
+    connect(copyAlphaCommand_,&QPushButton::clicked,this,[this]{
+        QStringList args{path_};
+        auto add=[&](const QString& key,double value){args<<key<<QString::number(value,'g',8);};
+        add("--min-radius",alphaMinRadius_->value());add("--max-radius",alphaMaxRadius_->value());
+        add("--neighbor-cutoff",alphaNeighborCutoff_->value());add("--cluster-distance",alphaClusterDistance_->value());
+        add("--max-cluster-radius",alphaMaxClusterRadius_->value());args<<"--min-contact-atoms"<<QString::number(alphaMinContacts_->value());
+        args<<"--min-spheres"<<QString::number(alphaMinSpheres_->value());
+        add("--macro-link",alphaMacroLink_->value());add("--macro-diameter",alphaMacroDiameter_->value());
+        add("--macro-clearance",alphaMacroClearance_->value());
+        if(!alphaMerge_->isChecked())args<<"--no-macro-merge";
+        const QString chain=chain_->currentData().toString();if(!chain.isEmpty())args<<"--chain"<<chain;
+        QApplication::clipboard()->setText(joinCommand("ligint-pocket-alpha",args));
+        status_->setText("Alpha command line copied.");
+    });
+    exportAlpha_=new QPushButton("Export Alpha results (CSV + PDB)");exportAlpha_->setEnabled(false);exportAlpha_->setVisible(false);
+    exportAlpha_->setToolTip("Export candidate centers and alpha spheres, plus a merge-decision audit. This does not change the loaded fingerprint pocket.");
+    column->addWidget(exportAlpha_);
+    connect(exportAlpha_,&QPushButton::clicked,this,[this]{
+        if(alphaPockets_.empty())return;
+        const QString csvPath=QFileDialog::getSaveFileName(this,"Save Alpha candidates","alpha_pockets.csv","CSV files (*.csv)");
+        if(csvPath.isEmpty())return;
+        const QString stem=csvPath.endsWith(".csv",Qt::CaseInsensitive)?csvPath.left(csvPath.size()-4):csvPath;
+        std::ofstream csv(stem.toStdString()+".csv");
+        std::ofstream pdb(stem.toStdString()+".pdb");
+        std::ofstream audit(stem.toStdString()+".audit.csv");
+        std::ofstream mergeAudit(stem.toStdString()+".merge_audit.csv");
+        if(!csv||!pdb||!audit||!mergeAudit){status_->setText("Could not write one or more Alpha result files.");return;}
+        csv<<"rank,center_x,center_y,center_z,sphere_count,sphere_volume_sum_A3\n"<<std::fixed<<std::setprecision(3);
+        audit<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3\n"<<std::fixed<<std::setprecision(3);
+        std::size_t serial=0;
+        for(std::size_t i=0;i<alphaPockets_.size();++i){
+            const auto& pocket=alphaPockets_[i];
+            csv<<i+1<<","<<pocket.center[0]<<","<<pocket.center[1]<<","<<pocket.center[2]<<","<<pocket.spheres.size()<<","<<pocket.volume<<"\n";
+            std::vector<double> radii;double extent=0;ligint::V3 low=pocket.spheres.front().center,high=low;
+            for(const auto& sphere:pocket.spheres){
+                radii.push_back(sphere.radius);
+                for(int k=0;k<3;++k){low[k]=std::min(low[k],sphere.center[k]);high[k]=std::max(high[k],sphere.center[k]);}
+                double d2=0;for(int k=0;k<3;++k)d2+=std::pow(sphere.center[k]-pocket.center[k],2);
+                extent=std::max(extent,std::sqrt(d2));
+            }
+            std::sort(radii.begin(),radii.end());
+            double box2=0;for(int k=0;k<3;++k)box2+=std::pow(high[k]-low[k],2);
+            audit<<i+1<<","<<radii.size()<<","<<radii.front()<<","<<radii[radii.size()/2]<<","<<radii.back()<<","<<extent<<","<<std::sqrt(box2)<<","<<pocket.volume<<"\n";
+            for(const auto& sphere:pocket.spheres){
+                if(++serial>99999)break;
+                char line[160];std::snprintf(line,sizeof(line),"HETATM%5zu  C   SPH A%4zu    %8.3f%8.3f%8.3f  1.00%6.2f           C\n",serial,(i+1)%10000,sphere.center[0],sphere.center[1],sphere.center[2],sphere.radius);
+                pdb<<line;
+            }
+        }
+        pdb<<"END\n";
+        mergeAudit<<"microcluster_a,microcluster_b,link_distance_A,min_clearance_A,endpoint_clearance_A,merged_center_diameter_A,accepted,reason\n"<<std::fixed<<std::setprecision(3);
+        for(const auto& d:alphaAudit_.decisions)mergeAudit<<d.first<<","<<d.second<<","<<d.linkDistance<<","<<d.minClearance<<","<<d.endpointClearance<<","<<d.mergedDiameter<<","<<(d.accepted?1:0)<<","<<d.reason<<"\n";
+        status_->setText(QString("Alpha results exported: %1 candidates; CSV, PDB and both audits saved.").arg(alphaPockets_.size()));
+    });
     auto* exportAudit=new QPushButton("Export solvent depth audit (CSV)");
     exportAudit->setEnabled(false);
     exportAudit->setToolTip("Export per-pocket reachability, probe blockage and solvent path depth percentiles.");
     column->addWidget(exportAudit);
+    connect(algorithm_,QOverload<int>::of(&QComboBox::currentIndexChanged),exportAudit,[exportAudit](int index){exportAudit->setVisible(index==0);});
     connect(exportAudit,&QPushButton::clicked,this,[this] {
         if(result_.pockets.empty())return;
         const QString path=QFileDialog::getSaveFileName(this,"Save solvent depth audit",
@@ -484,7 +653,14 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     outer->addWidget(viewport,1);
     connect(display_,QOverload<int>::of(&QComboBox::currentIndexChanged),this,[this]{
         entries_->clear();
-        if(display_->currentIndex()==0){
+        if(algorithm_->currentIndex()==1) {
+            for(std::size_t i=0;i<alphaPockets_.size();++i) {
+                const auto& pocket=alphaPockets_[i];
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                    .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
+            }
+        } else if(display_->currentIndex()==0){
             for(std::size_t i=0;i<result_.pockets.size();++i)
                 entries_->addItem(QString("#%1 | %2 Å³ | buried %3").arg(i+1)
                      .arg(result_.pockets[i].volume,0,'f',0)
@@ -527,6 +703,7 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         canvas_->update();
     });
     connect(opacity_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
+    connect(alphaOpacity_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(pointSize_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseNeighbors_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
     connect(noiseComponent_,QOverload<int>::of(&QSpinBox::valueChanged),canvas_,QOverload<>::of(&QWidget::update));
@@ -565,6 +742,32 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     });
     connect(run_,&QPushButton::clicked,this,[this]{
         if(path_.isEmpty())return;
+        const QString path=path_;
+        const QString chain=chain_->currentData().toString();
+        if(algorithm_->currentIndex()==1) {
+            ligint::AlphaPocketOptions options;
+            options.minRadius=alphaMinRadius_->value();options.maxRadius=alphaMaxRadius_->value();
+            options.neighborCutoff=alphaNeighborCutoff_->value();options.clusterDistance=alphaClusterDistance_->value();
+            options.maxClusterRadius=alphaMaxClusterRadius_->value();
+            options.minContactAtoms=static_cast<std::size_t>(alphaMinContacts_->value());
+            options.minSpheres=static_cast<std::size_t>(alphaMinSpheres_->value());
+            options.macroLinkDistance=alphaMacroLink_->value();options.macroMaxDiameter=alphaMacroDiameter_->value();
+            options.macroMinClearance=alphaMacroClearance_->value();options.mergeMicroclusters=alphaMerge_->isChecked();
+            run_->setEnabled(false);status_->setText("Computing Alpha-sphere pockets...");
+            watcher_.setFuture(QtConcurrent::run([path,chain,options]{
+                PocketGuiOutcome out;out.alphaMode=true;
+                try{
+                    out.atoms=ligint::readPocketAtoms(path.toStdString());
+                    auto selected=out.atoms;
+                    if(!chain.isEmpty())selected.erase(std::remove_if(selected.begin(),selected.end(),[&](const auto& atom){
+                        return QString::fromStdString(atom.chain)!=chain;
+                    }),selected.end());
+                    out.alphaPockets=ligint::findAlphaPockets(selected,options,&out.alphaAudit);
+                }catch(const std::exception& e){out.error=QString::fromUtf8(e.what());}
+                return out;
+            }));
+            return;
+        }
         ligint::PocketOptions o;
         o.spacing=spacing_->value();o.minBuriedness=buried_->value();o.rayLength=ray_->value();
         o.maxSurfaceDistance=surface_->value();o.solventProbeRadius=probe_->value();
@@ -574,8 +777,6 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
         o.maxSeeds=static_cast<std::size_t>(maxSeeds_->value());
         o.mergeMaxSeedDistance=mergeDistance_->value();
         o.mergeSaddleDrop=mergeDrop_->value();
-        const QString path=path_;
-        const QString chain=chain_->currentData().toString();
         if(!chain.isEmpty())o.chains={chain.toStdString()};
         run_->setEnabled(false);status_->setText("Computing pockets...");
         watcher_.setFuture(QtConcurrent::run([path,o]{
@@ -595,23 +796,41 @@ PocketWorkspace::PocketWorkspace(QWidget* parent):QWidget(parent){
     connect(&watcher_,&QFutureWatcher<PocketGuiOutcome>::finished,this,[this,exportAudit]{
         auto out=watcher_.result();run_->setEnabled(true);
         if(!out.error.isEmpty()){status_->setText("Error: "+out.error);return;}
-        result_=std::move(out.result);groups_=std::move(out.groups);
-        exportAudit->setEnabled(!result_.pockets.empty());
-        canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
         atoms_=std::move(out.atoms);
-        status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
-            .arg(result_.pockets.size()).arg(groups_.size()).arg(result_.selectedAtoms));
-        const int mode=display_->currentIndex();
-        display_->setCurrentIndex(mode==0?1:0);
-        display_->setCurrentIndex(mode);
-        canvas_->update();
+        if(out.alphaMode) {
+            alphaPockets_=std::move(out.alphaPockets);alphaAudit_=std::move(out.alphaAudit);
+            exportAlpha_->setEnabled(!alphaPockets_.empty());
+            status_->setText(QString("%1 Alpha pockets; %2 spheres; %3 atoms")
+                .arg(alphaPockets_.size()).arg([this]{std::size_t n=0;for(const auto& p:alphaPockets_)n+=p.spheres.size();return n;}())
+                .arg(atoms_.size()));
+        } else {
+            result_=std::move(out.result);groups_=std::move(out.groups);
+            exportAudit->setEnabled(!result_.pockets.empty());
+            status_->setText(QString("%1 pockets, %2 groups; %3 atoms")
+                .arg(result_.pockets.size()).arg(groups_.size()).arg(result_.selectedAtoms));
+        }
+        canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
+        if(algorithm_->currentIndex()==1) {
+            entries_->clear();
+            for(std::size_t i=0;i<alphaPockets_.size();++i) {
+                const auto& pocket=alphaPockets_[i];
+                entries_->addItem(QString("#%1 | %2 spheres | %3 Å³ | center (%4, %5, %6)")
+                    .arg(i+1).arg(pocket.spheres.size()).arg(pocket.volume,0,'f',0)
+                    .arg(pocket.center[0],0,'f',1).arg(pocket.center[1],0,'f',1).arg(pocket.center[2],0,'f',1));
+            }
+        } else {
+            const int mode=display_->currentIndex();
+            display_->setCurrentIndex(mode==0?1:0);display_->setCurrentIndex(mode);
+        }
+        if(entries_->count())entries_->setCurrentRow(0);
+        emit pocketChoicesChanged();canvas_->update();publishSelection();
     });
 }
 PocketWorkspace::~PocketWorkspace(){if(watcher_.isRunning())watcher_.waitForFinished();}
 void PocketWorkspace::setStructurePath(const QString& path){
     path_=path;run_->setEnabled(!path.isEmpty());
     status_->setText(path.isEmpty()?"Open a structure to start":"Ready: "+path);
-    result_={};groups_.clear();atoms_.clear();entries_->clear();
+    result_={};groups_.clear();alphaPockets_.clear();alphaAudit_={};atoms_.clear();entries_->clear();exportAlpha_->setEnabled(false);
     emit pocketChoicesChanged();
     canvas_->setProperty("pocketGeneration",canvas_->property("pocketGeneration").toInt()+1);
     chain_->clear();chain_->addItem("All chains",QString());
@@ -643,7 +862,9 @@ std::vector<std::size_t> PocketWorkspace::visibleMembers() const{
     for(const auto* item:entries_->selectedItems()){
         const int row=entries_->row(item);
         if(row<0)continue;
-        if(display_->currentIndex()==0){
+        if(algorithm_->currentIndex()==1){
+            if(static_cast<std::size_t>(row)<alphaPockets_.size())ids.insert(static_cast<std::size_t>(row));
+        }else if(display_->currentIndex()==0){
             if(static_cast<std::size_t>(row)<result_.pockets.size())
                 ids.insert(static_cast<std::size_t>(row));
         }else if(static_cast<std::size_t>(row)<groups_.size()){
@@ -676,7 +897,7 @@ void PocketWorkspace::setSelectedPocketRows(const QList<int>& rows) {
 int PocketWorkspace::pocketOpacityPercent() const { return overlayOpacity_->value(); }
 void PocketWorkspace::setPocketOpacityPercent(int percent) { overlayOpacity_->setValue(percent); }
 std::vector<ligint::PocketPoint> PocketWorkspace::pocketColorSample(int row) const {
-    if (row < 0) return {};
+    if (row < 0 || algorithm_->currentIndex()==1) return {};
     if (display_->currentIndex() == 0) {
         if (static_cast<std::size_t>(row) < result_.pockets.size())
             { const auto& pts = result_.pockets[static_cast<std::size_t>(row)].points;
@@ -698,6 +919,8 @@ int PocketWorkspace::rowForVisiblePocket(int visibleIndex) const {
     const auto members = visibleMembers();
     if (visibleIndex < 0 || static_cast<std::size_t>(visibleIndex) >= members.size()) return -1;
     const auto id = members[static_cast<std::size_t>(visibleIndex)];
+    if (algorithm_->currentIndex()==1)
+        return id < static_cast<std::size_t>(entries_->count()) ? static_cast<int>(id) : -1;
     if (display_->currentIndex() == 0)
         return id < static_cast<std::size_t>(entries_->count()) ? static_cast<int>(id) : -1;
     for (int row = 0; row < entries_->count() && static_cast<std::size_t>(row) < groups_.size(); ++row) {
@@ -719,7 +942,7 @@ void PocketWorkspace::selectPocketRow(int row) {
 void PocketWorkspace::publishSelection(){
     std::vector<ligint::PocketPoint> points;
     std::vector<std::vector<ligint::PocketPoint>> groups;
-    for(const auto id:visibleMembers())if(id<result_.pockets.size()){
+    if(algorithm_->currentIndex()!=1)for(const auto id:visibleMembers())if(id<result_.pockets.size()){
         const auto& source=result_.pockets[id].points;
         points.insert(points.end(),source.begin(),source.end());
         groups.push_back(source);
