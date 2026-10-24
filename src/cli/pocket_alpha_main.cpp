@@ -11,7 +11,7 @@
 using namespace ligint;
 int main(int argc,char**argv){
  try{
-  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-spheres N] [--rank-by sphere-count|sphere-volume] [--chain ID] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 1;}
+  if(argc<2){std::cerr<<"Usage: ligint-pocket-alpha structure.pdb [--min-radius A] [--max-radius A] [--neighbor-cutoff A] [--cluster-distance A] [--max-cluster-radius A] [--min-contact-atoms N] [--min-enclosure 0..1] [--min-spheres N] [--rank-by sphere-count|sphere-volume] [--chain ID] [--macro-link A] [--macro-diameter A] [--macro-clearance A] [--no-macro-merge] [--merge-audit CSV] [--output CSV] [--pdb FILE]\n";return 1;}
   AlphaPocketOptions o;
   std::string input,output,pdb,audit,mergeAuditFile,chain;
   for(int i=1;i<argc;++i){
@@ -27,6 +27,7 @@ int main(int argc,char**argv){
    else if(key=="--cluster-distance")o.clusterDistance=std::stod(value);
    else if(key=="--max-cluster-radius")o.maxClusterRadius=std::stod(value);
    else if(key=="--min-contact-atoms")o.minContactAtoms=std::stoull(value);
+   else if(key=="--min-enclosure")o.minEnclosureFraction=std::stod(value);
    else if(key=="--chain")chain=value;
    else if(key=="--audit")audit=value;
    else if(key=="--merge-audit")mergeAuditFile=value;
@@ -57,21 +58,22 @@ int main(int argc,char**argv){
      f<<d.first<<','<<d.second<<','<<d.linkDistance<<','<<d.minClearance<<','
       <<d.endpointClearance<<','<<d.mergedDiameter<<','<<(d.accepted?1:0)<<','<<d.reason<<'\n';
   }
-  std::cerr<<"Alpha pocket microclusters: "<<mergeAudit.microclusters
+  std::cerr<<"Alpha enclosure filter: "<<mergeAudit.rejectedByEnclosure<<" rejected of "
+           <<mergeAudit.enclosureTested<<" tested; microclusters: "<<mergeAudit.microclusters
            <<", macropockets: "<<pockets.size()<<"\n";
   std::ofstream file;
   if(!output.empty()){file.open(output);if(!file)throw std::runtime_error("Unable to open CSV output");}
   std::ostream& out=output.empty()?std::cout:file;
-  out<<"rank,center_x,center_y,center_z,sphere_count,sphere_volume_sum_A3\n";
+  out<<"rank,center_x,center_y,center_z,sphere_count,sphere_volume_sum_A3,mean_enclosure_fraction\n";
   out<<std::fixed<<std::setprecision(3);
   for(std::size_t i=0;i<pockets.size();++i){
    const auto& p=pockets[i];
    out<<i+1<<','<<p.center[0]<<','<<p.center[1]<<','<<p.center[2]<<','
-      <<p.spheres.size()<<','<<p.volume<<'\n';
+      <<p.spheres.size()<<','<<p.volume<<','<<p.enclosureFraction<<'\n';
   }
   if(!audit.empty()){
    std::ofstream f(audit);if(!f)throw std::runtime_error("Unable to open audit CSV");
-   f<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3\n";
+   f<<"rank,sphere_count,min_radius_A,median_radius_A,max_radius_A,max_center_extent_A,bbox_diagonal_A,volume_sum_A3,mean_enclosure_fraction\n";
    for(std::size_t i=0;i<pockets.size();++i){
     const auto& p=pockets[i];
     std::vector<double> radii;
@@ -85,7 +87,7 @@ int main(int argc,char**argv){
     }
     std::sort(radii.begin(),radii.end());
     f<<i+1<<','<<radii.size()<<','<<radii.front()<<','<<radii[radii.size()/2]<<','
-     <<radii.back()<<','<<extent<<','<<std::sqrt((high[0]-low[0])*(high[0]-low[0])+(high[1]-low[1])*(high[1]-low[1])+(high[2]-low[2])*(high[2]-low[2]))<<','<<p.volume<<'\n';
+     <<radii.back()<<','<<extent<<','<<std::sqrt((high[0]-low[0])*(high[0]-low[0])+(high[1]-low[1])*(high[1]-low[1])+(high[2]-low[2])*(high[2]-low[2]))<<','<<p.volume<<','<<p.enclosureFraction<<'\n';
    }
   }
   if(!pdb.empty()){
