@@ -51,7 +51,7 @@ private:
     QCheckBox* overlayVisible_=nullptr;
     QComboBox* overlayMaterial_=nullptr;
     QSpinBox *overlayOpacity_=nullptr,*overlaySpecular_=nullptr;
-    QComboBox *renderMode_=nullptr,*ligand_=nullptr;
+    QComboBox *renderMode_=nullptr,*ligand_=nullptr,*alphaRender_=nullptr;
     QDoubleSpinBox *seedSpacing_=nullptr,*seedProminence_=nullptr,*mergeDistance_=nullptr,*mergeDrop_=nullptr;
     QSpinBox *maxSeeds_=nullptr,*noiseNeighbors_=nullptr,*noiseComponent_=nullptr,*smoothSteps_=nullptr,*lightStrength_=nullptr,*shine_=nullptr;
     std::vector<ligint::V3> ligandCoords_;
