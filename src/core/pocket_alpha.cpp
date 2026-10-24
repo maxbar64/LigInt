@@ -8,6 +8,31 @@ namespace ligint {
 namespace {
 double sq(double x){return x*x;}
 double dist2(const V3&a,const V3&b){return sq(a[0]-b[0])+sq(a[1]-b[1])+sq(a[2]-b[2]);}
+double directionalEnclosure(double radius,const std::vector<std::array<double,5>>& localAtoms){
+    constexpr int samples=64;
+    constexpr double goldenAngle=2.39996322972865332;
+    std::size_t blocked=0;
+    const double maxDistance=radius+5.0;
+    for(int i=0;i<samples;++i){
+        const double y=1.0-2.0*(i+0.5)/samples;
+        const double radial=std::sqrt(std::max(0.0,1.0-y*y));
+        const double phi=goldenAngle*i;
+        const double direction[3]={radial*std::cos(phi),y,radial*std::sin(phi)};
+        bool hit=false;
+        for(const auto& atom:localAtoms){
+            const double projection=atom[0]*direction[0]+atom[1]*direction[1]+atom[2]*direction[2];
+            if(projection<0)continue;
+            const double d2=atom[0]*atom[0]+atom[1]*atom[1]+atom[2]*atom[2];
+            const double perpendicular2=d2-projection*projection;
+            const double expanded2=atom[4]*atom[4];
+            if(perpendicular2>expanded2)continue;
+            const double halfChord=std::sqrt(std::max(0.0,expanded2-perpendicular2));
+            if(projection+halfChord>=0 && projection-halfChord<=maxDistance){hit=true;break;}
+        }
+        blocked+=hit?1u:0u;
+    }
+    return static_cast<double>(blocked)/samples;
+}
 bool circumcenter(const V3&a,const V3&b,const V3&c,const V3&d,V3&out){
     double m[3][4]{};
     const V3* p[]={&b,&c,&d};
@@ -40,8 +65,9 @@ struct DSU{
 }
 std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,const AlphaPocketOptions& o, AlphaMergeAudit* audit){
     if(o.minRadius<=0||o.maxRadius<=o.minRadius||o.neighborCutoff<=0||
-       o.clusterDistance<=0||o.maxClusterRadius<=0||o.macroLinkDistance<=0||o.macroMaxDiameter<=0||o.macroMinClearance<0||o.minContactAtoms<4||o.minSpheres==0||o.maxCandidates==0)
+       o.clusterDistance<=0||o.maxClusterRadius<=0||o.macroLinkDistance<=0||o.macroMaxDiameter<=0||o.macroMinClearance<0||o.minContactAtoms<4||o.minEnclosureFraction<0||o.minEnclosureFraction>1||o.minSpheres==0||o.maxCandidates==0)
         throw std::invalid_argument("Invalid alpha pocket options");
+    if(audit){audit->enclosureTested=0;audit->rejectedByEnclosure=0;audit->decisions.clear();}
     std::vector<AlphaSphere> candidates;
     // Neighbor-limited tetrahedra avoid cubic scanning of the whole structure.
     // The sphere must be empty in the VdW-adjusted sense; atom centers define
@@ -65,17 +91,32 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
                 // Use the minimum clearance from all atom VdW surfaces as the
                 // actual sphere radius, including mixed atomic radii.
                 double radius=o.maxRadius+1;
-                for(const auto& atom:atoms)
-                    radius=std::min(radius,std::sqrt(dist2(center,atom.pos))-atom.radius);
+                std::vector<std::array<double,5>> localAtoms;
+                for(const auto& atom:atoms){
+                    const double dx=atom.pos[0]-center[0],dy=atom.pos[1]-center[1],dz=atom.pos[2]-center[2];
+                    const double distance=std::sqrt(dx*dx+dy*dy+dz*dz);
+                    radius=std::min(radius,distance-atom.radius);
+                    if(distance<=o.maxRadius+6.4+atom.radius)
+                        localAtoms.push_back({dx,dy,dz,atom.radius,atom.radius+1.4});
+                }
                 if(radius<o.minRadius||radius>o.maxRadius)continue;
                 std::size_t contacts=0;
-                for(const auto& atom:atoms)
-                    if(std::sqrt(dist2(center,atom.pos))-atom.radius<=radius+2.0)++contacts;
+                for(const auto& atom:localAtoms){
+                    const double distance=std::sqrt(atom[0]*atom[0]+atom[1]*atom[1]+atom[2]*atom[2]);
+                    if(distance-atom[3]<=radius+2.0)++contacts;
+                }
                 if(contacts<o.minContactAtoms)continue;
                 bool duplicate=false;
                 for(const auto& s:candidates)
                     if(dist2(center,s.center)<0.25){duplicate=true;break;}
-                if(!duplicate)candidates.push_back({center,radius});
+                if(duplicate)continue;
+                if(audit)++audit->enclosureTested;
+                const double enclosure=directionalEnclosure(radius,localAtoms);
+                if(enclosure<o.minEnclosureFraction){
+                    if(audit)++audit->rejectedByEnclosure;
+                    continue;
+                }
+                candidates.push_back({center,radius,enclosure});
                 if(candidates.size()>=o.maxCandidates)break;
             }
         if(candidates.size()>=o.maxCandidates)break;
@@ -95,12 +136,13 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
             if(bounded){best=i;bestDistance=d2;}
         }
         if(best==result.size()){
-            AlphaPocket p;p.center=sphere.center;p.spheres.push_back(sphere);
+            AlphaPocket p;p.center=sphere.center;p.enclosureFraction=sphere.enclosureFraction;p.spheres.push_back(sphere);
             result.push_back(std::move(p));
         }else{
             auto& p=result[best];
             const double n=static_cast<double>(p.spheres.size());
             for(int k=0;k<3;++k)p.center[k]=(p.center[k]*n+sphere.center[k])/(n+1);
+            p.enclosureFraction=(p.enclosureFraction*n+sphere.enclosureFraction)/(n+1);
             p.spheres.push_back(sphere);
         }
     }
@@ -109,7 +151,7 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
         for(const auto& s:p.spheres)p.volume+=4.1887902047863905*s.radius*s.radius*s.radius;
         return false;
     }),result.end());
-    if(audit){audit->microclusters=result.size();audit->decisions.clear();}
+    if(audit)audit->microclusters=result.size();
     if(o.mergeMicroclusters && result.size()>1) {
         // Evaluate candidate microcluster links from the closest pair of sphere
         // centers, not solely centroid distances. Merge only if the path is free
@@ -183,10 +225,13 @@ std::vector<AlphaPocket> findAlphaPockets(const std::vector<PocketAtom>& atoms,c
             const auto& src=result[i];
             for(const auto& sphere:src.spheres)dst.spheres.push_back(sphere);
             dst.volume+=src.volume;
+            dst.enclosureFraction+=src.enclosureFraction*src.spheres.size();
             for(int k=0;k<3;++k)dst.center[k]+=src.center[k]*src.spheres.size();
         }
-        for(auto& pocket:macro)
+        for(auto& pocket:macro){
             for(int k=0;k<3;++k)pocket.center[k]/=pocket.spheres.size();
+            pocket.enclosureFraction/=pocket.spheres.size();
+        }
         result=std::move(macro);
     }
     std::sort(result.begin(),result.end(),[&](const AlphaPocket&a,const AlphaPocket&b){
