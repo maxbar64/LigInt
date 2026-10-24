@@ -42,6 +42,40 @@
 #include <cmath>
 
 namespace gui {
+namespace {
+bool rasterizeAlphaPocket(const ligint::AlphaPocket& source,double spacing,
+                          std::vector<ligint::PocketPoint>& points,
+                          std::size_t maxCells=1500000){
+    points.clear();
+    if(!(spacing>0) || !std::isfinite(spacing))return false;
+    std::set<std::array<long long,3>> cells;
+    for(const auto& sphere:source.spheres){
+        if(!(sphere.radius>0) || !std::isfinite(sphere.radius))continue;
+        long long low[3],high[3];
+        for(int k=0;k<3;k++){
+            low[k]=static_cast<long long>(std::ceil((sphere.center[k]-sphere.radius)/spacing));
+            high[k]=static_cast<long long>(std::floor((sphere.center[k]+sphere.radius)/spacing));
+        }
+        for(long long z=low[2];z<=high[2];++z)
+            for(long long y=low[1];y<=high[1];++y)
+                for(long long x=low[0];x<=high[0];++x){
+                    const double px=x*spacing,py=y*spacing,pz=z*spacing;
+                    const double dx=px-sphere.center[0],dy=py-sphere.center[1],dz=pz-sphere.center[2];
+                    if(dx*dx+dy*dy+dz*dz>sphere.radius*sphere.radius)continue;
+                    cells.insert({x,y,z});
+                    if(cells.size()>maxCells)return false;
+                }
+    }
+    points.reserve(cells.size());
+    for(const auto& cell:cells){
+        ligint::PocketPoint point;
+        point.pos={cell[0]*spacing,cell[1]*spacing,cell[2]*spacing};
+        point.buriedness=1.0f; // occupied alpha-sphere union, not a buriedness measurement
+        points.push_back(point);
+    }
+    return true;
+}
+}
 class PocketCanvas : public QWidget {
 public:
     explicit PocketCanvas(PocketWorkspace* owner):QWidget(owner),owner_(owner){
@@ -128,35 +162,12 @@ protected:
                     auto& pocket=alphaVoxelPockets_[id];
                     const auto& source=owner_->alphaPockets_[id];
                     pocket.center=source.center;
-                    std::set<std::array<long long,3>> cells;
-                    for(const auto& sphere:source.spheres){
-                        long long low[3],high[3];
-                        for(int k=0;k<3;k++){
-                            low[k]=static_cast<long long>(std::ceil((sphere.center[k]-sphere.radius)/alphaSpacing));
-                            high[k]=static_cast<long long>(std::floor((sphere.center[k]+sphere.radius)/alphaSpacing));
-                        }
-                        for(long long z=low[2];z<=high[2];++z)
-                            for(long long y=low[1];y<=high[1];++y)
-                                for(long long x=low[0];x<=high[0];++x){
-                                    const double px=x*alphaSpacing,py=y*alphaSpacing,pz=z*alphaSpacing;
-                                    const double dx=px-sphere.center[0],dy=py-sphere.center[1],dz=pz-sphere.center[2];
-                                    if(dx*dx+dy*dy+dz*dz>sphere.radius*sphere.radius)continue;
-                                    cells.insert({x,y,z});
-                                    if(cells.size()>1500000){
-                                        alphaVoxelKey_.clear();
-                                        p.setPen(QColor(255,220,150));
-                                        p.drawText(rect(),Qt::AlignCenter,
-                                            "Alpha voxel volume is too large; increase Grid spacing");
-                                        return;
-                                    }
-                                }
-                    }
-                    pocket.points.reserve(cells.size());
-                    for(const auto& cell:cells){
-                        ligint::PocketPoint point;
-                        point.pos={cell[0]*alphaSpacing,cell[1]*alphaSpacing,cell[2]*alphaSpacing};
-                        point.buriedness=1.0f; // occupied alpha-sphere union, not a buriedness measurement
-                        pocket.points.push_back(point);
+                    if(!rasterizeAlphaPocket(source,alphaSpacing,pocket.points)){
+                        alphaVoxelKey_.clear();
+                        p.setPen(QColor(255,220,150));
+                        p.drawText(rect(),Qt::AlignCenter,
+                            "Alpha voxel volume is too large; increase Grid spacing");
+                        return;
                     }
                     pocket.pointCount=pocket.points.size();
                     pocket.volume=pocket.pointCount*alphaSpacing*alphaSpacing*alphaSpacing;
@@ -1016,7 +1027,20 @@ void PocketWorkspace::selectPocketRow(int row) {
 void PocketWorkspace::publishSelection(){
     std::vector<ligint::PocketPoint> points;
     std::vector<std::vector<ligint::PocketPoint>> groups;
-    if(algorithm_->currentIndex()!=1)for(const auto id:visibleMembers())if(id<result_.pockets.size()){
+    const auto members=visibleMembers();
+    if(algorithm_->currentIndex()==1){
+        std::size_t total=0;
+        for(const auto id:members)if(id<alphaPockets_.size()){
+            std::vector<ligint::PocketPoint> source;
+            if(!rasterizeAlphaPocket(alphaPockets_[id],spacing_->value(),source)){
+                points.clear();groups.clear();break;
+            }
+            total+=source.size();
+            if(total>3000000){points.clear();groups.clear();break;}
+            points.insert(points.end(),source.begin(),source.end());
+            groups.push_back(std::move(source));
+        }
+    }else for(const auto id:members)if(id<result_.pockets.size()){
         const auto& source=result_.pockets[id].points;
         points.insert(points.end(),source.begin(),source.end());
         groups.push_back(source);
